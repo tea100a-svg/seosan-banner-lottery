@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>마이페이지 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="mypage">
+<div class="demo-banner">
+  <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+</div>
+
+<header class="site-header">
+  <div class="wrap hdr">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#bfd8ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="4" width="19" height="9.5" rx="1.6" fill="rgba(191,216,255,.14)"/>
+          <path d="M6.5 7.4h11M6.5 10.2h7"/>
+          <path d="M6 13.5v6M18 13.5v6"/>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <span class="org">사단법인 충청남도옥외광고협회 서산시지부</span>
+        <h1>현수막 지정게시대 접수 시스템</h1>
+      </div>
+    </div>
+    <div class="hdr-side">
+      <button class="ime-badge on" id="imeToggle" type="button" aria-pressed="true" title="영타 입력 시 한글 자동변환 ON — 영문 키보드 상태로 입력해도 한글로 바뀝니다. 누르면 끕니다." aria-label="영타 입력 시 한글 자동변환 ON">
+        <span class="dot"></span><span id="imeText">영타 입력 시 한글 자동변환 <b>ON</b></span>
+      </button>
+      <div class="hdr-auth">
+        <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
+        <div class="hdr-user hidden" id="authUser">
+          <span><b id="authName">회원</b><small id="authSub">일반업체</small></span>
+          <button class="btn-auth sm" id="btnLogout" type="button" data-logout="1">로그아웃</button>
+        </div>
+      </div>
+      <div class="chip-round">
+        <span class="dot"></span>
+        <div>
+          <b id="roundName">2026년 11월 4주차 주간 추첨</b>
+          <small id="roundDue">입고 마감 수 18:00</small>
+        </div>
+      </div>
+      <label class="switch admin-switch" title="협회 관리자 모드 전환" aria-label="관리자 모드 전환">
+        <input type="checkbox" id="adminToggle">
+        <span class="track"><span class="knob"></span></span>
+        <span class="switch-label">관리자 모드</span>
+      </label>
+    </div>
+  </div>
+  <nav class="tabs wrap site-nav" aria-label="페이지 이동">
+    <a class="tab" href="index.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="9" rx="1.5"/><path d="M7 13v6M17 13v6M7 7.5h10M7 10h6"/></svg>
+      게시대 현황
+    </a>
+    <a class="tab" href="apply.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
+      주간 추첨 접수
+    </a>
+    <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      미배정 선착순
+    </a>
+    <a class="tab" href="guide.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
+      규격·안내
+    </a>
+    <a class="tab active" href="mypage.html" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      마이페이지
+    </a>
+    <a class="tab admin-tab" href="admin-draw.html" id="adminTab" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
+      협회 관리자
+    </a>
+  </nav>
+</header>
+
+
+<main class="wrap main">
+
+<section class="view active" id="view-mypage">
+
+    <div class="view-head">
+      <div>
+        <h2>마이페이지</h2>
+        <p>나의 접수 내역과 당첨 결과, <b>현수막 입고 기한(수요일 18:00)</b>과 게시 상태를 확인하세요.</p>
+      </div>
+    </div>
+    <div class="mp-head" id="mpHead"></div>
+    <div id="mpBody"></div>
+  
+</section>
+<button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
+</main>
+
+<footer class="footer">
+  <div class="wrap fi">
+    <div>
+      <b>사단법인 충청남도옥외광고협회 서산시지부</b><br>
+      충남 서산시 덕지천로 1, 2층 (석남동) · 대표전화 041-665-1216 · 팩스 041-665-1218<br>
+      업무시간 평일 09:00 ~ 18:00 (점심 12:00 ~ 13:00)
+    </div>
+    <div class="links">
+      <span>시연용 프로토타입 v1.5 · 주간 운영(목 선착순·금 마감) · 서산시 지정게시대 77개소</span>
+      <span>·</span>
+      <span>실제 서비스 아님</span>
+      <span>·</span>
+      <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
+    </div>
+  </div>
+</footer>
+
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal">
+  <div class="modal-bg" data-close></div>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div style="min-width:0">
+        <h3 id="modalTitle">제목</h3>
+        <p id="modalSub"></p>
+      </div>
+      <button class="modal-x" data-close aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<style id="printPageRule"></style>
+<script src="assets/app.js"></script>
+</body>
+</html>
