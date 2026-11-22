@@ -63,7 +63,7 @@
     <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
       미배정 선착순
     </a>
-    <a class="tab" href="guide.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
+    <a class="tab" href="guide-rules.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
       규격·안내
     </a>
     <a class="tab" href="mypage.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
@@ -96,6 +96,16 @@
     </ol>
 
     <form class="panel" id="applyForm" autocomplete="off" novalidate>
+      <!-- 게첩 희망 주 선택 — 달력에서 주(월~일)를 골라 사전 접수 (2026-11-22) -->
+      <div class="week-select-panel" id="weekSelectPanel" style="border:1px solid #cbdcf5;border-radius:14px;padding:14px;margin-bottom:16px;background:#fff">
+        <div class="panel-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">🗓️ 게첩 희망 주 선택 <span class="sub" style="font-size:11px;color:var(--muted)">이번 주 · 다음 주 · 다다음 주 사전 접수</span></h3>
+          <span class="spacer" style="flex:1"></span>
+          <span class="week-now" id="applyWeekNow">2026.11.30 ~ 12.06</span>
+        </div>
+        <div class="hint-txt" id="applyWeekHint" style="margin:0 0 4px">달력에서 <b>게첩을 시작할 월요일이 포함된 주</b>를 고르면 그 주차로 사전 접수됩니다. (월~일 7일 단위)</div>
+        <div id="applyWeekCal"></div>
+      </div>
       <!-- step 3 · 게시대 선택 (1개소 1매 · 수량별 1·2·3순위 / 고객장소 지정) -->
       <div class="step-body" id="step3">
         <div class="callout info">
@@ -171,18 +181,19 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label for="applyStart">게시 시작일<span class="req">*</span></label>
+            <label for="applyStart">게시 시작일 (게첩 주 월요일)<span class="req">*</span></label>
             <select class="input" id="applyStart">
               <option value="2026-11-30">2026-11-30 (월)</option>
               <option value="2026-12-07">2026-12-07 (월)</option>
             </select>
+            <div class="hint-txt" style="margin-top:6px">위 <b>게첩 희망 주 선택 달력</b>과 연동됩니다 — 달력에서 주를 고르면 여기도 함께 바뀝니다.</div>
           </div>
           <div class="field">
             <label for="applyDays">게시 기간<span class="req">*</span></label>
             <select class="input" id="applyDays">
               <option value="7" selected>1주(7일 · 월~일) 고정</option>
             </select>
-            <div class="hint-txt" style="margin-top:6px">일반 광고물 게시기간은 <b>1주(7일)</b>로 고정입니다. <b>2주(14일)</b>는 시청 공문만 사무실무원 작성 → 사무국장 → 수석부지부장 → 지부장 → 감사(2인 중 1인) 결재를 거쳐 승인됩니다.</div>
+            <div class="hint-txt" style="margin-top:6px">일반 광고물 게시기간은 <b>1주(7일)</b>로 고정입니다. <b>2주(14일)</b>는 시청 공문만 <b>지부장 결재 → 감사(2인 중 1인) 결재</b>를 거쳐 승인됩니다.</div>
           </div>
         </div>
         <div class="callout info" id="periodPreview">
@@ -345,7 +356,7 @@
           </div>
           <span class="badge b-amber" style="align-self:center">추첨 후 납부</span>
         </div>
-        <div class="hint-txt" style="margin-top:12px">수수료는 <b>1매 단가(탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000 = 10,700원) × 접수 수량</b>으로 계산하며, 14일(2주)은 2배가 됩니다. 예) 10매 107,000원 · 50매 535,000원. 실제 납부는 <b>추첨 배정 매수</b> 기준으로 접수증의 가상계좌에 입금합니다.</div>
+        <div class="hint-txt" style="margin-top:12px">수수료는 <b>1매 단가(탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000 = 10,700원) × 접수 수량</b>으로 계산합니다. 예) 10매 107,000원 · 50매 535,000원. 실제 납부는 <b>추첨 배정 매수</b> 기준으로 접수증의 가상계좌에 입금합니다.</div>
         <div class="hint-txt" style="margin-top:12px">당첨자에 한해 접수증에 안내되는 가상계좌로 입금하시면 됩니다. <b>수요일 18:00까지 현수막 실물을 협회로 입고</b>하지 않으면 자동 취소(반려)되고, 해당 매는 <b>목요일 선착순</b> 또는 차순위로 즉시 전환됩니다.</div>
       </div>
     </form>

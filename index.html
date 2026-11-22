@@ -63,7 +63,7 @@
     <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
       미배정 선착순
     </a>
-    <a class="tab" href="guide.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
+    <a class="tab" href="guide-rules.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
       규격·안내
     </a>
     <a class="tab" href="mypage.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
@@ -83,12 +83,19 @@
     <div class="view-head">
       <div>
         <h2>게시대 현황</h2>
-        <p>서산시 관내 지정게시대 <b id="stCount">77</b>개소 · 정원 <b id="stCap">575</b>면 · 이번 주 <b id="stRequests">0</b>건 접수중 (게시대별 <b>접수 건수</b> 실시간 집계)</p>
+        <p>서산시 관내 지정게시대 <b id="stCount">77</b>개소 · 정원 <b id="stCap">575</b>면 · <b>선택 주차</b> <b id="stWeekTxt">2026.11.30~12.06</b> · <b id="stRequests">0</b>건 접수중 (게시대별 <b>접수 건수</b> 실시간 집계)</p>
       </div>
       <button class="btn ghost sm" id="btnRefresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.6 6"/><path d="M20 5v6h-6"/></svg>
         새로고침
       </button>
+    </div>
+    <div class="panel week-cal-panel" id="weekCalPanel">
+      <div class="panel-head">
+        <h3>🗓️ 주별 현황 달력 <span class="sub">게첩 주(월~일) 단위</span></h3>
+        <span class="sub" id="weekCalSub"></span>
+      </div>
+      <div id="weekCal"></div>
     </div>
     <div class="week-strip" id="weekStrip"></div>
     <div class="stats" id="statusStats"></div>
@@ -107,8 +114,8 @@
         <input type="search" id="statusSearch" class="ko-ime" lang="ko" placeholder="게시대 · 읍면동 검색" aria-label="게시대 검색">
       </div>
     </div>
-    <div class="grid" id="placementGrid"></div>
-      <div class="pager" id="statusPager"></div>
+    <div class="pl-sum" id="statusListInfo"></div>
+    <div class="plrows" id="placementGrid"></div>
   
 </section>
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>

@@ -816,6 +816,76 @@
     '성연공구': { qty: 1, pin: '당율저수지입구', designated: true }
   };
 
+  /* ── 시연용 광고대행사 대리접수 (2026-11-22 김재봉 님 지시) ──────────
+     [회원ID, 실제 광고주, 광고주 사업자번호, 문구, 수량, 주차(0=이번 주 게첩), 1순위, 2순위]
+     · 10개 대행사가 각각 다른 실제 광고주(사업자번호)로 접수 — 광고주 1건 차단 규칙과 충돌 없음.
+     · 재봉기획(6)·서산애드컴(7)·해미미디어랩(5)은 대형 대행사 — 5건 이상 다건 대리접수.
+     · 주차 1=다음 주(12-07 게첩), 2=다다음 주(12-14 게첩) 사전 접수. 모두 '추첨대기'. */
+  var AGENCY_SEED_APPS = [
+    ['M-1002', '서산사과직판', '312-45-90011', '가을 사과 직판 · 30% 할인', 3, 0, ['P01', 'P05', 'P09'], ['P12']],
+    ['M-1002', '해미한우식당', '313-21-90012', '해미한우 식당 신규 오픈', 2, 0, ['P02', 'P07'], []],
+    ['M-1002', '부춘서점', '314-32-90013', '부춘서점 연말 도서 할인', 2, 0, ['P08', 'P10'], []],
+    ['M-1002', '서산꽃집', '312-43-90014', '연말 꽃다발 예약 접수', 1, 0, ['P04'], []],
+    ['M-1002', '예천카페거리', '315-54-90015', '예천 카페거리 크리스마스 축제', 3, 0, ['P03', 'P06', 'P11'], ['P14']],
+    ['M-1002', '고북딸기농장', '316-65-90016', '고북 딸기 체험 예약', 2, 0, ['P13', 'P16'], []],
+    ['M-1002', '서산원예조합', '317-76-90017', '원예조합 화훼 직판 안내', 2, 1, ['P17', 'P18'], []],
+    ['M-1002', '해미전통시장', '318-87-90018', '해미전통시장 연말 세일', 3, 1, ['P21', 'P22', 'P23'], []],
+    ['M-1004', '서산정형외과', '312-11-91021', '서산정형외과 척추·관절 상담', 2, 0, ['P01', 'P04'], []],
+    ['M-1004', '대산주유소', '313-22-91022', '대산주유소 연말 주유 할인', 1, 0, ['P64'], []],
+    ['M-1004', '성연어린이집', '314-33-91023', '성연어린이집 12월 원아 모집', 2, 0, ['P55', 'P56'], []],
+    ['M-1004', '지곡산업', '315-44-91024', '지곡산업 기자재 견적 안내', 3, 0, ['P57', 'P58', 'P59'], []],
+    ['M-1004', '팔봉수산', '316-55-91025', '팔봉수산 겨울 꽃게 직판', 2, 0, ['P68', 'P69'], []],
+    ['M-1004', '인지농협', '317-66-91026', '인지농협 김장용 배추 판매', 1, 0, ['P46'], []],
+    ['M-1004', '서산시장상인회', '318-77-91027', '서산시장 온누리상품권 행사', 2, 0, ['P08', 'P09'], []],
+    ['M-1004', '대산항선원복지', '319-88-91028', '대산항 선원복지관 소식', 2, 1, ['P65', 'P66'], []],
+    ['M-1005', '해미읍성한옥', '312-88-92031', '해미읍성 한옥 스테이 오픈', 2, 0, ['P02', 'P21'], []],
+    ['M-1005', '서산승마장', '313-99-92032', '서산승마장 겨울 체험 프로그램', 1, 0, ['P22'], []],
+    ['M-1005', '운산포도', '314-10-92033', '운산포도 샤인머스캣 직판', 2, 0, ['P28', 'P29'], []],
+    ['M-1005', '음암태권도', '315-20-92034', '음암태권도 겨울학기 모집', 1, 0, ['P26'], []],
+    ['M-1005', '동문학원', '316-30-92035', '동문학원 설명회 · 신입생 모집', 3, 0, ['P14', 'P15', 'P16'], []],
+    ['M-1005', '해미들녘축제', '317-40-92036', '해미들녘 겨울 축제 안내', 3, 2, ['P02', 'P21', 'P22'], []],
+    ['M-1006', '부춘약국', '312-31-93041', '부춘약국 독감 예방접종 안내', 1, 0, ['P07'], []],
+    ['M-1006', '서산문구', '313-41-93042', '서산문구 학용품 할인', 2, 1, ['P08', 'P10'], []],
+    ['M-1007', '석남철물', '313-42-93051', '석남철물 연말 자재 할인', 1, 0, ['P30'], []],
+    ['M-1007', '예천부동산', '314-52-93052', '예천부동산 매매·전세 상담', 2, 0, ['P31', 'P32'], []],
+    ['M-1008', '대산해운', '314-53-93061', '대산해운 선반 운송 안내', 2, 0, ['P65', 'P66'], []],
+    ['M-1009', '호수공원카페', '315-64-93071', '호수공원 카페 겨울 메뉴', 1, 0, ['P33'], []],
+    ['M-1009', '서산호수요가', '316-74-93072', '서산호수요가 겨울반 모집', 1, 1, ['P34'], []],
+    ['M-1010', '팔봉고구마', '316-75-93081', '팔봉고구마 겨울 직판', 1, 0, ['P68'], []],
+    ['M-1010', '팔봉민박', '317-85-93082', '팔봉민박 주말 예약', 1, 0, ['P69'], []],
+    ['M-1011', '성연정밀', '317-86-93091', '성연정밀 부품 가공 상담', 1, 0, ['P56'], []],
+    ['M-1011', '성연산업단지', '318-96-93092', '성연산업단지 입주 안내', 2, 2, ['P57', 'P58'], []],
+    ['M-1012', '인지수산시장', '318-97-93101', '인지수산시장 꽃게 직판', 1, 0, ['P46'], []],
+    ['M-1012', '인지농원', '319-98-93102', '인지농원 유기농 쌀 판매', 1, 1, ['P47'], []]
+  ];
+  function agencyAppsSeed() {
+    var out = [];
+    AGENCY_SEED_APPS.forEach(function (r, i) {
+      var m = null;
+      SEED_MEMBERS.forEach(function (x) { if (x.id === r[0]) m = x; });
+      if (!m) return;
+      var wk = Number(r[5]) || 0, p1 = r[6] || [], p2 = r[7] || [];
+      var roundId = wk === 0 ? ROUND.id : ('2026-W' + (48 + wk - 1));
+      out.push({
+        id: roundId + '-B-' + pad4(101 + i), round: roundId,
+        company: m.company, memberId: m.id, owner: m.owner, phone: m.phone,
+        appType: 'agency', advertiser: r[1], advertiserBiz: r[2], advertiserPhone: phoneOf(60 + i),
+        biz: m.biz, email: m.email, oade: m.oade,
+        qty: Number(r[4]) || 1, awardedQty: null,
+        placements: p1.concat(p2), assignedPlaces: [],
+        priority1: p1.slice(), priority2: p2.slice(), priority3: [], designatedOnly: false,
+        priority1Slots: [], priority2Slots: [], priority3Slots: [],
+        p1: p1[0] || '', p2: p2[0] || '', p3: '',
+        eco: false, status: '추첨대기', text: r[3],
+        appliedAt: '2026-11-' + pad2(18 + (i % 4)) + ' ' + pad2(9 + (i % 8)) + ':' + pad2((i * 11) % 60),
+        start: addDays(ROUND.postStart, wk * 7), days: 7,
+        file: null, preview: null, mine: false, paid: false, delivered: false, deliveryDue: null,
+        assignedTo: null, rank: null, reject: null, drawId: null, agencyName: m.company
+      });
+    });
+    return out;
+  }
+
   /* 예시 페널티 2건 — 실제 광고주 기준 차기 1개 주 회차 접수 제한 (시연용) */
   var SEED_PENALTIES = [
     { id: 'PN-2026-W46-01', advertiser: '한빛건설(주)', biz: '123-45-67890', phone: '010-3321-7788',
@@ -840,8 +910,53 @@
       licenseFile: { name: '재봉기획_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
     { id: 'M-1003', loginId: 'hanwoo', pw: '1234', type: 'direct', roleBonusType: 'none',
       company: '서산한우직판장', owner: '박영호', phone: phoneOf(1),
-      biz: '314-82-15530', email: 'hanwoo@seosan.kr', oade: '제 2019-4530186-08-5-00077 호' }
+      biz: '314-82-15530', email: 'hanwoo@seosan.kr', oade: '제 2019-4530186-08-5-00077 호' },
+    /* ── 시연용 광고대행사 10곳 (2026-11-22 김재봉 님 지시) ─────────────────
+       · 재봉기획 포함 10곳. 위 3곳(재봉기획·서산애드컴·해미미디어랩)은 5건 이상
+         다건 대리접수하는 '대형 광고대행사'로 시연 데이터를 구성했습니다.
+       · 모두 옥외광고업 등록증 사본(시연용 PDF)을 가진 승인된 대행사 회원입니다. */
+    { id: 'M-1004', loginId: 'seosanad', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '서산애드컴', owner: '김도현', phone: phoneOf(2),
+      biz: '312-45-10041', email: 'seosanad@seosan.kr', oade: '제 2016-4530186-08-5-00041 호',
+      licenseFile: { name: '서산애드컴_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1005', loginId: 'haemimedi', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '해미미디어랩', owner: '김민서', phone: phoneOf(3),
+      biz: '313-72-20052', email: 'haemimedi@seosan.kr', oade: '제 2018-4530186-08-5-00052 호',
+      licenseFile: { name: '해미미디어랩_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1006', loginId: 'buchunpl', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '부춘기획', owner: '이부춘', phone: phoneOf(4),
+      biz: '314-11-30063', email: 'buchunpl@seosan.kr', oade: '제 2015-4530186-08-5-00063 호',
+      licenseFile: { name: '부춘기획_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1007', loginId: 'seoknamad', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '석남광고', owner: '박석남', phone: phoneOf(5),
+      biz: '312-82-40074', email: 'seoknamad@seosan.kr', oade: '제 2017-4530186-08-5-00074 호',
+      licenseFile: { name: '석남광고_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1008', loginId: 'daesancom', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '대산커뮤니케이션', owner: '최대산', phone: phoneOf(6),
+      biz: '315-33-50085', email: 'daesancom@seosan.kr', oade: '제 2019-4530186-08-5-00085 호',
+      licenseFile: { name: '대산커뮤니케이션_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1009', loginId: 'hosuad', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '호수애드', owner: '정호수', phone: phoneOf(7),
+      biz: '312-55-60096', email: 'hosuad@seosan.kr', oade: '제 2020-4530186-08-5-00096 호',
+      licenseFile: { name: '호수애드_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1010', loginId: 'palbongmd', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '팔봉미디어', owner: '구팔봉', phone: phoneOf(8),
+      biz: '316-44-70107', email: 'palbongmd@seosan.kr', oade: '제 2014-4530186-08-5-00107 호',
+      licenseFile: { name: '팔봉미디어_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1011', loginId: 'seongyeon', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '성연광고기획', owner: '유성연', phone: phoneOf(9),
+      biz: '317-66-80118', email: 'seongyeon@seosan.kr', oade: '제 2018-4530186-08-5-00118 호',
+      licenseFile: { name: '성연광고기획_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1012', loginId: 'injiad', pw: '1234', type: 'agency', roleBonusType: 'none',
+      company: '인지애드', owner: '한인지', phone: phoneOf(10),
+      biz: '318-77-90129', email: 'injiad@seosan.kr', oade: '제 2016-4530186-08-5-00129 호',
+      licenseFile: { name: '인지애드_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } }
   ];
+  /* 시연용 광고대행사 10곳 — 로그인 화면 안내용 (3곳은 대형: 5건 이상 다건 대리접수) */
+  var AGENCY_IDS = ['M-1002', 'M-1004', 'M-1005', 'M-1006', 'M-1007', 'M-1008', 'M-1009', 'M-1010', 'M-1011', 'M-1012'];
+  var LARGE_AGENCY_IDS = ['M-1002', 'M-1004', 'M-1005'];
+  function isAgencyMember(m) { return !!m && m.type === 'agency'; }
+  function isLargeAgency(m) { return !!m && LARGE_AGENCY_IDS.indexOf(m.id) >= 0; }
 
   /* ── 협회 직책 추첨 가산점 (김재봉 님 지시 2026-11-21) ─────────────────────
      · 지부장 +5% · 수석부지부장 +3% · 사무실무원 +1% · 현장실무원 +1% · 없음(일반) +0%
@@ -1167,7 +1282,8 @@
     if (!m) { toast('대상 회원을 골라 주세요.', true); return null; }
     var reason = String(v.reason || '').trim() || '공로 회원 선점';
     var actor = accessDisplay();
-    /* 공문 2주와 같은 5단계 전자결재 루트 — 사무실무원 기안 → 사무국장 → 수석부지부장 → 지부장 → 감사(1인) */
+    /* 공로 회원 선점은 기존 5단계 전자결재 유지 — 사무실무원 기안 → 사무국장 → 수석부지부장 → 지부장 → 감사(1인)
+       (2026-11-22 김재봉 님 지시: 2주 '결재'만 지부장 → 감사 2인 중 1인으로 줄이고, 선점·40% 예외는 5단계 유지) */
     var rec = {
       id: 'PS-' + pad2(st.list.length + 1),
       memberId: m.id, memberName: m.company, owner: m.owner || '',
@@ -1321,10 +1437,11 @@
     ranks: { 1: [], 2: [], 3: [] }, slots: {}, rank: 1, designatedOnly: false,
     file: null, filePreview: null, licName: '', licData: '', licMime: '', drawing: false, daySim: null, appType: 'direct', appTypeTouched: false, adminBrokenOnly: false,
     locSel: '', locDay: '', locq: '', woLow: false, applyWarnShown: false, mpSel: '', guestAck: false, guestPromptOpen: false,
-    theme: '', pTheme: '', fcTheme: '', woDay: '', woAll: false, offDay: '', offSel: {}, imeOn: true, authTab: 'login',
+    theme: '', pTheme: '', fcTheme: '', woDay: '', woAll: false, offDay: '', offSel: {}, imeOn: true, authTab: 'login', fcTimeSim: '',
     locAddrOpen: false, locAddrRows: {}, coverOk: {},
     suLicName: '', suLicData: '', suLicMime: '', licFromMember: false,
-    adminSub: 'draw', guideSub: 'file', statusPage: 0, pickPage: 0, statusAll: false, pickAll: false,
+    adminSub: 'draw', guideSub: 'file', statusPage: 0, pickPage: 0, statusAll: true, pickAll: false,
+    statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, calMonth: {}, offSlots: {},
     themeSel: {}, themeSearch: '', themeEditSel: {} };
 
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
@@ -1413,10 +1530,17 @@
   }
 
   /* 입력칸 값을 한글 자동변환 (커서 위치 유지) */
+  /* 영타→한글 변환 — 한글 IME 조합을 절대 방해하지 않는다 (2026-11-22 버그 수정)
+     · compositionstart~compositionend 사이(e.isComposing)에는 value를 건드리지 않는다.
+     · 값에 한글(완성형·자모)이 하나라도 있으면 IME 입력으로 보고 변환하지 않는다.
+     · 순수 영문/숫자/기본 기호로만 이루어진 값만 변환하고, 커서 위치는 그대로 옮긴다. */
   function convertImeValue(el) {
     if (!el || typeof el.value !== 'string') return false;
+    if (el.dataset && el.dataset.imeComposing === '1') return false;
     var v = el.value;
     if (!/[A-Za-z]/.test(v)) return false;
+    if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(v)) return false;                 /* 한글 IME 입력 — 손대지 않음 */
+    if (!/^[A-Za-z0-9 .,!?~\-()\[\]'"·]*$/.test(v)) return false;
     var conv = qwertyToHangul(v);
     if (conv === v) return false;
     var pos = (el.selectionStart == null) ? v.length : el.selectionStart;
@@ -1424,6 +1548,15 @@
     var newPos = qwertyToHangul(v.slice(0, pos)).length;
     try { if (el.setSelectionRange) el.setSelectionRange(newPos, newPos); } catch (_) { }
     return true;
+  }
+  /* 입력이 멈춘 뒤(250ms)에만 변환한다 — 한 글자씩 변환해 조합이 깨지는 것을 막는다 */
+  function scheduleIme(el) {
+    if (!el) return;
+    if (el._imeTimer) clearTimeout(el._imeTimer);
+    el._imeTimer = setTimeout(function () {
+      if (el.dataset && el.dataset.imeComposing === '1') return;
+      convertImeValue(el);
+    }, 250);
   }
 
   function renderIme() {
@@ -1449,8 +1582,24 @@
   function bindIme(ctx) {
     var root = (ctx && ctx.querySelectorAll) ? ctx : document;
     $$('.ko-ime', root).forEach(function (el) {
-      el.addEventListener('input', function () {
+      if (el.dataset && el.dataset.imeBound === '1') return;
+      if (el.dataset) el.dataset.imeBound = '1';
+      /* IME 조합 중에는 input 이벤트가 여러 번 와도 value 를 수정하지 않는다 */
+      el.addEventListener('compositionstart', function () {
+        if (el.dataset) el.dataset.imeComposing = '1';
+        if (el._imeTimer) { clearTimeout(el._imeTimer); el._imeTimer = null; }
+      });
+      el.addEventListener('compositionend', function () {
+        if (el.dataset) el.dataset.imeComposing = '0';
+      });
+      el.addEventListener('input', function (e) {
+        if (e && e.isComposing) return;
+        if (el.dataset && el.dataset.imeComposing === '1') return;
         if (!ui.imeOn) return;
+        scheduleIme(el);
+      });
+      el.addEventListener('blur', function () {
+        if (el.dataset && el.dataset.imeComposing === '1') return;
         convertImeValue(el);
       });
     });
@@ -1468,6 +1617,250 @@
     return WEEK_DAYS[new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])).getDay()];
   }
   function dfmt(iso) { return dstr(iso) + '(' + wd(iso) + ')'; }
+
+  /* =====================================================================
+     게첩 주(월요일~일요일) 단위 · 주별 현황 · 주 선택 달력 (2026-11-22)
+     · 접수·추첨·입고는 게첩 주의 '전주' 월~금에 진행되고, 게첩은 그 주 월요일에 시작한다.
+     · 앱의 start(게시 시작 월요일)로 주차를 묶는다 — 사전 접수(미래 주)도 같은 기준.
+     · 관리자 공문(official)은 week(게첩 시작 월요일)로 묶고 2주 승인은 2주 범위로 센다.
+     ===================================================================== */
+  var CAL_DOW = ['월', '화', '수', '목', '금', '토', '일'];
+  function mondayOf(iso) {
+    var p = String(iso || ROUND.postStart).split('-');
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    if (isNaN(d.getTime())) return ROUND.postStart;
+    var off = (d.getDay() + 6) % 7;          /* 월=0 … 일=6 */
+    d.setDate(d.getDate() - off);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function weekStartOf(iso) { return mondayOf(iso); }
+  function weekRangeTxt(s) { return dstr(s) + ' ~ ' + dstr(addDays(s, 6)); }
+  function weekInfoOf(start) {
+    var s = weekStartOf(start);
+    return { start: s, end: addDays(s, 6),
+      drawDate: addDays(s, -7), drawTime: ROUND.drawTime,
+      deliverBy: addDays(s, -5), deliverTime: ROUND.deliverTime,
+      firstCome: addDays(s, -4), cutoff: addDays(s, -3) };
+  }
+  function currentPostingWeek() { return weekStartOf(ROUND.postStart); }
+  /* 지금 화면이 보고 있는 게첩 주 — 현황=선택 주차, 접수=게첩 희망 주 */
+  function activeWeekStart() {
+    if (PAGE === 'apply') return weekStartOf(ui.applyWeek || ROUND.postStart);
+    if (PAGE === 'status') return weekStartOf(ui.statusWeek || ROUND.postStart);
+    return currentPostingWeek();
+  }
+  function appsOfWeek(start) {
+    var s = weekStartOf(start);
+    return db.apps.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) === s; });
+  }
+  function officialWeekOf(o) { return weekStartOf((o && o.week) || ROUND.postStart); }
+  function officialWeekSpan(o) { return officialDaysOf(o) >= 14 ? 2 : 1; }
+  function officialCoversWeek(o, start) {
+    var s = weekStartOf(start), w = officialWeekOf(o), n = officialWeekSpan(o);
+    for (var i = 0; i < n; i++) { if (addDays(w, i * 7) === s) return true; }
+    return false;
+  }
+  /* 한 게시대의 그 주 접수 건수 (1·2·3순위 모두 · 반려 제외) */
+  function weekAppsOf(pid, week) {
+    var s = weekStartOf(week || activeWeekStart());
+    return db.apps.filter(function (a) {
+      return a.status !== '반려' && weekStartOf(a.start || ROUND.postStart) === s && requestedPlacesOf(a).indexOf(pid) >= 0;
+    });
+  }
+  function weekRequestCountOf(pid, week) { return weekAppsOf(pid, week).length; }
+  /* 한 게시대의 그 주 배정 면수 — 추첨 배정 + 공문 우선배정(확정) */
+  function weekAssignedSeatsOf(pid, week) {
+    var s = weekStartOf(week || activeWeekStart()), n = 0;
+    appsOfWeek(s).forEach(function (a) {
+      if (a.status === '반려' || a.status === '미입고취소' || a.status === '미입금취소' || a.status === '본인취소') return;
+      (a.awardedPlaces || a.assignedPlaces || []).forEach(function (x) { if (x && x.pid === pid) n += (x.qty || 1); });
+    });
+    (db.official || []).forEach(function (o) {
+      if (o.status !== 'active' || !officialCoversWeek(o, s)) return;
+      (o.pids || []).forEach(function (x) { if (x === pid) n += 1; });
+    });
+    return n;
+  }
+  /* 그 주 전체 요약 — 접수 건수 · 신청 매수 · 배정 매수 · 공문 배정 · 잔여 */
+  function weekStatsOf(start) {
+    var s = weekStartOf(start), list = appsOfWeek(s).filter(function (a) { return a.status !== '반려'; });
+    var qty = 0, awarded = 0, mine = 0, seats = 0;
+    list.forEach(function (a) { qty += qtyOf(a); awarded += Math.min(qtyOf(a), awardedOf(a)); if (a.mine) mine += 1; });
+    db.placements.forEach(function (p) { seats += p.cap; });
+    var off = 0;
+    (db.official || []).forEach(function (o) {
+      if (o.status !== 'active' || !officialCoversWeek(o, s)) return;
+      off += (o.pids || []).length;
+    });
+    return { start: s, n: list.length, qty: qty, awarded: awarded, mine: mine, official: off,
+      cap: seats, left: Math.max(0, seats - awarded - off), apps: list };
+  }
+  function monthAdd(ym, d) {
+    var y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7)) - 1 + d;
+    var dt = new Date(y, m, 1);
+    return dt.getFullYear() + '-' + pad2(dt.getMonth() + 1);
+  }
+  function monthTxt(ym) { return ym.slice(0, 4) + '년 ' + Number(ym.slice(5, 7)) + '월'; }
+  /* 한 달을 월요일 시작 주 단위로 묶는다 (그 달 1일이 든 주 ~ 마지막 날이 든 주) */
+  function monthWeeksOf(ym) {
+    var first = ym + '-01', lastDay = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0).getDate();
+    var start = mondayOf(first), last = mondayOf(ym + '-' + pad2(lastDay)), out = [];
+    for (var s = start; s <= last && out.length < 7; s = addDays(s, 7)) out.push(s);
+    return out;
+  }
+  function todayISO() {
+    var t = new Date();
+    return t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate());
+  }
+  /* 게첩 주 달력 — 월간 이동 · 주(월~일) 선택 · 주별 요약 */
+  function calBlockHTML(ctx) {
+    var sel = ctx === 'apply' ? weekStartOf(ui.applyWeek || ROUND.postStart)
+      : (ctx === 'official' ? weekStartOf(ui.offWeek || ROUND.postStart)
+        : weekStartOf(ui.statusWeek || ROUND.postStart));
+    if (!ui.calMonth) ui.calMonth = {};
+    var ym = ui.calMonth[ctx] || sel.slice(0, 7);
+    ui.calMonth[ctx] = ym;
+    var weeks = monthWeeksOf(ym), today = todayISO(), curW = currentPostingWeek(), thisW = weekStartOf(today);
+    var head = '<div class="cal-head"><b>' + monthTxt(ym) + '</b>' +
+      '<button class="cal-nav" type="button" data-calprev="' + ctx + '" aria-label="이전 달">‹</button>' +
+      '<button class="cal-nav" type="button" data-calnext="' + ctx + '" aria-label="다음 달">›</button>' +
+      '<button class="cal-today" type="button" data-caltoday="' + ctx + '">이번 주</button></div>';
+    var grid = '<div class="cal-dow">' + CAL_DOW.map(function (d) { return '<span>' + d + '</span>'; }).join('') + '</div>';
+    grid += '<div class="cal-weeks">' + weeks.map(function (s) {
+      var st = weekStatsOf(s);
+      var cells = '';
+      for (var i = 0; i < 7; i++) {
+        var iso = addDays(s, i), dim = iso.slice(0, 7) !== ym;
+        var dotCls = st.n >= 10 ? 'lv3' : (st.n >= 4 ? 'lv2' : (st.n > 0 ? '' : 'none'));
+        cells += '<span class="cal-d' + (dim ? ' dim' : '') + (iso === today ? ' today' : '') + '">' +
+          '<span class="n">' + Number(iso.slice(8, 10)) + '</span>' +
+          (i === 0 ? '<span class="dot ' + dotCls + '"></span>' : '') + '</span>';
+      }
+      return '<button type="button" class="cal-week' + (s === sel ? ' on' : '') + '" data-calweek="' + s + '" data-calctx="' + ctx + '" aria-pressed="' + (s === sel ? 'true' : 'false') + '" title="' + weekRangeTxt(s) + ' · ' + st.n + '건 접수">' + cells + '</button>';
+    }).join('') + '</div>';
+    var list = '<div class="cal-wklist">' + weeks.map(function (s) {
+      var st = weekStatsOf(s);
+      var tag = s === curW ? '<span class="tagwk">이번 회차</span>'
+        : (s === thisW ? '<span class="tagwk">이번 주 게첩</span>'
+          : (s > thisW ? '<span class="tagwk future">사전 접수</span>' : '<span class="tagwk past">지난 주</span>'));
+      return '<button type="button" class="cal-wkrow' + (s === sel ? ' on' : '') + '" data-calweek="' + s + '" data-calctx="' + ctx + '">' +
+        tag + '<span class="rng">' + weekRangeTxt(s) + '</span>' +
+        '<span class="sum">접수 ' + st.n + '건 · 배정 ' + st.awarded + '/' + st.qty + '매</span></button>';
+    }).join('') + '</div>';
+    return '<div class="cal" data-calctx="' + ctx + '">' + head + grid + list + '</div>';
+  }
+  function weekOpsHTML(s) {
+    var w = weekInfoOf(s);
+    var items = [
+      { k: 'draw', d: '월요일 ' + w.drawTime, b: '전산 추첨', s: dstr(w.drawDate) },
+      { k: 'due', d: '수요일 ' + w.deliverTime, b: '입고 마감', s: dstr(w.deliverBy) },
+      { k: 'first', d: '목요일 09:00~18:00', b: '잔여 선착순', s: dstr(w.firstCome) + ' · 입고 금 ' + dstr(FC_DELIVER.date) + ' 10:00' },
+      { k: 'off', d: '금요일', b: '접수 제한', s: dstr(w.cutoff) },
+      { k: 'post', d: '월요일', b: '게첩 시작', s: dstr(w.start) }
+    ];
+    return '<div class="wk-ops">' + items.map(function (it) {
+      return '<div class="wk-op ' + it.k + '"><span class="d">' + esc(it.d) + '</span><b>' + esc(it.b) + '</b><small>' + esc(it.s) + '</small></div>';
+    }).join('') + '</div>';
+  }
+  /* 주간 상세 — 운영 일정 5개 · 주간 요약 · 게시대별 한 줄 현황 */
+  function weekDetailHTML(start, opts) {
+    opts = opts || {};
+    var s = weekStartOf(start), st = weekStatsOf(s), w = weekInfoOf(s), curW = currentPostingWeek();
+    var rows = db.placements.slice().sort(function (a, b) {
+      var d = weekRequestCountOf(b.id, s) - weekRequestCountOf(a.id, s);
+      if (d) return d;
+      return weekAssignedSeatsOf(b.id, s) - weekAssignedSeatsOf(a.id, s);
+    }).map(function (p) { return placementRow(p, { week: s }); }).join('');
+    var thisW = weekStartOf(todayISO());
+    var rangeTag = s === curW ? '이번 회차 게첩 주' : (s === thisW ? '이번 주 게첩' : (s > thisW ? '사전 접수 주차' : '지난 주차'));
+    return '<div class="wk-detail" id="weekDetail" data-week="' + s + '">' +
+      '<div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">' +
+        '<div><h4>' + weekRangeTxt(s) + ' · ' + rangeTag + '</h4>' +
+        '<div class="sub">' + esc(wd(s)) + '요일 게첩 시작 · ' + esc(wd(addDays(s, 6))) + '요일 게시 종료 (7일) · 추첨 ' + dfmt(w.drawDate) + ' ' + w.drawTime + '</div></div>' +
+        '<span style="flex:1"></span>' +
+        (opts.noApply ? '' : '<button class="btn sm primary" type="button" data-weekapply="' + s + '">이 주차로 접수하러 가기</button>') +
+      '</div>' +
+      weekOpsHTML(s) +
+      '<div class="wk-kpi"><span>전체 접수 <b>' + st.n + '건</b></span><span>신청 <b>' + st.qty + '매</b></span>' +
+        '<span>배정 <b>' + st.awarded + '매</b></span><span>공문 배정 <b>' + st.official + '면</b></span>' +
+        '<span>잔여 <b>' + st.left + '면</b> / ' + st.cap + '면</span>' + (st.mine ? '<span>내 접수 <b>' + st.mine + '건</b></span>' : '') + '</div>' +
+      '<div class="sect-label" style="margin:10px 0 6px">게시대별 주간 현황 <span>접수 건수 · 정원 · 배정</span></div>' +
+      '<div class="wk-placebox">' + rows + '</div>' +
+      '<div class="wk-note">접수 건수는 그 주 게첩분을 1·2·3순위로 신청한 건수(반려 제외)이고, 배정은 추첨·공문으로 확정된 면수입니다. 주를 누르면 아래 현황 목록과 통계도 함께 바뀝니다.</div>' +
+      '</div>';
+  }
+  function renderStatusCal() {
+    if (!has('weekCal')) return;
+    var s = weekStartOf(ui.statusWeek || ROUND.postStart);
+    $('#weekCal').innerHTML = calBlockHTML('status') + weekDetailHTML(s, {});
+    if ($('#weekCalSub')) $('#weekCalSub').textContent = weekRangeTxt(s) + ' 게첩 주 · 접수 ' + weekStatsOf(s).n + '건';
+  }
+
+  /* 게첩 주 → 회차 ID (이번 주 게첩 = 현재 회차, 이후는 W48·W49…) */
+  function weekRoundId(start) {
+    var s = weekStartOf(start), base = currentPostingWeek();
+    var d = function (x) { var p = String(x).split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])).getTime(); };
+    var diff = Math.round((d(s) - d(base)) / 604800000);
+    return diff === 0 ? ROUND.id : ('2026-W' + (48 + diff - 1));
+  }
+  /* 접수 페이지 — 게첩 희망 주(주차) 달력과 게시 시작일 select 를 함께 맞춘다 */
+  function syncWeekSelect() {
+    var sel = $('#applyStart');
+    if (!sel) return;
+    var s = weekStartOf(ui.applyWeek || ROUND.postStart), opts = [], cur = currentPostingWeek();
+    for (var i = -1; i <= 9; i++) opts.push(addDays(s, i * 7));
+    if (opts.indexOf(cur) < 0) opts.push(cur);
+    opts.sort();
+    sel.innerHTML = opts.map(function (d2) {
+      return '<option value="' + d2 + '"' + (d2 === s ? ' selected' : '') + '>' + d2 + ' (' + wd(d2) + ')' +
+        (d2 === cur ? ' · 이번 주' : '') + '</option>';
+    }).join('');
+  }
+  function renderApplyWeek() {
+    if (!has('applyWeekCal')) return;
+    var s = weekStartOf(ui.applyWeek || ROUND.postStart);
+    if (!ui.calMonth) ui.calMonth = {};
+    if (!ui.calMonth.apply) ui.calMonth.apply = s.slice(0, 7);
+    $('#applyWeekCal').innerHTML = calBlockHTML('apply');
+    var st = weekStatsOf(s), w = weekInfoOf(s);
+    if ($('#applyWeekNow')) $('#applyWeekNow').textContent = weekRangeTxt(s) + ' · 접수 ' + st.n + '건';
+    if ($('#applyWeekHint')) {
+      $('#applyWeekHint').innerHTML = '선택한 게첩 주 <b>' + weekRangeTxt(s) + '</b> — 추첨 ' + dfmt(w.drawDate) + ' ' + w.drawTime +
+        ' · 입고 마감 ' + dfmt(w.deliverBy) + ' · 접수 <b>' + st.n + '건</b> / 신청 ' + st.qty + '매 / 배정 <b>' + st.awarded + '매</b>' +
+        (s === currentPostingWeek() ? ' · <b>이번 주</b>' : ' · <b>사전 접수</b>');
+    }
+    syncWeekSelect();
+    updatePeriodPreview();
+  }
+  function setApplyWeek(start, opts) {
+    var s = weekStartOf(start);
+    if (!s) return false;
+    if (s < currentPostingWeek()) {
+      toast('지난 주차(' + weekRangeTxt(s) + ')는 게첩 주로 선택할 수 없습니다. 이번 주 이후를 골라 주세요.', true);
+      return false;
+    }
+    ui.applyWeek = s;
+    if (!ui.calMonth) ui.calMonth = {};
+    ui.calMonth.apply = s.slice(0, 7);
+    renderApplyWeek();
+    renderPickUI();
+    if (ui.step === 4) buildSummary();
+    if (!(opts && opts.silent)) toast('게첩 희망 주를 ' + weekRangeTxt(s) + '(으)로 선택했습니다 — 접수 ' + weekStatsOf(s).n + '건', false);
+    return true;
+  }
+  function renderOffWeek() {
+    if (!has('offWeekCal')) return;
+    var s = weekStartOf(ui.offWeek || ROUND.postStart);
+    if (!ui.calMonth) ui.calMonth = {};
+    if (!ui.calMonth.official) ui.calMonth.official = s.slice(0, 7);
+    $('#offWeekCal').innerHTML = calBlockHTML('official');
+    if ($('#offWeekNow')) $('#offWeekNow').textContent = weekRangeTxt(s) + (officialDaysSel() === 14 ? ' ~ ' + weekRangeTxt(addDays(s, 7)).split(' ~ ')[1] : '') + ' · 공문 ' + officialRoundList(s).length + '건';
+  }
+  function officialDaysSel() {
+    var el = $('#offDays');
+    return el && Number(el.value) === 14 ? 14 : 7;
+  }
+
   function shortRound(l) { return String(l || '').replace(/^\d{4}년\s*/, ''); }
   function roundLabelOf(id) {
     if (id === ROUND.id) return ROUND.label;
@@ -1816,30 +2209,33 @@
     return '';
   }
   /* 슬롯 한 칸의 현재 상태 — 현황 격자·미니 피커·검증이 함께 씁니다 */
-  function slotPlan(pid) {
+  function slotPlan(pid, week) {
     var p = boardById(pid);
+    var wk = weekStartOf(week || activeWeekStart());
     var codes = slotCodeListOf(p);
-    var o = { p: p, codes: codes, post: {}, remove: {}, free: [], count: { official: 0, app: 0 } };
+    var o = { p: p, week: wk, codes: codes, post: {}, remove: {}, free: [], count: { official: 0, app: 0 } };
     if (!p) return o;
     /* 고장·설치불가 단수만 빈 자리에서 제외 — 풀가림은 '확인 후 선택' 가능한 자리로 남긴다 */
     var order = slotOrderOf(p);
     var free = codes.filter(function (c) { return !slotIsBlocked(p, c); });
     free.sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
     function take(code) { var i = free.indexOf(code); if (i < 0) return false; free.splice(i, 1); return true; }
-    /* 1) 시청 공문 우선배정 — 공문 100% 허용 동(의료원담장 F·G)을 먼저 채우고, 그다음 앞 단부터
-          (추첨 엔진과 같은 규칙 · 김재봉 님 지시: 의료원담장은 공문 우선 배정) */
-    var offFull = officialFullBoardsOf(p);
-    if (offFull.length && free.length) {
-      var offFirst = free.filter(function (c) { return offFull.indexOf(c.charAt(0)) >= 0; });
-      var offRest = free.filter(function (c) { return offFull.indexOf(c.charAt(0)) < 0; });
-      free = offFirst.concat(offRest);
-    }
-    officialActive().forEach(function (r) {
+    /* 1) 시청 공문 우선배정 — 본게시대(A~E동)를 먼저 채우고, 비선호 의료원담장(F·G)은 마지막
+          · 김재봉 님 2026-11-22 지시: "의료원담장은 비선호 게시대 — 추첨 및 공문우선도 5단 게시대 먼저
+            채우고 그 뒤에 담장으로" · 관리자가 특정 위치(F1 등)를 지정하면 그 자리에 배정한다. */
+    free = officialSlotOrder(p).filter(function (c) { return free.indexOf(c) >= 0; });
+    officialActive(wk).forEach(function (r) {
       (r.pids || []).forEach(function (x) {
         if (x !== pid || !free.length) return;
-        var code = free[0];
+        var want = officialSlotFor(r, pid), code = '';
+        if (want && slotBoardAll(want)) {
+          for (var i2 = 0; i2 < free.length; i2++) { if (free[i2].charAt(0) === want.charAt(0)) { code = free[i2]; break; } }
+        } else if (want && free.indexOf(want) >= 0) {
+          code = want;
+        }
+        if (!code) code = free[0];
         take(code);
-        o.post[code] = { kind: 'official', official: r, slot: code };
+        o.post[code] = { kind: 'official', official: r, slot: code, want: want };
         o.count.official += 1;
       });
     });
@@ -1849,9 +2245,9 @@
       if (ca !== cb) return ca - cb;
       return order.indexOf(a) - order.indexOf(b);
     });
-    /* 2) 이번 회차 확정(당첨·선착순) — 지정 슬롯 우선, 없으면 앞 빈 자리 */
+    /* 2) 그 주 확정(당첨·선착순) — 지정 슬롯 우선, 없으면 앞 빈 자리 */
     db.apps.forEach(function (a) {
-      if (!a || a.round !== ROUND.id || SEAT_STATUS.indexOf(a.status) < 0) return;
+      if (!a || weekStartOf(a.start || ROUND.postStart) !== wk || SEAT_STATUS.indexOf(a.status) < 0) return;
       awardedPlacesOf(a).forEach(function (pl) {
         if (!pl || pl.pid !== pid || !free.length) return;
         var want = pl.slot || slotFor(a, pid);
@@ -1864,7 +2260,7 @@
     /* 3) 지난 회차 게시분(회수 대상) — 같은 자리(단)끼리 짝이 되도록 따로 채웁니다 */
     var remFree = codes.slice();
     db.apps.forEach(function (a) {
-      if (!a || a.round === ROUND.id || ['게시중', '입고완료'].indexOf(a.status) < 0) return;
+      if (!a || weekStartOf(a.start || ROUND.postStart) >= wk || ['게시중', '입고완료'].indexOf(a.status) < 0) return;
       awardedPlacesOf(a).forEach(function (pl) {
         if (!pl || pl.pid !== pid || !remFree.length) return;
         var want = pl.slot || slotFor(a, pid);
@@ -1879,19 +2275,20 @@
   /* 슬롯 한 칸의 지금 상태 — 현황 격자·미니 피커·검증이 함께 씁니다
      · 공문 우선배정 / 이번 회차 확정은 실제로 그 자리가 정해진 것
      · 나머지는 게시대 잔여 면(availOf)만큼을 '빈 칸(가능)'으로 보고, 그 뒤는 '현재 게시 중' */
-  function rivalCount(pid, code) {
-    var n = 0;
+  function rivalCount(pid, code, week) {
+    var n = 0, wk = weekStartOf(week || activeWeekStart());
     db.apps.forEach(function (a) {
-      if (!a || a.round !== ROUND.id) return;
+      if (!a || weekStartOf(a.start || ROUND.postStart) !== wk) return;
       if (['추첨대기', '시안심사중'].indexOf(a.status) < 0) return;
       if (slotFor(a, pid) === String(code)) n += 1;
     });
     return n;
   }
-  function slotStateMap(p) {
+  function slotStateMap(p, week) {
     var map = {};
     if (!p) return map;
-    var plan = slotPlan(p.id);
+    var wk = weekStartOf(week || activeWeekStart());
+    var plan = slotPlan(p.id, wk);
     var usable = p.broken ? 0 : Math.max(0, availOf(p) - plan.count.app);
     slotCodesOf(p).forEach(function (s) {
       var it = plan.post[s.code];
@@ -1903,20 +2300,20 @@
       }
       if (flag === 'cover') {
         /* 풀가림 — 안내 팝업에서 확인하면 선택할 수 있다 */
-        map[s.code] = { k: 'cover', label: '풀가림 · 확인 후 선택 가능', off: false, flag: flag, cover: true, rivals: rivalCount(p.id, s.code) };
+        map[s.code] = { k: 'cover', label: '풀가림 · 확인 후 선택 가능', off: false, flag: flag, cover: true, rivals: rivalCount(p.id, s.code, wk) };
         return;
       }
       if (it && it.kind === 'official') { map[s.code] = { k: 'official', label: '공문 우선배정', off: true, item: it }; return; }
       if (it && it.kind === 'app') { map[s.code] = { k: 'confirmed', label: '이번 회차 확정', off: true, item: it }; return; }
-      if (usable > 0) { usable -= 1; map[s.code] = { k: 'free', label: '빈 칸 (가능)', off: false, rivals: rivalCount(p.id, s.code) }; return; }
-      map[s.code] = { k: 'inuse', label: '현재 게시 중', off: false, rivals: rivalCount(p.id, s.code) };
+      if (usable > 0) { usable -= 1; map[s.code] = { k: 'free', label: '빈 칸 (가능)', off: false, rivals: rivalCount(p.id, s.code, wk) }; return; }
+      map[s.code] = { k: 'inuse', label: '현재 게시 중', off: false, rivals: rivalCount(p.id, s.code, wk) };
     });
     return map;
   }
-  function slotStateOf(p, code) {
+  function slotStateOf(p, code, week) {
     if (!p || !code) return { k: 'broken', label: '없음', off: true };
     code = String(code);
-    var m = slotStateMap(p);
+    var m = slotStateMap(p, week);
     if (slotBoardAll(code)) {
       if (p.broken) return { k: 'broken', label: '고장·수리중', off: true };
       var L = code.charAt(0), open = 0, rival = 0, coverOpen = 0;
@@ -2184,7 +2581,8 @@
     if (a && a.assignedPlaces && a.assignedPlaces.length) return a.assignedPlaces.length;
     return a && a.assignedTo ? qtyOf(a) : 0;
   }
-  function daysMultOf(days) { return Number(days) >= 14 ? 2 : 1; }
+  /* 게시기간은 1주(7일) 기준 단가만 사용합니다 — '14일 선택 시 2배' 옵션은 삭제(2026-11-22) */
+  function daysMultOf(days) { return 1; }
   function feeFor(qty, days) {
     var q = Number(qty); if (!q || isNaN(q)) q = 0;
     var mult = daysMultOf(days);
@@ -2492,6 +2890,8 @@
         drawId: null
       });
     });
+    /* 광고대행사 10곳의 다건 대리접수 (대형 3곳 5건 이상) */
+    agencyAppsSeed().forEach(function (a) { apps.push(a); });
     // 지난 회차(11월 3주차) — 게시 중 2건 · 입고 대기(미입고) 2건 · 낙첨 1건
     apps.push({
       id: CUR.id + '-A-108', round: CUR.id, company: '대산산업안전', owner: '장미란', phone: phoneOf(25),
@@ -2549,10 +2949,16 @@
       themeSeq: 0,
       session: null,
       official: [{
-        id: 'G-2026-W47-01', round: ROUND.id, org: '서산시청 복지과', docNo: '서산시청 복지과 · 공문',
-        maker: '광고랜드(공문)', text: '서산시 희망나눔 캠페인 · 공문(예시)', pids: ['P23', 'P24'],
-        at: '2026-11-20 09:30', status: 'active', fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
+        id: 'G-2026-W47-01', round: ROUND.id, week: ROUND.postStart, org: '서산시청 복지과', docNo: '서산시청 복지과 · 공문',
+        maker: '광고랜드(공문)', text: '서산시 희망나눔 캠페인 · 공문(예시)', pids: ['P23', 'P24'], slots: [],
+        at: '2026-11-20 09:30', status: 'active', days: 7, fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
+      }, {
+        id: 'G-2026-W47-02', round: ROUND.id, week: '2026-12-07', org: '서산시청 문화관광과', docNo: '서산시청 문화관광과 · 공문',
+        maker: '서산애드컴(공문)', text: '서산 겨울 문화축제 안내 · 공문(2주 예시)', pids: ['P24', 'P25'], slots: [],
+        at: '2026-11-21 14:10', status: 'pending', days: 14, draftedBy: '사무실무원', approvals: [],
+        fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
       }],
+      seedVersion: 3,
       penalties: SEED_PENALTIES.map(function (p) { var o = {}; for (var k in p) { o[k] = p[k]; } return o; }),
       reclaimed: { P59: 0, P21: 0 },
       customPlaces: [],
@@ -2574,6 +2980,27 @@
       ],
       seq: 147
     };
+  }
+
+  /* 이전 저장 데이터에도 10개 대행사·대행 접수·공문 주차를 보강한다 (시연 데이터 v3) */
+  function ensureDemoData() {
+    if (!Array.isArray(db.members)) db.members = [];
+    SEED_MEMBERS.forEach(function (m) {
+      var hit = false;
+      db.members.forEach(function (x) { if (x.id === m.id) hit = true; });
+      if (!hit) { var o = {}; for (var k in m) { o[k] = m[k]; } db.members.push(o); }
+    });
+    (db.official || []).forEach(function (o) {
+      if (!o.week) o.week = ROUND.postStart;
+      if (!Array.isArray(o.slots)) o.slots = [];
+    });
+    if (Number(db.seedVersion || 1) < 3) {
+      var ids = {};
+      db.apps.forEach(function (a) { ids[a.id] = 1; });
+      agencyAppsSeed().forEach(function (a) { if (!ids[a.id]) db.apps.push(a); });
+      db.seedVersion = 3;
+      save();
+    }
   }
 
   function hydrate() {
@@ -2822,14 +3249,27 @@
   }
   function pickedTotal() { return rankList(1).length + (ui.designatedOnly ? 0 : rankList(2).length + rankList(3).length); }
 
-  /* 이번 주 추첨(ROUND)에 이 게시대로 접수된 건수 — 1·2·3순위 모두 포함, 반려 제외
-     (현황 카드의 `N건 접수중` · 상단 KPI `현재 접수중` 집계에 함께 쓴다) */
-  function weekAppsOf(pid) {
-    return db.apps.filter(function (a) {
-      return a.round === ROUND.id && a.status !== '반려' && requestedPlacesOf(a).indexOf(pid) >= 0;
-    });
+  /* 이번 주(또는 지정 주차) 추첨에 이 게시대로 접수된 건수 — 1·2·3순위 모두 포함, 반려 제외 */
+  function weekRequestCount(pid, week) { return weekRequestCountOf(pid, week); }
+
+  /* 한 줄(compact single-row) 게시대 행 — 게시대현황·주간 현황 공통
+     `[게시요일·행정동] 게시대명 · 정원/접수중 · [상세/접수]` */
+  function placementRow(p, opts) {
+    opts = opts || {};
+    var wk = weekStartOf(opts.week || activeWeekStart());
+    var reqN = weekRequestCountOf(p.id, wk);
+    var off = !!p.broken || slotAllDown(p);
+    var assigned = weekAssignedSeatsOf(p.id, wk);
+    var tagCls = p.broken ? ' broken' : '';
+    return '<div class="plrow' + (off ? ' off' : '') + '" data-detail="' + esc(p.id) + '" data-week="' + wk + '" role="button" tabindex="0" aria-label="' + esc(p.name + ' 상세 보기') + '">' +
+      '<span class="pl-main"><span class="pl-tag' + tagCls + '">' + esc(p.day) + '·' + esc(p.dong) + '</span>' +
+      '<span class="pl-name">' + esc(p.name) + '</span></span>' +
+      '<span class="pl-count"><b>' + reqN + '/' + p.cap + '</b>건 접수중' + (assigned ? ' · 배정 ' + assigned : '') + '</span>' +
+      '<span class="pl-act">' +
+        '<button class="btn sm hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
+        '<button class="btn sm primary" data-apply="' + esc(p.id) + '" data-week="' + wk + '" type="button"' + (off ? ' disabled' : '') + '>' + (off ? '불가' : '접수') + '</button>' +
+      '</span></div>';
   }
-  function weekRequestCount(pid) { return weekAppsOf(pid).length; }
 
   /* 테마 배지 + 주소·위치설명 (자료에 있는 게시대만) */
   function themeTagHTML(p) {
@@ -2957,9 +3397,9 @@
   /* #view-admin 의 panel 순서 → 서브페이지 */
   var ADMIN_SUB_MAP = ['draw', 'official', 'draw', 'official', 'official', 'loc', 'loc', 'notice', 'place', 'notice', 'place', 'place', 'place', 'place', 'notice'];
   var GUIDE_SUBS = [
-    { k: 'file', label: '📥 파일 다운로드·운영안내' },
-    { k: 'spec', label: '📐 규격·실명제·접기' },
-    { k: 'adj', label: '🚫 14개 인접제한·페널티' }
+    { k: 'rules', label: '📐 규격·일정·수수료·실명제' },
+    { k: 'faq', label: '❓ 자주 묻는 질문' },
+    { k: 'file', label: '📥 파일 다운로드·운영안내' }
   ];
   var GUIDE_SUB_MAP = ['file', 'file', 'spec', 'spec', 'adj', 'spec'];
   var _subVis = { admin: {}, guide: {} };
@@ -3011,6 +3451,8 @@
 
   function renderStatus() {
     if (!has('statusStats')) return;
+    var wk = weekStartOf(ui.statusWeek || ROUND.postStart);
+    var ws = weekStatsOf(wk);
     var caps = 0, left = 0, capAvail = 0;
     db.placements.forEach(function (p) {
       caps += p.cap;
@@ -3018,25 +3460,24 @@
       left += availOf(p);
     });
     var bkN = brokenCount();
-    var appsR = db.apps.filter(function (a) { return a.round === ROUND.id; });
-    var qtyR = appsR.reduce(function (s2, a) { return s2 + qtyOf(a); }, 0);
+    var appsR = ws.apps;
+    var qtyR = ws.qty;
     /* 게시대별 접수중 건수 합계 (한 접수가 여러 게시대를 고르면 게시대마다 1건씩 잡힌다) */
     var placeSum = 0;
-    db.placements.forEach(function (p) { placeSum += weekRequestCount(p.id); });
-    var dd = dday(ROUND.drawDate);
-    var recTotal = 0;
-    db.placements.forEach(function (p) { recTotal += reclaimedOf(p); });
+    db.placements.forEach(function (p) { placeSum += weekRequestCount(p.id, wk); });
+    var w = weekInfoOf(wk), dd = dday(w.drawDate);
     $('#roundDue').textContent = '입고 마감 ' + dfmt(ROUND.deliverBy);
     $('#roundName').textContent = ROUND.label + ' 주간 추첨';
     $('#stCount').textContent = db.placements.length;
     $('#stCap').textContent = caps;
     if ($('#stRequests')) $('#stRequests').textContent = appsR.length;
+    if ($('#stWeekTxt')) $('#stWeekTxt').textContent = weekRangeTxt(wk);
 
     var stats = [
       { label: '지정게시대', val: db.placements.length, unit: '개소', ic: IC.grid, sub: '총 ' + caps + '면 · 고장 ' + bkN + '개소(가용 제외)', accent: false },
-      { label: '현재 접수중', val: appsR.length, unit: '건', ic: IC.doc, sub: '게시대별 카드 합계 ' + placeSum + '건 · 신청 ' + qtyR + '매', accent: true },
-      { label: '추첨 경쟁률', val: (capAvail ? (qtyR / capAvail * 100).toFixed(0) : '0'), unit: '%', ic: IC.check, sub: '신청 ' + qtyR + '매 / 가용 ' + capAvail + '면 · ' + shortRound(ROUND.label) + ' 추첨', accent: false },
-      { label: '다음 전산 추첨', val: (dd > 0 ? 'D-' + dd : '오늘 ' + ROUND.drawTime), unit: '', ic: IC.clock, sub: dfmt(ROUND.drawDate) + ' ' + ROUND.drawTime + ' · 매주 월요일', accent: false }
+      { label: '선택 주 접수', val: appsR.length, unit: '건', ic: IC.doc, sub: '신청 ' + qtyR + '매 · 배정 ' + ws.awarded + '매 · 공문 ' + ws.official + '면', accent: true },
+      { label: '추첨 경쟁률', val: (capAvail ? (qtyR / capAvail * 100).toFixed(0) : '0'), unit: '%', ic: IC.check, sub: '신청 ' + qtyR + '매 / 가용 ' + capAvail + '면 · ' + weekRangeTxt(wk), accent: false },
+      { label: '해당 주 추첨', val: (dd > 0 ? 'D-' + dd : (dd === 0 ? '오늘' : '완료')), unit: '', ic: IC.clock, sub: dfmt(w.drawDate) + ' ' + w.drawTime + ' · 월요일 전산 추첨', accent: false }
     ];
     $('#statusStats').innerHTML = stats.map(function (s) {
       return '<div class="stat' + (s.accent ? ' accent' : '') + '">' +
@@ -3044,8 +3485,8 @@
         '<span>' + esc(s.label) + '</span><b>' + s.val + '<em>' + s.unit + '</em></b>' +
         '<div style="font-size:11.5px;color:var(--muted);margin-top:2px">' + esc(s.sub) + '</div></div>';
     }).join('');
-    renderWeekStrip();
-    if ($('#statusReqInfo')) $('#statusReqInfo').innerHTML = '현재 접수중 총 <b>' + appsR.length + '건</b> — 카드의 <b>N건 접수중</b>은 그 게시대를 1·2·3순위로 신청한 건수이고, 막대는 정원 대비 접수 비율입니다. 배정 후 남은 면수는 <b>미배정 선착순</b> 탭에서 확인합니다.';
+    renderWeekStrip(wk);
+    if ($('#statusReqInfo')) $('#statusReqInfo').innerHTML = '<b>' + weekRangeTxt(wk) + '</b> 게첩 주 — 접수 <b>' + appsR.length + '건</b> · 신청 <b>' + qtyR + '매</b> · 배정 <b>' + ws.awarded + '매</b> · 잔여 <b>' + ws.left + '면</b>. 카드의 <b>N/M건 접수중</b>은 그 게시대를 1·2·3순위로 신청한 건수입니다.';
 
     $('#statusThemeChips').innerHTML = themeChipsHTML(ui.theme, 'theme');
     $('#statusThemeInfo').textContent = ui.theme
@@ -3059,25 +3500,33 @@
       return '<option value="' + esc(d) + '"' + (ui.dong === d ? ' selected' : '') + '>' + esc(d) + ' (' + countDong(d) + ')</option>';
     }).join('');
 
+    /* 주별 현황 달력 — 선택 주차가 접수 건수·배정·잔여에 그대로 연결된다 */
+    renderStatusCal();
+
+    /* 필터링된 게시대 전체를 페이지 넘김 없이 한 줄로 (77개소 모두) */
     var list = statusVisible();
-    var pg = slicePage(list, ui.statusAll, ui.statusPage);
-    ui.statusPage = pg.page;
-    $('#placementGrid').innerHTML = pg.shown.length
-      ? pg.shown.map(function (p) { return placementCard(p, 'grid'); }).join('')
+    ui.statusAll = true;
+    $('#placementGrid').innerHTML = list.length
+      ? list.map(function (p) { return placementRow(p, { week: wk }); }).join('')
       : '<div class="empty" style="grid-column:1/-1">' + IC.empty + '<div>조건에 맞는 게시대가 없습니다.</div></div>';
-    if ($('#statusPager')) $('#statusPager').innerHTML = pagerHTML(list.length, pg.size, pg.page, 's', ui.statusAll);
+    if ($('#statusListInfo')) {
+      $('#statusListInfo').innerHTML = '<span>표시 <b>' + list.length + '</b>개소 / 전체 <b>' + db.placements.length + '</b>개소</span>' +
+        '<span>·</span><span><b>' + weekRangeTxt(wk) + '</b> 게첩 주</span><span>·</span><span>한 줄 보기 — 페이지 넘김 없음</span>';
+    }
   }
 
   /* 주간 일정 스트립 — 월 추첨 / 수 입고 / 목 선착순 / 금 접수 제한 / 월 게첩 */
-  function renderWeekStrip() {
+  /* 주간 일정 스트립 — 선택한 게첩 주의 전주 월 추첨 / 수 입고 / 목 선착순 / 금 접수 제한 / 월 게첩 */
+  function renderWeekStrip(week) {
     if (!has('weekStrip')) return;
     var st = firstComeState();
+    var wk = weekStartOf(week || activeWeekStart()), w = weekInfoOf(wk);
     var items = [
-      { k: 'draw', d: '월요일 ' + ROUND.drawTime, b: '정기 전산 추첨', s: dfmt(ROUND.drawDate) + ' · 당첨자 가상계좌 발급' },
-      { k: 'due', d: '수요일 ' + ROUND.deliverTime, b: '현수막 입고 마감', s: dfmt(ROUND.deliverBy) + ' · <em>미입고 자동 취소·반려</em>' },
-      { k: 'first', d: '목요일', b: '잔여석 선착순', s: dfmt(ROUND.firstComeDate) + ' 00:00~24:00 · <b>하루만</b>' },
-      { k: 'off', d: '금요일', b: '잔여석 접수 제한', s: dfmt(ROUND.cutoffDate) + ' · 분류·게첩 준비일' },
-      { k: 'post', d: '월요일', b: '현장 게첩 · 게시 시작', s: dfmt(ROUND.postStart) + ' 게시 시작 · 월~일 7일' }
+      { k: 'draw', d: '월요일 ' + w.drawTime, b: '전산 추첨', s: dfmt(w.drawDate) + ' · 당첨자 가상계좌 발급' },
+      { k: 'due', d: '수요일 ' + w.deliverTime, b: '현수막 입고 마감', s: dfmt(w.deliverBy) + ' · <em>미입고 자동 취소·반려</em>' },
+      { k: 'first', d: '목요일 09:00~18:00', b: '잔여석 선착순', s: dfmt(w.firstCome) + ' 일과시간만 · 입고 <em>' + dstr(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '</em>' },
+      { k: 'off', d: '금요일', b: '잔여석 접수 제한', s: dfmt(w.cutoff) + ' · 분류·게첩 준비일' },
+      { k: 'post', d: '월요일', b: '현장 게첩 · 게시 시작', s: dfmt(w.start) + ' 게시 시작 · 월~일 7일' }
     ];
     $('#weekStrip').innerHTML = items.map(function (it) {
       var now = (it.k === 'first' && st.open) || (it.k === 'off' && st.kind === 'closed');
@@ -3144,6 +3593,7 @@
     if (!has('applyForm')) return;
     $('#applyRoundLine').textContent = ROUND.label + ' · 접수 상시(추첨 전날 ' + dfmt(ROUND.close) + ' 24:00 마감) · 1회 최대 50매 · 매주 월요일 ' + ROUND.drawTime + ' 전산 추첨 · 당첨 현수막 ' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 협회 입고';
     applyAutofill(false);
+    renderApplyWeek();
     renderPickUI();
     syncAppType();
     renderUrgentHint();
@@ -3579,10 +4029,12 @@
   }
 
   function updatePeriodPreview() {
-    var start = $('#applyStart').value || ROUND.periodStart;
+    var start = weekStartOf(($('#applyStart') && $('#applyStart').value) || ui.applyWeek || ROUND.postStart);
     var days = 7;      /* 일반 광고물 게시기간은 1주(7일) 고정 — 2주는 공문 결재로만 */
-    var end = addDays(start, days - 1);
-    $('#periodPreview').innerHTML = IC.cal + '<div>게시 기간 <b>' + start + ' ~ ' + end + '</b> (' + days + '일) · 철거 예정일 ' + addDays(end, 1) + '</div>';
+    var end = addDays(start, days - 1), w = weekInfoOf(start);
+    var el = $('#periodPreview');
+    if (el) el.innerHTML = IC.cal + '<div>게시 기간 <b>' + start + ' ~ ' + end + '</b> (' + days + '일 · ' + wd(start) + '~' + wd(end) + ') · 철거 예정일 ' + addDays(end, 1) +
+      '<br>이 게첩 주의 추첨은 <b>' + dfmt(w.drawDate) + ' ' + w.drawTime + '</b> · 입고 마감 <b>' + dfmt(w.deliverBy) + ' ' + w.deliverTime + '</b>' + (start > currentPostingWeek() ? ' · <b>사전 접수</b>' : '') + '</div>';
   }
 
   function fieldErr(sel, msg) {
@@ -3614,7 +4066,7 @@
       phone: $('#applyPhone').value.trim(),
       text: $('#applyText').value.trim(),
       qty: rawQty(),
-      start: $('#applyStart').value || ROUND.periodStart,
+      start: weekStartOf(($('#applyStart') && $('#applyStart').value) || ui.applyWeek || ROUND.postStart),
       days: 7,
       appType: type,
       advertiser: adv,
@@ -3685,8 +4137,9 @@
       /* 비회원 인증 번호도 실제 광고주 중복 차단에 동일하게 사용 */
       var advSelfPhone = (!currentMember() && smsVerified()) ? { name: v.advertiser, biz: '', phone: smsState().phone } : null;
       var dup = null;
+      var appWk = weekStartOf(ui.applyWeek || ROUND.postStart);
       db.apps.forEach(function (a) {
-        if (a.round !== ROUND.id || a.status === '반려') return;
+        if (weekStartOf(a.start || ROUND.postStart) !== appWk || a.status === '반려') return;
         if (sameAdvertiser(advOfApp(a), advSelf)) dup = a;
         else if (advSelfPhone && sameAdvertiser(advOfApp(a), advSelfPhone)) dup = a;
       });
@@ -3845,7 +4298,7 @@
     updateFeeBox();
   }
 
-  /* 4단계 수수료 — 단가 × 수량 (× 14일 배수) 실시간 계산 */
+  /* 4단계 수수료 — 단가 × 수량 (1주 7일 기준) 실시간 계산 */
   function updateFeeBox() {
     var v = readApply();
     var f = feeFor(v.qty, v.days);
@@ -3854,7 +4307,7 @@
     $('#feeLines').innerHTML =
       '<span><em style="font-style:normal">' + esc(feeUnitText()) + '</em></span>' +
       '<span>계산 내역 <b>' + esc(feeText(f)) + '</b></span>' +
-      (f.mult > 1 ? '<span>14일(2주) 선택 시 <b>단가 × 2</b>가 적용됩니다</span>' : '<span>7일(주간 기본) 기준입니다</span>');
+      '<span>1주(7일) 기준입니다 — 기간에 따른 배수는 적용하지 않습니다.</span>';
     return f;
   }
 
@@ -3874,7 +4327,7 @@
     $('#applyQty').value = '1';
     $('#applyText').value = '';
     $('#textCount').textContent = '0';
-    $('#applyStart').value = '2026-11-30';
+    if ($('#applyStart')) $('#applyStart').value = weekStartOf(ui.applyWeek || ROUND.postStart);
     $('#applyDays').value = '7';
     $('#chkRule').checked = false;
     $('#chkDup').checked = false;
@@ -3900,10 +4353,10 @@
     var pr2 = ui.designatedOnly ? [] : ui.ranks[2].slice();
     var pr3 = ui.designatedOnly ? [] : ui.ranks[3].slice();
     var places = pr1.concat(pr2, pr3);
-    var id = nextAppId(ROUND.id + '-A-');
+    var id = nextAppId(weekRoundId(v.start) + '-A-');
     db.seq += 1;
     var app = {
-      id: id, round: ROUND.id, company: v.company,
+      id: id, round: weekRoundId(v.start), week: weekStartOf(v.start), company: v.company,
       owner: v.owner, phone: v.phone,
       memberId: currentMember() ? currentMember().id : null,
       appType: v.appType, advertiser: v.advertiser,
@@ -4104,7 +4557,7 @@
       var pa = officialAsApp(o);
       out.no = o.id; out.status = '확정'; out.advertiser = o.org + ' (공문)'; out.company = pa.advertiser;
       out.phone = '—'; out.text = o.text; out.appliedAt = o.at; out.official = true;
-      (o.pids || []).forEach(function (pid) { push(pid, 1); });
+      (o.pids || []).forEach(function (pid) { push(pid, 1, officialSlotFor(o, pid)); });
     } else {
       out.no = a.id; out.status = awardedOf(a) > 0 ? '확정' : '가접수';
       out.advertiser = advOfApp(a).name; out.company = a.company; out.phone = a.phone;
@@ -4149,15 +4602,13 @@
       '<div class="desig-note">※ 수수료 — ' + (d.official
         ? '공문 접수 1매 ' + won(FEE.official) + ' (탈부착·관리 7,000 + 부가세 700) · <b>시청 인지대 0원 (공문 면제)</b> 또는 공문 별도정산'
         : '1매 ' + won(FEE.total) + ' (탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000)') + '</div>' +
-      '<div class="desig-sign">위 내용은 사실과 다름이 없습니다. (사)충남옥외광고협회 서산시지부 041-665-1216</div>' +
-      '<div class="desig-signline"><span>신청인 (서명)</span><i></i><span>확인자 (서명)</span><i></i><span>협회 직인</span><i></i></div>' +
       '</div></div>';
   }
   function showDesignation(id) {
     var d = desigData(id);
     if (!d) { toast('게시 지정서를 만들 수 있는 접수 건이 아닙니다.', true); return; }
     openModal({
-      title: '현수막 게시 지정서', sub: (d.company || d.advertiser) + ' · ' + d.qty + '매 · NO. ' + d.no,
+      title: '현수막 게시 지정서', sub: (d.company || d.advertiser) + ' · ' + d.qty + '매 · NO. ' + d.no, wide: true,
       body: '<div class="callout info" style="margin-bottom:12px">' + IC.doc +
         '<div><b>시청제출용</b> 게시 지정서입니다. 버튼을 누르면 <b>A4 세로 1장</b>으로 인쇄됩니다. (게시기간은 각 게시대 설치요일 기준 7일)</div></div>' + designationHTML(id),
       foot: '<button class="btn ghost" data-close type="button">닫기</button>' +
@@ -4167,7 +4618,7 @@
   }
   function printDesignation() {
     var rule = $('#printPageRule');
-    if (rule) rule.textContent = '@page{size:A4 portrait;margin:10mm}';
+    if (rule) rule.textContent = '@page{size:A4 portrait;margin:8mm}';
     if (document.body && document.body.classList) document.body.classList.add('print-desig');
     try { window.print(); } catch (e) { /* 인쇄 불가 환경 */ }
     setTimeout(function () {
@@ -4180,21 +4631,40 @@
      8. 미배정(선착순) 예약
      --------------------------------------------------------------- */
   /* 선착순 접수 창구 — 목요일 00:00~24:00 하루만, 금요일은 접수 제한 */
+  /* ── 목요일 잔여석 선착순 · 입고 마감 (2026-11-22 김재봉 님 지시로 변경) ──
+     · 접수 가능 시간: 목요일 **일과시간 09:00~18:00** (그 외 시간·금요일은 접수 불가)
+     · 목요일 선착순 당첨분 입고 마감: **금요일 10:00** — 미입고 시 자동 취소(반려)
+     · 시연을 위해 '목요일'·'일과시간/18시 이후'를 화면에서 바꿔 볼 수 있다. */
+  var FC_OPEN_FROM = 9, FC_OPEN_TO = 18;
+  var FC_DELIVER = { date: ROUND.cutoffDate, time: '10:00' };
+  function firstComeOpenNow() {
+    if (ui.fcTimeSim === 'after') return false;
+    if (ui.fcTimeSim === 'open') return true;
+    var h = new Date().getHours();
+    return h >= FC_OPEN_FROM && h < FC_OPEN_TO;
+  }
   function firstComeState() {
     var today = new Date().getDay();
     var d = ui.daySim === 'thu' ? 4 : (ui.daySim === 'fri' ? 5 : today);
     if (d === 3) return { open: false, kind: 'wait', badge: '수 18:00 반려 후 공개',
       title: '수요일 · 18:00 미입고 반려 후 공개',
-      msg: '오늘 18:00에 미입고분을 일괄 반려하고, ' + dfmt(ROUND.firstComeDate) + ' 00:00부터 선착순 접수를 시작합니다.' };
-    if (d === 4) return { open: true, kind: 'open', badge: '목요일 선착순 접수 중',
-      title: '목요일 · 잔여석 선착순 접수 중 (오늘 24:00까지)',
-      msg: '미입고로 반려된 잔여석을 오늘 하루만 접수합니다. 누르는 즉시 확정되며, 수수료 입금과 현수막 준비도 오늘 안에 마쳐야 합니다.' };
+      msg: '오늘 18:00에 미입고분을 일괄 반려하고, ' + dfmt(ROUND.firstComeDate) + ' 09:00(일과시간 시작)부터 선착순 접수를 시작합니다.' };
+    if (d === 4) {
+      /* 시연에서 '목요일'을 고르면 기본은 일과시간(접수 가능) — '18시 이후'를 고르면 닫힘 */
+      var open = (ui.daySim === 'thu' && ui.fcTimeSim !== 'after') || (ui.daySim !== 'thu' && firstComeOpenNow());
+      if (open) return { open: true, kind: 'open', badge: '목요일 선착순 접수 중 (09:00~18:00)',
+        title: '목요일 · 잔여석 선착순 접수 중 (일과시간 09:00~18:00)',
+        msg: '목요일 일과시간(09:00~18:00)에만 접수합니다. 누르는 즉시 확정되며, 수수료 입금과 현수막 실물은 ' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '까지 입고해야 합니다. (미입고 시 자동 취소)' };
+      return { open: false, kind: 'offhours', badge: '목요일 · 일과시간 아님 (09:00~18:00)',
+        title: '목요일 · 일과시간(09:00~18:00)에만 접수합니다',
+        msg: '잔여석 선착순 접수는 목요일 일과시간 09:00~18:00에만 가능합니다. 지금은 접수 시간이 아닙니다. (시연용으로 아래 [일과시간]을 눌러 접수 화면을 확인할 수 있습니다.)' };
+    }
     if (d === 5) return { open: false, kind: 'closed', badge: '금요일 · 접수 제한',
       title: '금요일 · 잔여석 접수 제한',
-      msg: '현장 게첩 작업 준비로 인해 금요일은 잔여석 접수가 제한됩니다. 남은 면은 다음 주 회차 물량으로 이월됩니다.' };
+      msg: '현장 게첩 작업 준비로 인해 금요일은 잔여석 접수가 제한됩니다. 목요일 선착순 당첨분은 ' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '까지 입고해야 하며, 미입고 시 자동 취소(반려)됩니다.' };
     return { open: false, kind: 'wait', badge: WEEK_DAYS[d] + '요일 · 접수 시간 아님',
       title: WEEK_DAYS[d] + '요일 · 접수 시간이 아닙니다',
-      msg: '선착순 접수는 ' + dfmt(ROUND.firstComeDate) + '(목) 00:00 ~ 24:00 하루만 운영합니다.' };
+      msg: '선착순 접수는 ' + dfmt(ROUND.firstComeDate) + '(목) 일과시간 <b>09:00 ~ 18:00</b>에만 운영합니다.' };
   }
 
   function renderFirst() {
@@ -4203,7 +4673,7 @@
     var left = 0;
     db.placements.forEach(function (p) { left += availOf(p); });
     $('#firstCount').textContent = '잔여 ' + left + '면' + (brokenCount() ? ' (고장 ' + brokenCount() + '개소 제외)' : '');
-    $('#firstRoundLine').textContent = ROUND.label + ' 게시분 (' + dfmt(ROUND.postStart) + ' ~ ' + dfmt(ROUND.postEnd) + ') · 미입고 회수 면을 목요일 하루만 선착순 접수합니다.';
+    $('#firstRoundLine').textContent = ROUND.label + ' 게시분 (' + dfmt(ROUND.postStart) + ' ~ ' + dfmt(ROUND.postEnd) + ') · 미입고 회수 면을 목요일 일과시간(09:00~18:00)에만 선착순 접수합니다.';
 
     var chip = $('#fcBadge');
     chip.className = 'badge ' + (st.open ? 'b-green' : (st.kind === 'closed' ? 'b-red' : 'b-amber'));
@@ -4213,6 +4683,11 @@
       [['', '오늘(' + WEEK_DAYS[new Date().getDay()] + ')'], ['thu', '목요일'], ['fri', '금요일']].map(function (x) {
         var on = (x[0] === '' && !ui.daySim) || (x[0] !== '' && ui.daySim === x[0]);
         return '<button class="chip' + (on ? ' active' : '') + '" data-fcday="' + x[0] + '" type="button">' + x[1] + '</button>';
+      }).join('') +
+      '<span style="font-size:12px;color:var(--muted);font-weight:700;align-self:center;margin-left:8px;margin-right:2px">시연 시간</span>' +
+      [['open', '일과시간(09~18)'], ['after', '18시 이후']].map(function (x) {
+        var on = (x[0] === 'after' && ui.fcTimeSim === 'after') || (x[0] === 'open' && ui.fcTimeSim !== 'after');
+        return '<button class="chip' + (on ? ' active' : '') + '" data-fctime="' + x[0] + '" type="button">' + x[1] + '</button>';
       }).join('');
 
     var icon = st.open ? IC.check : (st.kind === 'closed' ? IC.x : IC.clock);
@@ -4265,7 +4740,7 @@
     var body = '<div class="summary" style="margin-bottom:14px"><dl>' +
       '<dt>게시대</dt><dd>' + esc(p.name) + ' (' + esc(p.dong) + ')</dd>' +
       '<dt>게시 기간</dt><dd>' + dfmt(ROUND.postStart) + ' ~ ' + dfmt(ROUND.postEnd) + ' (7일)</dd>' +
-      '<dt>접수 창구</dt><dd>목요일 00:00 ~ 24:00 (금요일 접수 제한)</dd>' +
+      '<dt>접수 창구</dt><dd>목요일 일과시간 09:00 ~ 18:00 (금요일 접수 제한)</dd>' +
       '<dt>잔여 매수</dt><dd>' + availOf(p) + '매 / ' + p.cap + '매' + (reclaimedOf(p) ? ' (미입고 회수 ' + reclaimedOf(p) + '매 포함)' : '') + '</dd>' +
       '<dt>접수 수량</dt><dd>1매 (선착순은 1건 1개소)</dd>' +
       '<dt>수수료</dt><dd>' + won(FEE.total) + '<span class="fee-sub">' + esc(feeUnitText()) + '</span></dd>' +
@@ -4277,8 +4752,8 @@
       '<input class="input" id="fcBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12"></div>' +
       '</div>' +
       '<div id="fcAdjWarn">' + adjWarnHTML('재봉기획') + '</div>' +
-      '<div class="callout warn">' + IC.alert + '<div>예약 즉시 확정됩니다. <b>' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지</b> 수수료 입금과 현수막 실물 입고를 마쳐야 하며, 미입고 시 자동 취소(반려)되고 <b>차기 1개 주 회차 접수 제한</b>이 적용됩니다.</div></div>' +
-      '<label class="check"><input type="checkbox" id="fcAgree"><span>적색·흑색 배경 금지 등 표시 기준을 확인했으며, 수요일 18:00 입고 기한에 동의합니다.</span></label>';
+      '<div class="callout warn">' + IC.alert + '<div>예약 즉시 확정됩니다. <b>' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '까지</b> 수수료 입금과 현수막 실물 입고를 마쳐야 하며, 미입고 시 자동 취소(반려)되고 <b>차기 1개 주 회차 접수 제한</b>이 적용됩니다.</div></div>' +
+      '<label class="check"><input type="checkbox" id="fcAgree"><span>적색·흑색 배경 금지 등 표시 기준을 확인했으며, 금요일 10:00 입고 기한에 동의합니다.</span></label>';
     openModal({
       title: '선착순 예약', sub: p.name + ' · 즉시 확정', body: body,
       foot: '<button class="btn ghost" data-close type="button">취소</button>' +
@@ -4338,7 +4813,7 @@
       eco: true, status: '선착순확정', text: '선착순 예약 (문구는 사무국 확인)',
       appliedAt: nowStamp(), start: ROUND.postStart, days: 7,
       file: null, preview: null, mine: true, paid: false, firstCome: true,
-      delivered: false, deliveryDue: ROUND.deliverBy + ' ' + ROUND.deliverTime,
+      delivered: false, deliveryDue: FC_DELIVER.date + ' ' + FC_DELIVER.time,
       assignedTo: p.id, rank: null, reject: null, drawId: null
     };
     db.seq += 1;
@@ -4405,7 +4880,7 @@
       '<span class="mr-top"><b class="mr-no">' + esc(a.id) + '</b>' + statusBadge(a.status) +
         (a.designatedOnly ? '<span class="badge b-purple"><i></i>고객장소 지정</span>' : '') + '</span>' +
       '<span class="mr-main">' + esc(advOfApp(a).name || a.company || '—') + ' — "' + esc(a.text || '') + '"</span>' +
-      '<span class="mr-sub">' + qtyOf(a) + '매 · ' + esc(place) + ' · 접수 ' + esc(a.appliedAt || '—') + '</span>' +
+      '<span class="mr-sub">' + qtyOf(a) + '매 · ' + esc(place) + ' · 게첩 ' + esc(weekRangeTxt(weekStartOf(a.start || ROUND.postStart))) + ' · 접수 ' + esc(a.appliedAt || '—') + '</span>' +
       '<span class="mr-go">상세 보기 ›</span></button>';
   }
   /* ── 마이페이지 세부 페이지 (1건 전체 상세 · 목록으로 돌아가기) ── */
@@ -4520,8 +4995,11 @@
       if (x !== y) return x < y ? 1 : -1;
       return String(b.id || '') < String(a.id || '') ? -1 : 1;
     });
-    var cur = mine.filter(function (a) { return a.round === ROUND.id; });
-    var past = mine.filter(function (a) { return a.round !== ROUND.id; });
+    var curWk = currentPostingWeek();
+    var cur = mine.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) === curWk; });
+    var upcoming = mine.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) > curWk; });
+    var past = mine.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) < curWk; });
+    upcoming.sort(function (a, b) { return String(a.start) < String(b.start) ? -1 : 1; });
 
     /* 목록 한 건을 누르면 mypage-detail.html?id=... 로 이동한다 (별도 페이지) */
 
@@ -4535,13 +5013,19 @@
         '<button class="btn-auth amber" type="button" style="padding:6px 11px;font-size:11.5px;margin-left:auto" data-login-open="1">로그인 / 회원가입</button></div>';
     }
 
-    html += '<div class="panel"><div class="panel-head"><h3>' + IC.doc + ' ' + esc(ROUND.label) + ' 주간 추첨 접수</h3>' +
-      '<span class="sub">' + cur.length + '건</span></div>' +
+    html += '<div class="panel"><div class="panel-head"><h3>' + IC.doc + ' ' + esc(weekRangeTxt(curWk)) + ' 게첩 주 접수</h3>' +
+      '<span class="sub">' + cur.length + '건 · 이번 주</span></div>' +
       (cur.length ? '<div class="mp-list">' + cur.map(myAppRow).join('') + '</div>'
-        : '<div class="empty">' + IC.empty + '<div>아직 이번 회차 접수가 없습니다.</div></div>') + '</div>';
+        : '<div class="empty">' + IC.empty + '<div>아직 이번 주 게첩분 접수가 없습니다.</div></div>') + '</div>';
+
+    if (upcoming.length) {
+      html += '<div class="panel"><div class="panel-head"><h3>' + IC.cal + ' 사전 접수 · 게첩 예정</h3>' +
+        '<span class="sub">' + upcoming.length + '건 · 달력에서 고른 미래 주차</span></div>' +
+        '<div class="mp-list">' + upcoming.map(myAppRow).join('') + '</div></div>';
+    }
 
     html += '<div class="panel"><div class="panel-head"><h3>' + IC.cal + ' 지난 회차 · 게시 중</h3>' +
-      '<span class="sub">' + CUR.label + '</span></div>' +
+      '<span class="sub">' + past.length + '건</span></div>' +
       (past.length ? '<div class="mp-list">' + past.map(myAppRow).join('') + '</div>'
         : '<div class="empty">' + IC.empty + '<div>지난 접수 내역이 없습니다.</div></div>') + '</div>';
 
@@ -4566,6 +5050,10 @@
      · 로그아웃하면 자동 작성한 값이 지워지고, 비회원 직접 입력도 그대로 쓸 수 있습니다. */
   var TYPE_LABEL = { direct: '일반업체', agency: '옥외광고대행사' };
   function memberList() { if (!db.members) db.members = []; return db.members; }
+  function agencyAppCount(memberId) {
+    if (!memberId) return 0;
+    return db.apps.filter(function (a) { return a.memberId === memberId; }).length;
+  }
   function memberById(id) {
     var out = null;
     memberList().forEach(function (m) { if (!out && m.id === id) out = m; });
@@ -4862,10 +5350,11 @@
         '</div>' +
         '<div class="field" id="fSuLic" style="display:none">' +
         '<label for="suLic">옥외광고업 등록증 사본 첨부 <span class="req">*</span> <span class="opt">(가입 시 1회)</span></label>' +
-        '<div class="dz-wrap" style="margin-top:6px"><div class="dz-tools">' +
+        '<div class="dz-wrap" style="margin-top:6px"><div class="dz-tools" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
         '<input type="file" id="suLic" accept="image/*,application/pdf">' +
-        '<button class="btn sm ghost" id="btnSuLicSample" type="button">샘플 등록증으로 체험</button></div></div>' +
+        '<button class="btn primary sm btn-sample-lic" id="btnSuLicSample" data-sulicsample="1" type="button">📎 샘플 등록증 제출(첨부)</button></div></div>' +
         '<div class="hint-txt" id="suLicName">첨부된 파일이 없습니다.</div>' +
+        '<div class="hint-txt" style="margin-top:3px">파일이 없어도 <b>샘플 등록증 제출</b>을 누르면 시연용 등록증 이미지가 바로 첨부·미리보기되고 그대로 가입을 마칠 수 있습니다.</div>' +
         '<div class="hint-txt" style="margin-top:4px">광고대행사는 가입할 때 등록증 사본을 <b>한 번만</b> 제출하면, 이후 주간 접수에서는 다시 첨부하지 않습니다.</div></div>' +
         '<div class="field-row">' +
         '<div class="field"><label for="suId">아이디<span class="req">*</span></label><input class="input" id="suId" placeholder="예) hatsal (영문·숫자 4자 이상)" maxlength="20" autocomplete="username"></div>' +
@@ -4874,20 +5363,31 @@
         '<div class="auth-hint">가입 즉시 로그인되고, 입력한 회원 정보가 다음 접수부터 1단계에 자동 작성됩니다. (시연용 — 실제 개인정보는 저장되지 않습니다.)</div>';
       return body;
     }
-    body += '<div class="sect-label" style="margin-top:2px">시연용 간편 로그인 <span>누르면 바로 체험</span></div>' +
+    var agencies = memberList().filter(function (m) { return m.type === 'agency'; });
+    var directs = memberList().filter(function (m) { return m.type !== 'agency'; });
+    body += '<div class="sect-label" style="margin-top:2px">시연용 광고대행사 10곳 <span>누르면 바로 체험 · ★ 대형(5건 이상)</span></div>' +
+      '<div class="auth-presets agency-grid">' +
+      agencies.map(function (m, i) {
+        var large = isLargeAgency(m);
+        return '<button class="preset' + (large ? ' big' : '') + '" type="button" data-login-preset="' + esc(m.id) + '" title="' + esc(m.loginId + ' / ' + m.pw) + '">' +
+          '<span class="pn">' + (large ? '★' : (i + 1)) + '</span>' +
+          '<span><b>' + esc(m.company) + '</b><small>' + esc(m.owner) + ' · ' + esc(m.loginId) + ' / ' + esc(m.pw) + (large ? ' · 대형 ' + agencyAppCount(m.id) + '건' : '') + '</small></span></button>';
+      }).join('') + '</div>' +
+      '<div class="sect-label" style="margin-top:10px">일반업체 시연 계정 <span>직접 신청</span></div>' +
       '<div class="auth-presets">' +
-      memberList().slice(0, 3).map(function (m, i) {
-        return '<button class="preset" type="button" data-login-preset="' + esc(m.id) + '">' +
-          '<span class="pn">' + (i + 1) + '</span>' +
-          '<span><b>' + esc(m.company) + '</b><small>' + esc(memberTypeLabel(m)) + ' · ' + esc(m.owner) + ' · ' + esc(m.phone) + '</small></span></button>';
+      directs.slice(0, 2).map(function (m) {
+        return '<button class="preset" type="button" data-login-preset="' + esc(m.id) + '" title="' + esc(m.loginId + ' / ' + m.pw) + '">' +
+          '<span class="pn">' + esc(String(m.company).charAt(0)) + '</span>' +
+          '<span><b>' + esc(m.company) + '</b><small>' + esc(memberTypeLabel(m)) + ' · ' + esc(m.owner) + ' · ' + esc(m.loginId) + ' / ' + esc(m.pw) + '</small></span></button>';
       }).join('') + '</div>' +
       '<div class="auth-sep">또는 아이디로 로그인</div>' +
       '<div class="field-row">' +
       '<div class="field" style="margin-bottom:8px"><label for="loginId">아이디</label><input class="input" id="loginId" placeholder="예) hatsal" maxlength="20" autocomplete="username"></div>' +
       '<div class="field" style="margin-bottom:8px"><label for="loginPw">비밀번호</label><input class="input" id="loginPw" type="password" placeholder="예) 1234" maxlength="24" autocomplete="current-password"></div>' +
       '</div>' +
-      '<div class="auth-hint">시연 계정 — <b>hatsal / 1234</b> (햇살농원) · <b>jaebong / 1234</b> (재봉기획 · 광고대행사) · <b>hanwoo / 1234</b> (서산한우직판장)' +
-      '<br>로그인하면 회원 정보(구분·업체명·대표자·연락처·사업자번호·이메일·옥외광고업 등록번호)가 접수 1단계에 자동 작성되고, 마이페이지에는 내 접수만 표시됩니다.</div>';
+      '<div class="auth-hint">광고대행사 <b>10곳</b> — 재봉기획(대형) · 서산애드컴(대형) · 해미미디어랩(대형) · 부춘기획 · 석남광고 · 대산커뮤니케이션 · 호수애드 · 팔봉미디어 · 성연광고기획 · 인지애드 (모두 비밀번호 <b>1234</b>)' +
+      '<br>일반업체 — <b>hatsal / 1234</b> (햇살농원) · <b>hanwoo / 1234</b> (서산한우직판장)' +
+      '<br>로그인하면 회원 정보가 접수 1단계에 자동 작성되고, 마이페이지에는 내 접수만 표시됩니다.</div>';
     return body;
   }
   function openAuth(tab) {
@@ -4928,6 +5428,7 @@
           if ($('#suOadeOpt')) { if (ag) $('#suOadeOpt').classList.add('hidden'); else $('#suOadeOpt').classList.remove('hidden'); }
           if ($('#fSuLic')) $('#fSuLic').style.display = ag ? '' : 'none';
         });
+        if ($('#btnSuLicSample')) onEl('#btnSuLicSample', 'click', function (e) { if (e && e.preventDefault) e.preventDefault(); useSuLicSample(); });
         /* 입력란에서 Enter 로 로그인·회원가입 */
         if ($('#modalBody') && $('#modalBody').addEventListener) {
           onEl('#modalBody', 'keydown', function (e) {
@@ -5141,29 +5642,80 @@
         · 일반 추첨은 공문 배정 면을 제외한 잔여 면으로만 진행 (정원 초과 0)
         · 광고주 중복 제한·페널티 제외 · 수수료 공문(면제/별도)
      --------------------------------------------------------------- */
-  function officialActive() {
-    return (db.official || []).filter(function (o) { return o.round === ROUND.id && o.status === 'active'; });
+  function activeOfficialWeek() {
+    if (PAGE === 'apply') return weekStartOf(ui.applyWeek || ROUND.postStart);
+    if (isAdminPage()) return weekStartOf(ui.offWeek || ROUND.postStart);
+    return weekStartOf(ui.statusWeek || ROUND.postStart);
   }
-  function officialSeatsOf(pid) {
+  /* 그 주(또는 2주 범위)에 걸친 공문 배정 — 담장/본게시대 판단도 주 단위로 한다 */
+  function officialActive(week) {
+    var s = week ? weekStartOf(week) : activeOfficialWeek();
+    return (db.official || []).filter(function (o) { return o.status === 'active' && officialCoversWeek(o, s); });
+  }
+  function officialSeatsOf(pid, week) {
     var n = 0;
-    officialActive().forEach(function (o) {
+    officialActive(week).forEach(function (o) {
       (o.pids || []).forEach(function (x) { if (x === pid) n += 1; });
     });
     return n;
   }
   /* 결재 중(pending) 2주 공문이 잡아 둔 면 — 상한 검사에 함께 센다 */
-  function officialPendingSeatsOf(pid) {
+  function officialPendingSeatsOf(pid, week) {
+    var s = week ? weekStartOf(week) : activeOfficialWeek();
     var n = 0;
     (db.official || []).forEach(function (o) {
-      if (o.round !== ROUND.id || o.status !== 'pending') return;
+      if (o.status !== 'pending' || !officialCoversWeek(o, s)) return;
       (o.pids || []).forEach(function (x) { if (x === pid) n += 1; });
     });
     return n;
   }
-  function officialSeatsTotal() {
+  function officialSeatsTotal(week) {
     var n = 0;
-    officialActive().forEach(function (o) { n += (o.pids || []).length; });
+    officialActive(week).forEach(function (o) { n += (o.pids || []).length; });
     return n;
+  }
+  /* 한 공문 건의 특정 위치 — pids 와 slots 를 짝지어 돌려준다 ('위치 무관'은 '') */
+  function officialSlotFor(o, pid) {
+    if (!o || !Array.isArray(o.slots)) return '';
+    for (var i = 0; i < o.slots.length; i++) {
+      if (o.slots[i] && o.slots[i].pid === pid) return String(o.slots[i].slot || '');
+    }
+    return '';
+  }
+  function officialSlotTxt(o, pid) {
+    var p = boardById(pid), c = officialSlotFor(o, pid);
+    if (!p) return '';
+    if (!c) return '위치 무관';
+    var nm = slotName(p, c);
+    return slotBoardAll(c) ? (c + '동 전체') : (nm || c);
+  }
+  /* 공문 배정용 위치 순서 — 비선호 담장(F·G)은 본게시대(A~E)가 다 찬 뒤 마지막 */
+  function officialSlotOrder(p) {
+    var codes = slotCodeListOf(p), order = slotOrderOf(p), wall = officialFullBoardsOf(p) || [];
+    var core = codes.filter(function (c) { return wall.indexOf(c.charAt(0)) < 0; });
+    var wallC = codes.filter(function (c) { return wall.indexOf(c.charAt(0)) >= 0; });
+    function byOrder(a, b) { return order.indexOf(a) - order.indexOf(b); }
+    core.sort(byOrder); wallC.sort(byOrder);
+    return core.concat(wallC);
+  }
+  /* 공문에 지정할 수 있는 위치 옵션 — 위치 무관 · 동 전체 · 동·단 */
+  function officialSlotOptions(p) {
+    var opts = [{ v: '', t: '위치 무관 (본게시대 먼저 · 담장은 나중)' }], seen = {}, codes = slotCodeListOf(p), wall = officialFullBoardsOf(p) || [];
+    var boards = Number(p.boards) || 1;
+    if (boards > 1) {
+      codes.forEach(function (c) {
+        var L = c.charAt(0);
+        if (seen['B' + L]) return;
+        seen['B' + L] = 1;
+        var tiers = slotTiersOf(p), idx = colIndexOf(p, L), n = idx >= 0 ? (tiers[idx] || 0) : 0;
+        opts.push({ v: L, t: L + '동 전체 (' + n + '면)' + (wall.indexOf(L) >= 0 ? ' · 비선호 담장' : '') });
+      });
+    }
+    codes.forEach(function (c) {
+      var nm = slotName(p, c) || c;
+      opts.push({ v: c, t: (slotBoardAll(c) ? c + '동 ' : '') + nm + ' (' + c + ')' + (wall.indexOf(c.charAt(0)) >= 0 ? ' · 비선호 담장' : '') });
+    });
+    return opts;
   }
   /* 게시대별 공문 우선배정 상한 — 그 게시대 '전체 게시면의 40% 이하'(내림)
      · 김재봉 님 2026-11-21 19:40 지시: 공문 우선은 전체 게시면의 40%를 넘지 않는다
@@ -5207,6 +5759,9 @@
      사무실무원 작성 → 사무국장 결재 → 수석부지부장 결재 → 지부장 결재 → 감사 결재(2인 중 1인)
      · 5단계가 끝나면 '2주 승인 완료(14일)'로 상태가 바뀌고 그때 면이 확정됩니다.
      · 1주(7일) 공문은 결재 없이 등록 즉시 확정입니다. */
+  /* ── 결재선 (2026-11-22 김재봉 님 지시로 변경) ──────────────────────────
+     2주(14일) 이상 결재는 **지부장 1인 → 감사(2인 중 1인)** 2단계.
+     40% 상한 초과 예외와 공로 회원 5자리 선점은 기존 5단계 결재를 그대로 유지한다. */
   var OFFICIAL_CHAIN = [
     { k: 'write', label: '사무실무원 작성' },
     { k: 'office', label: '사무국장 결재' },
@@ -5214,10 +5769,20 @@
     { k: 'chief', label: '지부장 결재' },
     { k: 'audit', label: '감사 결재(2인 중 1인)' }
   ];
+  var OFFICIAL_CHAIN_2W = [
+    { k: 'chief', label: '지부장 결재' },
+    { k: 'audit', label: '감사 결재(2인 중 1인)' }
+  ];
   function officialDaysOf(o) { return (Number(o && o.days) === 14) ? 14 : 7; }
-  /* 이번 회차 공문 — 확정(active) + 2주 결재 중(pending) */
-  function officialRoundList() {
-    return (db.official || []).filter(function (o) { return o.round === ROUND.id && (o.status === 'active' || o.status === 'pending'); });
+  function officialChainFor(o) {
+    return (officialDaysOf(o) >= 14 && !(o && o.exception)) ? OFFICIAL_CHAIN_2W : OFFICIAL_CHAIN;
+  }
+  /* 선택 주(또는 회차)의 공문 — 확정(active) + 결재 중(pending) */
+  function officialRoundList(week) {
+    var s = week ? weekStartOf(week) : activeOfficialWeek();
+    return (db.official || []).filter(function (o) {
+      return (o.status === 'active' || o.status === 'pending') && officialCoversWeek(o, s);
+    });
   }
   function officialApprovedKeys(o) {
     var m = {};
@@ -5225,24 +5790,32 @@
     return m;
   }
   function officialNextStep(o) {
-    var d = officialApprovedKeys(o);
-    for (var i = 0; i < OFFICIAL_CHAIN.length; i++) { if (!d[OFFICIAL_CHAIN[i].k]) return OFFICIAL_CHAIN[i].k; }
+    var d = officialApprovedKeys(o), chain = officialChainFor(o);
+    for (var i = 0; i < chain.length; i++) { if (!d[chain[i].k]) return chain[i].k; }
     return '';
   }
   function officialStepLabel(k) {
     for (var i = 0; i < OFFICIAL_CHAIN.length; i++) { if (OFFICIAL_CHAIN[i].k === k) return OFFICIAL_CHAIN[i].label; }
+    for (var j = 0; j < OFFICIAL_CHAIN_2W.length; j++) { if (OFFICIAL_CHAIN_2W[j].k === k) return OFFICIAL_CHAIN_2W[j].label; }
     return k;
   }
   function officialChainTxt(o) {
-    var d = officialApprovedKeys(o);
-    return OFFICIAL_CHAIN.map(function (c) {
+    var d = officialApprovedKeys(o), chain = officialChainFor(o);
+    var txt = chain.map(function (c) {
       var mark = d[c.k] ? '✓' : '○';
       var who = '';
       if (d[c.k]) (o.approvals || []).forEach(function (a) { if (a.k === c.k && (a.byName || a.by)) who = ' ' + (a.byName || a.by); });
       return mark + ' ' + c.label.replace(' 결재', '').replace(' 작성', '') + who;
     }).join(' → ');
+    if (chain === OFFICIAL_CHAIN_2W) txt = '기안 사무실무원 → ' + txt;
+    return txt;
   }
-  function officialDoneCount(o) { return Object.keys(officialApprovedKeys(o)).length; }
+  function officialDoneCount(o) {
+    var d = officialApprovedKeys(o), n = 0, chain = officialChainFor(o);
+    chain.forEach(function (c) { if (d[c.k]) n += 1; });
+    return n;
+  }
+  function officialChainLen(o) { return officialChainFor(o).length; }
   /* 결재 한 단계 진행 — 감사 단계는 '감사1'·'감사2' 중 누가 결재해도 통과 */
   function approveOfficial(id, who) {
     var o = null;
@@ -5274,10 +5847,10 @@
     var left = officialNextStep(o);
     if (!left) {
       o.status = 'active';
-      o.days = 14;
+      o.days = o.days || 14;
       o.approvedAt = nowStamp();
-      audit('공문 결재', o.id + ' ' + o.org + ' — ' + officialChainTxt(o) + ' · 2주(14일) 승인 완료 (' + byName + ' · ' + actor.label + ')');
-      toast(o.org + ' 공문 — ' + officialChainTxt(o) + ' · 2주(14일) 승인 완료. 이제 면이 확정됩니다.');
+      audit('공문 결재', o.id + ' ' + o.org + ' — ' + officialChainTxt(o) + ' · ' + (o.exception ? '40% 상한 초과 예외' : '2주(14일)') + ' 승인 완료 (' + byName + ' · ' + actor.label + ')');
+      toast(o.org + ' 공문 — ' + officialChainTxt(o) + ' · ' + (o.exception ? '40% 상한 초과 예외' : '2주(14일)') + ' 승인 완료. 이제 면이 확정됩니다.');
     } else {
       audit('공문 결재', o.id + ' ' + o.org + ' — ' + officialStepLabel(step) + ' (' + by + ' ' + byName + ' · ' + actor.label + ') · 다음 ' + officialStepLabel(left));
       toast(o.org + ' 공문 — ' + officialStepLabel(step) + ' 완료 (' + by + ') · 다음 단계 ' + officialStepLabel(left));
@@ -5347,7 +5920,7 @@
       toast('입력한 공문 수량 ' + goal + '매에 맞춰 선택해 주세요 — 이미 ' + offSelCount() + '매를 골랐습니다. (수량을 늘리거나 선택을 해제하세요)', true);
       return;
     } else {
-      var p = boardById(pid), capOff = officialCapOf(p), off = officialSeatsOf(pid);
+      var p = boardById(pid), capOff = officialCapOf(p), off = officialSeatsOf(pid, ui.offWeek);
       if (p && off >= capOff) {
         toast('공문 우선배정 상한을 넘을 수 없습니다 — ' + p.name + ' (공문 ' + off + '/' + capOff + '면 · 정원 ' +
           p.cap + '면의 ' + (p.officialOnly || p.low ? '전체(공문 전용)' : '40%') + ' 상한)', true);
@@ -5362,13 +5935,36 @@
     }
     renderOffPanel();
   }
+  function setOffSlot(pid, val) {
+    if (!ui.offSlots) ui.offSlots = {};
+    if (val) ui.offSlots[pid] = String(val); else delete ui.offSlots[pid];
+    renderOffPanel();
+  }
+  /* 선택한 게시대별 특정 위치(동·단) 지정 — 공문 배정에 그대로 반영 */
+  function offSlotListHTML() {
+    var ids = offSelList();
+    if (!ids.length) return '<div class="empty" style="padding:10px">게시대를 고르면 그 게시대의 <b>특정 위치(동·단)</b>를 지정할 수 있습니다.</div>';
+    return ids.map(function (pid) {
+      var p = boardById(pid);
+      if (!p) return '';
+      var cur = (ui.offSlots || {})[pid] || '';
+      var opts = officialSlotOptions(p).map(function (o) {
+        return '<option value="' + esc(o.v) + '"' + (o.v === cur ? ' selected' : '') + '>' + esc(o.t) + '</option>';
+      }).join('');
+      return '<div class="off-slot-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #e6edf6">' +
+        '<b style="font-size:12.5px;min-width:120px;flex:1 1 140px">' + esc(p.name) + (p.low ? ' <span class="tag off">공문 전용</span>' : '') + '</b>' +
+        '<select class="input sm" data-offslot="' + esc(p.id) + '" style="flex:1 1 220px;max-width:100%">' + opts + '</select></div>';
+    }).join('');
+  }
   function renderOffPanel() {
     if (!has('offPlaces')) return;
     if (!$('#offPlaces')) return;
-    var list = officialRoundList();
+    if (has('offWeekCal')) renderOffWeek();
+    var owk = weekStartOf(ui.offWeek || ROUND.postStart);
+    var list = officialRoundList(owk);
     var pend = list.filter(function (o) { return o.status === 'pending'; }).length;
-    $('#offInfo').textContent = '공문 ' + list.length + '건 (확정 ' + (list.length - pend) + ' · 2주 결재 중 ' + pend + ') · 사전 배정 ' +
-      officialSeatsTotal() + '면 (일반 추첨 제외) · 게시대별 상한 40% 이하 · 1주(7일)는 즉시 확정 · 2주(14일)는 결재 승인 후 확정';
+    $('#offInfo').textContent = '게첩 주 ' + weekRangeTxt(owk) + ' · 공문 ' + list.length + '건 (확정 ' + (list.length - pend) + ' · 결재 중 ' + pend + ') · 사전 배정 ' +
+      officialSeatsTotal(owk) + '면 (일반 추첨 제외) · 게시대별 상한 40% 이하 · 1주(7일)는 즉시 확정 · 2주(14일)는 지부장 → 감사(2인 중 1인) 결재 후 확정';
     $('#offDayChips').innerHTML = [['', '전체'], ['월', '월요일'], ['화', '화요일'], ['수', '수요일']].map(function (x) {
       var on = (ui.offDay || '') === x[0];
       return '<button class="chip' + (on ? ' active' : '') + '" data-offday="' + x[0] + '" type="button">' + x[1] + '</button>';
@@ -5381,7 +5977,7 @@
     }).concat(LOW_BOARDS.filter(function (p) { return !ui.offDay || p.day === ui.offDay; }));
     $('#offPlaces').innerHTML = ps.length ? ps.map(function (p) {
       var on = !!sel[p.id];
-      var off = officialSeatsOf(p.id), capOff = officialCapOf(p), full = off >= capOff;
+      var off = officialSeatsOf(p.id, owk), capOff = officialCapOf(p), full = off >= capOff;
       var ovFull = officialFullSeatsOf(p);
       var adjB = (!on && !full) ? officialBlock(p.id) : null;
       var rule = (p.officialOnly || p.low) ? '공문 전용 · 전체' : (ovFull ? '담장 100% + 40%' : '상한 40%');
@@ -5396,6 +5992,7 @@
         ' · <b class="off-cap">공문 ' + off + '/' + capOff + '면' + (full ? ' · 상한 도달' : '') + '</b>' +
         ' <i class="off-rule">' + rule + '</i></small></label>';
     }).join('') : '<div class="empty" style="grid-column:1/-1">배정할 수 있는 게시대가 없습니다.</div>';
+    if ($('#offSlots')) $('#offSlots').innerHTML = offSlotListHTML();
     renderOffQty();
     $('#offPickInfo').textContent = '선택 ' + offSelList().length + '개소 (일반 게시대 77개소 + 공문 전용 저단 32개소) · 게시대별 공문 배정은 정원의 40% 이하(내림)까지만 가능하고, 등록하면 그 면은 추첨 전에 사전 배정되어 일반 추첨에서 제외됩니다. 예외 — 의료원사거리에 통합된 의료원담장(F·G 4면)은 공문 우선 100% 허용(상한 12면 = 주 게시면 20면×40% 8면 + 담장 4면). 공문 수수료 1매 ' + won(FEE.official) + ' (시청 인지대 0원 면제)';
     $('#offTable').innerHTML = list.length
@@ -5405,11 +6002,12 @@
           var names = (o.pids || []).map(function (pid) { var p = boardById(pid); return p ? p.name : pid; });
           var f = (o.feeTotal === undefined ? FEE.official : o.feeTotal);
           var dd = officialDaysOf(o), pend = o.status === 'pending', next = pend ? officialNextStep(o) : '';
+          var wks = officialWeekOf(o), clen = officialChainLen(o);
           var period = o.exception
-            ? '<b>⚠️ 40% 상한 초과 예외</b>' + (pend ? ' <span class="badge b-amber"><i></i>결재 ' + officialDoneCount(o) + '/5</span>' : ' <span class="badge b-green"><i></i>예외 승인 완료</span>')
+            ? '<b>⚠️ 40% 상한 초과 예외</b>' + (pend ? ' <span class="badge b-amber"><i></i>결재 ' + officialDoneCount(o) + '/' + clen + '</span>' : ' <span class="badge b-green"><i></i>예외 승인 완료</span>')
             : (dd === 14
-              ? '<b>2주(14일)</b>' + (pend ? ' <span class="badge b-amber"><i></i>결재 ' + officialDoneCount(o) + '/5</span>' : ' <span class="badge b-green"><i></i>2주 승인 완료</span>')
-              : '<b>1주(7일)</b> <span class="badge b-gray"><i></i>즉시 확정</span>');
+              ? '<b>2주(14일)</b> ' + weekRangeTxt(wks) + ' ~ ' + dstr(addDays(wks, 13)) + (pend ? ' <span class="badge b-amber"><i></i>결재 ' + officialDoneCount(o) + '/' + clen + '</span>' : ' <span class="badge b-green"><i></i>2주 승인 완료</span>')
+              : '<b>1주(7일)</b> ' + weekRangeTxt(wks) + ' <span class="badge b-gray"><i></i>즉시 확정</span>');
           var chain = (dd === 14 || o.exception) ? '<div class="sm" style="margin-top:4px;line-height:1.5">' + esc(officialChainTxt(o)) + '</div>' : '';
           var permNote = (pend && next && !canApproveStep(next, next === 'audit' ? '감사1' : ''))
             ? '<span class="sm perm-off" title="현재 접속 권한: ' + esc(accessRoleLabel()) + '">🔒 권한 필요</span> '
@@ -5438,6 +6036,7 @@
   }
   function registerOfficial(o) {
     o = o || {};
+    var owk = weekStartOf((o.week !== undefined ? o.week : (ui.offWeek || ROUND.postStart)));
     var org = (o.org !== undefined) ? o.org : ($('#offOrg') ? $('#offOrg').value.trim() : '');
     var docNo = (o.docNo !== undefined) ? o.docNo : ($('#offDoc') ? $('#offDoc').value.trim() : '');
     var maker = (o.maker !== undefined) ? o.maker : ($('#offMaker') ? $('#offMaker').value.trim() : '');
@@ -5455,25 +6054,45 @@
       return null;
     }
     /* 게시대별 공문 배정 상한 — 정원의 40% 이하(내림). 넘으면 등록 자체를 막는다 */
+    /* 특정 위치(동·단) 지정 검증 — 이 게시대에 없는 위치·고장 칸은 막는다 */
+    var slotsSel = {}, badSlot = null;
+    pids.forEach(function (pid) {
+      var p = boardById(pid);
+      var c = String((o.slots && (function () { for (var i = 0; i < o.slots.length; i++) { if (o.slots[i].pid === pid) return o.slots[i].slot; } return ''; })()) || (ui.offSlots || {})[pid] || '');
+      if (!p || !c) { slotsSel[pid] = ''; return; }
+      if (slotBoardAll(c)) {
+        var has = slotCodesOf(p).some(function (x) { return x.letter === c.charAt(0); });
+        if (!has) badSlot = { p: p, c: c, why: '없는 동입니다.' };
+      } else if (!slotValid(p, c)) {
+        badSlot = { p: p, c: c, why: '이 게시대에 없는 위치입니다.' };
+      } else if (slotIsBlocked(p, c)) {
+        badSlot = { p: p, c: c, why: '고장·설치불가 칸입니다.' };
+      }
+      slotsSel[pid] = c;
+    });
+    if (badSlot) {
+      toast('공문 위치 지정 — ' + badSlot.p.name + ' ' + badSlot.c + ' : ' + badSlot.why + ' 다른 위치를 골라 주세요.', true);
+      return null;
+    }
     var perPid = {};
     pids.forEach(function (pid) { perPid[pid] = (perPid[pid] || 0) + 1; });
     var over = Object.keys(perPid).filter(function (pid) {
       var p = boardById(pid);
-      return p ? officialSeatsOf(pid) + officialPendingSeatsOf(pid) + perPid[pid] > officialCapOf(p) : false;
+      return p ? officialSeatsOf(pid, owk) + officialPendingSeatsOf(pid, owk) + perPid[pid] > officialCapOf(p) : false;
     });
     /* 40% 상한을 넘는 면 — 막지 않고 '초과분'만 예외 결재(같은 5단계 루트)로 넘긴다 */
     var capPids = [], exPids = [];
     Object.keys(perPid).forEach(function (pid) {
       var p = boardById(pid);
       var cap = p ? officialCapOf(p) : 0;
-      var leftN = Math.max(0, cap - officialSeatsOf(pid) - officialPendingSeatsOf(pid));
+      var leftN = Math.max(0, cap - officialSeatsOf(pid, owk) - officialPendingSeatsOf(pid, owk));
       var take = Math.min(leftN, perPid[pid]);
       for (var i = 0; i < take; i++) capPids.push(pid);
       for (var j = 0; j < perPid[pid] - take; j++) exPids.push(pid);
     });
     var capName = function (pid) {
       var p = boardById(pid);
-      return p ? p.name + ' (공문 ' + officialSeatsOf(pid) + '/' + officialCapOf(p) + '면 · 정원 ' + p.cap + '면)' : pid;
+      return p ? p.name + ' (공문 ' + officialSeatsOf(pid, owk) + '/' + officialCapOf(p) + '면 · 정원 ' + p.cap + '면)' : pid;
     };
     if (over.length && !capPids.length) toast('공문 40% 상한 초과 — 예외 결재 기안으로 접수합니다 (5단계 결재 완료 시 초과 면 확정)', false);
     /* 인접 게시대 택1 제한 — 한 공문 안에서도, 같은 기관·공문번호의 기존 배정과도 함께 배정 불가 */
@@ -5505,15 +6124,16 @@
     var rec = null;
     if (assignPids.length) {
       var id = 'G-' + ROUND.id + '-' + pad2((db.official.length || 0) + 1);
-      rec = { id: id, round: ROUND.id, org: org, docNo: docNo || '공문', maker: maker || (org + ' 지정업체'),
-        text: text, pids: assignPids.slice(), qty: assignPids.length, at: nowStamp(),
+      rec = { id: id, round: weekRoundId(owk), week: owk, org: org, docNo: docNo || '공문', maker: maker || (org + ' 지정업체'),
+        text: text, pids: assignPids.slice(), slots: assignPids.map(function (pid) { return { pid: pid, slot: slotsSel[pid] || '' }; }),
+        qty: assignPids.length, at: nowStamp(),
         status: daysReq === 14 ? 'pending' : 'active', days: daysReq,
-        approvals: daysReq === 14 ? [{ k: 'write', label: officialStepLabel('write'), by: '사무실무원', at: nowStamp() }] : [],
+        approvals: [], draftedBy: '사무실무원',
         fee: '공문(인지대 면제)', feeTotal: FEE.official, cityFee: FEE.officialCity, official: true };
       db.official.push(rec);
       audit('공문 우선접수', id + ' ' + org + ' · ' + text + ' — ' +
         assignPids.map(function (pid) { var p = boardById(pid); return p ? p.name : pid; }).join(', ') +
-        ' (' + assignPids.length + '면 · ' + (daysReq === 14 ? '2주(14일) 결재 신청 — 사무실무원 작성 완료' : '1주(7일) 즉시 확정') +
+        ' (' + assignPids.length + '면 · ' + (daysReq === 14 ? '2주(14일) 결재 신청 — 기안 사무실무원 → 지부장 → 감사(2인 중 1인)' : '1주(7일) 즉시 확정') +
         ' · 1매 ' + won(FEE.official) + ' / 시청 인지대 0원 공문 면제)');
     }
     /* 40% 상한 초과분 — 같은 5단계 전자결재로 예외 승인 (미결재 상태에서는 초과 면을 배정하지 않음) */
@@ -5521,8 +6141,9 @@
     if (exPids.length) {
       var exId = 'G-' + ROUND.id + '-' + pad2((db.official.length || 0) + 1);
       var actorOff = accessDisplay();
-      exRec = { id: exId, round: ROUND.id, org: org, docNo: docNo || '공문', maker: maker || (org + ' 지정업체'),
-        text: text, pids: exPids.slice(), qty: exPids.length, at: nowStamp(),
+      exRec = { id: exId, round: weekRoundId(owk), week: owk, org: org, docNo: docNo || '공문', maker: maker || (org + ' 지정업체'),
+        text: text, pids: exPids.slice(), slots: exPids.map(function (pid) { return { pid: pid, slot: slotsSel[pid] || '' }; }),
+        qty: exPids.length, at: nowStamp(),
         status: 'pending', days: daysReq, exception: true,
         approvals: [{ k: 'write', label: officialStepLabel('write'), by: '사무실무원',
           byName: actorOff.name, byRole: actorOff.label, at: nowStamp() }],
@@ -5542,7 +6163,7 @@
       toast('공문 우선배정 — 정상 ' + rec.pids.length + '면 즉시/' + (daysReq === 14 ? '결재' : '확정') + ' + 상한 초과 ' + exRec.pids.length + '면은 예외 결재(1/5)로 기안했습니다.');
     } else {
       toast(daysReq === 14
-        ? ('공문 2주(14일) 승인 신청 — ' + org + ' · ' + rec.pids.length + '면. 사무실무원 작성 완료 → 사무국장 → 수석부지부장 → 지부장 → 감사 결재가 끝나면 확정됩니다.')
+        ? ('공문 2주(14일) 승인 신청 — ' + org + ' · ' + rec.pids.length + '면. 지부장 결재 → 감사(2인 중 1인) 결재가 끝나면 확정됩니다.')
         : ('공문 우선배정 등록 — ' + org + ' · ' + rec.pids.length + '면 · 1주(7일) 즉시 확정 (1매 ' + won(FEE.official) + ' · 시청 인지대 0원 공문 면제)'));
     }
     return rec || exRec;
@@ -5564,8 +6185,8 @@
   function renderAdmin() {
     var appsR = db.apps.filter(function (a) { return a.round === ROUND.id; });
     var reviewing = db.apps.filter(function (a) { return a.round === ROUND.id && a.status === '시안심사중'; });
-    var paying = db.apps.filter(function (a) { return a.status === '입고대기' && !a.paid; });
-    var waiting = db.apps.filter(function (a) { return a.status === '입고대기' && !a.delivered; });
+    var paying = db.apps.filter(function (a) { return ['입고대기', '선착순확정'].indexOf(a.status) >= 0 && !a.paid; });
+    var waiting = db.apps.filter(function (a) { return ['입고대기', '선착순확정'].indexOf(a.status) >= 0 && !a.delivered; });
     var posted = db.apps.filter(function (a) { return a.round === ROUND.id && (a.status === '입고완료' || a.status === '게시중'); });
     var pool = appsR.filter(function (a) { return a.status === '추첨대기'; });
     var draw = currentDraw();
@@ -6047,7 +6668,7 @@
     if (id) ui.locSel = id;
     renderLoc();
     var rule = $('#printPageRule');
-    if (rule) rule.textContent = '@page{size:A4 portrait;margin:10mm}';
+    if (rule) rule.textContent = '@page{size:A4 portrait;margin:8mm}';
     if (document.body && document.body.classList) document.body.classList.add('print-loc');
     try { window.print(); } catch (e) { /* 인쇄 불가 환경 */ }
     setTimeout(function () {
@@ -6401,12 +7022,12 @@
   function missedTargets() {
     var now = nowStamp();
     return db.apps.filter(function (a) {
-      if (a.status !== '입고대기' || a.delivered) return false;
-      return String(dueOf(a)) <= now;   // 입고 마감(수 18:00)이 지난 건만
+      if (['입고대기', '선착순확정'].indexOf(a.status) < 0 || a.delivered) return false;
+      return String(dueOf(a)) <= now;   // 입고 마감(수 18:00 / 목 선착순은 금 10:00)이 지난 건만
     });
   }
   function isOverdue(a) {
-    return a.status === '입고대기' && !a.delivered && String(dueOf(a)) <= nowStamp();
+    return ['입고대기', '선착순확정'].indexOf(a.status) >= 0 && !a.delivered && String(dueOf(a)) <= nowStamp();
   }
 
   function runMissedDelivery() {
@@ -6418,10 +7039,10 @@
         '<td>' + (a.paid ? '<span class="badge b-green"><i></i>입금</span>' : '<span class="badge b-gray"><i></i>미입금</span>') + '</td></tr>';
     }).join('');
     openModal({
-      title: '수요일 미입고 일괄 취소(반려)',
-      sub: dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + ' 입고 마감 · 대상 ' + targets.length + '건',
+      title: '입고 마감 경과 일괄 취소(반려)',
+      sub: '수 ' + dfmt(ROUND.deliverBy) + ' 18:00 · 목 선착순 ' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + ' 마감 · 대상 ' + targets.length + '건',
       wide: true,
-      body: '<div class="callout warn">' + IC.alert + '<div>아래 당첨 건을 <b>자동 취소(반려)</b> 처리합니다. 반려 사유는 <b>현수막 실물 미제출</b>로 기록되고, 해당 매는 <b>차순위 신청자</b>에게 즉시 배정하거나 <b>목요일 선착순 접수</b>로 공개됩니다.</div></div>' +
+      body: '<div class="callout warn">' + IC.alert + '<div>아래 당첨 건을 <b>자동 취소(반려)</b> 처리합니다. 수요일 추첨분은 <b>수 18:00</b>, 목요일 선착순 당첨분은 <b>금 10:00</b>까지 입고해야 하며, 미입고 시 자동 취소(반려)됩니다. 반려 사유는 <b>현수막 실물 미제출</b>로 기록되고, 해당 매는 <b>차순위 신청자</b>에게 즉시 배정하거나 <b>목요일 선착순 접수</b>로 공개됩니다.</div></div>' +
         '<div class="table-wrap"><table><thead><tr><th>접수번호</th><th>업체·단체</th><th>배정 게시대</th><th>입고 마감</th><th>입금</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
       foot: '<button class="btn ghost" data-close type="button">취소</button>' +
         '<button class="btn danger" id="btnMissedGo" type="button">' + targets.length + '건 취소(반려) 실행</button>',
@@ -7238,7 +7859,7 @@
 
   function printReceipt() {
     var rule = $('#printPageRule');
-    if (rule) rule.textContent = '@page{size:A4 portrait;margin:10mm}';
+    if (rule) rule.textContent = '@page{size:A4 portrait;margin:8mm}';
     if (document.body && document.body.classList) document.body.classList.add('print-receipt');
     try { window.print(); } catch (e) { /* 인쇄 불가 환경 */ }
     setTimeout(function () {
@@ -7405,20 +8026,46 @@
     renderSuLicName();
     toast('옥외광고업 등록증 사본을 첨부했습니다 — ' + f.name + ' (가입 시 1회 제출)');
   }
+  function suLicSampleSvg() {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 508" width="720" height="508">' +
+      '<rect width="720" height="508" fill="#f3f7ff"/>' +
+      '<rect x="26" y="22" width="668" height="464" fill="#fff" stroke="#123a72" stroke-width="4"/>' +
+      '<rect x="26" y="22" width="668" height="64" fill="#123a72"/>' +
+      '<text x="360" y="63" font-size="30" text-anchor="middle" fill="#fff" font-family="sans-serif">옥 외 광 고 업  등 록 증</text>' +
+      '<text x="70" y="130" font-size="17" fill="#33475f" font-family="sans-serif">등록번호</text>' +
+      '<text x="200" y="130" font-size="19" fill="#0b2b52" font-family="sans-serif">제 2017-4530186-08-5-00001 호</text>' +
+      '<text x="70" y="180" font-size="17" fill="#33475f" font-family="sans-serif">상　　호</text>' +
+      '<text x="200" y="180" font-size="19" fill="#0b2b52" font-family="sans-serif">서산애드컴 (시연용)</text>' +
+      '<text x="70" y="230" font-size="17" fill="#33475f" font-family="sans-serif">대 표 자</text>' +
+      '<text x="200" y="230" font-size="19" fill="#0b2b52" font-family="sans-serif">김 도 현</text>' +
+      '<text x="70" y="280" font-size="17" fill="#33475f" font-family="sans-serif">사업자번호</text>' +
+      '<text x="200" y="280" font-size="19" fill="#0b2b52" font-family="sans-serif">312-45-10041</text>' +
+      '<text x="70" y="330" font-size="17" fill="#33475f" font-family="sans-serif">영업소 소재지</text>' +
+      '<text x="200" y="330" font-size="19" fill="#0b2b52" font-family="sans-serif">충남 서산시 덕지천로 1, 2층</text>' +
+      '<text x="70" y="380" font-size="17" fill="#33475f" font-family="sans-serif">업　　종</text>' +
+      '<text x="200" y="380" font-size="19" fill="#0b2b52" font-family="sans-serif">옥외광고물 제작·표시업</text>' +
+      '<text x="360" y="444" font-size="17" text-anchor="middle" fill="#6a7b93" font-family="sans-serif">위와 같이 옥외광고업 등록을 증명합니다.</text>' +
+      '<text x="360" y="472" font-size="15" text-anchor="middle" fill="#8b97a9" font-family="sans-serif">2026년 11월 22일   ·   서산시장 (시연용 샘플)</text>' +
+      '<circle cx="596" cy="404" r="42" fill="none" stroke="#c0392b" stroke-width="3"/>' +
+      '<text x="596" y="400" font-size="14" text-anchor="middle" fill="#c0392b" font-family="sans-serif">서산시장</text>' +
+      '<text x="596" y="420" font-size="11" text-anchor="middle" fill="#c0392b" font-family="sans-serif">(시연용)</text></svg>';
+  }
   function useSuLicSample() {
-    ui.suLicName = '옥외광고업등록증_샘플.pdf';
-    ui.suLicMime = 'application/pdf';
-    ui.suLicData = '';
+    ui.suLicName = '옥외광고업등록증_샘플_이미지.svg';
+    ui.suLicMime = 'image/svg+xml';
+    ui.suLicData = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(suLicSampleSvg());
     renderSuLicName();
-    toast('샘플 등록증을 첨부했습니다 — 실제 서비스에서는 등록증 사본 파일이 필요합니다.');
+    toast('샘플 옥외광고업 등록증 사본을 첨부했습니다 — 미리보기를 확인하고 그대로 가입을 마칠 수 있습니다.', false);
+    return ui.suLicName;
   }
   function renderSuLicName() {
     if (!has('suLicName')) return;
     var el = $('#suLicName');
     if (!el) return;
-    el.innerHTML = ui.suLicName
-      ? '첨부됨 · <b>' + esc(ui.suLicName) + '</b>' + (ui.suLicData ? ' <a href="#" data-licview="1">보기</a>' : ' (샘플)')
-      : '첨부된 파일이 없습니다.';
+    if (!ui.suLicName) { el.innerHTML = '첨부된 파일이 없습니다.'; return; }
+    var img = (ui.suLicData && /^image\//.test(String(ui.suLicMime || '')))
+      ? '<div class="su-lic-preview"><img src="' + ui.suLicData + '" alt="옥외광고업 등록증 샘플 미리보기"><div class="cap">시연용 옥외광고업 등록증 사본 미리보기 — 가입 필수 조건 충족</div></div>' : '';
+    el.innerHTML = '<span class="badge b-green"><i></i>첨부 완료</span> <b>' + esc(ui.suLicName) + '</b>' + (ui.suLicData ? '' : ' (샘플)') + img;
   }
   function renderLicName() {
     if (!has('licName')) return;
@@ -7481,18 +8128,57 @@
   }
 
   /* 게시대 현황 카드 `접수하러 가기` — 1단계 접수 화면으로 이동하며 이 게시대를 3단계 1순위에 담아 둔다 */
-  function applyFromStatus(pid) {
+  function applyFromStatus(pid, week) {
     var ap = placementById(pid);
     if (!ap) return false;
     if (ap.broken) { toast('고장·수리 중인 게시대입니다. 복구 후 신청할 수 있습니다.', true); return false; }
-    /* 페이지가 바뀌므로 선택 상태는 URL(?place=)로 넘긴다 */
-    return goPage('apply.html?place=' + encodeURIComponent(pid));
+    /* 페이지가 바뀌므로 선택 상태는 URL(?place=·?week=)로 넘긴다 */
+    var wk = week ? weekStartOf(week) : currentPostingWeek();
+    return goPage('apply.html?week=' + encodeURIComponent(wk) + '&place=' + encodeURIComponent(pid));
+  }
+  function rerenderCal(ctx) {
+    if (ctx === 'apply') { renderApplyWeek(); return; }
+    if (ctx === 'official') { renderOffWeek(); return; }
+    renderStatusCal();
+  }
+  function calMove(ctx, d) {
+    if (!ui.calMonth) ui.calMonth = {};
+    var cur = ui.calMonth[ctx] || weekStartOf(ctx === 'apply' ? (ui.applyWeek || ROUND.postStart) : (ctx === 'official' ? (ui.offWeek || ROUND.postStart) : (ui.statusWeek || ROUND.postStart))).slice(0, 7);
+    ui.calMonth[ctx] = monthAdd(cur, d);
+    rerenderCal(ctx);
+  }
+  function calPickWeek(ctx, s0) {
+    var s = weekStartOf(s0);
+    if (ctx === 'apply') { setApplyWeek(s); return; }
+    if (ctx === 'official') {
+      ui.offWeek = s;
+      ui.calMonth.official = s.slice(0, 7);
+      renderOffWeek(); renderOffPanel();
+      toast('공문 게첩 주를 ' + weekRangeTxt(s) + '(으)로 선택했습니다.');
+      return;
+    }
+    ui.statusWeek = s;
+    ui.calMonth.status = s.slice(0, 7);
+    renderStatus();
+  }
+  function calToday(ctx) {
+    var s = currentPostingWeek();
+    ui.calMonth[ctx] = s.slice(0, 7);
+    if (ctx === 'apply') { setApplyWeek(s); return; }
+    if (ctx === 'official') { ui.offWeek = s; renderOffWeek(); renderOffPanel(); return; }
+    ui.statusWeek = s; renderStatus();
   }
 
   function onClick(e) {
     var t = e.target;
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],#btnTop,[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgent],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday]') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgent],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime]') : null;
     if (!el) return;
+    if (el.hasAttribute('data-calprev')) { calMove(el.getAttribute('data-calprev'), -1); return; }
+    if (el.hasAttribute('data-calnext')) { calMove(el.getAttribute('data-calnext'), 1); return; }
+    if (el.hasAttribute('data-caltoday')) { calToday(el.getAttribute('data-caltoday')); return; }
+    if (el.hasAttribute('data-calweek')) { calPickWeek(el.getAttribute('data-calctx') || 'status', el.getAttribute('data-calweek')); return; }
+    if (el.hasAttribute('data-weekapply')) { goPage('apply.html?week=' + encodeURIComponent(el.getAttribute('data-weekapply'))); return; }
+    if (el.id === 'btnSuLicSample' || (el.getAttribute && el.getAttribute('data-sulicsample'))) { useSuLicSample(); return; }
     if (el.hasAttribute('data-login-open')) { openAuth('login'); return; }
     if (el.hasAttribute('data-auth-tab')) { openAuth(el.getAttribute('data-auth-tab')); return; }
     if (el.hasAttribute('data-login-preset')) { loginPreset(el.getAttribute('data-login-preset')); return; }
@@ -7568,7 +8254,7 @@
     if (el.hasAttribute('data-pick')) { togglePick(el.getAttribute('data-pick')); return; }
     if (el.hasAttribute('data-detail')) { showPlacementDetail(el.getAttribute('data-detail')); return; }
     if (el.hasAttribute('data-apply')) {
-      applyFromStatus(el.getAttribute('data-apply'));
+      applyFromStatus(el.getAttribute('data-apply'), el.getAttribute('data-week'));
       return;
     }
     if (el.hasAttribute('data-book')) { bookFirst(el.getAttribute('data-book')); return; }
@@ -7686,6 +8372,7 @@
     if (el.hasAttribute('data-payconfirm')) { confirmPay([el.getAttribute('data-payconfirm')]); return; }
     if (el.hasAttribute('data-deliverconfirm')) { confirmDeliver([el.getAttribute('data-deliverconfirm')]); return; }
     if (el.hasAttribute('data-poststart')) { markPosted(el.getAttribute('data-poststart')); return; }
+    if (el.hasAttribute('data-fctime')) { ui.fcTimeSim = el.getAttribute('data-fctime') || ''; ui.daySim = ui.daySim || 'thu'; renderFirst(); return; }
     if (el.hasAttribute('data-fcday')) {
       var fd = el.getAttribute('data-fcday');
       ui.daySim = fd ? fd : null;
@@ -7768,6 +8455,14 @@
     if ($('#applyBiz')) onEl('#applyBiz', 'input', function () { $('#fBiz').classList.remove('invalid'); });
     if ($('#applyEmail')) onEl('#applyEmail', 'input', function () { $('#fEmail').classList.remove('invalid'); });
     if ($('#imeToggle')) onEl('#imeToggle', 'click', function () { setIme(!ui.imeOn); });
+    if (document.addEventListener) {
+      document.addEventListener('change', function (e) {
+        var t = e.target;
+        if (t && t.getAttribute && t.getAttribute('data-offslot')) {
+          setOffSlot(t.getAttribute('data-offslot'), t.value);
+        }
+      });
+    }
     $$('input[name="appType"]').forEach(function (r) {
       r.addEventListener('change', function () {
         /* 로그인 중 — 회원 구분으로 확정된 상태라 바꿀 수 없다 */
@@ -7786,6 +8481,8 @@
     });
     onEl('#applyQty', 'input', qtyLiveCheck);
     onEl('#applyQty', 'change', qtyLiveCheck);
+    if ($('#applyStart')) onEl('#applyStart', 'change', function () { setApplyWeek(this.value, { silent: true }); });
+    if ($('#offDays')) onEl('#offDays', 'change', function () { renderOffWeek(); renderOffPanel(); });
     onEl('#chkDesignated', 'change', function () {
       var was = ui.designatedOnly;
       setDesignated(!!this.checked);
@@ -7805,7 +8502,7 @@
     if ($('#applyLic')) onEl('#applyLic', 'change', function (e) { handleLicFile(e.target.files && e.target.files[0]); });
     /* 회원가입 — 광고대행사 등록증 사본(가입 1회) */
     if ($('#suLic')) onEl('#suLic', 'change', function (e) { handleSuLic(e.target.files && e.target.files[0]); });
-    if ($('#btnSuLicSample')) onEl('#btnSuLicSample', 'click', function () { useSuLicSample(); });
+    /* 회원가입 모달은 열 때마다 새로 그려지므로 샘플 버튼은 document 위임으로 처리한다 */
     if ($('#licDrop')) onEl('#licDrop', 'click', function (e) { if (e.target && e.target.id === 'applyLic') return; if ($('#applyLic')) $('#applyLic').click(); });
     if ($('#btnDesignSample')) onEl('#btnDesignSample', 'click', function () { useDesignSample(); });
     if ($('#btnLicSample')) onEl('#btnLicSample', 'click', function () {
@@ -7947,6 +8644,11 @@
 
   /* 접수 페이지 — 게시대 현황·상세의 `접수하러 가기`가 넘긴 ?place= 를 1순위로 담는다 */
   function applyPlaceFromUrl() {
+    var wk = String(paramOf('week') || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(wk)) {
+      var ws = weekStartOf(wk);
+      if (ws >= currentPostingWeek()) { ui.applyWeek = ws; ui.calMonth.apply = ws.slice(0, 7); }
+    }
     var pid = String(paramOf('place') || '').trim();
     if (!pid) return false;
     var p = placementById(pid);
@@ -7989,6 +8691,7 @@
     if (!Array.isArray(db.members) || !db.members.length) {
       db.members = SEED_MEMBERS.map(function (m) { var o = {}; for (var k in m) { o[k] = m[k]; } return o; });
     }
+    ensureDemoData();
     if (!memberById(db.session)) db.session = null;
     /* 이전 저장 데이터 호환 — 협회 직책(가산점) 기본값 '없음(일반)' */
     db.members.forEach(function (m) { if (!m.roleBonusType) m.roleBonusType = 'none'; });
@@ -8239,6 +8942,30 @@
       });
     },
     officialNext: function (id) { var o = null; (db.official || []).forEach(function (x) { if (x.id === id) o = x; }); return o ? officialNextStep(o) : ''; },
+    /* 주별 현황 · 게첩 주 선택 · 대행사 시연 데이터 검증용 (2026-11-22) */
+    weekState: function () { return { status: weekStartOf(ui.statusWeek || ROUND.postStart), apply: weekStartOf(ui.applyWeek || ROUND.postStart), official: weekStartOf(ui.offWeek || ROUND.postStart), current: currentPostingWeek(), today: weekStartOf(todayISO()) }; },
+    setStatusWeek: function (s) { calPickWeek('status', s); return weekStartOf(ui.statusWeek); },
+    setApplyWeek: function (s) { return setApplyWeek(s, { silent: true }); },
+    setOffWeek: function (s) { calPickWeek('official', s); return weekStartOf(ui.offWeek); },
+    weekStats: function (s) { var r = weekStatsOf(s || activeWeekStart()); return { start: r.start, n: r.n, qty: r.qty, awarded: r.awarded, official: r.official, cap: r.cap, left: r.left }; },
+    weekApps: function (s) { return appsOfWeek(s || activeWeekStart()).map(function (a) { return { id: a.id, company: a.company, advertiser: a.advertiser, start: a.start, status: a.status, qty: a.qty, memberId: a.memberId }; }); },
+    weekOptions: function (ym) { return monthWeeksOf(ym || (ui.calMonth.status || currentPostingWeek().slice(0, 7))); },
+    officialChainOf: function (id) { var o = null; (db.official || []).forEach(function (x) { if (x.id === id) o = x; }); return o ? { days: officialDaysOf(o), exception: !!o.exception, chain: officialChainFor(o).map(function (c) { return c.k; }), done: officialDoneCount(o), next: officialNextStep(o), len: officialChainLen(o), status: o.status, week: officialWeekOf(o), slots: (o.slots || []).slice(), pids: (o.pids || []).slice() } : null; },
+    offSlotOrder: function (pid) { return officialSlotOrder(boardById(pid)); },
+    offSlotOptions: function (pid) { return officialSlotOptions(boardById(pid)); },
+    officialSlots: function (id) { var o = null; (db.official || []).forEach(function (x) { if (x.id === id) o = x; }); return o ? (o.slots || []).slice() : []; },
+    agencyCounts: function () {
+      var out = {};
+      AGENCY_IDS.forEach(function (mid) {
+        out[mid] = db.apps.filter(function (a) { return a.memberId === mid; }).length;
+      });
+      return out;
+    },
+    largeAgencies: LARGE_AGENCY_IDS.slice(),
+    agencyMembers: function () { return memberList().filter(function (m) { return m.type === 'agency'; }).map(function (m) { return { id: m.id, company: m.company, loginId: m.loginId, biz: m.biz }; }); },
+    firstComeConfig: function () { return { from: FC_OPEN_FROM, to: FC_OPEN_TO, deliverDate: FC_DELIVER.date, deliverTime: FC_DELIVER.time }; },
+    setFcTime: function (v) { ui.fcTimeSim = v || ''; renderFirst(); return firstComeState(); },
+    registerOfficialRaw: registerOfficial,
     officialChain: function () { return OFFICIAL_CHAIN.map(function (c) { return c.label; }); },
     applyDaysFixed: function () { return String($('#applyDays') ? $('#applyDays').value : ''); },
     applyDaysLocked: function () { return true; },
@@ -8271,10 +8998,11 @@
     /* 게시동(A·B·C) × 단(1~5) 세부 위치 검증용 */
     slotCodes: function (pid) { return slotCodeListOf(boardById(pid)); },
     slotName: function (pid, code) { return slotName(boardById(pid), code); },
-    slotPlan: function (pid) {
-      var o = slotPlan(pid);
+    slotPlan: function (pid, week) {
+      var o = slotPlan(pid, week);
       return { codes: o.codes.slice(), free: o.free.slice(), post: Object.keys(o.post).sort(), remove: Object.keys(o.remove).sort(), official: o.count.official, app: o.count.app };
     },
+    setRole: function (k) { return setAdminRole(k); },
     slotStates: function (pid) {
       var p = boardById(pid);
       return slotCodeListOf(p).map(function (c) { var s = slotStateOf(p, c); return { code: c, k: s.k, off: !!s.off, rivals: s.rivals || 0 }; });
