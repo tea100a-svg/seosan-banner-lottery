@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>협회 관리자 · 공문 우선배정 · 입금 · 입고 · 작업지시서 · 게시위치 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<title>협회 관리자 · 입고 · 작업지시서 · 게시 지정서 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -80,18 +80,21 @@
 
 <section class="view active" id="view-admin">
 <div class="subtabs" id="adminSub">
-  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 전산 추첨 · 접수대장</a>
-  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안심사 · 가산점</a>
-  <a class="subtab on" href="admin-docs.html" data-adminsub="docs">📄 공문 · 작업지시서</a>
-  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 · 코스 · 회원</a>
-  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 규칙 · 로그</a>
+  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
+  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
+  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
+  <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입고 · 지시서</a>
+  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 코스 · 금지</a>
+  <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
+  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
 <div class="view-head">
       <div>
-        <h2>공문 우선배정 · 입금 · 입고 · 작업지시서 · 게시위치</h2>
-        <p>시청 공문 사전 배정과 결재, 입금·현수막 입고 확인, 현장 게첩 작업지시서와 게시위치(위치보기)·게시지정서를 처리합니다.</p>
+        <h2>🧾 입금·입고 확인 · 현장 작업지시서 · 게시 지정서</h2>
+        <p>당첨 건의 입금·현수막 실물 입고를 확인하고, 현장 게첩 작업지시서와 시청 제출용 게시 지정서를 출력합니다.</p>
       </div>
-
     </div>
 <div class="role-bar" id="adminRoleBar">
       <span class="role-badge">🔐 현재 접속 권한: <b id="adminRoleNow">총괄 관리자</b></span>
@@ -101,68 +104,8 @@
       <select class="input sm" id="adminRoleSel"></select>
       <span class="sm role-note" id="adminRoleNote"></span>
     </div>
-<div class="panel" id="offPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h9l5 5v12H5Z"/><path d="M14 3.5v5h5"/><path d="M8 13h8M8 16.5h5"/></svg>
-          시청 공문 현수막 우선 접수 (사전 배정)
-        </h3>
-        <span class="sub" id="offInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:14px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>시청 공문 현수막은 <b>추첨 전에 게시대를 먼저 확정</b>합니다. 게시대별 공문 배정은 그 게시대 <b>전체 게시면의 40% 이하(내림, 예: 정원 20면 → 최대 8면)</b>까지만 가능하며, 상한을 넘으려 하면 등록이 차단됩니다. 등록 즉시 <b>공문 우선배정</b> 상태가 되어 해당 게시대의 <b>가용 면을 먼저 차감</b>하고, 월요일 전산 추첨은 <b>남은 면으로만</b> 진행됩니다(정원 초과 없음). 공문 건은 <b>광고주 중복 제한·페널티 대상에서 제외</b>되며, <b>시청 인지대 3,000원은 면제(0원)</b>입니다 — 1매 <b>7,700원</b>(탈부착·관리 7,000 + 부가세 700) 또는 <b>공문 별도정산</b>. 현장 게첩 작업지시서에도 <b>(공문)</b> 표기로 설치 대상에 자동 포함됩니다.</div>
-      </div>
-      <div class="field-row">
-        <div class="field" id="fOffOrg"><label for="offOrg">기관·부서<span class="req">*</span></label>
-          <input class="input ko-ime" id="offOrg" lang="ko" placeholder="예) 서산시청 복지과" maxlength="40">
-          <div class="err-txt">기관·부서를 입력해 주세요.</div></div>
-        <div class="field"><label for="offDoc">공문번호</label>
-          <input class="input ko-ime" id="offDoc" lang="ko" placeholder="예) 서산시청 복지과 · 공문" maxlength="40"></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label for="offMaker">제작업체</label>
-          <input class="input ko-ime" id="offMaker" lang="ko" placeholder="예) 광고랜드(공문)" maxlength="40"></div>
-        <div class="field" id="fOffText"><label for="offText">현수막 문구<span class="req">*</span></label>
-          <input class="input ko-ime" id="offText" lang="ko" placeholder="예) 서산시 희망나눔 캠페인" maxlength="40">
-          <div class="err-txt">현수막 문구를 입력해 주세요.</div></div>
-      </div>
-      <div class="field" id="fOffWeek">
-        <label>게첩 희망 주 (월요일 ~ 일요일)<span class="req">*</span></label>
-        <div class="hint-txt" style="margin:0 0 6px">공문 현수막을 <b>어느 주에 게첩할지</b> 달력에서 고릅니다. 2주 승인 건은 <b>선택한 주부터 2주</b>가 달력·주별 현황에 함께 표시됩니다.</div>
-        <div id="offWeekCal"></div>
-        <div class="week-now" id="offWeekNow" style="display:inline-block;margin-top:6px">2026.11.30 ~ 12.06</div>
-      </div>
-      <div class="field" id="fOffDays">
-        <label for="offDays">게시 기간</label>
-        <select class="input" id="offDays">
-          <option value="7" selected>1주(7일) · 등록 즉시 확정</option>
-          <option value="14">2주(14일) · 전자결재 승인 후 확정</option>
-        </select>
-        <div class="hint-txt" style="margin-top:6px">2주는 <b>지부장 결재 → 감사(2인 중 1인) 결재</b>가 끝나야 면이 확정됩니다.</div>
-      </div>
-      <div class="field" id="fOffQty">
-        <label for="offQty">공문 접수 수량(장)<span class="req">*</span></label>
-        <input class="input" id="offQty" type="number" min="1" max="50" step="1" value="1" style="max-width:180px">
-        <div class="counter"><span id="offQtyCount">0</span> / <span id="offQtyGoal">1</span>매 선택 — 게시대 1곳당 1매</div>
-        <div class="err-txt">공문 수량(1~50매)을 먼저 입력해 주세요.</div>
-      </div>
-      <div class="field">
-        <span class="flabel">배정 게시대 (복수 선택 · 고장 게시대 제외)<span class="req">*</span></span>
-        <div class="hint-txt" style="margin:0 0 6px"><b id="offQtyLine">선택 0 / 목표 1매</b> — 입력한 수량만큼 게시대를 고르면 등록할 수 있습니다.</div>
-        <div class="off-days" id="offDayChips"></div>
-        <div class="off-picks" id="offPlaces"></div>
-        <div class="off-slot-list" id="offSlots" style="margin-top:10px"></div>
-        <div class="hint-txt" id="offPickInfo"></div>
-      </div>
-      <div class="off-actions">
-        <button class="btn primary" id="btnOffAdd" type="button">공문 우선배정 등록</button>
-        <button class="btn ghost" id="btnOffClear" type="button">선택 해제</button>
-        <span class="hint-txt" style="margin:0">등록 즉시 확정 · 시연 예시 <b>서산시 희망나눔 캠페인 · 공문(예시)</b> · 공문 수수료 <b>1매 7,700원(시청 인지대 0원 면제)</b></span>
-      </div>
-      <div class="table-wrap" id="offTable" style="margin-top:14px"></div>
-    </div>
-<div class="panel">
+<div class="callout warn hidden" id="payLocked"></div>
+<div class="panel" id="payPanel">
       <div class="admin-head">
         <h3>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19M6 15h4"/></svg>
@@ -179,7 +122,8 @@
       </div>
       <div class="table-wrap" id="payTable"></div>
     </div>
-<div class="panel">
+<div class="callout warn hidden" id="deliverLocked"></div>
+<div class="panel" id="deliverPanel">
       <div class="admin-head">
         <h3>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="9.5" rx="1.6"/><path d="M6 13.5v6M18 13.5v6M6.5 7.4h11M6.5 10.2h7"/></svg>
@@ -200,6 +144,38 @@
         <div>입고 마감은 <b>수요일 18:00</b>입니다. 일괄 취소를 실행하면 미입고 당첨 건이 <b>자동 취소(반려 · 사유: 현수막 실물 미제출)</b>되고, 그 매는 차순위 신청자 또는 <b>목요일 선착순 접수</b>로 즉시 전환됩니다. 목요일에 남은 매는 금요일부터 접수가 제한되며 다음 주 회차로 이월됩니다.</div>
       </div>
       <div class="table-wrap" id="deliverTable"></div>
+    </div>
+<div class="panel" id="reportPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+          🏛️ 시청 신고 표지 — 현수막 접수현황
+        </h3>
+        <span class="sub" id="reportInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>시청에 제출할 <b>현수막 접수현황 표지</b>입니다. 업체별 건수·매수·수수료·세액·인지대·금액을 집계하고, <b>공문 건은 인지대 -</b>(면제·살구색)로 따로 모읍니다. <b>A4 세로 1장</b>으로 인쇄합니다.</div>
+      </div>
+      <div class="off-actions" style="margin-bottom:10px">
+        <button class="btn primary" id="btnReportShow" type="button">미리보기</button>
+        <button class="btn" id="btnReportPrint2" type="button">A4 1장 인쇄</button>
+      </div>
+      <div class="report-preview" id="reportPreview"></div>
+    </div>
+<div class="panel" id="desigBatchPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          🖨️ 게시 지정서 일괄 출력
+        </h3>
+        <span class="sub" id="desigBatchInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>이번 회차 <b>확정·배정 건 전체</b> 또는 <b>체크한 건</b>의 시청제출용 게시 지정서를 한 번에 인쇄합니다. <b>건마다 A4 1장</b>으로 페이지가 나뉘고, 60칸 2단 표·서명란 없음 규격은 단건 출력과 같습니다.</div>
+      </div>
+      <div id="desigBatchList"></div>
     </div>
 <div class="panel" id="woPanel">
       <div class="admin-head">

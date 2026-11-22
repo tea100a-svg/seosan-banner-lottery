@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>협회 관리자 · 시안 심사 · 유사문구 · 가산점 · 금지게시대 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<title>협회 관리자 · 시안 심사 · 유사문구 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -80,18 +80,21 @@
 
 <section class="view active" id="view-admin">
 <div class="subtabs" id="adminSub">
-  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 전산 추첨 · 접수대장</a>
-  <a class="subtab on" href="admin-review.html" data-adminsub="review">🔍 시안심사 · 가산점</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">📄 공문 · 작업지시서</a>
-  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 · 코스 · 회원</a>
-  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 규칙 · 로그</a>
+  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
+  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
+  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
+  <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입고 · 지시서</a>
+  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 코스 · 금지</a>
+  <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
+  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
 <div class="view-head">
       <div>
-        <h2>시안 심사 · 유사문구 · 가산점 · 금지게시대</h2>
-        <p>접수 시안을 승인·반려하고, 유사 광고주·문구를 점검하며, 직책 가산점과 제작업체별 금지 게시대를 관리합니다.</p>
+        <h2>시안 심사 · 유사 광고주·문구 점검</h2>
+        <p>접수 시안을 승인·반려하고, 같은 광고주·비슷한 문구의 중복 접수를 점검합니다. 행사 우선접수 투표는 <b>행사 우선접수</b> 메뉴에서 합니다.</p>
       </div>
-
     </div>
 <div class="role-bar" id="adminRoleBar">
       <span class="role-badge">🔐 현재 접속 권한: <b id="adminRoleNow">총괄 관리자</b></span>
@@ -119,67 +122,6 @@
         </div>
         <div class="table-wrap" id="dupSuspectList"></div>
       </div>
-    </div>
-<div class="panel" id="roleBonusPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9Z"/></svg>
-          직책 가산점 관리
-        </h3>
-        <span class="sub" id="roleBonusInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회 직책은 <b>관리자만 지정·해제</b>합니다(일반 회원가입 화면에는 없습니다). 추첨 가중치는 <b>1.0 + 직책 가산 + 임박 행사(+15%)</b>이며, 지정·해제와 추첨 적용 내역은 모두 <b>감사 로그</b>에 남습니다.</div>
-      </div>
-      <div class="chips" id="roleBonusChips" style="margin-bottom:10px"></div>
-      <div class="table-wrap" id="adminRoleTable"></div>
-    </div>
-<div class="panel" id="makerBlockPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.5 5.5l13 13"/></svg>
-          🚫 제작업체별 금지 게시대
-        </h3>
-        <span class="sub" id="makerBlockInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>제작업체(<b>업체명</b> 또는 <b>옥외광고업 등록번호</b>)를 지정하고 금지할 게시대를 고르면, 그 업체가 접수한 건은 <b>3단계 선택 · 무작위 담기 · 선착순 · 추첨 배정</b>에서 그 게시대가 자동으로 빠집니다. 일반업체가 그 출력업체 등록번호로 접수한 경우도 함께 적용됩니다.</div>
-      </div>
-      <div class="place-add" id="makerBlockAdd">
-        <div class="pa-head"><b>금지 게시대 등록</b><span>업체명·등록번호 중 하나는 꼭 입력하세요.</span></div>
-        <div class="field-row">
-          <div class="field"><label for="mbMaker">제작업체명</label>
-            <input class="input ko-ime" id="mbMaker" lang="ko" placeholder="예) 재봉기획" maxlength="30"></div>
-          <div class="field"><label for="mbOade">옥외광고업 등록번호</label>
-            <input class="input" id="mbOade" placeholder="예) 제 2017-4530186-08-5-00001 호" maxlength="40"></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label for="mbReason">사유</label>
-            <input class="input ko-ime" id="mbReason" lang="ko" placeholder="예) 업체 장비·안전상 설치 불가" maxlength="60"></div>
-          <div class="field"><label for="mbPlaces">금지할 게시대 (여러 곳 선택)</label>
-            <select class="input" id="mbPlaces" multiple size="6" style="height:auto"></select></div>
-        </div>
-        <div class="off-actions">
-          <button class="btn primary" id="btnMakerBlockAdd" type="button">금지 게시대 등록</button>
-        </div>
-      </div>
-      <div class="table-wrap" id="makerBlockTable"></div>
-    </div>
-<div class="panel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M12 9v4M12 16.5v.1"/></svg>
-          제재(페널티) 현황
-        </h3>
-        <span class="sub" id="penaltyInfo"></span>
-      </div>
-      <div class="callout warn" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
-        <div>당첨 후 <b>본인 사유 취소</b>, <b>미입금(입금 지연)</b>, <b>수요일 18:00 미입고 자동 취소</b>는 실제 광고주(사업자번호+연락처) 기준으로 <b>차기 1개 주 회차 접수 제한</b>이 자동 부여됩니다. <b>협회 시안 반려는 제재 대상이 아닙니다</b>(재접수 가능). 제한 중에는 주간 추첨·목요일 선착순 접수가 모두 차단됩니다.</div>
-      </div>
-      <div class="table-wrap" id="adminPenaltyTable"></div>
     </div>
 </section>
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>

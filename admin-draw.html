@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>협회 관리자 · 전산 추첨 · 추첨결과 · 접수대장 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<title>협회 관리자 · 추첨 · 주차별 접수대장 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -80,23 +80,22 @@
 
 <section class="view active" id="view-admin">
 <div class="subtabs" id="adminSub">
-  <a class="subtab on" href="admin-draw.html" data-adminsub="draw">🎯 전산 추첨 · 접수대장</a>
-  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안심사 · 가산점</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">📄 공문 · 작업지시서</a>
-  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 · 코스 · 회원</a>
-  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 규칙 · 로그</a>
+  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
+  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
+  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
+  <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입고 · 지시서</a>
+  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 코스 · 금지</a>
+  <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
+  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
 <div class="view-head">
       <div>
-        <h2>전산 추첨 · 추첨결과 · 접수대장</h2>
-        <p>매주 월요일 10:00 정기 전산 추첨을 실행하고, 추첨 결과·난수 시드·검증 정보와 접수대장을 확인합니다.</p>
+        <h2>주간 전산 추첨 · 주차별 접수대장</h2>
+        <p>게첩 주별 접수·배정 현황을 확인하고, 매주 월요일 10:00 전산 추첨을 실행합니다. 배정 순서는 <b>시청 공문 → 행사 우선 승인 → 일반 추첨</b>입니다.</p>
       </div>
-
     </div>
-<div class="mp-linkbar">
-  <a class="btn sm" href="admin-docs.html">🏛️ 공문 우선접수 · 게첩 주 달력 · 특정 위치(동·단) · 2주 결재 →</a>
-  <span class="hint-txt" style="margin:0;align-self:center">공문은 <b>게첩 주(월~일)</b>를 골라 접수하고, 2주는 <b>지부장 → 감사(2인 중 1인)</b> 결재로 확정됩니다.</span>
-</div>
 <div class="role-bar" id="adminRoleBar">
       <span class="role-badge">🔐 현재 접속 권한: <b id="adminRoleNow">총괄 관리자</b></span>
       <span class="role-who" id="adminRoleWho"></span>

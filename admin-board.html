@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>협회 관리자 · 게시대 · 테마 코스 · 회원 · 직책 권한 · 공로 선점 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<title>협회 관리자 · 게시대 관리 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -80,18 +80,21 @@
 
 <section class="view active" id="view-admin">
 <div class="subtabs" id="adminSub">
-  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 전산 추첨 · 접수대장</a>
-  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안심사 · 가산점</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">📄 공문 · 작업지시서</a>
-  <a class="subtab on" href="admin-board.html" data-adminsub="board">🛠️ 게시대 · 코스 · 회원</a>
-  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 규칙 · 로그</a>
+  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
+  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
+  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
+  <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입고 · 지시서</a>
+  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 코스 · 금지</a>
+  <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
+  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
 <div class="view-head">
       <div>
-        <h2>게시대 · 테마 코스 · 회원 · 직책 권한 · 공로 선점</h2>
-        <p>게시대 추가·고장 체크, 테마별 추천 코스, 회원 직책 가산점, 직책·권한 승인과 공로 회원 특별 선점권을 관리합니다.</p>
+        <h2>🛠️ 게시대 관리 · 고장 / 풀가림 / 기타사유</h2>
+        <p>게시대를 추가·삭제하고, 단수마다 <b>고장 · 풀가림 · 설치불가 · 기타사유</b>를 지정합니다. 풀가림은 목요일 선착순에서만, 기타사유는 사유 팝업으로 고객에게 안내됩니다.</p>
       </div>
-
     </div>
 <div class="role-bar" id="adminRoleBar">
       <span class="role-badge">🔐 현재 접속 권한: <b id="adminRoleNow">총괄 관리자</b></span>
@@ -143,86 +146,6 @@
         </div>
       </div>
       <div class="table-wrap" id="adminPlaceTable"></div>
-    </div>
-<div class="panel" id="themeAdminPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v13L9 17l6 3 6-2.5v-13L15 7Z"/><path d="M9 4v13M15 7v13"/></svg>
-          🗺️ 테마별 추천 코스 관리
-        </h3>
-        <span class="sub" id="themeAdminInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>여기서 저장한 테마 코스는 <b>게시대 현황 · 3단계 게시대 선택 · 미배정 선착순</b>의 테마 필터에 <b>바로</b> 나타나고, 새로고침해도 유지됩니다. 기본 3종(학교·통학로 / 통근버스·정류소 / 산업단지 인근)도 게시대를 추가·해제할 수 있고, 새로 만든 테마는 삭제할 수 있습니다. <b>테마</b>는 광고주에게 보이는 추천 묶음일 뿐이며 <b>추첨·배정·수수료에는 영향이 없습니다</b>.</div>
-      </div>
-      <div class="table-wrap" id="themeAdminTable"></div>
-      <div class="place-add" id="themeAdd">
-        <div class="pa-head"><b>새 테마 코스 추가</b><span>테마명·코스 설명을 적고 포함할 게시대를 골라 저장하세요.</span></div>
-        <div class="field-row">
-          <div class="field"><label for="thName">테마명<span class="req">*</span></label>
-            <input class="input ko-ime" id="thName" lang="ko" placeholder="예) 대산공단 출퇴근 코스" maxlength="24"></div>
-          <div class="field"><label for="thDesc">코스 설명</label>
-            <input class="input ko-ime" id="thDesc" lang="ko" placeholder="예) 대산읍·성연면 산업단지 통근 동선" maxlength="60"></div>
-        </div>
-        <div class="field"><label>포함할 게시대 — <span id="thCount">0개소 선택</span></label>
-          <input class="input sm" id="thSearch" placeholder="게시대·읍면동 검색" style="max-width:240px;margin-bottom:8px">
-          <div class="th-picks" id="thPicks"></div></div>
-        <div class="off-actions">
-          <button class="btn primary" id="btnThemeAdd" type="button">테마 코스 저장</button>
-          <button class="btn ghost" id="btnThemeClear" type="button">선택 해제</button>
-        </div>
-      </div>
-    </div>
-<div class="panel" id="officerPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 5 5.6.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.6-.8Z"/></svg>
-          직책·권한 승인 관리
-        </h3>
-        <span class="sub" id="officerInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회 임원·실무자(<b>지부장 · 수석부지부장 · 사무국장 · 사무실무원 · 현장실무원 · 감사1 · 감사2</b>)의 직책과 권한을 관리합니다. <b>승인 완료</b>된 직책자만 해당 단계의 공문 결재를 할 수 있고, <b>승인 대기</b>·<b>해제</b> 상태면 결재할 수 없습니다. 총괄 관리자는 모든 단계를 결재·승인·회수할 수 있으며, 모든 처리는 감사 로그에 기록됩니다. (직책 가산점은 별도 <b>직책 가산점 관리</b>에서 지정합니다.)</div>
-      </div>
-      <div class="deleg-card" id="delegCard">
-        <div class="deleg-head">
-          <b>🎖 공로 회원 특별 선점권</b>
-          <span class="badge b-gray" id="delegState"><i></i>위임 안 됨</span>
-          <span class="sm" id="delegLimit">잔여 5 / 5자리 (주간)</span>
-          <span class="spacer"></span>
-          <button class="btn sm primary" id="btnDelegGrant" data-deleg="grant" type="button">사무실무원에게 위임</button>
-          <button class="btn sm ghost" id="btnDelegRevoke" data-deleg="revoke" type="button">위임 회수</button>
-        </div>
-        <div class="sm" id="delegInfo" style="margin:6px 0 10px"></div>
-        <div class="field-row">
-          <div class="field"><label for="psMember">대상 회원</label><select class="input" id="psMember"></select></div>
-          <div class="field"><label for="psReason">공적 사유</label><input class="input ko-ime" id="psReason" lang="ko" maxlength="60" placeholder="예) 자율방범·협회 행사 공로" autocomplete="off"></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label for="psPlace">게시대</label><select class="input" id="psPlace"></select></div>
-          <div class="field"><label for="psSlot">단수 (선택)</label><input class="input" id="psSlot" placeholder="예) 1F-A" maxlength="8" autocomplete="off"></div>
-        </div>
-        <div class="off-actions">
-          <button class="btn primary" id="btnSeatAssign" data-seatassign="1" type="button">선점 배정</button>
-          <span class="hint-txt" id="delegHint" style="margin:0"></span>
-        </div>
-        <div class="table-wrap" id="seatList" style="margin-top:10px"></div>
-      </div>
-      <div class="table-wrap" id="officerTable"></div>
-      <div class="place-add" id="officerAdd" style="margin-top:14px">
-        <div class="pa-head"><b>직책자 등록</b><span>직책·성명·업체를 적고 등록하면 <b>승인 대기</b>로 접수됩니다.</span></div>
-        <div class="field-row">
-          <div class="field"><label for="ofRole">직책</label><select class="input" id="ofRole"></select></div>
-          <div class="field"><label for="ofName">성명<span class="req">*</span></label><input class="input ko-ime" id="ofName" lang="ko" maxlength="20" placeholder="예) 김재봉" autocomplete="off"></div>
-          <div class="field"><label for="ofCompany">업체·소속</label><input class="input ko-ime" id="ofCompany" lang="ko" maxlength="30" placeholder="예) 재봉기획" autocomplete="off"></div>
-        </div>
-        <div class="off-actions">
-          <button class="btn primary" id="btnOfficerAdd" type="button" data-officeradd="1">직책자 등록</button>
-          <span class="hint-txt" style="margin:0">등록 후 [승인]을 눌러야 결재 권한이 생깁니다.</span>
-        </div>
-      </div>
     </div>
 </section>
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>

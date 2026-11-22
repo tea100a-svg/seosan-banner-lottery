@@ -90,10 +90,16 @@
         새로고침
       </button>
     </div>
-    <div class="panel week-cal-panel" id="weekCalPanel">
+    <div class="cal-toggle-row">
+      <button class="btn ghost sm" id="btnWeekCal" type="button" aria-expanded="false" aria-controls="weekCalPanel">📅 달력보기</button>
+      <span class="sm" id="weekCalHint">게첩 주(월~일)별 접수·배정을 달력으로 봅니다</span>
+    </div>
+    <div class="panel week-cal-panel collapsed" id="weekCalPanel">
       <div class="panel-head">
         <h3>🗓️ 주별 현황 달력 <span class="sub">게첩 주(월~일) 단위</span></h3>
         <span class="sub" id="weekCalSub"></span>
+        <span class="spacer"></span>
+        <button class="btn ghost sm" id="btnWeekCalClose" type="button">닫기</button>
       </div>
       <div id="weekCal"></div>
     </div>
@@ -106,6 +112,7 @@
     </div>
     <div class="toolbar">
       <div class="pick-filters" style="margin:0">
+        <div class="chips sort-chips" id="statusSortChips" aria-label="게시대 정렬"></div>
         <div class="chips" id="statusDayChips"></div>
         <select class="input" id="statusDong" aria-label="읍면동 선택"></select>
       </div>

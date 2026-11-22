@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>협회 관리자 · 회원 · 권한 · 가산점 · 행사권한자 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="admin-members">
+<div class="demo-banner">
+  <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+</div>
+
+<header class="site-header">
+  <div class="wrap hdr">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#bfd8ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="4" width="19" height="9.5" rx="1.6" fill="rgba(191,216,255,.14)"/>
+          <path d="M6.5 7.4h11M6.5 10.2h7"/>
+          <path d="M6 13.5v6M18 13.5v6"/>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <span class="org">사단법인 충청남도옥외광고협회 서산시지부</span>
+        <h1>현수막 지정게시대 접수 시스템</h1>
+      </div>
+    </div>
+    <div class="hdr-side">
+      <button class="ime-badge on" id="imeToggle" type="button" aria-pressed="true" title="영타 입력 시 한글 자동변환 ON — 영문 키보드 상태로 입력해도 한글로 바뀝니다. 누르면 끕니다." aria-label="영타 입력 시 한글 자동변환 ON">
+        <span class="dot"></span><span id="imeText">영타 입력 시 한글 자동변환 <b>ON</b></span>
+      </button>
+      <div class="hdr-auth">
+        <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
+        <div class="hdr-user hidden" id="authUser">
+          <span><b id="authName">회원</b><small id="authSub">일반업체</small></span>
+          <button class="btn-auth sm" id="btnLogout" type="button" data-logout="1">로그아웃</button>
+        </div>
+      </div>
+      <div class="chip-round">
+        <span class="dot"></span>
+        <div>
+          <b id="roundName">2026년 11월 4주차 주간 추첨</b>
+          <small id="roundDue">입고 마감 수 18:00</small>
+        </div>
+      </div>
+      <label class="switch admin-switch" title="협회 관리자 모드 전환" aria-label="관리자 모드 전환">
+        <input type="checkbox" id="adminToggle">
+        <span class="track"><span class="knob"></span></span>
+        <span class="switch-label">관리자 모드</span>
+      </label>
+    </div>
+  </div>
+  <nav class="tabs wrap site-nav" aria-label="페이지 이동">
+    <a class="tab" href="index.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="9" rx="1.5"/><path d="M7 13v6M17 13v6M7 7.5h10M7 10h6"/></svg>
+      게시대 현황
+    </a>
+    <a class="tab" href="apply.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
+      주간 추첨 접수
+    </a>
+    <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      미배정 선착순
+    </a>
+    <a class="tab" href="guide-rules.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
+      규격·안내
+    </a>
+    <a class="tab" href="mypage.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      마이페이지
+    </a>
+    <a class="tab active admin-tab" href="admin-draw.html" id="adminTab" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
+      협회 관리자
+    </a>
+  </nav>
+</header>
+
+
+<main class="wrap main">
+
+<section class="view active" id="view-admin">
+<div class="subtabs" id="adminSub">
+  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
+  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
+  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
+  <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입고 · 지시서</a>
+  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 코스 · 금지</a>
+  <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
+  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
+</div>
+<div class="view-head">
+      <div>
+        <h2>👥 회원 · 임원 권한 · 직책 가산점 · 행사승인권한자</h2>
+        <p>협회 직책과 결재 권한, 직책별 추첨 가산점, 행사 우선접수를 투표로 결정하는 <b>행사승인권한자 5명</b>, 제재(페널티) 현황을 관리합니다.</p>
+      </div>
+    </div>
+<div class="role-bar" id="adminRoleBar">
+      <span class="role-badge">🔐 현재 접속 권한: <b id="adminRoleNow">총괄 관리자</b></span>
+      <span class="role-who" id="adminRoleWho"></span>
+      <span class="spacer"></span>
+      <label class="sm" for="adminRoleSel">시연용 직책 전환</label>
+      <select class="input sm" id="adminRoleSel"></select>
+      <span class="sm role-note" id="adminRoleNote"></span>
+    </div>
+<div class="panel" id="assocPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V8l6-4 6 4v12"/><path d="M15 20V11h6v9"/><path d="M6.5 11h1M6.5 14h1M6.5 17h1M10 11h.5M10 14h.5"/></svg>
+          🏢 협회 등록 회원사 · 추첨 가산점
+        </h3>
+        <span class="sub" id="assocInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>협회에 등록된 회원사에는 추첨 가산점을 줄 수 있습니다. <b>기본 0%</b>이고, 관리자가 회원사별로 <b>%를 직접 조정</b>합니다(최대 20%). 기한임박 자동 가산점과 같은 방식으로 <b>가중치 = 1.0 + 직책 가산 + 협회 회원사 가산 + (관리자 인정 임박 가산)</b>에 더해집니다.</div>
+      </div>
+      <div class="table-wrap" id="assocTable"></div>
+    </div>
+<div class="panel" id="officerPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 5 5.6.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.6-.8Z"/></svg>
+          직책·권한 승인 관리
+        </h3>
+        <span class="sub" id="officerInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>협회 임원·실무자(<b>지부장 · 수석부지부장 · 사무국장 · 사무실무원 · 현장실무원 · 감사1 · 감사2</b>)의 직책과 권한을 관리합니다. <b>승인 완료</b>된 직책자만 해당 단계의 공문 결재를 할 수 있고, <b>승인 대기</b>·<b>해제</b> 상태면 결재할 수 없습니다. 총괄 관리자는 모든 단계를 결재·승인·회수할 수 있으며, 모든 처리는 감사 로그에 기록됩니다. (직책 가산점은 별도 <b>직책 가산점 관리</b>에서 지정합니다.)</div>
+      </div>
+      <div class="deleg-card" id="delegCard">
+        <div class="deleg-head">
+          <b>🎖 공로 회원 특별 선점권</b>
+          <span class="badge b-gray" id="delegState"><i></i>위임 안 됨</span>
+          <span class="sm" id="delegLimit">잔여 5 / 5자리 (주간)</span>
+          <span class="spacer"></span>
+          <button class="btn sm primary" id="btnDelegGrant" data-deleg="grant" type="button">사무실무원에게 위임</button>
+          <button class="btn sm ghost" id="btnDelegRevoke" data-deleg="revoke" type="button">위임 회수</button>
+        </div>
+        <div class="sm" id="delegInfo" style="margin:6px 0 10px"></div>
+        <div class="field-row">
+          <div class="field"><label for="psMember">대상 회원</label><select class="input" id="psMember"></select></div>
+          <div class="field"><label for="psReason">공적 사유</label><input class="input ko-ime" id="psReason" lang="ko" maxlength="60" placeholder="예) 자율방범·협회 행사 공로" autocomplete="off"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="psPlace">게시대</label><select class="input" id="psPlace"></select></div>
+          <div class="field"><label for="psSlot">단수 (선택)</label><input class="input" id="psSlot" placeholder="예) 1F-A" maxlength="8" autocomplete="off"></div>
+        </div>
+        <div class="off-actions">
+          <button class="btn primary" id="btnSeatAssign" data-seatassign="1" type="button">선점 배정</button>
+          <span class="hint-txt" id="delegHint" style="margin:0"></span>
+        </div>
+        <div class="table-wrap" id="seatList" style="margin-top:10px"></div>
+      </div>
+      <div class="table-wrap" id="officerTable"></div>
+      <div class="place-add" id="officerAdd" style="margin-top:14px">
+        <div class="pa-head"><b>직책자 등록</b><span>직책·성명·업체를 적고 등록하면 <b>승인 대기</b>로 접수됩니다.</span></div>
+        <div class="field-row">
+          <div class="field"><label for="ofRole">직책</label><select class="input" id="ofRole"></select></div>
+          <div class="field"><label for="ofName">성명<span class="req">*</span></label><input class="input ko-ime" id="ofName" lang="ko" maxlength="20" placeholder="예) 김재봉" autocomplete="off"></div>
+          <div class="field"><label for="ofCompany">업체·소속</label><input class="input ko-ime" id="ofCompany" lang="ko" maxlength="30" placeholder="예) 재봉기획" autocomplete="off"></div>
+        </div>
+        <div class="off-actions">
+          <button class="btn primary" id="btnOfficerAdd" type="button" data-officeradd="1">직책자 등록</button>
+          <span class="hint-txt" style="margin:0">등록 후 [승인]을 눌러야 결재 권한이 생깁니다.</span>
+        </div>
+      </div>
+    </div>
+<div class="panel" id="eventApproverPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
+          🎪 행사승인권한자 5명 관리
+        </h3>
+        <span class="sub" id="eventApproverInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>행사 우선접수 심사를 투표로 결정하는 <b>행사승인권한자 5명</b>입니다. 5명 중 <b>3명 이상 찬성</b>이면 <b>행사 우선 승인</b>이 확정되고(일반 추첨보다 먼저 배정), <b>반대·기권 3명 이상</b> 또는 과반 미달이면 <b>미승인 → 일반 추첨 전환</b>됩니다. 성명·직책·소속은 언제든지 바꿀 수 있고, 변경 내역은 감사 로그에 남습니다. (투표는 <b>시안심사 · 가산점</b> 화면의 행사 우선접수 심사 패널에서 합니다.)</div>
+      </div>
+      <div class="table-wrap" id="eventApproverTable"></div>
+    </div>
+<div class="panel" id="roleBonusPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9Z"/></svg>
+          직책 가산점 관리
+        </h3>
+        <span class="sub" id="roleBonusInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>협회 직책은 <b>관리자만 지정·해제</b>합니다(일반 회원가입 화면에는 없습니다). 추첨 가중치는 <b>1.0 + 직책 가산</b>이며, 직책 가산은 <b>지부장 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>입니다. <b>기한 임박 행사는 자동 가산 0%</b>(관리자가 인정할 때만 +5%)이고, 지정·해제와 추첨 적용 내역은 모두 <b>감사 로그</b>에 남습니다.</div>
+      </div>
+      <div class="chips" id="roleBonusChips" style="margin-bottom:10px"></div>
+      <div class="table-wrap" id="adminRoleTable"></div>
+    </div>
+<div class="panel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M12 9v4M12 16.5v.1"/></svg>
+          제재(페널티) 현황
+        </h3>
+        <span class="sub" id="penaltyInfo"></span>
+      </div>
+      <div class="callout warn" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+        <div>당첨 후 <b>본인 사유 취소</b>, <b>미입금(입금 지연)</b>, <b>수요일 18:00 미입고 자동 취소</b>는 실제 광고주(사업자번호+연락처) 기준으로 <b>차기 1개 주 회차 접수 제한</b>이 자동 부여됩니다. <b>협회 시안 반려는 제재 대상이 아닙니다</b>(재접수 가능). 제한 중에는 주간 추첨·목요일 선착순 접수가 모두 차단됩니다.</div>
+      </div>
+      <div class="table-wrap" id="adminPenaltyTable"></div>
+    </div>
+</section>
+<button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
+</main>
+
+<footer class="footer">
+  <div class="wrap fi">
+    <div>
+      <b>사단법인 충청남도옥외광고협회 서산시지부</b><br>
+      충남 서산시 덕지천로 1, 2층 (석남동) · 대표전화 041-665-1216 · 팩스 041-665-1218<br>
+      업무시간 평일 09:00 ~ 18:00 (점심 12:00 ~ 13:00)
+    </div>
+    <div class="links">
+      <span>시연용 프로토타입 v1.5 · 주간 운영(목 선착순·금 마감) · 서산시 지정게시대 77개소</span>
+      <span>·</span>
+      <span>실제 서비스 아님</span>
+      <span>·</span>
+      <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
+    </div>
+  </div>
+</footer>
+
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal">
+  <div class="modal-bg" data-close></div>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div style="min-width:0">
+        <h3 id="modalTitle">제목</h3>
+        <p id="modalSub"></p>
+      </div>
+      <button class="modal-x" data-close aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<style id="printPageRule"></style>
+<script src="assets/app.js"></script>
+</body>
+</html>
