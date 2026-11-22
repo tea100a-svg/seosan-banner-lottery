@@ -101,11 +101,12 @@
         <div class="panel-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">🗓️ 게첩 희망 주 선택 <span class="sub" style="font-size:11px;color:var(--muted)">이번 주 · 다음 주 · 다다음 주 사전 접수</span></h3>
           <span class="spacer" style="flex:1"></span>
-          <span class="week-now" id="applyWeekNow">2026.11.30 ~ 12.06</span>
+          <span class="week-now" id="applyWeekNow">📅 2026.11.30 ~ 12.06 게첩 주</span>
+          <button class="btn ghost sm" id="btnApplyWeekCal" type="button" data-caltoggle="apply" aria-expanded="false" aria-controls="applyWeekCal">📅 달력보기</button>
         </div>
-        <div class="hint-txt" id="applyWeekHint" style="margin:0 0 4px">달력에서 <b>게첩을 시작할 월요일이 포함된 주</b>를 고르면 그 주차로 사전 접수됩니다. (월~일 7일 단위)</div>
+        <div class="hint-txt" id="applyWeekHint" style="margin:0 0 4px">주를 바꾸려면 <b>📅 달력보기</b>를 눌러 <b>게첩을 시작할 월요일이 포함된 주</b>를 고르세요. (월~일 7일 단위)</div>
         <div class="hint-txt cal-off-note" style="margin:0;display:none">선택한 게첩 주는 위 <b>한 줄 요약</b>에서 확인할 수 있습니다. 주를 바꾸려면 <b>1단계</b>로 돌아가 주세요.</div>
-        <div id="applyWeekCal"></div>
+        <div id="applyWeekCal" class="cal-collapsed"></div>
       </div>
       <!-- step 3 · 게시대 선택 (1개소 1매 · 수량별 1·2·3순위 / 고객장소 지정) -->
       <div class="step-body" id="step3">
@@ -344,7 +345,7 @@
         <div class="ev-apply" id="eventApplyBox">
           <label class="check ev-head" for="chkEventApp">
             <input type="checkbox" id="chkEventApp">
-            <span><b>🎪 행사 우선접수 신청 (선택)</b> — 축제·행사 홍보로 <b>일반 추첨보다 먼저</b> 배정받고 싶을 때 신청합니다. <b>행사승인권한자 5명 중 3명 이상 찬성</b>해야 확정됩니다.</span>
+            <span><b>🎪 행사 우선접수 신청 (선택) · 회원 직접 신청</b> — 축제·행사 홍보로 <b>일반 추첨보다 먼저</b> 배정받고 싶을 때 <b>회원이 이 화면에서 직접 신청</b>합니다. 협회 <b>행사승인권한자 5명 중 3명 이상 찬성</b>해야 확정되며, 관리자는 이 접수 건을 심사만 합니다.</span>
           </label>
           <div class="hidden" id="eventFields">
             <div class="callout info" style="margin-top:8px">
@@ -368,6 +369,10 @@
               <textarea class="input ko-ime" id="applyEventReason" lang="ko" maxlength="120" placeholder="예) 서산시 주관 시민 걷기축제 홍보 — 시청 협조 공문 사본 첨부"></textarea>
               <div class="hint-txt">행사승인권한자 5명이 사유·증빙을 보고 투표합니다. 허위 행사는 승인되지 않습니다.</div>
             </div>
+            <div class="callout warn hidden" id="eventPolNote">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+              <div><b>행사 우선접수는 정치행정 선택 불가</b>입니다 — 두 신청은 한 건에 함께 넣을 수 없습니다. 또한 <b>공문 전용 저단게시대(32개소)는 행사 우선접수에서 선택·배정이 불가</b>합니다(3단계 목록에서 제외됩니다). (김재봉 님 지시 2026-11-22)</div>
+            </div>
             <div class="callout warn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
               <div>행사 우선접수도 <b>시안 심사 → 행사 심사(권한자 5명 투표) → 추첨</b> 순서로 진행됩니다. 반대·기권이 3명 이상이거나 5명 투표에서 찬성이 3명에 못 미치면 <b>미승인 → 일반 추첨</b>으로 처리되고, 신청한 <b>1·2·3순위</b>가 그대로 추첨에 쓰입니다.</div>
@@ -379,7 +384,11 @@
         <div class="ev-apply" id="polApplyBox">
           <label class="check ev-head" for="chkPolApp">
             <input type="checkbox" id="chkPolApp">
-            <span><b>🏛️ 정치행정 현수막</b> — 정치행정 홍보물은 <b>3단(3열)</b>에 배정되고, <b>지부장 + 감사(2인 중 1인)</b> 승인이 필요합니다(순서 무관).</span>
+            <span><b>🏛️ 정치행정 현수막</b> — 정치행정 홍보물은 <b>3단(3열)</b>에 배정되고, <b>지부장 + 감사(2인 중 1인)</b> 승인이 필요합니다(순서 무관). <b>행사 우선접수와 함께 선택할 수 없습니다.</b></span>
+            <div class="callout warn hidden" id="polEventNote" style="margin-top:8px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+              <div><b>정치행정을 선택하면 행사 우선접수 신청이 막힙니다</b> — 두 신청은 한 건에 함께 넣을 수 없습니다. 행사 우선접수를 원하면 정치행정 선택을 해제해 주세요.</div>
+            </div>
           </label>
         </div>
         <div class="divider"></div>

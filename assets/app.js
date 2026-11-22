@@ -675,6 +675,9 @@
       low: true, adminOnly: true, officialOnly: true
     };
   });
+  /* 공문 전용 저단게시대 판정 — 일반 게시대(placement)에는 low 필드가 없고, 저단은 LOW_BOARDS 별도 목록
+     (김재봉 님 지시 2026-11-22 "행사 우선은 정치행정, 저단게시대 사용 불가" — 행사 우선·정치행정 접수가 저단을 고르지 못하게 막는다) */
+  function isLowBoard(p) { return !!(p && (p.low || p.officialOnly)); }
   function lowBoardById(id) {
     for (var i = 0; i < LOW_BOARDS.length; i++) { if (LOW_BOARDS[i].id === id) return LOW_BOARDS[i]; }
     return null;
@@ -1672,6 +1675,10 @@
     applyOffAccess();
     applyRolePanels();
     renderOfficerPanel();
+    /* 가산점 부여 패널의 '내 몫' 선택지·한도 안내도 새 직책 기준으로 다시 그린다(2026-11-22) */
+    renderUrgentGrantPanel();
+    renderAssocPanel();
+    renderGrantPanel();
     toast('접속 권한을 ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : '') + '(으)로 전환했습니다.');
     return meta.k;
   }
@@ -2433,6 +2440,73 @@
     return ui.calOpen;
   }
 
+  /* ── 주 선택 달력 접기 — **모든 화면 공통** (김재봉 님 지시 2026-11-22 "모든 과정에서 달력보기 접기")
+     · 진입하면 달력은 접혀 있고, '📅 달력보기' 버튼과 선택 주 요약 한 줄만 보입니다.
+     · 버튼을 눌러야 달력이 펼쳐져 다른 주를 고를 수 있습니다.
+       게시대 현황(index) · 접수 1단계(apply) · 공문 우선접수(admin-official) · 추첨 접수대장(admin-draw) */
+  var CAL_PANEL = {
+    status: { box: '#weekCalPanel', btn: '#btnWeekCal', cls: 'collapsed', open: 'calOpen', render: 'status' },
+    apply: { box: '#applyWeekCal', btn: '#btnApplyWeekCal', cls: 'cal-collapsed', open: 'calApplyOpen', render: 'apply' },
+    official: { box: '#offWeekCal', btn: '#btnOffWeekCal', cls: 'cal-collapsed', open: 'calOffOpen', render: 'official' },
+    draw: { box: '#drawWeekCal', btn: '#btnDrawWeekCal', cls: 'cal-collapsed', open: 'calDrawOpen', render: 'draw' }
+  };
+  function calIsOpen(page) { var c = CAL_PANEL[page]; return !!(c && ui[c.open]); }
+  /* 선택 주 요약 한 줄 — '📅 11.30 ~ 12.06 게첩 주 (변경: 달력보기)' */
+  function calSummaryTxt(page) {
+    var s = '', extra = '';
+    if (page === 'status') {
+      s = weekStartOf(ui.statusWeek || ROUND.postStart);
+      return weekRangeTxt(s) + ' 게첩 주 · 접수 ' + weekStatsOf(s).n + '건';
+    }
+    if (page === 'apply') {
+      s = weekStartOf(ui.applyWeek || ROUND.postStart);
+      var st = weekStatsOf(s);
+      return weekRangeTxt(s) + ' 게첩 주 · 접수 ' + st.n + '건 · 신청 ' + st.qty + '매';
+    }
+    if (page === 'official') {
+      s = weekStartOf(ui.offWeek || ROUND.postStart);
+      extra = officialDaysSel() === 14 ? ' (2주)' : '';
+      return weekRangeTxt(s) + extra + ' · 공문 ' + officialRoundList(s).length + '건';
+    }
+    if (page === 'draw') {
+      s = weekStartOf(ui.drawWeek || ROUND.postStart);
+      var sd = weekStatsOf(s);
+      return weekRangeTxt(s) + ' · 접수 ' + sd.n + '건 · 배정 ' + sd.awarded + '매';
+    }
+    return '';
+  }
+  function calSummaryHTML(page) {
+    var txt = calSummaryTxt(page);
+    if (!txt) return '';
+    return '📅 ' + esc(txt) + (calIsOpen(page) ? '' : ' <span class="sm">(변경: 달력보기)</span>');
+  }
+  function renderCalSummary(page) {
+    var c = CAL_PANEL[page];
+    if (!c) return;
+    var sel = page === 'status' ? '#weekCalHint' : (page === 'apply' ? '#applyWeekNow' : (page === 'official' ? '#offWeekNow' : '#drawWeekNow'));
+    var el = $(sel);
+    if (el) el.innerHTML = calSummaryHTML(page);
+  }
+  function setCalPanelOpen(page, on) {
+    var c = CAL_PANEL[page];
+    if (!c) return false;
+    ui[c.open] = !!on;
+    var box = $(c.box), btn = $(c.btn);
+    if (box) box.classList.toggle(c.cls, !ui[c.open]);
+    if (btn) {
+      btn.setAttribute('aria-expanded', ui[c.open] ? 'true' : 'false');
+      btn.textContent = ui[c.open] ? '📅 달력 접기' : '📅 달력보기';
+    }
+    if (ui[c.open]) {
+      if (c.render === 'status') renderStatusCal();
+      else if (c.render === 'apply') renderApplyWeek();
+      else if (c.render === 'official') renderOffWeek();
+      else if (c.render === 'draw') renderDrawWeek();
+    }
+    renderCalSummary(page);
+    return ui[c.open];
+  }
+
   function renderStatusCal() {
     if (!has('weekCal')) return;
     var s = weekStartOf(ui.statusWeek || ROUND.postStart);
@@ -2467,7 +2541,7 @@
     if (!ui.calMonth.apply) ui.calMonth.apply = s.slice(0, 7);
     $('#applyWeekCal').innerHTML = calBlockHTML('apply');
     var st = weekStatsOf(s), w = weekInfoOf(s);
-    if ($('#applyWeekNow')) $('#applyWeekNow').textContent = weekRangeTxt(s) + ' · 접수 ' + st.n + '건';
+    renderCalSummary('apply');
     if ($('#applyWeekHint')) {
       $('#applyWeekHint').innerHTML = '선택한 게첩 주 <b>' + weekRangeTxt(s) + '</b> — 추첨 ' + dfmt(w.drawDate) + ' ' + w.drawTime +
         ' · 입고 마감 ' + dfmt(w.deliverBy) + ' · 접수 <b>' + st.n + '건</b> / 신청 ' + st.qty + '매 / 배정 <b>' + st.awarded + '매</b>' +
@@ -2498,7 +2572,7 @@
     if (!ui.calMonth) ui.calMonth = {};
     if (!ui.calMonth.official) ui.calMonth.official = s.slice(0, 7);
     $('#offWeekCal').innerHTML = calBlockHTML('official');
-    if ($('#offWeekNow')) $('#offWeekNow').textContent = weekRangeTxt(s) + (officialDaysSel() === 14 ? ' ~ ' + weekRangeTxt(addDays(s, 7)).split(' ~ ')[1] : '') + ' · 공문 ' + officialRoundList(s).length + '건';
+    renderCalSummary('official');
   }
   function officialDaysSel() {
     var el = $('#offDays');
@@ -4357,10 +4431,21 @@
   }
   /* 행사 우선접수 입력부 —  체크했을 때만 행사명·기간·사유 칸을 연다 */
   function eventFormOn() { return !!($('#chkEventApp') && $('#chkEventApp').checked); }
+  /* 행사 우선접수와 정치행정은 **한 건에 함께 선택할 수 없습니다** (김재봉 님 지시 2026-11-22
+     "행사 우선은 정치행정, 저단게시대 사용 불가") — 먼저 고른 쪽을 유지하고 다른 쪽을 막습니다. */
   function syncEventBox() {
     var on = eventFormOn();
+    var pol = $('#chkPolApp');
+    if (pol) {
+      pol.disabled = on;
+      if (on && pol.checked) { pol.checked = false; }
+      if ($('#polApplyBox')) $('#polApplyBox').classList.toggle('on', !on && pol.checked);
+    }
+    if ($('#chkEventApp')) $('#chkEventApp').disabled = !!(pol && pol.checked);
     if ($('#eventFields')) $('#eventFields').classList.toggle('hidden', !on);
     if ($('#eventApplyBox')) $('#eventApplyBox').classList.toggle('on', on);
+    if ($('#eventPolNote')) $('#eventPolNote').classList.toggle('hidden', !on);
+    if ($('#polEventNote')) $('#polEventNote').classList.toggle('hidden', !(pol && pol.checked));
     return on;
   }
 
@@ -4372,6 +4457,7 @@
       if (ui.pDay && p.day !== ui.pDay) return false;
       if (ui.pDong && p.dong !== ui.pDong) return false;
       if (q && (p.name + ' ' + p.dong + ' ' + (p.addr || '') + ' ' + (p.desc || '')).indexOf(q) < 0) return false;
+      if (eventFormOn() && (isLowBoard(p))) return false;   /* 행사 우선접수 — 공문 전용 저단 제외 */
       return true;
     });
     return sortPlacesBy(list, ui.pSort, weekStartOf(ui.applyWeek || ROUND.postStart));
@@ -4644,7 +4730,8 @@
     var reqN = weekRequestCount(p.id);
     var ranks = pickedIn(p.id), picked = ranks.length > 0;
     var allDown = slotAllDown(p);
-    var off = p.broken || allDown;
+    var evLowBlock = eventFormOn() && (isLowBoard(p));
+    var off = p.broken || allDown || evLowBlock;
     var adjB = (!picked && !off) ? adjPickBlock(p.id) : null;
     var mbHit = (off || picked) ? null : makerBlockOf(p.id, currentMakerInfo());
     var code = (ui.slots && ui.slots[p.id]) || '';
@@ -4751,6 +4838,7 @@
       if (pickedIn(p.id).length) return false;
       if (makerBlockOf(p.id, maker)) return false;
       if (adjPickBlock(p.id)) return false;
+      if (eventFormOn() && (isLowBoard(p))) return false;   /* 행사 우선접수 — 저단 제외 */
       return true;
     });
     for (var i = cands.length - 1; i > 0; i--) {
@@ -4804,6 +4892,11 @@
     var mbHit = makerBlockOf(id, currentMakerInfo());
     if (mbHit) {
       makerBlockNotice();
+      return;
+    }
+    /* 행사 우선접수는 공문 전용 저단게시대(32개소)를 사용할 수 없습니다 (김재봉 님 지시 2026-11-22) */
+    if (eventFormOn() && p && (isLowBoard(p))) {
+      toast('행사 우선접수는 공문 전용 저단게시대를 사용할 수 없습니다 — ' + p.name + '은(는) 일반 접수에서만 선택하세요. (김재봉 님 지시: 행사 우선은 정치행정·저단게시대 사용 불가)', true);
       return;
     }
     var rank = activeRank();
@@ -4950,9 +5043,9 @@
       box.classList.add('cal-off');
       if ($('#applyWeekCal')) $('#applyWeekCal').style.display = 'none';
       if ($('#applyWeekHint')) $('#applyWeekHint').style.display = 'none';
-      if ($('#applyWeekNow')) $('#applyWeekNow').textContent = weekRangeTxt(s2) + ' 게첩 주';
+      renderCalSummary('apply');
     }
-    if ($('#applyWeekNow') && n === 1) $('#applyWeekNow').textContent = weekRangeTxt(weekStartOf(ui.applyWeek || ROUND.postStart));
+    if (n === 1) renderCalSummary('apply');
     var note = document.querySelector('.cal-off-note');
     if (note) note.style.display = n === 1 ? 'none' : 'block';
   }
@@ -5064,6 +5157,38 @@
       if (v.eventApp) {
         if (String(v.eventName || '').length < 2) { fieldErr('#fEventName'); ok = false; }
         if (String(v.eventPeriod || '').length < 4) { fieldErr('#fEventPeriod'); ok = false; }
+        /* 행사 우선접수는 정치행정과 함께 신청할 수 없고, 공문 전용 저단게시대도 사용할 수 없습니다
+           (김재봉 님 지시 2026-11-22 "행사 우선은 정치행정, 저단게시대 사용 불가") */
+        if (v.polApp) {
+          fieldErr('#fEventName', '행사 우선접수는 정치행정 현수막과 함께 신청할 수 없습니다.');
+          toast('행사 우선접수는 정치행정 선택 불가입니다 — 둘 중 한 가지만 신청해 주세요.', true);
+          return false;
+        }
+        var evLow = [];
+        [1, 2, 3].forEach(function (n) { (v['priority' + n] || []).forEach(function (pid) {
+          var p = boardById(pid);                      /* 저단(L01~)도 함께 판정 — boardById는 LOW_BOARDS까지 찾는다 */
+          if (p && (isLowBoard(p))) evLow.push(n + '순위 ' + p.name);
+        }); });
+        if (evLow.length) {
+          toast('행사 우선접수는 공문 전용 저단게시대를 사용할 수 없습니다 — ' + evLow.join(', ') + '을(를) 해제해 주세요.', true);
+          return false;
+        }
+      }
+      if (v.polApp) {
+        /* 정치행정 신청에 행사 우선접수가 함께 들어온 것도 차단(상호 배타 방어) */
+        if (v.eventApp) {
+          toast('정치행정과 행사 우선접수는 함께 신청할 수 없습니다 — 한 가지만 신청해 주세요.', true);
+          return false;
+        }
+        var polLow = [];
+        [1, 2, 3].forEach(function (n) { (v['priority' + n] || []).forEach(function (pid) {
+          var p = boardById(pid);
+          if (p && (isLowBoard(p))) polLow.push(p.name);
+        }); });
+        if (polLow.length) {
+          toast('정치행정은 3단(3열) 일반 게시대에 배정됩니다 — 공문 전용 저단게시대(' + polLow.join(', ') + ')는 선택할 수 없습니다.', true);
+          return false;
+        }
       }
       if (!v.advertiser) { fieldErr('#fAdvertiser'); ok = false; }
       if (v.advertiserBiz && normDigits(v.advertiserBiz).length !== 10) { fieldErr('#fAdvBiz', '사업자등록번호는 숫자 10자리로 입력해 주세요.'); ok = false; }
@@ -5160,6 +5285,19 @@
       if (adjHit) {
         ui.rank = adjRank;
         toast(adjRank + '순위에 ' + adjHit.no + ' 구역(택1)의 ' + adjHit.a.name + '·' + adjHit.b.name + '이(가) 함께 들어 있습니다. 인접 게시대는 한 접수에서 두 곳을 함께 신청할 수 없으니 한 곳을 해제해 주세요.', true);
+        renderPickUI();
+        return false;
+      }
+      /* 행사 우선접수·정치행정 — 공문 전용 저단게시대(L01~)는 아예 신청할 수 없습니다
+         (김재봉 님 지시 2026-11-22 "행사 우선은 정치행정, 저단게시대 사용 불가") — 3단계 진입 검증에서 차단 */
+      var lowPicked = all.filter(function (id) { var p = boardById(id); return !!(p && (p.low || p.officialOnly)); });
+      if (lowPicked.length) {
+        all.forEach(function (id) {
+          var p = boardById(id);
+          if (!(p && (p.low || p.officialOnly))) return;
+          [1, 2, 3].forEach(function (k) { var i = rankList(k).indexOf(id); if (i >= 0) rankList(k).splice(i, 1); pruneslotOne(id); });
+        });
+        toast('행사 우선접수·정치행정은 공문 전용 저단게시대를 사용할 수 없습니다 — ' + lowPicked.length + '개소를 선택에서 제외했습니다. (저)게시대는 시청 공문 접수에서만 배정됩니다.', true);
         renderPickUI();
         return false;
       }
@@ -6745,6 +6883,12 @@
         var list = pool.filter(function (a) {
           if (isEventApproved(a) !== tier.ev) return false;
           if (stage > 1 && a.designatedOnly) return false;          // 고객장소 지정은 1순위만
+          /* 행사 우선접수 승인 건은 공문 전용 저단게시대·정치행정 물량에 배정하지 않습니다
+             (김재봉 님 지시 2026-11-22 — 접수 데이터가 남아 있어도 배정 단계에서 다시 막는다) */
+          if (tier.ev && (isLowBoard(p))) return false;
+          /* 정치행정은 승인 완료(polStatus '승인') 건만 추첨에 참여하며, 승인 전에는 어느 풀에도 섞지 않습니다.
+             미승인으로 전환된 행사 건은 이미 일반 추첨 풀(tier.ev = false)에 있으므로 이 조건에 걸리지 않습니다. */
+          if (a.polApp && a.eventStatus !== '미승인' && (a.polStatus !== '승인' || !tier.ev)) return false;
           if (prioOf(a, stage).indexOf(pid) < 0) return false;
           if (got(a) >= qtyOf(a)) return false;
           if (hasPlace(a, pid)) return false;
@@ -7438,7 +7582,7 @@
     if (!ui.calMonth.draw) ui.calMonth.draw = s.slice(0, 7);
     $('#drawWeekCal').innerHTML = calBlockHTML('draw');
     var st = weekStatsOf(s), list = appsOfWeek(s).filter(function (a) { return a.status !== '반려'; });
-    if ($('#drawWeekNow')) $('#drawWeekNow').textContent = weekRangeTxt(s) + ' · 접수 ' + st.n + '건 · 배정 ' + st.awarded + '매';
+    renderCalSummary('draw');
     if ($('#drawWeekInfo')) $('#drawWeekInfo').innerHTML = '<b>' + weekRangeTxt(s) + '</b> 게첩 주 — 접수 <b>' + st.n + '건</b> · 신청 <b>' + st.qty + '매</b> · 배정 <b>' + st.awarded + '매</b> · 공문 <b>' + st.official + '면</b>' +
       (st.event && st.event.n ? ' · 행사 우선접수 <b>' + st.event.pending + '건 심사중 · ' + st.event.approved + '건 승인 · ' + st.event.converted + '건 일반 전환</b>' : '') +
       ' · 잔여 <b>' + st.left + '면</b>' +
@@ -9551,7 +9695,7 @@
 
   function onClick(e) {
     var t = e.target;
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove]') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle]') : null;
     if (!el) return;
     /* 행사 우선접수 — 5명 권한자 투표·권한자 변경 (2026-11-22) */
     if (el.hasAttribute('data-fccover')) { askFcCover(el.getAttribute('data-fccover')); return; }
@@ -9580,6 +9724,9 @@
       setSlot(el.getAttribute('data-slotpick'), el.getAttribute('data-slot') || '', Number(el.getAttribute('data-slotrank')) || activeRank());
       return;
     }
+    if (el.hasAttribute('data-caltoggle')) { var ctp = el.getAttribute('data-caltoggle');
+      if (ctp === 'status') { setWeekCalOpen(!ui.calOpen); renderCalSummary('status'); return; }
+      setCalPanelOpen(ctp, !calIsOpen(ctp)); return; }
     if (el.id === 'btnWeekCal') { setWeekCalOpen(!ui.calOpen); return; }
     if (el.id === 'btnWeekCalClose') { setWeekCalOpen(false); return; }
     if (el.id === 'btnReportShow') { showReportCover(); return; }
@@ -9847,6 +9994,8 @@
     if ($('#chkEventApp')) onEl('#chkEventApp', 'change', function () {
       if (syncEventBox()) toast('행사 우선접수 신청 — 행사명·행사 기간을 적고, 3단계에서 1·2·3순위를 함께 선택해 주세요. (미승인 시 일반 추첨으로 자동 전환)');
     });
+    /* 정치행정 체크 → 행사 우선접수 막기 (상호 배타 · 김재봉 님 지시 2026-11-22) */
+    if ($('#chkPolApp')) onEl('#chkPolApp', 'change', function () { syncEventBox(); });
     onEl('#applyDays', 'change', function () { updatePeriodPreview(); if (ui.step === 4) updateFeeBox(); });
     onEl('#applyText', 'input', function () {
       $('#textCount').textContent = String(this.value.length);
@@ -10177,6 +10326,11 @@
     /* 공지 팝업은 '첫 화면'(게시대 현황 = index.html)에서만 자동 노출
        — 다른 페이지는 📢 공지 다시 보기 링크만 둔다 */
     if (PAGE === 'status') showNoticeIfDue(); else updateNoticeLink();
+    /* 주 선택 달력은 **모든 화면에서 기본 접힘** — '📅 달력보기'를 눌러야 펼쳐진다 (김재봉 님 지시 2026-11-22) */
+    setCalPanelOpen('status', false);
+    setCalPanelOpen('apply', false);
+    setCalPanelOpen('official', false);
+    setCalPanelOpen('draw', false);
     /* 비회원(미로그인) — 1단계 입력칸은 항상 공백에서 시작한다
        (이전 입력·자동작성·브라우저 캐시 잔존값 삭제 · 김재봉 님 지시) */
     renderSmsBox();
@@ -10393,7 +10547,17 @@
     },
     applyRolePanels: function () { applyRolePanels(); return this.payAccess(); },
     calOpen: function () { return !!ui.calOpen; },
-    setCalOpen: function (on) { return setWeekCalOpen(on !== false); },
+    setCalOpen: function (on, page) { return page ? setCalPanelOpen(page, on !== false) : setWeekCalOpen(on !== false); },
+    calOpen: function (page) { return page ? calIsOpen(page) : !!ui.calOpen; },
+    calSummary: function (page) {
+      var sel = page === 'status' ? '#weekCalHint' : (page === 'apply' ? '#applyWeekNow' : (page === 'official' ? '#offWeekNow' : '#drawWeekNow'));
+      var el = $(sel);
+      var btn = page === 'status' ? $('#btnWeekCal') : (page === 'apply' ? $('#btnApplyWeekCal') : (page === 'official' ? $('#btnOffWeekCal') : $('#btnDrawWeekCal')));
+      var box = page === 'status' ? $('#weekCalPanel') : (page === 'apply' ? $('#applyWeekCal') : (page === 'official' ? $('#offWeekCal') : $('#drawWeekCal')));
+      return { page: page, open: calIsOpen(page), text: el ? String(el.textContent) : '',
+        btn: btn ? String(btn.textContent).trim() : '',
+        visible: box ? (getComputedStyle(box).display !== 'none') : null };
+    },
     sortState: function () { return { status: ui.sort, pick: ui.pSort }; },
     setSort: function (which, mode) {
       if (which === 'pick') { ui.pSort = mode || 'comp-desc'; renderPickUI(); renderPickFilters(); }
@@ -10697,6 +10861,8 @@
     },
     stepNow: function () { return ui.step; },
     applyValues: function () { return readApply(); },
+    uiRanks: function () { return { 1: rankList(1).slice(), 2: rankList(2).slice(), 3: rankList(3).slice() }; },
+    setUiRanks: function (r) { ui.ranks = { 1: (r[1] || []).slice(), 2: (r[2] || []).slice(), 3: (r[3] || []).slice() }; renderPickUI(); return this.uiRanks(); },
     smsState: function () {
       var st = smsState(), ok = smsVerified();
       return { sent: !!st.sent, code: st.code, phone: st.phone, verified: ok,
@@ -10930,7 +11096,12 @@
       if (o.days !== undefined) $('#applyDays').value = String(o.days);
       if (o.agree !== undefined) { $('#chkRule').checked = !!o.agree; $('#chkDup').checked = !!o.agree; }
       if (o.designated !== undefined) setDesignated(!!o.designated);
-      /* 행사 우선접수 — 검증용 (o.event = {name, period, reason} / o.event = false) */
+      /* 행사 우선접수 — 검증용 (o.event = {name, period, reason} / o.event = false)
+         · o.pol 로 정치행정 신청도 설정 — 행사 우선과 상호 배타(먼저 설정한 쪽을 유지) */
+      if (o.pol !== undefined) {
+        if ($('#chkPolApp')) $('#chkPolApp').checked = !!o.pol;
+        syncEventBox();
+      }
       if (o.event !== undefined) {
         if ($('#chkEventApp')) $('#chkEventApp').checked = !!o.event;
         if (o.event) {

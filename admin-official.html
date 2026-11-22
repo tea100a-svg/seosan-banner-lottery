@@ -145,9 +145,12 @@
       </div>
       <div class="field" id="fOffWeek">
         <label>게첩 희망 주 (월요일 ~ 일요일)<span class="req">*</span></label>
-        <div class="hint-txt" style="margin:0 0 6px">공문 현수막을 <b>어느 주에 게첩할지</b> 달력에서 고릅니다. 2주 승인 건은 <b>선택한 주부터 2주</b>가 달력·주별 현황에 함께 표시됩니다.</div>
-        <div id="offWeekCal"></div>
-        <div class="week-now" id="offWeekNow" style="display:inline-block;margin-top:6px">2026.11.30 ~ 12.06</div>
+        <div class="hint-txt" style="margin:0 0 6px">공문 현수막을 <b>어느 주에 게첩할지</b> 고릅니다. 주를 바꾸려면 <b>📅 달력보기</b>를 누르세요. 2주 승인 건은 <b>선택한 주부터 2주</b>가 달력·주별 현황에 함께 표시됩니다.</div>
+        <div class="cal-toggle-row" style="margin:0 0 6px">
+          <button class="btn ghost sm" id="btnOffWeekCal" type="button" data-caltoggle="official" aria-expanded="false" aria-controls="offWeekCal">📅 달력보기</button>
+          <span class="week-now" id="offWeekNow">📅 2026.11.30 ~ 12.06 · 공문 0건</span>
+        </div>
+        <div id="offWeekCal" class="cal-collapsed"></div>
       </div>
       <div class="field" id="fOffDays">
         <label for="offDays">게시 기간</label>

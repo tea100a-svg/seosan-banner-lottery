@@ -106,10 +106,12 @@
     </div>
 <div class="panel week-cal-panel" id="drawWeekPanel">
       <div class="panel-head">
-        <h3>🗓️ 주차별 접수대장 <span class="sub">달력에서 게첩 주를 골라 접수·배정 현황을 봅니다</span></h3>
+        <h3>🗓️ 주차별 접수대장 <span class="sub">게첩 주를 골라 접수·배정 현황을 봅니다</span></h3>
         <span class="sub" id="drawWeekNow"></span>
+        <span class="spacer"></span>
+        <button class="btn ghost sm" id="btnDrawWeekCal" type="button" data-caltoggle="draw" aria-expanded="false" aria-controls="drawWeekCal">📅 달력보기</button>
       </div>
-      <div id="drawWeekCal"></div>
+      <div id="drawWeekCal" class="cal-collapsed"></div>
       <div class="hint-txt" id="drawWeekInfo" style="margin:8px 0 0"></div>
       <div class="table-wrap" id="drawWeekTable" style="margin-top:10px"></div>
     </div>

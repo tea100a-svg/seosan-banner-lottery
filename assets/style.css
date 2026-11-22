@@ -639,18 +639,24 @@ td .sm{font-size:11.5px;color:var(--muted)}
    좌측 봉미싱 100mm(1.408%) · 표시면 6,800mm(95.774%) · 우측 봉미싱·말리는 부분 200mm(2.817%)
    폭이 좁은 좌·우 조각에는 글자를 넣지 않고 번호 핀 + 범례로 적어 360px에서도 겹치지 않습니다. */
 .sv-frame{display:grid;grid-template-columns:minmax(0,1fr) 50px;grid-template-rows:auto auto auto auto;gap:0 8px;align-items:start;min-width:0;max-width:100%}
-.sv-pins{grid-column:1;grid-row:1;position:relative;height:19px;min-width:0}
+.sv-pins{grid-column:1;grid-row:1;position:relative;height:36px;min-width:0}
 .sv-pin{position:absolute;top:0;display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:800;line-height:1.1;white-space:nowrap;color:#41556f}
+.sv-pin.r2{top:0}
+.sv-pin.r{top:17px}
+.sv-pins .sv-pin.r,.sv-pins .sv-pin.r2{z-index:2}
 .sv-pin.l{left:0}
 .sv-pin.r{right:0;color:#8a5000}
+.sv-pin.r2{right:0.9%;color:#a13752}
+.sv-pins .sv-pin{filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
 .sv-pin i{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1px solid #a9bdd6;background:#dbe6f4;color:#24364f;font-style:normal;font-size:8.5px;font-weight:900}
 .sv-pin.r i{border-color:#d99a3c;background:#ffe2be;color:#8a5000}
 .sv-banner{grid-column:1;grid-row:2;position:relative;display:block;width:100%;aspect-ratio:7100/900;min-height:0;border:2px solid #24364f;border-radius:4px;overflow:hidden;background:#fff;box-sizing:border-box}
 .sv-seg{position:absolute;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 1px;min-width:0;text-align:center;font-weight:800;line-height:1.15;overflow:hidden}
 .sv-seg b{display:block;font-size:9.5px;font-weight:800;letter-spacing:-.02em;color:inherit}
+.sv-seg b small{font-size:7.5px;font-weight:800}
 .sv-seg i{display:block;font-style:normal;font-size:11px;font-weight:800;letter-spacing:-.02em;color:inherit}
 .sv-l{left:0;width:1.408%;background:repeating-linear-gradient(135deg,#eef3fa,#eef3fa 3px,#dbe6f4 3px,#dbe6f4 6px);color:#41556f}
-.sv-c{left:1.408%;width:95.774%;background:
+.sv-c{left:1.408%;width:95.775%;background:
   radial-gradient(120% 90% at 15% 0%,rgba(255,255,255,.85),rgba(255,255,255,0) 60%),
   linear-gradient(120deg,#e8f1ff 0%,#f7fbff 38%,#e3efff 72%,#f3f8ff 100%);
   color:#24364f;border-left:1px solid #b9c9dc;border-right:1px solid #b9c9dc}
@@ -661,7 +667,8 @@ td .sm{font-size:11.5px;color:var(--muted)}
   padding:2px 7px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sv-c b{font-size:11px;color:#24364f;opacity:.9}
 .sv-c i{font-size:11.5px;color:#12233d;font-weight:900;letter-spacing:.01em;opacity:1}
-.sv-r{right:0;width:2.817%;background:repeating-linear-gradient(135deg,#fff4e6,#fff4e6 3px,#ffe2be 3px,#ffe2be 6px);color:#8a5000;border-left:1px dashed #d99a3c}
+.sv-r{right:0;width:2.113%;background:repeating-linear-gradient(135deg,#fff4e6,#fff4e6 3px,#ffe2be 3px,#ffe2be 6px);color:#8a5000;border-left:1px dashed #d99a3c;writing-mode:vertical-rl;text-orientation:upright;font-size:11px;letter-spacing:.02em}
+.sv-r2{right:2.113%;width:0.704%;background:repeating-linear-gradient(135deg,#ffeef2,#ffeef2 3px,#ffd0da 3px,#ffd0da 6px);color:#a13752;border-left:1px dashed #d98aa4;writing-mode:vertical-rl;text-orientation:upright;}
 .sv-hdim{grid-column:1;grid-row:3;position:relative;margin:9px 2.817% 0 1.408%;padding-top:8px;text-align:center;font-size:10px;line-height:1.25;font-weight:800;color:#b4530a;letter-spacing:-.02em;word-break:keep-all;overflow-wrap:anywhere;min-width:0;text-wrap:balance}
 .sv-hdim b{color:#8a3f06;font-weight:900}
 .sv-hdim::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:#d98a4a}
@@ -679,6 +686,7 @@ td .sm{font-size:11.5px;color:var(--muted)}
 .sv-legend span{display:inline-flex;align-items:center;gap:4px;min-width:0}
 .sv-legend i{display:inline-flex;align-items:center;justify-content:center;flex:none;width:14px;height:14px;border-radius:50%;font-style:normal;font-size:9px;font-weight:900;border:1px solid}
 .sv-legend i.c1{background:#dbe6f4;border-color:#a9bdd6;color:#24364f}
+.sv-legend i.c4{background:#ffe2be;border-color:#d99a3c;color:#8a5000}
 .sv-legend i.c2{background:#e8f0fb;border-color:#b9cde8;color:#2b4a72}
 .sv-legend i.c3{background:#ffe2be;border-color:#d99a3c;color:#8a5000}
 .sv-legend b{color:#24364f;font-weight:900}
@@ -1380,7 +1388,7 @@ a.mp-back{text-decoration:none}
 /* 접수 페이지 게첩 주 선택 */
 .week-select-panel{margin-bottom:16px;border-color:#cbdcf5}
 .week-select-panel .panel-head h3{display:flex;align-items:center;gap:6px}
-.week-now{font-size:12px;font-weight:800;color:var(--blue-d);background:var(--sky);border-radius:8px;padding:5px 10px;white-space:nowrap}
+.week-now{font-size:12px;font-weight:800;color:var(--blue-d);background:var(--sky);border-radius:8px;padding:5px 10px;white-space:normal;flex:0 1 auto;min-width:0;line-height:1.45}
 .week-select-panel .cal{margin-top:8px;box-shadow:none;background:#fbfcfe}
 .week-select-panel .cal-wklist{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 /* 10개 대행사 프리셋 */
@@ -1481,4 +1489,6 @@ a.mp-back{text-decoration:none}
 /* ---------- 게시대 현황 — 달력 접기/펼치기 (2026-11-22) ---------- */
 .cal-toggle-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-6px 0 12px}
 .week-cal-panel.collapsed{display:none}
+/* 주 선택 달력 접기 — 적용·공문·추첨 화면 (김재봉 님 지시 2026-11-22) */
+.cal-collapsed{display:none!important}
 .week-cal-panel .panel-head .spacer{flex:1}
