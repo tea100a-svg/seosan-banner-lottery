@@ -1082,26 +1082,99 @@
     return out;
   }
 
-  /* ── 시한임박 현수막 가산점 — 접수 1건에 직책자가 부여 ───────────────────── */
-  function urgentGrantOf(a) { return grantRecOf(a && a.urgentGrant); }
+  /* ── 가산점은 **부여자별로 따로** 쌓고 마지막에 합산합니다 (김재봉 님 지시 2026-11-22
+     "가산점을 부여자 각각 최대 권한까지 부여 총종 합산되도록 변경") ─────────────────
+     · 대상(접수 건·회원사) 하나에 부여자마다 자기 직책 한도까지 각각 부여합니다.
+         지부장 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%  →  최대 합산 +13%
+     · 같은 부여자(같은 직책)가 다시 부여하면 **그 부여자의 몫만** 바꾸고, 다른 부여자의
+       몫은 그대로 둡니다(덮어쓰지 않음). 해제도 자기 몫만 빠집니다.
+     · 자료 구조: [{ pct, role, label, name, at }, ...] — 부여자(직책)당 1항목
+     · 추첨 가중치 = 1.00 + (시한임박 합산 % + 회원사 합산 %) / 100 */
+  function grantListOf(v) {
+    var out = [];
+    if (Array.isArray(v)) {
+      v.forEach(function (g) { var r = grantRecOf(g); if (r) out.push(r); });
+    } else {
+      var one = grantRecOf(v);
+      if (one) out.push(one);
+    }
+    return out;
+  }
+  /* 같은 부여자(직책)의 항목 위치 — 없으면 -1 */
+  function grantIndexOf(list, role) {
+    var key = String(role == null ? '' : role);
+    for (var i = 0; i < (list || []).length; i++) { if (String(list[i].role || '') === key) return i; }
+    return -1;
+  }
+  function grantSumPct(list) {
+    return (list || []).reduce(function (s, g) { return s + (Math.round(Number(g && g.pct)) || 0); }, 0);
+  }
+  /* 부여자별 칩 — '지부장 김서산 +5%' '수석부지부장 박해미 +3%' */
+  function grantChipsHTML(list) {
+    if (!list || !list.length) return '<span class="badge b-gray"><i></i>미부여 0%</span>';
+    return list.map(function (g) {
+      return '<span class="badge b-purple" title="부여 시각 ' + esc(g.at || '기록 없음') + '"><i></i>' +
+        esc(g.label || '') + ' ' + esc(g.name || '') + ' +' + g.pct + '%</span>';
+    }).join(' ');
+  }
+  /* 최종 합산 배지 — '합계 +8%' */
+  function grantSumHTML(list) {
+    var n = (list || []).length, sum = grantSumPct(list);
+    if (!n) return '<span class="sm">합계 0% (미부여)</span>';
+    return '<span class="badge b-amber"><i></i>합계 +' + sum + '%' + (n > 1 ? ' · ' + n + '명' : '') + '</span>';
+  }
+  /* 합산 결과 하나로 묶은 기록 — 옛 단일 구조(urgentGrant·assocGrant)를 읽던 곳·API 호환용 */
+  function grantSummaryOf(list) {
+    var n = (list || []).length;
+    if (!n) return null;
+    var sum = grantSumPct(list), last = list[n - 1];
+    return { pct: sum, role: n === 1 ? list[0].role : 'multi',
+      label: n === 1 ? list[0].label : '합산',
+      name: n === 1 ? list[0].name : list.map(function (g) { return g.label + ' ' + g.name; }).join(' · '),
+      at: last.at || '', count: n, grants: list.slice() };
+  }
+  /* 감사 로그에 함께 남길 부여자 내역 */
+  function grantWhoTxt(list) {
+    if (!list || !list.length) return ' · 부여자 없음';
+    return ' · 부여자: ' + list.map(function (g) { return g.label + ' ' + g.name + ' +' + g.pct + '%'; }).join(', ');
+  }
+
+  /* ── 시한임박 현수막 가산점 — 접수 1건에 직책자가 각자 부여 ──────────────── */
+  function urgentGrantsOf(a) {
+    if (!a) return [];
+    return grantListOf(Array.isArray(a.urgentGrants) ? a.urgentGrants : a.urgentGrant);
+  }
+  function urgentGrantPctOf(a) { return grantSumPct(urgentGrantsOf(a)); }
+  function urgentGrantOf(a) { return grantSummaryOf(urgentGrantsOf(a)); }
   function setUrgentGrant(id, pct) {
     var a = findApp(id);
     if (!a) return null;
     var chk = checkGrantPct(pct);
     if (!chk.ok) return null;
     var who = myGrantWho();
+    var list = urgentGrantsOf(a);
+    var idx = grantIndexOf(list, who.role);
+    var before = grantSumPct(list);
     if (chk.pct <= 0) {
-      a.urgentGrant = null;
-      audit('가산점', a.id + ' ' + a.company + ' 시한임박 가산점 해제 (기본 0%) — ' + who.label + ' ' + who.name);
+      if (idx >= 0) list.splice(idx, 1);
+      a.urgentGrants = list; delete a.urgentGrant;
+      var after = grantSumPct(list);
+      audit('가산점', a.id + ' ' + a.company + ' 시한임박 가산점 — ' + who.label + ' ' + who.name +
+        ' 몫 해제(내 몫 0%) · 합산 +' + before + '% → +' + after + '%' + grantWhoTxt(list));
       save(); renderAdmin();
-      toast(a.company + ' 시한임박 가산점을 해제했습니다 (기본 0%).');
-      return { id: a.id, pct: 0, grant: null, limit: chk.limit };
+      toast(a.company + ' 시한임박 가산점에서 ' + who.label + ' 몫을 해제했습니다 — 부여자 ' + list.length + '명 합산 +' + after + '%.');
+      return { id: a.id, pct: 0, total: after, grants: list.slice(), grant: grantSummaryOf(list), limit: chk.limit };
     }
-    a.urgentGrant = { pct: chk.pct, role: who.role, label: who.label, name: who.name, at: nowStamp() };
-    audit('가산점', a.id + ' ' + a.company + ' 시한임박 가산점 +' + chk.pct + '% 부여 — ' + who.label + ' ' + who.name + ' (한도 ' + chk.limit + '%)');
+    var rec = { pct: chk.pct, role: who.role, label: who.label, name: who.name, at: nowStamp() };
+    if (idx >= 0) list[idx] = rec; else list.push(rec);
+    a.urgentGrants = list; delete a.urgentGrant;
+    var sum = grantSumPct(list);
+    audit('가산점', a.id + ' ' + a.company + ' 시한임박 가산점 +' + chk.pct + '% 부여 — ' + who.label + ' ' + who.name +
+      ' (한도 ' + chk.limit + '%) · 합산 +' + sum + '%' + grantWhoTxt(list));
     save(); renderAdmin();
-    toast(a.company + ' 시한임박 가산점 +' + chk.pct + '%를 부여했습니다 (' + who.label + ' ' + who.name + ' · 한도 ' + chk.limit + '%).');
-    return { id: a.id, pct: chk.pct, grant: urgentGrantOf(a), limit: chk.limit };
+    toast(a.company + ' 시한임박 가산점 +' + chk.pct + '%를 부여했습니다 (' + who.label + ' ' + who.name + ' · 한도 ' + chk.limit +
+      '%) — 부여자 ' + list.length + '명 합산 +' + sum + '%.');
+    return { id: a.id, pct: chk.pct, total: sum, grants: list.slice(), grant: grantSummaryOf(list), limit: chk.limit };
   }
   /* 시한임박 부여 대상 — 문구에 행사 날짜가 있고 인정 범위(차차주) 안에 드는 접수 */
   function urgentCandidateList() {
@@ -1116,9 +1189,12 @@
     var list = urgentCandidateList();
     var lim = myGrantLimit();
     var withinN = list.filter(function (a) { return urgentStateOf(a).within; }).length;
-    var grantedN = list.filter(function (a) { return !!urgentGrantOf(a) && urgentStateOf(a).within; }).length;
+    var grantedN = list.filter(function (a) { return urgentGrantsOf(a).length > 0 && urgentStateOf(a).within; }).length;
+    var giverN = {};
+    list.forEach(function (a) { urgentGrantsOf(a).forEach(function (g) { giverN[g.role] = 1; }); });
     if ($('#urgentGrantInfo')) $('#urgentGrantInfo').textContent =
-      '시한임박 감지 ' + list.length + '건 · 인정 범위(차차주까지) ' + withinN + '건 · 부여 ' + grantedN + '건 · 현재 부여 한도 ' +
+      '시한임박 감지 ' + list.length + '건 · 인정 범위(차차주까지) ' + withinN + '건 · 가산 부여 ' + grantedN + '건 (부여자 ' +
+      Object.keys(giverN).length + '명 · 부여자별 몫을 최종 합산) · 현재 부여 한도 ' +
       (canGrantBonus() ? accessRoleLabel() + ' 최대 ' + lim + '%' : '없음 (부여 권한 없음)');
     var box = $('#urgentGrantTable');
     if (!box) return;
@@ -1126,28 +1202,40 @@
       box.innerHTML = '<div class="empty">' + IC.check + '<div>문구에 행사 날짜가 있는 접수가 없습니다.</div></div>';
       return;
     }
-    box.innerHTML = '<table><thead><tr><th>접수 · 문구</th><th>행사일</th><th>인정 범위</th><th>가산점</th><th>부여자 (직책·성명)</th><th style="text-align:right">처리</th></tr></thead><tbody>' +
+    box.innerHTML = '<table><thead><tr><th>접수 · 문구</th><th>행사일</th><th>인정 범위</th>' +
+      '<th>부여자별 부여 내역 → 최종 합산</th><th>내 몫 (직책 한도)</th><th style="text-align:right">처리</th></tr></thead><tbody>' +
       list.map(function (a, i) {
-        var u = urgentStateOf(a), g = urgentGrantOf(a);
+        var u = urgentStateOf(a), gs = urgentGrantsOf(a);
+        var mine = grantIndexOf(gs, currentAccessRole());
+        var myPct = mine >= 0 ? gs[mine].pct : 0;
         return '<tr><td><span class="co">' + esc(a.company) + '</span><span class="sm">' + esc(a.id) + ' · ' + esc(a.text) + '</span></td>' +
           '<td class="sm">' + esc(u.date) + '<span class="sm">' + (u.days === 0 ? '게첩 시작일' : '게첩 ' + u.days + '일 전') + '</span></td>' +
           '<td>' + (u.within ? '<span class="badge b-green"><i></i>차차주 이내</span>' : '<span class="badge b-gray"><i></i>차차주 이후</span>') + '</td>' +
-          '<td>' + (u.within
-            ? (canGrantBonus() && lim ? '<select class="input sm" id="urgSel' + i + '" aria-label="시한임박 가산점 퍼센트">' + grantOptionsHTML(g ? g.pct : 0, Math.max(lim, g ? g.pct : 0)) + '</select>'
-              : '<span class="sm">' + (g ? g.pct + '%' : '0%') + ' (권한 없음)</span>')
+          '<td style="max-width:300px">' + (u.within
+            ? '<div class="grant-chips">' + grantChipsHTML(gs) + '</div><div style="margin-top:5px">' + grantSumHTML(gs) +
+              ' <span class="sm">가중치 ' + drawWeightOf(a).toFixed(2) + '배</span></div>'
             : '<span class="sm">— (대상 아님)</span>') + '</td>' +
-          '<td>' + (u.within ? grantBadgeHTML(g) : '<span class="sm">—</span>') + '</td>' +
+          '<td>' + (u.within
+            ? (canGrantBonus() && lim ? '<select class="input sm" id="urgSel' + i + '" aria-label="내 시한임박 가산점 퍼센트">' + grantOptionsHTML(myPct, Math.max(lim, myPct)) + '</select>' +
+                ' <span class="sm">' + esc(accessRoleLabel()) + ' 최대 ' + lim + '%</span>'
+              : '<span class="sm">' + myPct + '% (권한 없음)</span>')
+            : '<span class="sm">— (대상 아님)</span>') + '</td>' +
           '<td style="text-align:right;white-space:nowrap">' + (u.within
-            ? (canGrantBonus() ? '<button class="btn sm primary" type="button" data-urgentgrant="' + esc(a.id) + '" data-urgentidx="' + i + '">부여</button>' +
-              (g ? ' <button class="btn sm ghost" type="button" data-urgentgrant="' + esc(a.id) + '" data-urgentpct="0">해제</button>' : '')
+            ? (canGrantBonus() ? '<button class="btn sm primary" type="button" data-urgentgrant="' + esc(a.id) + '" data-urgentidx="' + i + '">내 몫 부여</button>' +
+              (myPct > 0 ? ' <button class="btn sm ghost" type="button" data-urgentgrant="' + esc(a.id) + '" data-urgentpct="0">내 몫 해제</button>' : '')
               : '<span class="sm">부여 권한 없음</span>')
             : '<span class="sm">차차주 이후 — 대상 아님</span>') + '</td></tr>';
       }).join('') + '</tbody></table>';
   }
 
-  /* ── 협회 등록 회원사 가산점 — 직책자가 회원사에 부여 ─────────────────────── */
-  function assocGrantOf(m) { return m && m.assocMember ? grantRecOf(m.assocGrant) : null; }
-  function assocGrantPctOfMember(m) { var g = assocGrantOf(m); return g ? g.pct / 100 : 0; }
+  /* ── 협회 등록 회원사 가산점 — 직책자가 회원사에 각자 부여 → 최종 합산 ────── */
+  function assocRawGrantsOf(m) {
+    if (!m) return [];
+    return grantListOf(Array.isArray(m.assocGrants) ? m.assocGrants : m.assocGrant);
+  }
+  function assocGrantsOf(m) { return (m && m.assocMember) ? assocRawGrantsOf(m) : []; }
+  function assocGrantOf(m) { return grantSummaryOf(assocGrantsOf(m)); }
+  function assocGrantPctOfMember(m) { return grantSumPct(assocGrantsOf(m)) / 100; }
   function assocRateOfMember(m) { return assocGrantPctOfMember(m); }
   function assocRateOfApp(a) { return assocRateOfMember(memberOfApp(a)); }
   function assocMemberList() { return memberList().filter(function (m) { return !!m.assocMember; }); }
@@ -1157,34 +1245,52 @@
     var chk = checkGrantPct(pct);
     if (!chk.ok) return null;
     var who = myGrantWho();
+    var list = assocRawGrantsOf(m);
+    var idx = grantIndexOf(list, who.role);
+    var before = grantSumPct(list);
     m.assocMember = !!on;
-    if (!m.assocMember || chk.pct <= 0) {
-      m.assocGrant = null;
+    if (!m.assocMember) {
+      list = [];                                   /* 등록 해제 — 부여 내역도 모두 비움 */
+    } else if (chk.pct <= 0) {
+      if (idx >= 0) list.splice(idx, 1);           /* 내 몫만 해제 — 다른 부여자 몫은 유지 */
     } else {
-      m.assocGrant = { pct: chk.pct, role: who.role, label: who.label, name: who.name, at: nowStamp() };
+      var rec = { pct: chk.pct, role: who.role, label: who.label, name: who.name, at: nowStamp() };
+      if (idx >= 0) list[idx] = rec; else list.push(rec);
     }
+    m.assocGrants = list; delete m.assocGrant;
+    var sum = grantSumPct(list);
     audit('가산점', '협회 등록 회원사 ' + m.company + ' — ' + (m.assocMember
-      ? '등록 · 가산 ' + (m.assocGrant ? '+' + m.assocGrant.pct + '% (' + who.label + ' ' + who.name + ')' : '0% (미부여)')
-      : '해제 (0%)'));
+      ? (chk.pct > 0
+        ? who.label + ' ' + who.name + ' +' + chk.pct + '% 부여 (한도 ' + chk.limit + '%) · 합산 +' + sum + '%'
+        : who.label + ' ' + who.name + ' 몫 해제(내 몫 0%) · 합산 +' + before + '% → +' + sum + '%')
+      : '등록 해제 (가산 0%)') + grantWhoTxt(list));
     save();
-    return { id: m.id, company: m.company, assocMember: !!m.assocMember, rate: assocRateOfMember(m), grant: assocGrantOf(m), limit: chk.limit };
+    return { id: m.id, company: m.company, assocMember: !!m.assocMember, rate: assocRateOfMember(m),
+      pct: m.assocMember ? chk.pct : 0, total: sum, grants: list.slice(), grant: assocGrantOf(m), limit: chk.limit };
   }
   function renderAssocPanel() {
     if (!has('assocTable')) return;
     var list = memberList();
     var lim = myGrantLimit();
-    if ($('#assocInfo')) $('#assocInfo').textContent = assocMemberList().length + '곳 협회 등록 · 가산점 기본 0% · 현재 부여 한도 ' +
+    var giverN = {};
+    list.forEach(function (m) { assocGrantsOf(m).forEach(function (g) { giverN[g.role] = 1; }); });
+    if ($('#assocInfo')) $('#assocInfo').textContent = assocMemberList().length + '곳 협회 등록 · 가산점 기본 0% · 부여자 ' +
+      Object.keys(giverN).length + '명(부여자별 몫을 최종 합산) · 현재 부여 한도 ' +
       (canGrantBonus() ? accessRoleLabel() + ' 최대 ' + lim + '%' : '없음 (부여 권한 없음)');
-    $('#assocTable').innerHTML = '<table><thead><tr><th>업체·단체</th><th>대표·구분</th><th>협회 등록</th><th>가산점 부여(%)</th><th>부여자 (직책·성명)</th><th>처리</th></tr></thead><tbody>' +
+    $('#assocTable').innerHTML = '<table><thead><tr><th>업체·단체</th><th>대표·구분</th><th>협회 등록</th>' +
+      '<th>부여자별 부여 내역 → 최종 합산</th><th>내 몫 (직책 한도)</th><th>처리</th></tr></thead><tbody>' +
       list.map(function (m, i) {
-        var g = assocGrantOf(m), pct = g ? g.pct : 0;
+        var gs = assocGrantsOf(m), pct = grantSumPct(gs);
+        var mine = grantIndexOf(gs, currentAccessRole());
+        var myPct = mine >= 0 ? gs[mine].pct : 0;
         return '<tr><td><span class="co">' + esc(m.company) + '</span><span class="sm">' + esc(m.loginId || m.id) + '</span></td>' +
           '<td class="sm">' + esc(m.owner || '') + ' · ' + esc(memberTypeLabel(m)) + '</td>' +
           '<td><label class="check" style="margin:0"><input type="checkbox" id="assocOn' + i + '"' + (m.assocMember ? ' checked' : '') + ' aria-label="협회 등록 회원사"> <span>등록</span></label></td>' +
-          '<td>' + (canGrantBonus() && lim ? '<select class="input sm" id="assocRate' + i + '" aria-label="가산점 퍼센트">' + grantOptionsHTML(pct, Math.max(lim, pct)) + '</select>'
-            : '<span class="sm">' + pct + '% (권한 없음)</span>') + '</td>' +
-          '<td>' + grantBadgeHTML(g) + '</td>' +
-          '<td><button class="btn sm" type="button" data-assocsave="' + esc(m.id) + '" data-associdx="' + i + '">저장</button></td></tr>';
+          '<td style="max-width:290px"><div class="grant-chips">' + (m.assocMember ? grantChipsHTML(gs) : '<span class="sm">미등록</span>') + '</div>' +
+            '<div style="margin-top:5px">' + (m.assocMember ? grantSumHTML(gs) + ' <span class="sm">가산 ' + pct + '%</span>' : '<span class="sm">가산 0%</span>') + '</div></td>' +
+          '<td>' + (canGrantBonus() && lim ? '<select class="input sm" id="assocRate' + i + '" aria-label="내 회원사 가산점 퍼센트">' + grantOptionsHTML(myPct, Math.max(lim, myPct)) + '</select>'
+            : '<span class="sm">' + myPct + '% (권한 없음)</span>') + '</td>' +
+          '<td><button class="btn sm" type="button" data-assocsave="' + esc(m.id) + '" data-associdx="' + i + '">내 몫 저장</button></td></tr>';
       }).join('') + '</tbody></table>';
   }
   function saveAssocRow(id, idx) {
@@ -1195,7 +1301,7 @@
     renderAssocPanel();
     renderDesigBatch();
     renderReportPanel(); renderAdmin();
-    toast(r.company + ' — 협회 등록 ' + (r.assocMember ? '지정' : '해제') + ' · 가산 ' + Math.round(r.rate * 100) + '%');
+    toast(r.company + ' — 협회 등록 ' + (r.assocMember ? '지정' : '해제') + ' · 가산 합산 ' + Math.round(r.rate * 100) + '%');
     return r;
   }
 
@@ -5213,7 +5319,7 @@
       eventStatus: v.eventApp ? '심사중' : 'none', eventVotes: [], eventDecidedAt: '',
       polStatus: v.polApp ? '심사중' : 'none', polApprovals: [],
       text: v.text, appliedAt: nowStamp(),
-      urgentGrant: null,
+      urgentGrants: [],
       start: v.start, days: v.days,
       file: ui.file ? ui.file.name : null, preview: ui.filePreview || null,
       license: ui.licName || '', licenseData: ui.licData || '', licenseMime: ui.licMime || '',
@@ -5225,7 +5331,7 @@
     audit('접수', id + ' ' + app.company + ' → 광고주 ' + app.advertiser + ' · ' + app.qty + '매(1개소 1매) · ' +
       (app.designatedOnly ? '고객장소 지정(1순위 ' + pr1.length + '개소)' : '1순위 ' + pr1.length + ' · 2순위 ' + pr2.length + ' · 3순위 ' + pr3.length + '개소') +
       (slotAssignTxt(app) ? ' · 세부 위치 지정 ' + slotAssignTxt(app) : ' · 세부 위치 위치 무관') +
-      (urgentStateOf(app).urgent ? ' · 임박 행사 감지(' + urgentStateOf(app).date + ', 가산 +5% 관리자 확인 대기)' : '') +
+      (urgentStateOf(app).urgent ? ' · 임박 행사 감지(' + urgentStateOf(app).date + ', 가산 기본 0% — 직책자 부여 시 부여자별 몫 합산)' : '') +
       (app.eventApp ? ' · 행사 우선접수 신청(' + app.eventName + ' · ' + app.eventPeriod + ') — 권한자 5명 중 3명 이상 찬성 시 우선 배정, 미승인 시 일반 추첨 전환' : '') +
       ' · ' + won(f.total));
     save();
@@ -7547,6 +7653,24 @@
     var partial = awardedIds.filter(function (id) { var a = null; pool.forEach(function (x) { if (x.id === id) a = x; }); return a && res.out[id].qty < qtyOf(a); }).length;
 
     var designatedN = pool.filter(function (a) { return a.designatedOnly; }).length;
+    /* 가산점 부여 현황 — 부여자별 몫을 최종 합산한 값까지 로그에 남긴다 */
+    var grantStat = (function () {
+      var uMax = 0, aMax = 0, uGivers = {}, aGivers = {}, n = 0;
+      pool.forEach(function (a) {
+        var s = urgentStateOf(a);
+        if (s.within && s.grants.length) {
+          uMax = Math.max(uMax, s.pct);
+          s.grants.forEach(function (g) { uGivers[g.role] = 1; });
+        }
+        var ags = assocGrantsOf(memberOfApp(a));
+        if (ags.length) {
+          aMax = Math.max(aMax, grantSumPct(ags));
+          ags.forEach(function (g) { aGivers[g.role] = 1; });
+        }
+        if ((s.within && s.grants.length) || ags.length) n += 1;
+      });
+      return { uMax: uMax, aMax: aMax, uGivers: Object.keys(uGivers).length, aGivers: Object.keys(aGivers).length, n: n };
+    })();
     ui.lastDrawLines = null;
     var lines = [
       { t: '[00.1]', m: '추첨 세션 시작 — 회차 ' + ROUND.id },
@@ -7560,8 +7684,8 @@
       { t: '[01.4]', m: '3순위 추가 배정 — 2순위 후 잔여 면에서 보충 (배정 ' + res.stat.stage3 + '매)' },
       { t: '[01.6]', m: '고객장소 지정 ' + designatedN + '건 — 1순위만 참여 (2·3순위 대체 배정 제외)' },
       { t: '[01.7]', m: '인접 게시대 택1 제한 — 같은 광고주 충돌 배정 차단 ' + res.stat.adj + '건 (14개 구역)' },
-      { t: '[01.75]', m: '시한임박 가산점 — 인정 범위(차차주) 감지 ' + (res.stat.urgent || 0) + '건 · 기본 0% · 직책자 부여 ' + (res.stat.urgentGranted || 0) + '건 (배정 ' + (res.stat.urgentGrantSeats || 0) + '매)' },
-      { t: '[01.78]', m: '협회 등록 회원사 가산점 — 기본 0% · 직책자 부여 ' + (res.stat.assocGranted || 0) + '건 (배정 ' + (res.stat.assocGrantSeats || 0) + '매)' },
+      { t: '[01.75]', m: '시한임박 가산점 — 인정 범위(차차주) 감지 ' + (res.stat.urgent || 0) + '건 · 기본 0% · 부여 ' + (res.stat.urgentGranted || 0) + '건 · 부여자 ' + grantStat.uGivers + '명 몫 합산 최대 +' + grantStat.uMax + '% (배정 ' + (res.stat.urgentGrantSeats || 0) + '매)' },
+      { t: '[01.78]', m: '협회 등록 회원사 가산점 — 기본 0% · 부여 ' + (res.stat.assocGranted || 0) + '건 · 부여자 ' + grantStat.aGivers + '명 몫 합산 최대 +' + grantStat.aMax + '% (배정 ' + (res.stat.assocGrantSeats || 0) + '매)' },
       { t: '[01.8]', m: '결과 확정 — 당첨 ' + awardedIds.length + '건 / 낙첨 ' + losers + '건 · 배정 ' + res.stat.seats + '매 (부분 배정 ' + partial + '건)' },
       { t: '[01.9]', m: '당첨자 가상계좌 발급 — ' + awardedIds.length + '건 (농협 301-0123-4567-89)' },
       { t: '[02.0]', m: '입고 안내 — 현수막은 ' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 협회 입고 (미입고 시 자동 취소·반려)' },
@@ -7597,23 +7721,27 @@
           log: lines.map(function (x) { return x.t + ' ' + x.m; }).join(' | ')
         });
         audit('추첨', drawId + ' 전산 추첨 완료 — 당첨 ' + awardedIds.length + '건 / 낙첨 ' + losers + '건 · 배정 ' + res.stat.seats + '매 (1순위 ' + res.stat.stage1 + ' · 2순위 ' + res.stat.stage2 + ' · 3순위 ' + res.stat.stage3 + ' · 세부 위치 지정 ' + res.stat.slot + ' · 지정 자리 경합 낙첨 ' + res.stat.slotMiss + ' · 고장 ' + res.stat.broken + '개소 제외) (SEED ' + hex8(res.seed) + ')');
-        /* 가산점 적용 내역 — 누가(직책·성명) 어떤 대상에 몇 %를 부여했고 결과가 어땠는지 */
-        var grantApplied = [];
+        /* 가산점 적용 내역 — 누가(직책·성명) 어떤 대상에 몇 %를 부여했고, 부여자별 몫이 몇 %로 합산됐는지 */
+        var grantApplied = [], grantDetail = [];
         pool.forEach(function (a) {
-          var u = urgentStateOf(a), g = u.applied ? u.grant : null, ag = assocGrantOf(memberOfApp(a));
-          if (!g && !ag) return;
-          var parts = [];
-          if (g) parts.push('시한임박 +' + g.pct + '%(' + g.label + ' ' + g.name + ')');
-          if (ag) parts.push('협회 회원사 +' + ag.pct + '%(' + ag.label + ' ' + ag.name + ')');
-          grantApplied.push(a.company + ' ' + parts.join(' + ') +
+          var u = urgentStateOf(a), ags = assocGrantsOf(memberOfApp(a));
+          if (!u.applied && !ags.length) return;
+          grantApplied.push(a.company + ' ' + drawWeightNoteOf(a) +
             ' (가중치 ' + (Number(drawWeightOf(a))).toFixed(2) + ') ' +
             (res.out[a.id] ? '당첨 ' + res.out[a.id].qty + '매' : '낙첨'));
+          grantDetail.push({
+            app: a.id, company: a.company,
+            urgent: u.applied ? u.grants.map(function (g) { return g.label + ' ' + g.name + ' +' + g.pct + '%'; }) : [],
+            urgentPct: u.applied ? u.pct : 0,
+            assoc: ags.map(function (g) { return g.label + ' ' + g.name + ' +' + g.pct + '%'; }),
+            assocPct: grantSumPct(ags), weight: Number(drawWeightOf(a))
+          });
         });
-        audit('가산점', drawId + ' — ' + (grantApplied.length ? grantApplied.join(' · ') : '부여된 가산점 없음 (모두 1.00배)'));
+        audit('가산점', drawId + ' — 부여자별 가산점 최종 합산 적용 — ' + (grantApplied.length ? grantApplied.join(' · ') : '부여된 가산점 없음 (모두 1.00배)'));
         if (db.draws.length && db.draws[db.draws.length - 1].id === drawId) {
           db.draws[db.draws.length - 1].grants = {
             urgentSeats: res.stat.urgentGrantSeats || 0, assocSeats: res.stat.assocGrantSeats || 0,
-            applied: grantApplied.slice()
+            applied: grantApplied.slice(), detail: grantDetail.slice()
           };
         }
         save();
@@ -7668,24 +7796,26 @@
     best.limitLabel = '차차주(' + URGENT.weeks + '주 뒤)까지';
     return best;
   }
-  /* 접수 건의 시한임박 상태 — urgent(감지) / within(인정 범위) / grant(직책자 부여) / applied(가중치 적용) */
+  /* 접수 건의 시한임박 상태 — urgent(감지) / within(인정 범위) / grants(부여자별) / applied(가중치 적용) */
   function urgentStateOf(a) {
     var u = urgentDateInText(a && a.text, (a && a.start) || ROUND.postStart);
-    if (!u) return { urgent: false, within: false, days: null, date: '', applied: false, grant: null, pct: 0, weight: 1, label: '' };
-    var g = u.within ? urgentGrantOf(a) : null;
-    var pct = g ? g.pct : 0;
+    if (!u) return { urgent: false, within: false, days: null, date: '', applied: false, grant: null, grants: [], pct: 0, weight: 1, label: '' };
+    var gs = u.within ? urgentGrantsOf(a) : [];
+    var pct = grantSumPct(gs);
     return {
-      urgent: true, within: !!u.within, days: u.days, date: u.iso, applied: !!g, grant: g, pct: pct,
+      urgent: true, within: !!u.within, days: u.days, date: u.iso, applied: gs.length > 0,
+      grant: grantSummaryOf(gs), grants: gs, pct: pct,
       weight: 1 + pct / 100,
       label: (u.mo + '월 ' + u.dy + '일 행사 · 게첩 시작 ' + (u.days === 0 ? '당일' : u.days + '일 전')) +
-        (g ? ' · ' + g.label + ' ' + g.name + ' +' + pct + '%' : (u.within ? ' · 가산 0% (미부여)' : ' · 차차주 이후 — 시한임박 대상 아님'))
+        (gs.length ? grantWhoTxt(gs) + ' 합산 +' + pct + '%' : (u.within ? ' · 가산 0% (미부여)' : ' · 차차주 이후 — 시한임박 대상 아님'))
     };
   }
   function urgentWeightOf(a) { return urgentStateOf(a).weight; }
 
-  /* ── 추첨 가중치 한 곳에서 계산 ────────────────────────────────────────────
-     가중치 = 1.00 + 시한임박 부여 % + 협회 등록 회원사 부여 %
+  /* ── 추첨 가중치 한 곳에서 계산 ────────────────────────────────────────────────────
+     가중치 = 1.00 + (시한임박 부여자 합산 % + 협회 등록 회원사 부여자 합산 %) / 100
      · 직책자 본인의 직책에 따른 자동 가산은 없습니다(전부 0%).
+     · 한 대상에 여러 부여자가 부여하면 부여자별 %를 **모두 더합니다**(예: +5 +3 +3 +2 = +13%).
      · 두 가산 모두 부여하지 않으면 1.00배입니다. */
   function drawWeightOf(a) {
     var u = urgentStateOf(a);
@@ -7693,12 +7823,17 @@
     var apct = Math.round(assocRateOfApp(a) * 100);
     return 1 + (upct + apct) / 100;
   }
-  /* 추첨 로그·감사 로그용 — '시한임박 +5%(지부장 김서산) + 협회 회원사 +3%(수석부지부장 박해미)' */
+  /* 추첨 로그·감사 로그용 — '시한임박 +5%(지부장 김서산) +3%(수석부지부장 박해미) = 합산 +8%'
+     + '협회 회원사 +3%(사무실무원 한은지) = 합산 +3%' */
   function drawWeightNoteOf(a) {
     var u = urgentStateOf(a), out = [];
-    if (u.applied && u.grant) out.push('시한임박 +' + u.pct + '%(' + u.grant.label + ' ' + u.grant.name + ')');
-    var ag = assocGrantOf(memberOfApp(a));
-    if (ag) out.push('협회 회원사 +' + ag.pct + '%(' + ag.label + ' ' + ag.name + ')');
+    function part(list) {
+      return list.map(function (g) { return '+' + g.pct + '%(' + g.label + ' ' + g.name + ')'; }).join(' ') +
+        ' = 합산 +' + grantSumPct(list) + '%';
+    }
+    if (u.applied && u.grants.length) out.push('시한임박 ' + part(u.grants));
+    var ags = assocGrantsOf(memberOfApp(a));
+    if (ags.length) out.push('협회 회원사 ' + part(ags));
     return out.length ? out.join(' + ') : '가산점 없음';
   }
   /* 가산점 부여 요약 — '시한임박 2건 · 회원사 1건' */
@@ -8014,7 +8149,7 @@
           : '';
         var urgCell = urg.urgent
           ? '<div class="urgent-row"><span class="urgent-badge' + (urg.applied ? '' : ' off') + '">📅 ' + esc(urg.date.slice(5).replace('-', '/')) +
-            (urg.applied ? ' · ' + esc(urg.grant.label) + ' +' + urg.pct + '%'
+            (urg.applied ? ' · 가산 합산 +' + urg.pct + '%' + (urg.grants.length > 1 ? ' (' + urg.grants.length + '명)' : '')
               : (urg.within ? ' · 가산 0% (미부여)' : ' · 차차주 이후 (대상 아님)')) + '</span></div>'
           : '';
         return '<tr><td>' + thumb + '<button class="btn sm ghost" data-zoom="' + esc(a.id) + '" type="button" style="margin-top:6px;width:100%">시안 확대</button></td>' +
@@ -8406,14 +8541,20 @@
   function grantEntryList() {
     var out = [];
     db.apps.forEach(function (a) {
-      var g = urgentGrantOf(a);
-      if (!g) return;
-      out.push({ kind: '시한임박', target: a.company, detail: a.text || '', pct: g.pct, label: g.label, name: g.name, at: g.at, appId: a.id });
+      var gs = urgentGrantsOf(a);
+      if (!gs.length) return;
+      gs.forEach(function (g) {
+        out.push({ kind: '시한임박', target: a.company, detail: a.text || '', pct: g.pct, total: grantSumPct(gs),
+          count: gs.length, label: g.label, name: g.name, at: g.at, appId: a.id });
+      });
     });
     memberList().forEach(function (m) {
-      var g = assocGrantOf(m);
-      if (!g) return;
-      out.push({ kind: '회원사', target: m.company, detail: m.owner || '', pct: g.pct, label: g.label, name: g.name, at: g.at, memberId: m.id });
+      var gs = assocGrantsOf(m);
+      if (!gs.length) return;
+      gs.forEach(function (g) {
+        out.push({ kind: '회원사', target: m.company, detail: m.owner || '', pct: g.pct, total: grantSumPct(gs),
+          count: gs.length, label: g.label, name: g.name, at: g.at, memberId: m.id });
+      });
     });
     return out.sort(function (x, y) { return String(y.at).localeCompare(String(x.at)); });
   }
@@ -8421,8 +8562,10 @@
     if (!has('adminRoleTable')) return;
     var list = grantEntryList();
     var lim = myGrantLimit();
+    var targets = {};
+    list.forEach(function (g) { targets[(g.appId || g.memberId || '')] = 1; });
     if ($('#roleBonusInfo')) $('#roleBonusInfo').textContent =
-      '부여 내역 ' + list.length + '건 · 기본 0% · 현재 부여 한도 ' +
+      '부여 내역 ' + list.length + '건(부여자별) · 대상 ' + Object.keys(targets).length + '곳 · 기본 0% · 부여자별 몫을 최종 합산 · 현재 부여 한도 ' +
       (canGrantBonus() ? accessRoleLabel() + ' 최대 ' + lim + '%' : '없음 (부여 권한 없음)');
     var chips = $('#roleBonusChips');
     if (chips) {
@@ -8430,7 +8573,8 @@
         var on = r.limit > 0 && (r.k === currentAccessRole() || r.k === 'super');
         return '<span class="chip' + (on ? ' on' : '') + '" style="cursor:default">' + esc(r.label) +
           ' <b>' + (r.limit > 0 ? '최대 +' + r.limit + '%' : '부여 불가') + '</b></span>';
-      }).join('');
+      }).join('') +
+        '<span class="chip" style="cursor:default">부여자 4인 합산 <b>최대 +13%</b></span>';
     }
     var box = $('#adminRoleTable');
     if (!box) return;
@@ -8438,8 +8582,8 @@
       box.innerHTML = '<div class="empty">' + IC.check + '<div>아직 부여된 가산점이 없습니다 — 모두 기본 0%(1.00배)입니다.</div></div>';
       return;
     }
-    box.innerHTML = '<table><thead><tr><th>구분</th><th>대상</th><th style="text-align:right">부여 %</th>' +
-      '<th>부여자 (직책·성명)</th><th>부여 시각</th><th>이번 회차 추첨 가중치</th></tr></thead><tbody>' +
+    box.innerHTML = '<table><thead><tr><th>구분</th><th>대상</th><th style="text-align:right">부여자 몫</th>' +
+      '<th style="text-align:right">이 대상 합산</th><th>부여자 (직책·성명)</th><th>부여 시각</th><th>이번 회차 추첨 가중치</th></tr></thead><tbody>' +
       list.map(function (g) {
         var a = g.appId ? findApp(g.appId) : null;
         var m = g.memberId ? memberById(g.memberId) : null;
@@ -8447,6 +8591,7 @@
         return '<tr><td><span class="badge ' + (g.kind === '시한임박' ? 'b-amber' : 'b-green') + '"><i></i>' + g.kind + '</span></td>' +
           '<td><span class="co">' + esc(g.target) + '</span><span class="sm">' + esc(g.detail) + '</span></td>' +
           '<td class="mono" style="text-align:right">+' + g.pct + '%</td>' +
+          '<td class="mono" style="text-align:right"><b>+' + g.total + '%</b>' + (g.count > 1 ? '<span class="sm"> ' + g.count + '명</span>' : '') + '</td>' +
           '<td class="sm">' + esc(g.label) + ' ' + esc(g.name) + '</td>' +
           '<td class="sm">' + esc(g.at || '—') + '</td>' +
           '<td class="mono" style="text-align:right">' + w.toFixed(2) + '배</td></tr>';
@@ -9962,26 +10107,32 @@
     }
     ensureDemoData();
     if (!memberById(db.session)) db.session = null;
-    /* 이전 저장 데이터 호환 — 가산점 구조 교정(2026-11-22): 직책자 본인 자동 가산 → 직책자 부여
+    /* 이전 저장 데이터 호환 — 가산점 구조(2026-11-22): 부여자 1명 단일 기록 → **부여자별 배열(최종 합산)**
+       · urgentGrant(단일) → urgentGrants(배열) · assocGrant(단일) → assocGrants(배열)
        · 회원에 남은 옛 직책 가산(roleBonusType)은 지우고 가중치에 반영하지 않습니다.
-       · 옛 '관리자 인정/조정' 값은 '지부장 부여'로 옮기고, 그 밖에는 기본 0%입니다. */
+       · 옛 '관리자 인정/조정' 값은 '지부장 부여' 항목 하나로 옮겼습니다(다른 부여자 몫은 그대로 유지). */
     db.members.forEach(function (m) {
       if (m.roleBonusType !== undefined) delete m.roleBonusType;
       if (m.roleBonusSetAt !== undefined) delete m.roleBonusSetAt;
+      var legacyAssocPct = 0;
       if (m.assocRate !== undefined) {
-        var oldPct = Math.round(Number(m.assocRate || 0) * 100);
-        if (m.assocMember && oldPct > 0 && !m.assocGrant) {
-          m.assocGrant = { pct: Math.min(5, oldPct), role: 'chief', label: '지부장', name: '(이전 데이터)', at: '' };
-        }
+        legacyAssocPct = Math.round(Number(m.assocRate || 0) * 100);
         delete m.assocRate;
       }
-      if (m.assocMember && m.assocGrant === undefined) m.assocGrant = null;
+      var assocList = Array.isArray(m.assocGrants) ? grantListOf(m.assocGrants) : grantListOf(m.assocGrant);
+      if (!assocList.length && m.assocMember && legacyAssocPct > 0) {
+        assocList = grantListOf({ pct: Math.min(5, legacyAssocPct), role: 'chief', label: '지부장', name: '(이전 데이터)', at: '' });
+      }
+      m.assocGrants = assocList;
+      delete m.assocGrant;
     });
     db.apps.forEach(function (a) {
-      if (a.urgentGrant === undefined) {
-        a.urgentGrant = (a.urgentAck === 'on')
-          ? { pct: 5, role: 'chief', label: '지부장', name: '(이전 데이터)', at: '' } : null;
+      var urgList = Array.isArray(a.urgentGrants) ? grantListOf(a.urgentGrants) : grantListOf(a.urgentGrant);
+      if (!urgList.length && a.urgentAck === 'on') {
+        urgList = grantListOf({ pct: 5, role: 'chief', label: '지부장', name: '(이전 데이터)', at: '' });
       }
+      a.urgentGrants = urgList;
+      delete a.urgentGrant;
       if (a.urgentAck !== undefined) delete a.urgentAck;
       if (a.urgentEvent !== undefined) delete a.urgentEvent;
     });
@@ -10157,11 +10308,16 @@
     myGrantLimit: function () { return myGrantLimit(); },
     grantWho: function () { return myGrantWho(); },
     urgentGrant: function (id) { var a = findApp(id); return a ? urgentGrantOf(a) : null; },
+    /* 부여자별 가산점 — 목록과 합산 값 (2026-11-22 다중 부여자 합산 구조 검증용) */
+    urgentGrants: function (id) { var a = findApp(id); return a ? urgentGrantsOf(a) : []; },
+    urgentGrantTotal: function (id) { var a = findApp(id); return a ? urgentGrantPctOf(a) : 0; },
+    assocGrants: function (id) { return assocGrantsOf(memberById(id)); },
+    assocGrantTotal: function (id) { return grantSumPct(assocGrantsOf(memberById(id))); },
     urgentCandidates: function () {
       return urgentCandidateList().map(function (a) {
-        var u = urgentStateOf(a), g = urgentGrantOf(a);
+        var u = urgentStateOf(a), gs = urgentGrantsOf(a);
         return { id: a.id, company: a.company, date: u.date, days: u.days, within: u.within, applied: u.applied,
-          pct: u.pct, grant: g, weight: drawWeightOf(a) };
+          pct: u.pct, total: u.pct, grants: gs, count: gs.length, grant: grantSummaryOf(gs), weight: drawWeightOf(a) };
       });
     },
     urgentGrantPanel: function () {
@@ -10222,7 +10378,7 @@
         x.priority1 = [pid]; x.priority2 = []; x.priority3 = []; x.placements = [pid];
         x.priority1Slots = []; x.priority2Slots = []; x.priority3Slots = [];
         x.designatedOnly = false; x.eco = false; x.eventApp = false; x.polApp = false;
-        x.advertiser = '노후화검증'; x.company = '노후화검증'; x.oade = ''; x.urgentGrant = null;
+        x.advertiser = '노후화검증'; x.company = '노후화검증'; x.oade = ''; x.urgentGrants = [];
         var r = drawEngine([x], 5);
         return { seats: r.stat.seats, places: ((r.out['AGED-T'] || {}).places || []).map(function (p) { return p.slot; }) };
       }
@@ -10250,7 +10406,9 @@
     assocList: function () { return assocMemberList().map(function (m) { return { id: m.id, company: m.company, rate: assocRateOfMember(m) }; }); },
     assocSet: function (id, on, pct) { return setAssocMember(id, on, pct); },
     assocRate: function (id) { return assocRateOfMember(memberById(id)); },
-    assocPanel: function () { renderAssocPanel(); return { info: String($('#assocInfo') ? $('#assocInfo').textContent : ''), rows: document.querySelectorAll('#assocTable tbody tr').length }; },
+    assocPanel: function () { renderAssocPanel(); return { info: String($('#assocInfo') ? $('#assocInfo').textContent : ''),
+      rows: document.querySelectorAll('#assocTable tbody tr').length,
+      html: String($('#assocTable') ? $('#assocTable').innerHTML : '') }; },
     drawWeight: function (id) { var a = findApp(id); return a ? drawWeightOf(a) : 1; },
     /* 행사 우선배정 순위 검증 — 같은 게시대 1자리에 '승인 행사'와 '일반'을 겨루게 하고 여러 시드로 반복한다.
        mode 'approved' → 승인 행사가 일반보다 먼저 자리를 잡는다 (모든 시드에서 행사 승)
@@ -10268,7 +10426,7 @@
         x.priority1 = [pid]; x.priority2 = []; x.priority3 = [];
         x.placements = [pid]; x.priority1Slots = []; x.priority2Slots = []; x.priority3Slots = [];
         x.designatedOnly = false; x.eco = false; x.advertiser = adv; x.company = co; x.oade = '';
-        x.eventVotes = []; x.urgentGrant = null;
+        x.eventVotes = []; x.urgentGrants = [];
       }
       for (var s = 0; s < n; s++) {
         var E = JSON.parse(JSON.stringify(evBase)), G = JSON.parse(JSON.stringify(genBase));
