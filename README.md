@@ -45,7 +45,7 @@ python3 verify_multipage.py          # 전체
 python3 verify_multipage.py --no-file # file:// 점검 생략
 ```
 
-로컬 HTTP 서버 + 실제 Chromium(Playwright)으로 다음을 확인합니다(총 441개 검사).
+로컬 HTTP 서버 + 실제 Chromium(Playwright)으로 다음을 확인합니다(총 455개 검사).
 
 1. 17개 페이지 로드 시 콘솔 오류·JS 예외·실패 요청 0건, 페이지마다 `.view` 섹션 1개만 렌더
 2. 상단 네비 6개 탭 · 관리자 5개/규격·안내 3개 서브탭 클릭 → `location.pathname`이 해당 `.html`로 이동
