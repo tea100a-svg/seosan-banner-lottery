@@ -7130,14 +7130,15 @@
   function executeMissed(targets) {
     var cancelled = 0, promoted = [], toFirst = [], penalized = [];
     targets.forEach(function (a) {
-      if (a.status !== '입고대기' || a.delivered) return;
+      if (['입고대기', '선착순확정'].indexOf(a.status) < 0 || a.delivered) return;
+      var fc = a.status === '선착순확정' || a.firstCome;
       a.status = '미입고취소';
-      a.reject = '현수막 실물 미제출 (수요일 ' + ROUND.deliverTime + ' 입고 마감 초과)';
+      a.reject = '현수막 실물 미제출 (' + (fc ? '목요일 선착순 · 금요일 ' + FC_DELIVER.time : '수요일 ' + ROUND.deliverTime) + ' 입고 마감 초과)';
       a.cancelledAt = nowStamp();
       cancelled += 1;
       audit('미입고', a.id + ' ' + a.company + ' 미입고 자동 취소(반려) — 배정 ' + awardedOf(a) + '매 회수');
       /* 페널티 — 실제 광고주(사업자번호+연락처) 기준 차기 1개 주 회차 접수 제한 */
-      var pen = penaltyOnce(a, '수요일 18:00 미입고 자동 취소(반려)');
+      var pen = penaltyOnce(a, fc ? '금요일 10:00 미입고 자동 취소(반려)' : '수요일 18:00 미입고 자동 취소(반려)');
       if (pen) penalized.push(pen.advertiser);
       var r = releaseSeatOf(a);
       r.promoted.forEach(function (c) { promoted.push(c.company); });
