@@ -1441,7 +1441,7 @@
     locAddrOpen: false, locAddrRows: {}, coverOk: {},
     suLicName: '', suLicData: '', suLicMime: '', licFromMember: false,
     adminSub: 'draw', guideSub: 'file', statusPage: 0, pickPage: 0, statusAll: true, pickAll: false,
-    statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, calMonth: {}, offSlots: {},
+    statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, drawWeek: ROUND.postStart, calMonth: {}, offSlots: {},
     themeSel: {}, themeSearch: '', themeEditSel: {} };
 
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
@@ -1716,7 +1716,8 @@
   function calBlockHTML(ctx) {
     var sel = ctx === 'apply' ? weekStartOf(ui.applyWeek || ROUND.postStart)
       : (ctx === 'official' ? weekStartOf(ui.offWeek || ROUND.postStart)
-        : weekStartOf(ui.statusWeek || ROUND.postStart));
+        : (ctx === 'draw' ? weekStartOf(ui.drawWeek || ROUND.postStart)
+          : weekStartOf(ui.statusWeek || ROUND.postStart)));
     if (!ui.calMonth) ui.calMonth = {};
     var ym = ui.calMonth[ctx] || sel.slice(0, 7);
     ui.calMonth[ctx] = ym;
@@ -6182,6 +6183,29 @@
   }
   function renderOfficialAll() { renderOffPanel(); renderStatus(); renderFirst(); renderWorkOrder(); }
 
+  /* 주차별 접수대장 — 달력에서 고른 게첩 주의 접수·배정 현황 (추첨 페이지) */
+  function renderDrawWeek() {
+    if (!has('drawWeekCal')) return;
+    var s = weekStartOf(ui.drawWeek || ROUND.postStart);
+    if (!ui.calMonth) ui.calMonth = {};
+    if (!ui.calMonth.draw) ui.calMonth.draw = s.slice(0, 7);
+    $('#drawWeekCal').innerHTML = calBlockHTML('draw');
+    var st = weekStatsOf(s), list = appsOfWeek(s).filter(function (a) { return a.status !== '반려'; });
+    if ($('#drawWeekNow')) $('#drawWeekNow').textContent = weekRangeTxt(s) + ' · 접수 ' + st.n + '건 · 배정 ' + st.awarded + '매';
+    if ($('#drawWeekInfo')) $('#drawWeekInfo').innerHTML = '<b>' + weekRangeTxt(s) + '</b> 게첩 주 — 접수 <b>' + st.n + '건</b> · 신청 <b>' + st.qty + '매</b> · 배정 <b>' + st.awarded + '매</b> · 공문 <b>' + st.official + '면</b> · 잔여 <b>' + st.left + '면</b>' +
+      (s === currentPostingWeek() ? '' : ' · 이 주차는 <b>사전 접수</b>분입니다 (추첨은 해당 회차 월요일에 실행)');
+    var rows = list.slice().sort(function (a, b) { return String(a.id) < String(b.id) ? -1 : 1; });
+    $('#drawWeekTable').innerHTML = rows.length
+      ? '<table><thead><tr><th>접수번호</th><th>대행사·업체</th><th>실제 광고주</th><th style="text-align:right">수량</th><th>1순위 게시대</th><th>상태</th><th style="text-align:center">배정</th></tr></thead><tbody>' +
+        rows.slice(0, 60).map(function (a) {
+          return '<tr><td class="mono">' + esc(a.id) + '</td><td><span class="co">' + esc(a.company) + '</span>' + (a.appType === 'agency' ? '<span class="sm">대행</span>' : '') + '</td>' +
+            '<td class="sm">' + esc(advOfApp(a).name) + '</td><td class="mono" style="text-align:right">' + qtyOf(a) + '매</td>' +
+            '<td class="sm">' + esc(placeNamesTxt(prioOf(a, 1), 2) || '—') + '</td><td>' + statusBadge(a.status) + '</td>' +
+            '<td class="mono" style="text-align:center">' + awardedOf(a) + '</td></tr>';
+        }).join('') + '</tbody></table>' + (rows.length > 60 ? '<div class="hint-txt">상위 60건만 표시 (전체 ' + rows.length + '건)</div>' : '')
+      : '<div class="empty">' + IC.empty + '<div>' + weekRangeTxt(s) + ' 게첩 주에 접수된 건이 없습니다.</div></div>';
+  }
+
   function renderAdmin() {
     var appsR = db.apps.filter(function (a) { return a.round === ROUND.id; });
     var reviewing = db.apps.filter(function (a) { return a.round === ROUND.id && a.status === '시안심사중'; });
@@ -6218,6 +6242,7 @@
     }
 
     renderDrawResult(draw);
+    renderDrawWeek();
     renderOffPanel();
     renderReview(reviewing);
     renderDupSuspects();
@@ -8139,17 +8164,19 @@
   function rerenderCal(ctx) {
     if (ctx === 'apply') { renderApplyWeek(); return; }
     if (ctx === 'official') { renderOffWeek(); return; }
+    if (ctx === 'draw') { renderDrawWeek(); return; }
     renderStatusCal();
   }
   function calMove(ctx, d) {
     if (!ui.calMonth) ui.calMonth = {};
-    var cur = ui.calMonth[ctx] || weekStartOf(ctx === 'apply' ? (ui.applyWeek || ROUND.postStart) : (ctx === 'official' ? (ui.offWeek || ROUND.postStart) : (ui.statusWeek || ROUND.postStart))).slice(0, 7);
+    var cur = ui.calMonth[ctx] || weekStartOf(ctx === 'apply' ? (ui.applyWeek || ROUND.postStart) : (ctx === 'official' ? (ui.offWeek || ROUND.postStart) : (ctx === 'draw' ? (ui.drawWeek || ROUND.postStart) : (ui.statusWeek || ROUND.postStart)))).slice(0, 7);
     ui.calMonth[ctx] = monthAdd(cur, d);
     rerenderCal(ctx);
   }
   function calPickWeek(ctx, s0) {
     var s = weekStartOf(s0);
     if (ctx === 'apply') { setApplyWeek(s); return; }
+    if (ctx === 'draw') { ui.drawWeek = s; ui.calMonth.draw = s.slice(0, 7); renderDrawWeek(); return; }
     if (ctx === 'official') {
       ui.offWeek = s;
       ui.calMonth.official = s.slice(0, 7);
@@ -8165,6 +8192,7 @@
     var s = currentPostingWeek();
     ui.calMonth[ctx] = s.slice(0, 7);
     if (ctx === 'apply') { setApplyWeek(s); return; }
+    if (ctx === 'draw') { ui.drawWeek = s; ui.calMonth.draw = s.slice(0, 7); renderDrawWeek(); return; }
     if (ctx === 'official') { ui.offWeek = s; renderOffWeek(); renderOffPanel(); return; }
     ui.statusWeek = s; renderStatus();
   }
@@ -8943,7 +8971,7 @@
     },
     officialNext: function (id) { var o = null; (db.official || []).forEach(function (x) { if (x.id === id) o = x; }); return o ? officialNextStep(o) : ''; },
     /* 주별 현황 · 게첩 주 선택 · 대행사 시연 데이터 검증용 (2026-11-22) */
-    weekState: function () { return { status: weekStartOf(ui.statusWeek || ROUND.postStart), apply: weekStartOf(ui.applyWeek || ROUND.postStart), official: weekStartOf(ui.offWeek || ROUND.postStart), current: currentPostingWeek(), today: weekStartOf(todayISO()) }; },
+    weekState: function () { return { status: weekStartOf(ui.statusWeek || ROUND.postStart), apply: weekStartOf(ui.applyWeek || ROUND.postStart), official: weekStartOf(ui.offWeek || ROUND.postStart), drawWeek: weekStartOf(ui.drawWeek || ROUND.postStart), current: currentPostingWeek(), today: weekStartOf(todayISO()) }; },
     setStatusWeek: function (s) { calPickWeek('status', s); return weekStartOf(ui.statusWeek); },
     setApplyWeek: function (s) { return setApplyWeek(s, { silent: true }); },
     setOffWeek: function (s) { calPickWeek('official', s); return weekStartOf(ui.offWeek); },
