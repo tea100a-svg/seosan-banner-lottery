@@ -92,8 +92,8 @@
 </div>
 <div class="view-head">
       <div>
-        <h2>👥 회원 · 임원 권한 · 직책 가산점 · 행사승인권한자</h2>
-        <p>협회 직책과 결재 권한, 직책별 추첨 가산점, 행사 우선접수를 투표로 결정하는 <b>행사승인권한자 5명</b>, 제재(페널티) 현황을 관리합니다.</p>
+        <h2>👥 회원 · 임원 권한 · 가산점 부여 · 행사승인권한자</h2>
+        <p>협회 직책과 결재 권한, <b>직책자가 시한임박 현수막·협회 등록 회원사에 부여하는 추첨 가산점</b>, 행사 우선접수를 투표로 결정하는 <b>행사승인권한자 5명</b>, 제재(페널티) 현황을 관리합니다.</p>
       </div>
     </div>
 <div class="role-bar" id="adminRoleBar">
@@ -114,7 +114,7 @@
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회에 등록된 회원사에는 추첨 가산점을 줄 수 있습니다. <b>기본 0%</b>이고, 관리자가 회원사별로 <b>%를 직접 조정</b>합니다(최대 20%). 기한임박 자동 가산점과 같은 방식으로 <b>가중치 = 1.0 + 직책 가산 + 협회 회원사 가산 + (관리자 인정 임박 가산)</b>에 더해집니다.</div>
+        <div>협회에 등록된 회원사에는 <b>직책자가 자기 권한 한도 안에서</b> 추첨 가산점을 부여합니다. <b>기본 0%</b>이며, 부여 한도는 <b>지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>(사무국장·감사·일반 회원은 부여 불가)입니다. 로그인한 직책의 한도를 넘는 %는 선택할 수 없고, 부여하면 <b>부여자(직책·성명)와 %</b>가 표에 남습니다. 추첨 가중치는 <b>1.00 + 시한임박 부여 % + 협회 회원사 부여 %</b>입니다.</div>
       </div>
       <div class="table-wrap" id="assocTable"></div>
     </div>
@@ -128,7 +128,7 @@
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회 임원·실무자(<b>지부장 · 수석부지부장 · 사무국장 · 사무실무원 · 현장실무원 · 감사1 · 감사2</b>)의 직책과 권한을 관리합니다. <b>승인 완료</b>된 직책자만 해당 단계의 공문 결재를 할 수 있고, <b>승인 대기</b>·<b>해제</b> 상태면 결재할 수 없습니다. 총괄 관리자는 모든 단계를 결재·승인·회수할 수 있으며, 모든 처리는 감사 로그에 기록됩니다. (직책 가산점은 별도 <b>직책 가산점 관리</b>에서 지정합니다.)</div>
+        <div>협회 임원·실무자(<b>지부장 · 수석부지부장 · 사무국장 · 사무실무원 · 현장실무원 · 감사1 · 감사2</b>)의 직책과 권한을 관리합니다. <b>승인 완료</b>된 직책자만 해당 단계의 공문 결재를 할 수 있고, <b>승인 대기</b>·<b>해제</b> 상태면 결재할 수 없습니다. 총괄 관리자는 모든 단계를 결재·승인·회수할 수 있으며, 모든 처리는 감사 로그에 기록됩니다. (가산점 부여는 아래 <b>가산점 부여 권한 · 부여 내역</b>과 회원사 표에서 합니다.)</div>
       </div>
       <div class="deleg-card" id="delegCard">
         <div class="deleg-head">
@@ -178,7 +178,7 @@
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>행사 우선접수 심사를 투표로 결정하는 <b>행사승인권한자 5명</b>입니다. 5명 중 <b>3명 이상 찬성</b>이면 <b>행사 우선 승인</b>이 확정되고(일반 추첨보다 먼저 배정), <b>반대·기권 3명 이상</b> 또는 과반 미달이면 <b>미승인 → 일반 추첨 전환</b>됩니다. 성명·직책·소속은 언제든지 바꿀 수 있고, 변경 내역은 감사 로그에 남습니다. (투표는 <b>시안심사 · 가산점</b> 화면의 행사 우선접수 심사 패널에서 합니다.)</div>
+        <div>행사 우선접수 심사를 투표로 결정하는 <b>행사승인권한자 5명</b>입니다. 5명 중 <b>3명 이상 찬성</b>이면 <b>행사 우선 승인</b>이 확정되고(일반 추첨보다 먼저 배정), <b>반대·기권 3명 이상</b> 또는 과반 미달이면 <b>미승인 → 일반 추첨 전환</b>됩니다. 성명·직책·소속은 언제든지 바꿀 수 있고, 변경 내역은 감사 로그에 남습니다. (투표는 <b>시안 심사</b> 화면의 행사 우선접수 심사 패널에서 합니다.)</div>
       </div>
       <div class="table-wrap" id="eventApproverTable"></div>
     </div>
@@ -186,13 +186,13 @@
       <div class="admin-head">
         <h3>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9Z"/></svg>
-          직책 가산점 관리
+          🎖 가산점 부여 권한 · 부여 내역
         </h3>
         <span class="sub" id="roleBonusInfo"></span>
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회 직책은 <b>관리자만 지정·해제</b>합니다(일반 회원가입 화면에는 없습니다). 추첨 가중치는 <b>1.0 + 직책 가산</b>이며, 직책 가산은 <b>지부장 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>입니다. <b>기한 임박 행사는 자동 가산 0%</b>(관리자가 인정할 때만 +5%)이고, 지정·해제와 추첨 적용 내역은 모두 <b>감사 로그</b>에 남습니다.</div>
+        <div><b>가산점은 직책자 본인에게 주는 것이 아닙니다.</b> 직책자가 <b>시한임박 현수막</b>과 <b>협회 등록 회원사</b>에 부여하는 권한이며, 두 가산 모두 <b>기본 0%</b>입니다. 부여 한도는 <b>지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>이고, 사무국장·감사·일반 회원은 부여할 수 없습니다. 시한임박 인정 범위는 <b>차차주까지</b>입니다. 지금까지 부여된 내역(부여자·%)과 그 대상의 추첨 가중치를 아래에서 확인합니다.</div>
       </div>
       <div class="chips" id="roleBonusChips" style="margin-bottom:10px"></div>
       <div class="table-wrap" id="adminRoleTable"></div>

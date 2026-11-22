@@ -889,7 +889,7 @@
 
   /* ── 시연용 행사 우선접수 3건 (2026-11-22 김재봉 님 지시) ─────────────────────
      · 심사중(투표 진행) 1건 · 승인 확정 1건 · 미승인 → 일반 추첨 전환 1건
-     · 관리자 [시안심사 · 가산점] 화면의 행사 우선접수 심사 패널에서 바로 투표·확정을 시험할 수 있습니다.
+     · 관리자 [시안 심사] 화면의 행사 우선접수 심사 패널에서 바로 투표·확정을 시험할 수 있습니다.
      · 승인·미승인 모두 추첨 대상(추첨대기)이고, 미승인 건은 신청한 1·2·3순위로 일반 추첨에 참여합니다. */
   var EVENT_SEED_APPS = [
     { company: '해미읍성축제추진위', owner: '노현정', adv: '해미읍성 겨울축제 추진위원회', biz: '318-21-40221',
@@ -951,55 +951,55 @@
   /* ── 회원 (시연용) — 로그인하면 1단계 입력 자동 작성 · 마이페이지 접수 필터 ──────
      · type: direct = 일반업체(직접 신청) / agency = 옥외광고대행사(대행 신청)
      · 회원 정보: 구분 · 업체명 · 대표자/담당자 · 연락처 · 사업자번호 · 이메일 · 옥외광고업 등록번호
-     · 협회 직책(roleBonusType)은 관리자만 지정합니다 — 일반 회원가입 화면에는 없습니다. */
+     · 가산점은 회원 직책이 아니라 **직책자가 대상(시한임박·회원사)에 부여**합니다 — 회원에 자동 가산이 붙지 않습니다. */
   var SEED_MEMBERS = [
-    { id: 'M-1001', loginId: 'hatsal', pw: '1234', type: 'direct', roleBonusType: 'none',
+    { id: 'M-1001', loginId: 'hatsal', pw: '1234', type: 'direct',
       company: '햇살농원', owner: '김정수', phone: phoneOf(0),
       biz: '312-45-67120', email: 'hatsal@seosan.kr', oade: '제 2021-4530186-08-5-00012 호' },
-    { id: 'M-1002', loginId: 'jaebong', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1002', loginId: 'jaebong', pw: '1234', type: 'agency',
       company: '재봉기획', owner: '김재봉', phone: '010-0000-0000',
       biz: '123-45-67890', email: 'jaebong@seosan.kr', oade: '제 2017-4530186-08-5-00001 호',
       licenseFile: { name: '재봉기획_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1003', loginId: 'hanwoo', pw: '1234', type: 'direct', roleBonusType: 'none',
+    { id: 'M-1003', loginId: 'hanwoo', pw: '1234', type: 'direct',
       company: '서산한우직판장', owner: '박영호', phone: phoneOf(1),
       biz: '314-82-15530', email: 'hanwoo@seosan.kr', oade: '제 2019-4530186-08-5-00077 호' },
     /* ── 시연용 광고대행사 10곳 (2026-11-22 김재봉 님 지시) ─────────────────
        · 재봉기획 포함 10곳. 위 3곳(재봉기획·서산애드컴·해미미디어랩)은 5건 이상
          다건 대리접수하는 '대형 광고대행사'로 시연 데이터를 구성했습니다.
        · 모두 옥외광고업 등록증 사본(시연용 PDF)을 가진 승인된 대행사 회원입니다. */
-    { id: 'M-1004', loginId: 'seosanad', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1004', loginId: 'seosanad', pw: '1234', type: 'agency',
       company: '서산애드컴', owner: '김도현', phone: phoneOf(2),
       biz: '312-45-10041', email: 'seosanad@seosan.kr', oade: '제 2016-4530186-08-5-00041 호',
       licenseFile: { name: '서산애드컴_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1005', loginId: 'haemimedi', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1005', loginId: 'haemimedi', pw: '1234', type: 'agency',
       company: '해미미디어랩', owner: '김민서', phone: phoneOf(3),
       biz: '313-72-20052', email: 'haemimedi@seosan.kr', oade: '제 2018-4530186-08-5-00052 호',
       licenseFile: { name: '해미미디어랩_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1006', loginId: 'buchunpl', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1006', loginId: 'buchunpl', pw: '1234', type: 'agency',
       company: '부춘기획', owner: '이부춘', phone: phoneOf(4),
       biz: '314-11-30063', email: 'buchunpl@seosan.kr', oade: '제 2015-4530186-08-5-00063 호',
       licenseFile: { name: '부춘기획_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1007', loginId: 'seoknamad', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1007', loginId: 'seoknamad', pw: '1234', type: 'agency',
       company: '석남광고', owner: '박석남', phone: phoneOf(5),
       biz: '312-82-40074', email: 'seoknamad@seosan.kr', oade: '제 2017-4530186-08-5-00074 호',
       licenseFile: { name: '석남광고_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1008', loginId: 'daesancom', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1008', loginId: 'daesancom', pw: '1234', type: 'agency',
       company: '대산커뮤니케이션', owner: '최대산', phone: phoneOf(6),
       biz: '315-33-50085', email: 'daesancom@seosan.kr', oade: '제 2019-4530186-08-5-00085 호',
       licenseFile: { name: '대산커뮤니케이션_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1009', loginId: 'hosuad', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1009', loginId: 'hosuad', pw: '1234', type: 'agency',
       company: '호수애드', owner: '정호수', phone: phoneOf(7),
       biz: '312-55-60096', email: 'hosuad@seosan.kr', oade: '제 2020-4530186-08-5-00096 호',
       licenseFile: { name: '호수애드_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1010', loginId: 'palbongmd', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1010', loginId: 'palbongmd', pw: '1234', type: 'agency',
       company: '팔봉미디어', owner: '구팔봉', phone: phoneOf(8),
       biz: '316-44-70107', email: 'palbongmd@seosan.kr', oade: '제 2014-4530186-08-5-00107 호',
       licenseFile: { name: '팔봉미디어_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1011', loginId: 'seongyeon', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1011', loginId: 'seongyeon', pw: '1234', type: 'agency',
       company: '성연광고기획', owner: '유성연', phone: phoneOf(9),
       biz: '317-66-80118', email: 'seongyeon@seosan.kr', oade: '제 2018-4530186-08-5-00118 호',
       licenseFile: { name: '성연광고기획_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
-    { id: 'M-1012', loginId: 'injiad', pw: '1234', type: 'agency', roleBonusType: 'none',
+    { id: 'M-1012', loginId: 'injiad', pw: '1234', type: 'agency',
       company: '인지애드', owner: '한인지', phone: phoneOf(10),
       biz: '318-77-90129', email: 'injiad@seosan.kr', oade: '제 2016-4530186-08-5-00129 호',
       licenseFile: { name: '인지애드_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } }
@@ -1010,61 +1010,180 @@
   function isAgencyMember(m) { return !!m && m.type === 'agency'; }
   function isLargeAgency(m) { return !!m && LARGE_AGENCY_IDS.indexOf(m.id) >= 0; }
 
-  /* ── 협회 직책 추첨 가산점 (김재봉 님 지시 2026-11-21) ─────────────────────
-     · 지부장 +5% · 수석부지부장 +3% · 사무실무원 +1% · 현장실무원 +1% · 없음(일반) +0%
-     · 직책은 회원 정보(member.roleBonusType)에만 두고, 일반 회원가입 화면에는 노출하지 않습니다.
-       관리자 모드의 '직책 가산점 관리'에서만 지정·해제합니다.
-     · 추첨 가중치 = 1.0 + 직책 가산 + (임박 행사 인정 시 +0.05) */
-  var ROLE_BONUS = [
-    { k: 'none', label: '없음(일반)', rate: 0, memo: '가산점 없음' },
-    { k: 'chief', label: '지부장', rate: 0.05, memo: '추첨 가중치 +5%' },
-    { k: 'senior', label: '수석부지부장', rate: 0.03, memo: '추첨 가중치 +3%' },
-    { k: 'office', label: '사무실무원', rate: 0.02, memo: '추첨 가중치 +2%' },
-    { k: 'field', label: '현장실무원', rate: 0.03, memo: '추첨 가중치 +3%' }
+  /* ── 추첨 가산점 — 직책자가 시한임박 현수막·협회 등록 회원사에 부여 ──────────
+     (김재봉 님 지시 2026-11-22 "가산점은 직책자한테 부여가 아니고 직책자가
+      시한임박현수막 회원사에 부여하는거야") → 접수자 본인의 직책으로 자동 가산하지 않습니다.
+     · 시한임박 현수막 · 협회 등록 회원사의 기본 가산은 **0%**(가중치 1.00배)입니다.
+     · 직책자는 자기 권한 한도 안에서 대상에 가산점을 부여하고,
+       부여 내역(직책·성명·%·시각)을 대상에 기록해 감사 로그에 남깁니다.
+         지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%
+         (사무국장·감사·일반 회원은 부여 불가. 총괄 관리자는 지부장과 같은 5% 한도)
+     · 추첨 가중치 = 1.00 + 시한임박 부여 % + 협회 등록 회원사 부여 % */
+  var GRANT_LIMIT = [
+    { k: 'super', label: '총괄 관리자', limit: 5, memo: '시스템 관리자 — 지부장과 같은 한도' },
+    { k: 'chief', label: '지부장', limit: 5, memo: '시한임박·회원사 가산 최대 +5%' },
+    { k: 'senior', label: '수석부지부장', limit: 3, memo: '최대 +3%' },
+    { k: 'field', label: '현장실무원', limit: 3, memo: '최대 +3%' },
+    { k: 'staff', label: '사무실무원', limit: 2, memo: '최대 +2%' },
+    { k: 'office', label: '사무국장', limit: 0, memo: '부여 권한 없음' },
+    { k: 'audit1', label: '감사1', limit: 0, memo: '부여 권한 없음' },
+    { k: 'audit2', label: '감사2', limit: 0, memo: '부여 권한 없음' }
   ];
-  function roleBonusMeta(k) {
+  function grantLimitMeta(k) {
     var key = String(k == null ? '' : k);
-    for (var i = 0; i < ROLE_BONUS.length; i++) { if (ROLE_BONUS[i].k === key) return ROLE_BONUS[i]; }
-    for (var j = 0; j < ROLE_BONUS.length; j++) { if (ROLE_BONUS[j].label === key) return ROLE_BONUS[j]; }
-    return ROLE_BONUS[0];
+    for (var i = 0; i < GRANT_LIMIT.length; i++) { if (GRANT_LIMIT[i].k === key) return GRANT_LIMIT[i]; }
+    return { k: key, label: key || '권한 없음', limit: 0, memo: '부여 권한 없음' };
   }
-  function roleBonusOf(k) { return roleBonusMeta(k).rate; }
-  /* ── 협회 등록 회원사 추첨 가산점 (김재봉 님 지시 2026-11-22) ──────────────
-     · 회원관리 탭에서 '협회 등록 회원사'로 지정하고 가산점(%)을 조정합니다.
-     · 기한임박 자동 가산점과 같은 방식 — **기본 0%**, 관리자가 정한 %만 가중치에 더합니다. */
-  function assocRateOfMember(m) {
-    if (!m || !m.assocMember) return 0;
-    var r = Number(m.assocRate);
-    if (!isFinite(r) || r < 0) r = 0;
-    return Math.min(0.2, r);          /* 최대 20% */
+  function grantLimitOf(k) { return grantLimitMeta(k).limit; }
+  /* 지금 접속 권한으로 가산점을 부여할 수 있는가 — 승인 완료된 직책자 또는 총괄 관리자 */
+  function canGrantBonus() {
+    var r = currentAccessRole();
+    if (grantLimitOf(r) <= 0) return false;
+    if (r === 'super') return true;
+    return !!accessOfficer();
   }
+  function myGrantLimit() { return canGrantBonus() ? grantLimitOf(currentAccessRole()) : 0; }
+  function myGrantWho() {
+    var who = accessDisplay();
+    return { role: who.role, label: who.label, name: who.name };
+  }
+  /* 부여 요청 % 검증 — 권한 없음·한도 초과는 거부합니다(초과분을 잘라 주지 않음). */
+  function checkGrantPct(pct) {
+    if (!canGrantBonus()) {
+      toast('가산점 부여 권한이 없습니다 — 지부장·수석부지부장·현장실무원·사무실무원(승인 완료)만 부여할 수 있습니다. 현재 접속 권한: ' + accessRoleLabel(), true);
+      return { ok: false, reason: 'no-authority', limit: 0 };
+    }
+    var lim = grantLimitOf(currentAccessRole());
+    var p = Math.round(Number(String(pct == null ? 0 : pct).replace('%', '').trim()));
+    if (!isFinite(p) || p < 0) p = 0;
+    if (p > lim) {
+      toast('부여 한도를 넘었습니다 — ' + accessRoleLabel() + '은(는) 최대 ' + lim + '%까지 부여할 수 있습니다.', true);
+      return { ok: false, reason: 'over-limit', limit: lim };
+    }
+    return { ok: true, pct: p, limit: lim };
+  }
+  /* 부여자 배지 — '지부장 김서산 +5%' */
+  function grantBadgeHTML(g) {
+    if (!g) return '<span class="badge b-gray"><i></i>미부여 0%</span>';
+    return '<span class="badge b-purple"><i></i>' + esc(g.label || '') + ' ' + esc(g.name || '') + ' +' + g.pct + '%</span>' +
+      (g.at ? '<span class="sm"> ' + esc(g.at) + '</span>' : '');
+  }
+  /* 부여 내역 정규화 — {pct, role, label, name, at} */
+  function grantRecOf(g) {
+    if (!g) return null;
+    var pct = Math.round(Number(g.pct));
+    if (!isFinite(pct) || pct <= 0) return null;
+    return { pct: pct, role: String(g.role || ''), label: String(g.label || grantLimitMeta(g.role).label),
+      name: String(g.name || ''), at: String(g.at || '') };
+  }
+  function grantOptionsHTML(cur, limit) {
+    var out = '';
+    for (var p = 0; p <= limit; p++) out += '<option value="' + p + '"' + (p === cur ? ' selected' : '') + '>' + p + '%</option>';
+    return out;
+  }
+
+  /* ── 시한임박 현수막 가산점 — 접수 1건에 직책자가 부여 ───────────────────── */
+  function urgentGrantOf(a) { return grantRecOf(a && a.urgentGrant); }
+  function setUrgentGrant(id, pct) {
+    var a = findApp(id);
+    if (!a) return null;
+    var chk = checkGrantPct(pct);
+    if (!chk.ok) return null;
+    var who = myGrantWho();
+    if (chk.pct <= 0) {
+      a.urgentGrant = null;
+      audit('가산점', a.id + ' ' + a.company + ' 시한임박 가산점 해제 (기본 0%) — ' + who.label + ' ' + who.name);
+      save(); renderAdmin();
+      toast(a.company + ' 시한임박 가산점을 해제했습니다 (기본 0%).');
+      return { id: a.id, pct: 0, grant: null, limit: chk.limit };
+    }
+    a.urgentGrant = { pct: chk.pct, role: who.role, label: who.label, name: who.name, at: nowStamp() };
+    audit('가산점', a.id + ' ' + a.company + ' 시한임박 가산점 +' + chk.pct + '% 부여 — ' + who.label + ' ' + who.name + ' (한도 ' + chk.limit + '%)');
+    save(); renderAdmin();
+    toast(a.company + ' 시한임박 가산점 +' + chk.pct + '%를 부여했습니다 (' + who.label + ' ' + who.name + ' · 한도 ' + chk.limit + '%).');
+    return { id: a.id, pct: chk.pct, grant: urgentGrantOf(a), limit: chk.limit };
+  }
+  /* 시한임박 부여 대상 — 문구에 행사 날짜가 있고 인정 범위(차차주) 안에 드는 접수 */
+  function urgentCandidateList() {
+    return db.apps.filter(function (a) {
+      if (a.round !== ROUND.id) return false;
+      if (a.status === '반려' || a.status === '취소') return false;
+      return urgentStateOf(a).urgent;
+    }).sort(function (x, y) { return (urgentStateOf(x).days || 0) - (urgentStateOf(y).days || 0); });
+  }
+  function renderUrgentGrantPanel() {
+    if (!has('urgentGrantTable')) return;
+    var list = urgentCandidateList();
+    var lim = myGrantLimit();
+    var withinN = list.filter(function (a) { return urgentStateOf(a).within; }).length;
+    var grantedN = list.filter(function (a) { return !!urgentGrantOf(a) && urgentStateOf(a).within; }).length;
+    if ($('#urgentGrantInfo')) $('#urgentGrantInfo').textContent =
+      '시한임박 감지 ' + list.length + '건 · 인정 범위(차차주까지) ' + withinN + '건 · 부여 ' + grantedN + '건 · 현재 부여 한도 ' +
+      (canGrantBonus() ? accessRoleLabel() + ' 최대 ' + lim + '%' : '없음 (부여 권한 없음)');
+    var box = $('#urgentGrantTable');
+    if (!box) return;
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">' + IC.check + '<div>문구에 행사 날짜가 있는 접수가 없습니다.</div></div>';
+      return;
+    }
+    box.innerHTML = '<table><thead><tr><th>접수 · 문구</th><th>행사일</th><th>인정 범위</th><th>가산점</th><th>부여자 (직책·성명)</th><th style="text-align:right">처리</th></tr></thead><tbody>' +
+      list.map(function (a, i) {
+        var u = urgentStateOf(a), g = urgentGrantOf(a);
+        return '<tr><td><span class="co">' + esc(a.company) + '</span><span class="sm">' + esc(a.id) + ' · ' + esc(a.text) + '</span></td>' +
+          '<td class="sm">' + esc(u.date) + '<span class="sm">' + (u.days === 0 ? '게첩 시작일' : '게첩 ' + u.days + '일 전') + '</span></td>' +
+          '<td>' + (u.within ? '<span class="badge b-green"><i></i>차차주 이내</span>' : '<span class="badge b-gray"><i></i>차차주 이후</span>') + '</td>' +
+          '<td>' + (u.within
+            ? (canGrantBonus() && lim ? '<select class="input sm" id="urgSel' + i + '" aria-label="시한임박 가산점 퍼센트">' + grantOptionsHTML(g ? g.pct : 0, Math.max(lim, g ? g.pct : 0)) + '</select>'
+              : '<span class="sm">' + (g ? g.pct + '%' : '0%') + ' (권한 없음)</span>')
+            : '<span class="sm">— (대상 아님)</span>') + '</td>' +
+          '<td>' + (u.within ? grantBadgeHTML(g) : '<span class="sm">—</span>') + '</td>' +
+          '<td style="text-align:right;white-space:nowrap">' + (u.within
+            ? (canGrantBonus() ? '<button class="btn sm primary" type="button" data-urgentgrant="' + esc(a.id) + '" data-urgentidx="' + i + '">부여</button>' +
+              (g ? ' <button class="btn sm ghost" type="button" data-urgentgrant="' + esc(a.id) + '" data-urgentpct="0">해제</button>' : '')
+              : '<span class="sm">부여 권한 없음</span>')
+            : '<span class="sm">차차주 이후 — 대상 아님</span>') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  /* ── 협회 등록 회원사 가산점 — 직책자가 회원사에 부여 ─────────────────────── */
+  function assocGrantOf(m) { return m && m.assocMember ? grantRecOf(m.assocGrant) : null; }
+  function assocGrantPctOfMember(m) { var g = assocGrantOf(m); return g ? g.pct / 100 : 0; }
+  function assocRateOfMember(m) { return assocGrantPctOfMember(m); }
   function assocRateOfApp(a) { return assocRateOfMember(memberOfApp(a)); }
   function assocMemberList() { return memberList().filter(function (m) { return !!m.assocMember; }); }
   function setAssocMember(id, on, pct) {
     var m = memberById(id);
     if (!m) return null;
+    var chk = checkGrantPct(pct);
+    if (!chk.ok) return null;
+    var who = myGrantWho();
     m.assocMember = !!on;
-    if (pct !== undefined && pct !== null && String(pct) !== '') {
-      var r = Number(String(pct).replace('%', '').trim());
-      if (isFinite(r)) m.assocRate = Math.max(0, Math.min(20, r)) / 100;
+    if (!m.assocMember || chk.pct <= 0) {
+      m.assocGrant = null;
+    } else {
+      m.assocGrant = { pct: chk.pct, role: who.role, label: who.label, name: who.name, at: nowStamp() };
     }
-    if (!m.assocMember) m.assocRate = 0;
-    if (m.assocRate == null) m.assocRate = 0;
-    audit('가산점', '협회 등록 회원사 ' + m.company + ' — ' + (m.assocMember ? '지정 · 가산 ' + Math.round(m.assocRate * 100) + '%' : '해제 (0%)'));
+    audit('가산점', '협회 등록 회원사 ' + m.company + ' — ' + (m.assocMember
+      ? '등록 · 가산 ' + (m.assocGrant ? '+' + m.assocGrant.pct + '% (' + who.label + ' ' + who.name + ')' : '0% (미부여)')
+      : '해제 (0%)'));
     save();
-    return { id: m.id, company: m.company, assocMember: !!m.assocMember, rate: assocRateOfMember(m) };
+    return { id: m.id, company: m.company, assocMember: !!m.assocMember, rate: assocRateOfMember(m), grant: assocGrantOf(m), limit: chk.limit };
   }
   function renderAssocPanel() {
     if (!has('assocTable')) return;
     var list = memberList();
-    if ($('#assocInfo')) $('#assocInfo').textContent = assocMemberList().length + '곳 협회 등록 · 가산점 기본 0%(관리자 조정) · 추첨 가중치에 더해집니다';
-    $('#assocTable').innerHTML = '<table><thead><tr><th>업체·단체</th><th>대표·구분</th><th>협회 등록</th><th>가산점(%)</th><th>변경</th></tr></thead><tbody>' +
+    var lim = myGrantLimit();
+    if ($('#assocInfo')) $('#assocInfo').textContent = assocMemberList().length + '곳 협회 등록 · 가산점 기본 0% · 현재 부여 한도 ' +
+      (canGrantBonus() ? accessRoleLabel() + ' 최대 ' + lim + '%' : '없음 (부여 권한 없음)');
+    $('#assocTable').innerHTML = '<table><thead><tr><th>업체·단체</th><th>대표·구분</th><th>협회 등록</th><th>가산점 부여(%)</th><th>부여자 (직책·성명)</th><th>처리</th></tr></thead><tbody>' +
       list.map(function (m, i) {
-        var pct = Math.round(assocRateOfMember(m) * 100);
+        var g = assocGrantOf(m), pct = g ? g.pct : 0;
         return '<tr><td><span class="co">' + esc(m.company) + '</span><span class="sm">' + esc(m.loginId || m.id) + '</span></td>' +
           '<td class="sm">' + esc(m.owner || '') + ' · ' + esc(memberTypeLabel(m)) + '</td>' +
           '<td><label class="check" style="margin:0"><input type="checkbox" id="assocOn' + i + '"' + (m.assocMember ? ' checked' : '') + ' aria-label="협회 등록 회원사"> <span>등록</span></label></td>' +
-          '<td><input class="input sm" id="assocRate' + i + '" value="' + pct + '" inputmode="numeric" maxlength="3" style="width:64px;text-align:right" aria-label="가산점 퍼센트"> %</td>' +
+          '<td>' + (canGrantBonus() && lim ? '<select class="input sm" id="assocRate' + i + '" aria-label="가산점 퍼센트">' + grantOptionsHTML(pct, Math.max(lim, pct)) + '</select>'
+            : '<span class="sm">' + pct + '% (권한 없음)</span>') + '</td>' +
+          '<td>' + grantBadgeHTML(g) + '</td>' +
           '<td><button class="btn sm" type="button" data-assocsave="' + esc(m.id) + '" data-associdx="' + i + '">저장</button></td></tr>';
       }).join('') + '</tbody></table>';
   }
@@ -1079,9 +1198,6 @@
     toast(r.company + ' — 협회 등록 ' + (r.assocMember ? '지정' : '해제') + ' · 가산 ' + Math.round(r.rate * 100) + '%');
     return r;
   }
-  function roleBonusLabel(k) { return roleBonusMeta(k).label; }
-  function roleBonusPct(k) { return Math.round(roleBonusOf(k) * 100); }
-  function roleBonusText(k) { return '+' + roleBonusPct(k) + '%'; }
 
   /* ── 행사 우선접수 · 행사승인권한자 5명 과반수 승인 (김재봉 님 지시 2026-11-22) ────────
      · 배정 우선순위: ① 시청 공문 우선접수 → ② 행사 우선접수(승인 완료) → ③ 일반 추첨
@@ -5097,7 +5213,7 @@
       eventStatus: v.eventApp ? '심사중' : 'none', eventVotes: [], eventDecidedAt: '',
       polStatus: v.polApp ? '심사중' : 'none', polApprovals: [],
       text: v.text, appliedAt: nowStamp(),
-      urgentEvent: !!urgentDateInText(v.text, v.start || ROUND.postStart), urgentAck: '',
+      urgentGrant: null,
       start: v.start, days: v.days,
       file: ui.file ? ui.file.name : null, preview: ui.filePreview || null,
       license: ui.licName || '', licenseData: ui.licData || '', licenseMime: ui.licMime || '',
@@ -6030,8 +6146,6 @@
   }
   function currentMember() { return (db && db.session) ? memberById(db.session) : null; }
   function memberTypeLabel(m) { return TYPE_LABEL[(m && m.type) || 'direct'] || '일반업체'; }
-  /* 회원 직책 — 없으면 '없음(일반)' */
-  function memberRoleOf(m) { return (m && m.roleBonusType) ? String(m.roleBonusType) : 'none'; }
   /* 접수 건의 회원 — 접수 때 저장한 memberId, 없으면 같은 업체명 회원 */
   function memberOfApp(a) {
     if (!a) return null;
@@ -6043,21 +6157,6 @@
     });
     return out;
   }
-  function roleBonusOfApp(a) { return roleBonusOf(memberRoleOf(memberOfApp(a))); }
-  function roleBonusLabelOfApp(a) { return roleBonusLabel(memberRoleOf(memberOfApp(a))); }
-  /* 관리자 — 회원 직책 지정·해제 (일반 화면에는 없는 관리자 전용 기능) */
-  function setMemberRole(mid, roleKey) {
-    var m = memberById(mid);
-    if (!m) return null;
-    var meta = roleBonusMeta(roleKey);
-    m.roleBonusType = meta.k;
-    m.roleBonusSetAt = nowStamp();
-    audit('직책 가산점', (m.company || m.loginId) + ' 협회 직책 → ' + meta.label + ' (' + roleBonusText(meta.k) + ')');
-    save();
-    renderAdmin();
-    return m;
-  }
-
   /* 헤더 로그인 버튼 ↔ 회원 정보 칩 */
   function renderAuth() {
     var m = currentMember();
@@ -6271,8 +6370,7 @@
       id: nextMemberId(), loginId: v.loginId, pw: v.pw, type: v.type,
       company: v.company, owner: v.owner, phone: v.phone,
       biz: v.biz, email: v.email, oade: v.oade, joinedAt: nowStamp(),
-      licenseFile: (v.type === 'agency' && v.license) ? { name: v.license, data: v.licenseData || '', mime: v.licenseMime || '' } : null,
-      roleBonusType: 'none'   /* 협회 직책은 관리자만 지정 — 가입 화면에는 없습니다 */
+      licenseFile: (v.type === 'agency' && v.license) ? { name: v.license, data: v.licenseData || '', mime: v.licenseMime || '' } : null
     };
     memberList().push(m);
     ui.suLicName = ''; ui.suLicData = ''; ui.suLicMime = '';
@@ -6472,11 +6570,12 @@
     });
     var out = {};
     var stat = { eco: 0, random: 0, seats: 0, places: 0, broken: 0, brokenSeats: 0, stage1: 0, stage2: 0, stage3: 0, designated: 0, designatedSeats: 0, adj: 0, slot: 0, slotMiss: 0, urgent: 0, urgentWins: 0,
-      role: 0, roleWins: 0, roleSeats: 0, roles: { chief: 0, senior: 0, office: 0, field: 0 }, makerBlock: 0 };
+      urgentGranted: 0, urgentGrantWins: 0, urgentGrantSeats: 0, assocGranted: 0, assocGrantWins: 0, assocGrantSeats: 0, makerBlock: 0 };
     pool.forEach(function (a) {
-      if (urgentStateOf(a).applied) stat.urgent += 1;
-      var rk = memberRoleOf(memberOfApp(a));
-      if (roleBonusOf(rk) > 0 && stat.roles[rk] != null) { stat.roles[rk] += 1; stat.role += 1; }
+      var u = urgentStateOf(a);
+      if (u.urgent && u.within) stat.urgent += 1;      /* 인정 범위(차차주) 안의 시한임박 접수 */
+      if (u.applied) stat.urgentGranted += 1;
+      if (assocRateOfApp(a) > 0) stat.assocGranted += 1;
     });
     var placeSet = {};
 
@@ -6598,13 +6697,11 @@
       if (isEventApproved(a) && out[a.id]) { stat.eventWins += 1; stat.eventSeats += out[a.id].qty; }
     });
     Object.keys(out).forEach(function (id) { out[id].pid = out[id].places[0].pid; });
-    /* 직책 가산점 결과 — 가산점 대상 중 당첨(배정) 건수·매수 */
+    /* 가산점 결과 — 부여된 가산점 대상 중 당첨(배정) 건수·매수 */
     pool.forEach(function (a) {
-      var rk = memberRoleOf(memberOfApp(a));
-      if (roleBonusOf(rk) <= 0 || !out[a.id]) return;
-      stat.roleWins += 1;
-      stat.roleSeats += out[a.id].qty;
-      if (stat.roles[rk] != null) stat.roles[rk + 'Wins'] = (stat.roles[rk + 'Wins'] || 0) + 1;
+      if (!out[a.id]) return;
+      if (urgentStateOf(a).applied) { stat.urgentGrantWins += 1; stat.urgentGrantSeats += out[a.id].qty; }
+      if (assocRateOfApp(a) > 0) { stat.assocGrantWins += 1; stat.assocGrantSeats += out[a.id].qty; }
     });
     return { seed: seed, out: out, stat: stat };
   }
@@ -7306,7 +7403,8 @@
     renderWorkOrder();
     renderLoc();
     renderPenalty();
-    renderRoleBonus();
+    renderGrantPanel();
+    renderUrgentGrantPanel();
     renderAdminPlace();
     renderThemeAdmin();
     renderMakerBlock();
@@ -7462,8 +7560,8 @@
       { t: '[01.4]', m: '3순위 추가 배정 — 2순위 후 잔여 면에서 보충 (배정 ' + res.stat.stage3 + '매)' },
       { t: '[01.6]', m: '고객장소 지정 ' + designatedN + '건 — 1순위만 참여 (2·3순위 대체 배정 제외)' },
       { t: '[01.7]', m: '인접 게시대 택1 제한 — 같은 광고주 충돌 배정 차단 ' + res.stat.adj + '건 (14개 구역)' },
-      { t: '[01.75]', m: '임박 행사 가산점 — 대상 ' + (res.stat.urgent || 0) + '건 · 자동 0% (관리자 인정분만 1.05배)' },
-      { t: '[01.78]', m: '직책 가산점 — ' + (roleBonusSummary(res.stat) || '대상 없음') + ' (지부장 +5% · 수석부지부장 +3% · 사무실무원 +1% · 현장실무원 +1%) · 배정 ' + (res.stat.roleSeats || 0) + '매' },
+      { t: '[01.75]', m: '시한임박 가산점 — 인정 범위(차차주) 감지 ' + (res.stat.urgent || 0) + '건 · 기본 0% · 직책자 부여 ' + (res.stat.urgentGranted || 0) + '건 (배정 ' + (res.stat.urgentGrantSeats || 0) + '매)' },
+      { t: '[01.78]', m: '협회 등록 회원사 가산점 — 기본 0% · 직책자 부여 ' + (res.stat.assocGranted || 0) + '건 (배정 ' + (res.stat.assocGrantSeats || 0) + '매)' },
       { t: '[01.8]', m: '결과 확정 — 당첨 ' + awardedIds.length + '건 / 낙첨 ' + losers + '건 · 배정 ' + res.stat.seats + '매 (부분 배정 ' + partial + '건)' },
       { t: '[01.9]', m: '당첨자 가상계좌 발급 — ' + awardedIds.length + '건 (농협 301-0123-4567-89)' },
       { t: '[02.0]', m: '입고 안내 — 현수막은 ' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 협회 입고 (미입고 시 자동 취소·반려)' },
@@ -7499,23 +7597,23 @@
           log: lines.map(function (x) { return x.t + ' ' + x.m; }).join(' | ')
         });
         audit('추첨', drawId + ' 전산 추첨 완료 — 당첨 ' + awardedIds.length + '건 / 낙첨 ' + losers + '건 · 배정 ' + res.stat.seats + '매 (1순위 ' + res.stat.stage1 + ' · 2순위 ' + res.stat.stage2 + ' · 3순위 ' + res.stat.stage3 + ' · 세부 위치 지정 ' + res.stat.slot + ' · 지정 자리 경합 낙첨 ' + res.stat.slotMiss + ' · 고장 ' + res.stat.broken + '개소 제외) (SEED ' + hex8(res.seed) + ')');
-        /* 직책 가산점 적용 내역 — 누가 어떤 직책으로 어떤 가중치를 받았고 결과가 어땠는지 */
-        var roleApplied = [];
+        /* 가산점 적용 내역 — 누가(직책·성명) 어떤 대상에 몇 %를 부여했고 결과가 어땠는지 */
+        var grantApplied = [];
         pool.forEach(function (a) {
-          var rk = memberRoleOf(memberOfApp(a));
-          if (roleBonusOf(rk) <= 0) return;
-          roleApplied.push(a.company + ' ' + roleBonusLabel(rk) + ' ' + roleBonusText(rk) +
+          var u = urgentStateOf(a), g = u.applied ? u.grant : null, ag = assocGrantOf(memberOfApp(a));
+          if (!g && !ag) return;
+          var parts = [];
+          if (g) parts.push('시한임박 +' + g.pct + '%(' + g.label + ' ' + g.name + ')');
+          if (ag) parts.push('협회 회원사 +' + ag.pct + '%(' + ag.label + ' ' + ag.name + ')');
+          grantApplied.push(a.company + ' ' + parts.join(' + ') +
             ' (가중치 ' + (Number(drawWeightOf(a))).toFixed(2) + ') ' +
             (res.out[a.id] ? '당첨 ' + res.out[a.id].qty + '매' : '낙첨'));
         });
-        if (roleApplied.length) {
-          audit('직책 가산점', drawId + ' — ' + roleApplied.join(' · '));
-        } else {
-          audit('직책 가산점', drawId + ' — 직책 지정 회원 없음 (모두 없음(일반) 0%)');
-        }
+        audit('가산점', drawId + ' — ' + (grantApplied.length ? grantApplied.join(' · ') : '부여된 가산점 없음 (모두 1.00배)'));
         if (db.draws.length && db.draws[db.draws.length - 1].id === drawId) {
-          db.draws[db.draws.length - 1].roleBonus = {
-            summary: roleBonusSummary(res.stat), seats: res.stat.roleSeats || 0, applied: roleApplied.slice()
+          db.draws[db.draws.length - 1].grants = {
+            urgentSeats: res.stat.urgentGrantSeats || 0, assocSeats: res.stat.assocGrantSeats || 0,
+            applied: grantApplied.slice()
           };
         }
         save();
@@ -7533,13 +7631,14 @@
     })();
   }
 
-  /* ── 임박 행사 가산점 (김재봉 님 지시) ────────────────────────────────
+  /* ── 시한임박 현수막 (김재봉 님 지시 2026-11-22) ───────────────────────
      · 현수막 문구에서 날짜(11월 25일 · 12/3 · 12.3 · 12-3 등)를 찾아
-       이번 회차 게첩 시작일(ROUND.postStart) 기준 0~7일 안에 드는 행사면 '임박 행사'로 봅니다.
-     · 자동 가산은 기본 0%(1.00배) — 관리자가 '가산점 인정'을 누를 때만 +5%를 줍니다 (2026-11-22 김재봉 님 지시 "기한 임박 가산점은 기본 0퍼센트").
-     · 허위 날짜를 막기 위해 관리자가 '가산점 해제'하면 1.0배로 되돌립니다(관리자 확인 시 적용). */
-  /* 기한 임박 자동 가산점은 기본 0%(1.00배). 관리자가 '가산점 인정'을 누를 때만 +5%를 적용합니다. */
-  var URGENT = { days: 7, weight: 1.00, ack: 1.05 };
+       이번 회차 게첩 시작일(ROUND.postStart) 기준으로 판단합니다.
+     · 인정 범위는 **차차주까지**입니다 — 게첩 시작일부터 2주 뒤 주(차차주) 일요일까지(20일 이내).
+       ("시한임박은 차차주까지 인정해주고") 그 뒤 일정은 시한임박 대상이 아니며 화면에 안내만 합니다.
+     · 자동 가산은 0%(1.00배)입니다 — 직책자가 권한 한도 안에서 부여할 때만 가중치가 올라갑니다
+       (2026-11-22 김재봉 님 지시 "기한 임박 가산점은 기본 0퍼센트"). */
+  var URGENT = { days: 20, weeks: 2 };
   function urgentDateInText(text, baseStr) {
     var t = String(text || '');
     if (!t) return null;
@@ -7551,60 +7650,66 @@
       var d = new Date(y, mo - 1, dy);
       if (d.getMonth() !== mo - 1) return;                 // 2월 30일 같은 값 제외
       var diff = Math.round((d.getTime() - base.getTime()) / 86400000);
-      if (diff < 0 || diff > URGENT.days) return;
-      if (!best || diff < best.days) best = { days: diff, mo: mo, dy: dy, iso: y + '-' + pad2(mo) + '-' + pad2(dy) };
+      if (diff < 0) {                                      // 연말을 넘기는 일정(12/30 → 1/5)
+        d = new Date(y + 1, mo - 1, dy);
+        if (d.getMonth() !== mo - 1) return;
+        diff = Math.round((d.getTime() - base.getTime()) / 86400000);
+      }
+      if (diff < 0) return;
+      if (!best || diff < best.days) best = { days: diff, mo: mo, dy: dy, iso: d.getFullYear() + '-' + pad2(mo) + '-' + pad2(dy) };
     }
     var m, re1 = /(\d{1,2})\s*월\s*(\d{1,2})\s*일/g;
     while ((m = re1.exec(t))) consider(Number(m[1]), Number(m[2]));
     var re2 = /(?:^|[^0-9])(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?![0-9])/g;
     while ((m = re2.exec(t))) consider(Number(m[1]), Number(m[2]));
+    if (!best) return null;
+    best.within = best.days <= URGENT.days;                 /* 차차주까지 인정 */
+    best.limitDays = URGENT.days;
+    best.limitLabel = '차차주(' + URGENT.weeks + '주 뒤)까지';
     return best;
   }
-  /* 접수 건의 임박 행사 상태 — urgent(감지) / ack(관리자 인정·해제) / applied(실제 가중치 적용) */
+  /* 접수 건의 시한임박 상태 — urgent(감지) / within(인정 범위) / grant(직책자 부여) / applied(가중치 적용) */
   function urgentStateOf(a) {
     var u = urgentDateInText(a && a.text, (a && a.start) || ROUND.postStart);
-    if (!u) return { urgent: false, days: null, date: '', ack: '', applied: false, weight: 1, label: '' };
-    var ack = (a && a.urgentAck) || '';
-    var applied = ack === 'on';
+    if (!u) return { urgent: false, within: false, days: null, date: '', applied: false, grant: null, pct: 0, weight: 1, label: '' };
+    var g = u.within ? urgentGrantOf(a) : null;
+    var pct = g ? g.pct : 0;
     return {
-      urgent: true, days: u.days, date: u.iso, ack: ack, applied: applied,
-      weight: applied ? URGENT.ack : URGENT.weight,
-      label: (u.mo + '월 ' + u.dy + '일 행사 · 게첩 시작 ' + (u.days === 0 ? '당일' : u.days + '일 전') +
-        (applied ? ' · 관리자 인정 +5%' : ' · 자동 가산 없음(0%)'))
+      urgent: true, within: !!u.within, days: u.days, date: u.iso, applied: !!g, grant: g, pct: pct,
+      weight: 1 + pct / 100,
+      label: (u.mo + '월 ' + u.dy + '일 행사 · 게첩 시작 ' + (u.days === 0 ? '당일' : u.days + '일 전')) +
+        (g ? ' · ' + g.label + ' ' + g.name + ' +' + pct + '%' : (u.within ? ' · 가산 0% (미부여)' : ' · 차차주 이후 — 시한임박 대상 아님'))
     };
   }
-  function urgentWeightOf(a) { return urgentStateOf(a).applied ? URGENT.ack : URGENT.weight; }
+  function urgentWeightOf(a) { return urgentStateOf(a).weight; }
 
   /* ── 추첨 가중치 한 곳에서 계산 ────────────────────────────────────────────
-     가중치 = 1.0 + 직책 가산(지부장 +0.05 · 수석부지부장 +0.03 · 사무실무원·현장실무원 +0.01)
-              + 임박 행사 인정 시 +0.05
-     · 임박 행사 단독 가중치는 1.05 이고, 직책이 있으면 더해집니다. */
+     가중치 = 1.00 + 시한임박 부여 % + 협회 등록 회원사 부여 %
+     · 직책자 본인의 직책에 따른 자동 가산은 없습니다(전부 0%).
+     · 두 가산 모두 부여하지 않으면 1.00배입니다. */
   function drawWeightOf(a) {
-    var role = roleBonusOfApp(a);
-    var urgent = urgentStateOf(a).applied ? (URGENT.ack - 1) : 0;
-    var assoc = assocRateOfApp(a);
-    return 1 + role + urgent + assoc;
+    var u = urgentStateOf(a);
+    var upct = u.applied ? u.pct : 0;
+    var apct = Math.round(assocRateOfApp(a) * 100);
+    return 1 + (upct + apct) / 100;
   }
-  /* 추첨 로그·감사 로그용 — '지부장 +5%' / '없음(일반)' */
+  /* 추첨 로그·감사 로그용 — '시한임박 +5%(지부장 김서산) + 협회 회원사 +3%(수석부지부장 박해미)' */
   function drawWeightNoteOf(a) {
-    var role = roleBonusOfApp(a), urgent = urgentStateOf(a).applied ? (URGENT.ack - 1) : 0;
-    var out = [];
-    if (role > 0) out.push(roleBonusLabelOfApp(a) + ' ' + roleBonusText(memberRoleOf(memberOfApp(a))));
-    if (urgent > 0) out.push('임박 행사 +5%');
-    var assoc = assocRateOfApp(a);
-    if (assoc > 0) out.push('협회 회원사 +' + Math.round(assoc * 100) + '%');
+    var u = urgentStateOf(a), out = [];
+    if (u.applied && u.grant) out.push('시한임박 +' + u.pct + '%(' + u.grant.label + ' ' + u.grant.name + ')');
+    var ag = assocGrantOf(memberOfApp(a));
+    if (ag) out.push('협회 회원사 +' + ag.pct + '%(' + ag.label + ' ' + ag.name + ')');
     return out.length ? out.join(' + ') : '가산점 없음';
   }
-  /* 직책 가산점 대상 요약 — '지부장 1건 · 사무실무원 2건' */
-  function roleBonusSummary(stat) {
-    if (!stat || !stat.roles) return '';
+  /* 가산점 부여 요약 — '시한임박 2건 · 회원사 1건' */
+  function grantSummary(stat) {
+    if (!stat) return '';
     var out = [];
-    ['chief', 'senior', 'office', 'field'].forEach(function (k) {
-      if (stat.roles[k]) out.push(roleBonusLabel(k) + ' ' + stat.roles[k] + '건');
-    });
+    if (stat.urgentGranted) out.push('시한임박 ' + stat.urgentGranted + '건');
+    if (stat.assocGranted) out.push('회원사 ' + stat.assocGranted + '건');
     return out.join(' · ');
   }
-  /* 1단계 문구 입력칸 — 임박 날짜가 보이면 배지를 띄운다 */
+  /* 1단계 문구 입력칸 — 인정 범위(차차주) 안의 날짜가 보이면 배지를 띄운다 */
   function renderUrgentHint() {
     if (!has('urgentHint')) return;
     var el = $('#urgentHint');
@@ -7612,7 +7717,10 @@
     var u = urgentDateInText($('#applyText') ? $('#applyText').value : '', ROUND.postStart);
     if (u) {
       el.classList.remove('hidden');
-      el.textContent = '📅 임박 행사 감지 — ' + u.mo + '월 ' + u.dy + '일 · 자동 가산 0% (관리자 인정 시 +5%)';
+      el.classList.toggle('off', !u.within);
+      el.textContent = u.within
+        ? '📅 시한임박 감지 — ' + u.mo + '월 ' + u.dy + '일 (게첩 ' + (u.days === 0 ? '당일' : u.days + '일 전') + ') · 기본 가산 0% · 직책자 부여 시 최대 +5% · 인정 범위 차차주까지'
+        : '📅 차차주 이후 일정 — ' + u.mo + '월 ' + u.dy + '일 (' + u.days + '일 뒤) · 시한임박 가산 대상 아님 (인정 범위 차차주까지)';
     } else {
       el.classList.add('hidden');
     }
@@ -7905,10 +8013,9 @@
             '<span class="sm">비교 대상: ' + esc(dup.advertiser || dup.company) + ' · ' + esc(dup.id) + ' (' + esc(dup.kind) + ')</span></div>'
           : '';
         var urgCell = urg.urgent
-          ? '<div class="urgent-row"><span class="urgent-badge' + (urg.applied ? '' : ' off') + '">📅 임박 ' + esc(urg.date.slice(5).replace('-', '/')) +
-            (urg.applied ? ' · 가산 +5%' : ' · 가산 해제') + '</span>' +
-            '<button class="btn sm ghost" data-urgent="' + esc(a.id) + '" data-urgentval="' + (urg.applied ? 'off' : 'on') + '" type="button">' +
-            (urg.applied ? '가산점 해제' : '가산점 인정') + '</button></div>'
+          ? '<div class="urgent-row"><span class="urgent-badge' + (urg.applied ? '' : ' off') + '">📅 ' + esc(urg.date.slice(5).replace('-', '/')) +
+            (urg.applied ? ' · ' + esc(urg.grant.label) + ' +' + urg.pct + '%'
+              : (urg.within ? ' · 가산 0% (미부여)' : ' · 차차주 이후 (대상 아님)')) + '</span></div>'
           : '';
         return '<tr><td>' + thumb + '<button class="btn sm ghost" data-zoom="' + esc(a.id) + '" type="button" style="margin-top:6px;width:100%">시안 확대</button></td>' +
           '<td><span class="co">' + esc(a.company) + '</span><span class="sm">' + esc(advOfApp(a).name) + (a.appType === 'agency' ? ' · 대행' : '') + ' · ' + esc(a.phone) + '</span>' + dupBadge +
@@ -7926,17 +8033,7 @@
       }).join('') + '</tbody></table></div>';
   }
 
-  /* 임박 행사 가산점 — 관리자 인정/해제 (허위 날짜 방지) */
-  function setUrgentAck(id, val) {
-    var a = findApp(id);
-    if (!a) return null;
-    a.urgentAck = (val === 'off') ? 'off' : 'on';
-    audit('가산점', a.id + ' ' + a.company + ' 임박 행사 가산점 ' + (val === 'off' ? '자동 0% (1.0배)' : '관리자 인정 +5% (1.05배)') +
-      (a.urgentEvent ? ' — 문구 날짜 감지' : ''));
-    save(); renderAdmin();
-    toast(a.company + ' 임박 행사 가산점을 ' + (val === 'off' ? '자동 0%(1.0배)로 두었습니다.' : '관리자 인정 +5%(1.05배)로 적용했습니다.'));
-    return a.urgentAck;
-  }
+  /* 시한임박 가산점 인정/해제는 아래 [시한임박 현수막 가산점] 패널에서 합니다(직책자 권한 한도). */
 
   function approveApp(id) {
     var a = findApp(id);
@@ -8303,54 +8400,56 @@
       }).join('') + '</tbody></table>';
   }
 
-  /* ── 관리자 전용 — 회원 협회 직책 · 추첨 가산점 관리 ─────────────────────
-     · 일반 회원가입 화면에는 직책 선택을 두지 않습니다(관리자만 지정·해제). */
-  function renderRoleBonus() {
+  /* ── 관리자 전용 — 가산점 부여 권한 · 부여 내역 ─────────────────────────
+     · 가산점은 직책자 본인에게 주는 것이 아니라, 직책자가 시한임박 현수막·협회 등록 회원사에
+       부여하는 권한입니다. 기본 0%이며 부여 내역(직책·성명·%)을 한자리에서 봅니다. */
+  function grantEntryList() {
+    var out = [];
+    db.apps.forEach(function (a) {
+      var g = urgentGrantOf(a);
+      if (!g) return;
+      out.push({ kind: '시한임박', target: a.company, detail: a.text || '', pct: g.pct, label: g.label, name: g.name, at: g.at, appId: a.id });
+    });
+    memberList().forEach(function (m) {
+      var g = assocGrantOf(m);
+      if (!g) return;
+      out.push({ kind: '회원사', target: m.company, detail: m.owner || '', pct: g.pct, label: g.label, name: g.name, at: g.at, memberId: m.id });
+    });
+    return out.sort(function (x, y) { return String(y.at).localeCompare(String(x.at)); });
+  }
+  function renderGrantPanel() {
     if (!has('adminRoleTable')) return;
-    var list = memberList().slice();
-    var counts = { chief: 0, senior: 0, office: 0, field: 0 }, n = 0;
-    list.forEach(function (m) {
-      var k = memberRoleOf(m);
-      if (roleBonusOf(k) > 0 && counts[k] != null) { counts[k] += 1; n += 1; }
-    });
-    var parts = [];
-    ['chief', 'senior', 'office', 'field'].forEach(function (k) {
-      if (counts[k]) parts.push(roleBonusLabel(k) + ' ' + counts[k] + '명');
-    });
-    var info = $('#roleBonusInfo');
-    if (info) info.textContent = '회원 ' + list.length + '명 · 직책 지정 ' + n + '명' +
-      (parts.length ? ' (' + parts.join(' · ') + ')' : '') + ' · 추첨 가중치 = 1.0 + 직책 + 임박 행사';
+    var list = grantEntryList();
+    var lim = myGrantLimit();
+    if ($('#roleBonusInfo')) $('#roleBonusInfo').textContent =
+      '부여 내역 ' + list.length + '건 · 기본 0% · 현재 부여 한도 ' +
+      (canGrantBonus() ? accessRoleLabel() + ' 최대 ' + lim + '%' : '없음 (부여 권한 없음)');
     var chips = $('#roleBonusChips');
     if (chips) {
-      chips.innerHTML = ROLE_BONUS.map(function (r) {
-        var on = r.rate > 0;
-        return '<span class="chip' + (on ? ' on' : '') + '" style="cursor:default">' + esc(r.label) + ' <b>' + roleBonusText(r.k) + '</b></span>';
+      chips.innerHTML = GRANT_LIMIT.map(function (r) {
+        var on = r.limit > 0 && (r.k === currentAccessRole() || r.k === 'super');
+        return '<span class="chip' + (on ? ' on' : '') + '" style="cursor:default">' + esc(r.label) +
+          ' <b>' + (r.limit > 0 ? '최대 +' + r.limit + '%' : '부여 불가') + '</b></span>';
       }).join('');
     }
     var box = $('#adminRoleTable');
     if (!box) return;
     if (!list.length) {
-      box.innerHTML = '<div class="empty">' + IC.check + '<div>등록된 회원이 없습니다.</div></div>';
+      box.innerHTML = '<div class="empty">' + IC.check + '<div>아직 부여된 가산점이 없습니다 — 모두 기본 0%(1.00배)입니다.</div></div>';
       return;
     }
-    box.innerHTML = '<table><thead><tr><th>회원 (업체·대표)</th><th>아이디</th>' +
-      '<th>협회 직책 (관리자 지정)</th><th>추첨 가산점</th><th style="text-align:right">추첨 가중치</th>' +
-      '<th>이번 회차 접수</th></tr></thead><tbody>' +
-      list.map(function (m) {
-        var k = memberRoleOf(m);
-        var mine = db.apps.filter(function (a) { var mm = memberOfApp(a); return a.round === ROUND.id && !!mm && mm.id === m.id; });
-        var seats = mine.reduce(function (s, a) { return s + qtyOf(a); }, 0);
-        var opts = ROLE_BONUS.map(function (r) {
-          return '<option value="' + r.k + '"' + (r.k === k ? ' selected' : '') + '>' + esc(r.label) + ' ' + roleBonusText(r.k) + '</option>';
-        }).join('');
-        return '<tr><td><span class="co">' + esc(m.company) + '</span><span class="sm">' + esc(m.owner || '') + ' · ' + esc(memberTypeLabel(m)) + '</span></td>' +
-          '<td class="sm">' + esc(m.loginId) + '</td>' +
-          '<td><select class="input sm" data-rolebonusid="' + esc(m.id) + '" style="min-width:180px;max-width:230px">' + opts + '</select></td>' +
-          '<td>' + (roleBonusOf(k) > 0
-            ? '<span class="badge b-purple"><i></i>' + esc(roleBonusLabel(k)) + ' ' + roleBonusText(k) + '</span>'
-            : '<span class="badge b-gray"><i></i>없음(일반)</span>') + '</td>' +
-          '<td class="mono" style="text-align:right">' + (1 + roleBonusOf(k)).toFixed(2) + '배</td>' +
-          '<td class="sm">' + (mine.length ? mine.length + '건 · ' + seats + '매' : '—') + '</td></tr>';
+    box.innerHTML = '<table><thead><tr><th>구분</th><th>대상</th><th style="text-align:right">부여 %</th>' +
+      '<th>부여자 (직책·성명)</th><th>부여 시각</th><th>이번 회차 추첨 가중치</th></tr></thead><tbody>' +
+      list.map(function (g) {
+        var a = g.appId ? findApp(g.appId) : null;
+        var m = g.memberId ? memberById(g.memberId) : null;
+        var w = a ? drawWeightOf(a) : (m ? 1 + assocRateOfMember(m) : 1);
+        return '<tr><td><span class="badge ' + (g.kind === '시한임박' ? 'b-amber' : 'b-green') + '"><i></i>' + g.kind + '</span></td>' +
+          '<td><span class="co">' + esc(g.target) + '</span><span class="sm">' + esc(g.detail) + '</span></td>' +
+          '<td class="mono" style="text-align:right">+' + g.pct + '%</td>' +
+          '<td class="sm">' + esc(g.label) + ' ' + esc(g.name) + '</td>' +
+          '<td class="sm">' + esc(g.at || '—') + '</td>' +
+          '<td class="mono" style="text-align:right">' + w.toFixed(2) + '배</td></tr>';
       }).join('') + '</tbody></table>';
   }
 
@@ -9307,7 +9406,7 @@
 
   function onClick(e) {
     var t = e.target;
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgent],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove]') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove]') : null;
     if (!el) return;
     /* 행사 우선접수 — 5명 권한자 투표·권한자 변경 (2026-11-22) */
     if (el.hasAttribute('data-fccover')) { askFcCover(el.getAttribute('data-fccover')); return; }
@@ -9531,7 +9630,14 @@
     if (el.hasAttribute('data-zoom')) { showDesignZoom(el.getAttribute('data-zoom')); return; }
     if (el.hasAttribute('data-zoomapprove')) { closeModal(); approveApp(el.getAttribute('data-zoomapprove')); return; }
     if (el.hasAttribute('data-zoomreject')) { closeModal(); rejectApp(el.getAttribute('data-zoomreject')); return; }
-    if (el.hasAttribute('data-urgent')) { setUrgentAck(el.getAttribute('data-urgent'), el.getAttribute('data-urgentval')); return; }
+    if (el.hasAttribute('data-urgentgrant')) {
+      var gid = el.getAttribute('data-urgentgrant');
+      var gidx = el.getAttribute('data-urgentidx');
+      var gpct = el.hasAttribute('data-urgentpct') ? el.getAttribute('data-urgentpct')
+        : (gidx != null && $('#urgSel' + gidx) ? $('#urgSel' + gidx).value : '0');
+      setUrgentGrant(gid, gpct);
+      return;
+    }
     if (el.hasAttribute('data-approve')) { approveApp(el.getAttribute('data-approve')); return; }
     if (el.hasAttribute('data-reject')) { rejectApp(el.getAttribute('data-reject')); return; }
     if (el.hasAttribute('data-payconfirm')) { confirmPay([el.getAttribute('data-payconfirm')]); return; }
@@ -9550,15 +9656,10 @@
   function bindEvents() {
     bindIme();
     document.addEventListener('click', onClick);
-    /* 관리자 — 회원 협회 직책(가산점) 지정·해제 */
+    /* 관리자 — 회원사·시한임박 가산점 부여는 [부여] 버튼/저장 버튼으로 처리합니다 */
     document.addEventListener('change', function (e) {
       var el = e.target;
       if (!el || !el.getAttribute) return;
-      if (el.getAttribute('data-rolebonusid')) {
-        var m = setMemberRole(el.getAttribute('data-rolebonusid'), el.value);
-        if (m) toast(m.company + ' — 협회 직책 ' + roleBonusLabel(m.roleBonusType) + ' (' + roleBonusText(m.roleBonusType) + ') 지정·해제했습니다. 감사 로그에 기록했습니다.');
-        return;
-      }
       /* 관리자 — 새 테마 코스에 포함할 게시대 선택 */
       if (el.getAttribute('data-thpick')) {
         var pid = el.getAttribute('data-thpick');
@@ -9861,8 +9962,29 @@
     }
     ensureDemoData();
     if (!memberById(db.session)) db.session = null;
-    /* 이전 저장 데이터 호환 — 협회 직책(가산점) 기본값 '없음(일반)' */
-    db.members.forEach(function (m) { if (!m.roleBonusType) m.roleBonusType = 'none'; });
+    /* 이전 저장 데이터 호환 — 가산점 구조 교정(2026-11-22): 직책자 본인 자동 가산 → 직책자 부여
+       · 회원에 남은 옛 직책 가산(roleBonusType)은 지우고 가중치에 반영하지 않습니다.
+       · 옛 '관리자 인정/조정' 값은 '지부장 부여'로 옮기고, 그 밖에는 기본 0%입니다. */
+    db.members.forEach(function (m) {
+      if (m.roleBonusType !== undefined) delete m.roleBonusType;
+      if (m.roleBonusSetAt !== undefined) delete m.roleBonusSetAt;
+      if (m.assocRate !== undefined) {
+        var oldPct = Math.round(Number(m.assocRate || 0) * 100);
+        if (m.assocMember && oldPct > 0 && !m.assocGrant) {
+          m.assocGrant = { pct: Math.min(5, oldPct), role: 'chief', label: '지부장', name: '(이전 데이터)', at: '' };
+        }
+        delete m.assocRate;
+      }
+      if (m.assocMember && m.assocGrant === undefined) m.assocGrant = null;
+    });
+    db.apps.forEach(function (a) {
+      if (a.urgentGrant === undefined) {
+        a.urgentGrant = (a.urgentAck === 'on')
+          ? { pct: 5, role: 'chief', label: '지부장', name: '(이전 데이터)', at: '' } : null;
+      }
+      if (a.urgentAck !== undefined) delete a.urgentAck;
+      if (a.urgentEvent !== undefined) delete a.urgentEvent;
+    });
     /* 이전 저장 데이터 호환 — 직책자 명단(테스트 임원) */
     if (!Array.isArray(db.officers) || !db.officers.length) db.officers = seedOfficers();
     try { ui.adminRole = localStorage.getItem(OFFICER_KEY) || 'super'; } catch (e) { ui.adminRole = 'super'; }
@@ -10028,7 +10150,27 @@
     urgentOf: function (id) { var a = findApp(id); return a ? urgentStateOf(a) : null; },
     urgentWeightOf: function (id) { var a = findApp(id); return a ? urgentWeightOf(a) : 1; },
     urgentHint: function () { return { hidden: !$('#urgentHint') || $('#urgentHint').classList.contains('hidden'), text: $('#urgentHint') ? String($('#urgentHint').textContent) : '' }; },
-    setUrgent: function (id, on) { return setUrgentAck(id, on ? 'on' : 'off'); },
+    setUrgent: function (id, pct) { return setUrgentGrant(id, pct); },
+    grantLimits: function () { return GRANT_LIMIT.map(function (r) { return { k: r.k, label: r.label, limit: r.limit }; }); },
+    grantLimitOf: grantLimitOf,
+    canGrant: function () { return canGrantBonus(); },
+    myGrantLimit: function () { return myGrantLimit(); },
+    grantWho: function () { return myGrantWho(); },
+    urgentGrant: function (id) { var a = findApp(id); return a ? urgentGrantOf(a) : null; },
+    urgentCandidates: function () {
+      return urgentCandidateList().map(function (a) {
+        var u = urgentStateOf(a), g = urgentGrantOf(a);
+        return { id: a.id, company: a.company, date: u.date, days: u.days, within: u.within, applied: u.applied,
+          pct: u.pct, grant: g, weight: drawWeightOf(a) };
+      });
+    },
+    urgentGrantPanel: function () {
+      renderUrgentGrantPanel();
+      return { info: String($('#urgentGrantInfo') ? $('#urgentGrantInfo').textContent : ''),
+        rows: document.querySelectorAll('#urgentGrantTable tbody tr').length,
+        html: String($('#urgentGrantTable') ? $('#urgentGrantTable').innerHTML : '') };
+    },
+    urgentLimitLabel: function (text, base) { var u = urgentDateInText(text, base || ROUND.postStart); return u ? { days: u.days, within: u.within, limitDays: u.limitDays, label: u.limitLabel, date: u.iso } : null; },
     /* 행사 우선접수 · 행사승인권한자 5명 과반수 승인 검증용 (2026-11-22) */
     eventApprovers: function () {
       return eventApprovers().map(function (x) { return { id: x.id, name: x.name, role: x.role, company: x.company }; });
@@ -10080,7 +10222,7 @@
         x.priority1 = [pid]; x.priority2 = []; x.priority3 = []; x.placements = [pid];
         x.priority1Slots = []; x.priority2Slots = []; x.priority3Slots = [];
         x.designatedOnly = false; x.eco = false; x.eventApp = false; x.polApp = false;
-        x.advertiser = '노후화검증'; x.company = '노후화검증'; x.oade = ''; x.urgentAck = 'off';
+        x.advertiser = '노후화검증'; x.company = '노후화검증'; x.oade = ''; x.urgentGrant = null;
         var r = drawEngine([x], 5);
         return { seats: r.stat.seats, places: ((r.out['AGED-T'] || {}).places || []).map(function (p) { return p.slot; }) };
       }
@@ -10126,7 +10268,7 @@
         x.priority1 = [pid]; x.priority2 = []; x.priority3 = [];
         x.placements = [pid]; x.priority1Slots = []; x.priority2Slots = []; x.priority3Slots = [];
         x.designatedOnly = false; x.eco = false; x.advertiser = adv; x.company = co; x.oade = '';
-        x.eventVotes = []; x.urgentAck = 'off';
+        x.eventVotes = []; x.urgentGrant = null;
       }
       for (var s = 0; s < n; s++) {
         var E = JSON.parse(JSON.stringify(evBase)), G = JSON.parse(JSON.stringify(genBase));
@@ -10148,16 +10290,10 @@
       codes.forEach(function (c, i) { setSlotFlags(p.id, [c], i === 0 ? '' : 'fault'); });
       return codes;
     },
-    /* 협회 직책 가산점 (지부장 +5% · 수석부지부장 +3% · 사무실무원 +1% · 현장실무원 +1%) */
-    roleBonusList: function () { return ROLE_BONUS.map(function (r) { return { k: r.k, label: r.label, rate: r.rate }; }); },
-    roleBonusOf: roleBonusOf,
-    roleBonusLabel: roleBonusLabel,
-    memberRole: function (mid) { var m = memberById(mid); return m ? memberRoleOf(m) : null; },
-    setRoleBonus: function (mid, k) { return setMemberRole(mid, k); },
-    roleBonusOfApp: function (id) { var a = findApp(id); return a ? roleBonusOfApp(a) : 0; },
+    /* 가산점 부여 — 직책자 권한 한도(지부장 5 · 수석 3 · 현장 3 · 사무 2) 검증용 */
+    grantPanel: function () { renderAdmin(); return { info: String($('#roleBonusInfo') ? $('#roleBonusInfo').textContent : ''), table: String($('#adminRoleTable') ? $('#adminRoleTable').innerHTML : ''), chips: String($('#roleBonusChips') ? $('#roleBonusChips').innerHTML : '') }; },
     drawWeightOf: function (id) { var a = findApp(id); return a ? drawWeightOf(a) : 1; },
     drawWeightNote: function (id) { var a = findApp(id); return a ? drawWeightNoteOf(a) : ''; },
-    rolePanel: function () { renderAdmin(); return { info: String($('#roleBonusInfo') ? $('#roleBonusInfo').textContent : ''), table: String($('#adminRoleTable') ? $('#adminRoleTable').innerHTML : ''), chips: String($('#roleBonusChips') ? $('#roleBonusChips').innerHTML : '') }; },
     memberOfApp: function (id) { var a = findApp(id); var m = a ? memberOfApp(a) : null; return m ? m.id : null; },
     preview: function (id) { var a = findApp(id); return a ? previewOf(a) : ''; },
     zoomOpen: function (id) { showDesignZoom(id); return String($('#modalBody').innerHTML) + String($('#modalFoot').innerHTML); },
