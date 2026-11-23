@@ -42,7 +42,7 @@
       <div class="chip-round">
         <span class="dot"></span>
         <div>
-          <b id="roundName">2026년 11월 4주차 주간 추첨</b>
+          <b id="roundName">2026년 12월 1주차 주간 추첨</b>
           <small id="roundDue">입고 마감 수 18:00</small>
         </div>
       </div>
@@ -84,9 +84,9 @@
   <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
   <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
   <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입고 · 지시서</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입금·입고·서식</a>
   <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
-  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 코스 · 금지</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
   <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
   <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
@@ -104,6 +104,18 @@
       <select class="input sm" id="adminRoleSel"></select>
       <span class="sm role-note" id="adminRoleNote"></span>
     </div>
+<div class="quick-nav" id="docsQuickNav" aria-label="출력·확인 메뉴 빠른 이동">
+  <span class="qn-label">빠른 이동</span>
+  <a class="btn sm ghost" href="#payPanel">💰 입금 확인</a>
+  <a class="btn sm ghost" href="#deliverPanel">🚚 현수막 입고</a>
+  <a class="btn sm ghost" href="#reportPanel">🏛️ 시청 신고 표지</a>
+  <a class="btn sm ghost" href="#desigBatchPanel">🖨️ 게시 지정서 일괄 출력</a>
+  <a class="btn sm ghost" href="#woPanel">📋 현장 작업지시서</a>
+</div>
+<div class="callout info" id="docsScopeHint" style="margin-bottom:14px">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+  <div><b>사무실무원이 쓰는 화면</b>입니다 — ① 입금 확인 → ② 현수막 입고 확인 → ③ <b>시청 신고 표지(접수현황)</b> → ④ <b>게시 지정서 일괄 출력</b> → ⑤ 현장 작업지시서 순서로 쓰면 됩니다. 위 <b>빠른 이동</b>을 누르면 해당 칸으로 바로 내려가고, <b>출력 버튼은 배정 건이 0건이어도 항상 보입니다</b>(0건이면 안내 문구만 뜹니다). ① 입금 확인은 사무실무원, ② 입고 확인은 현장실무원 직책에서 열립니다.</div>
+</div>
 <div class="callout warn hidden" id="payLocked"></div>
 <div class="panel" id="payPanel">
       <div class="admin-head">

@@ -42,7 +42,7 @@
       <div class="chip-round">
         <span class="dot"></span>
         <div>
-          <b id="roundName">2026년 11월 4주차 주간 추첨</b>
+          <b id="roundName">2026년 12월 1주차 주간 추첨</b>
           <small id="roundDue">입고 마감 수 18:00</small>
         </div>
       </div>
@@ -84,9 +84,9 @@
   <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
   <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
   <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입고 · 지시서</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입금·입고·서식</a>
   <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
-  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 코스 · 금지</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
   <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
   <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
@@ -145,7 +145,8 @@
       </div>
       <div class="field" id="fOffWeek">
         <label>게첩 희망 주 (월요일 ~ 일요일)<span class="req">*</span></label>
-        <div class="hint-txt" style="margin:0 0 6px">공문 현수막을 <b>어느 주에 게첩할지</b> 고릅니다. 주를 바꾸려면 <b>📅 달력보기</b>를 누르세요. 2주 승인 건은 <b>선택한 주부터 2주</b>가 달력·주별 현황에 함께 표시됩니다.</div>
+        <div id="offRuleStrip"></div>
+        <div class="hint-txt" style="margin:0 0 6px">공문 현수막을 <b>어느 주에 게첩할지</b> 고릅니다 — 공문 배정은 그 주 <b>전주 월요일 추첨 전</b>에 끝나야 하며, 게첩은 선택한 주 월요일부터 1주일(2주 승인 건은 2주)입니다. 주를 바꾸려면 <b>📅 달력보기</b>를 누르세요.</div>
         <div class="cal-toggle-row" style="margin:0 0 6px">
           <button class="btn ghost sm" id="btnOffWeekCal" type="button" data-caltoggle="official" aria-expanded="false" aria-controls="offWeekCal">📅 달력보기</button>
           <span class="week-now" id="offWeekNow">📅 2026.11.30 ~ 12.06 · 공문 0건</span>

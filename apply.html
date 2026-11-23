@@ -42,7 +42,7 @@
       <div class="chip-round">
         <span class="dot"></span>
         <div>
-          <b id="roundName">2026년 11월 4주차 주간 추첨</b>
+          <b id="roundName">2026년 12월 1주차 주간 추첨</b>
           <small id="roundDue">입고 마감 수 18:00</small>
         </div>
       </div>
@@ -83,7 +83,7 @@
     <div class="view-head">
       <div>
         <h2>주간 추첨 접수</h2>
-        <p id="applyRoundLine">2026년 11월 4주차 · 접수 상시 · 매주 월요일 10:00 전산 추첨 · 당첨 현수막 수요일 18:00까지 협회 입고</p>
+        <p id="applyRoundLine">2026년 12월 1주차(게첩 11.30~12.06) · 접수 상시 · 매주 월요일 10:00 추첨 → 다음 주 월요일부터 게첩 · 당첨 현수막은 수요일 18:00까지 협회 입고</p>
       </div>
       <span class="badge b-amber" id="applyRoundBadge"><i></i>접수 진행 중</span>
     </div>
@@ -99,12 +99,15 @@
       <!-- 게첩 희망 주 선택 — 달력에서 주(월~일)를 골라 사전 접수 (2026-11-22) -->
       <div class="week-select-panel" id="weekSelectPanel" style="border:1px solid #cbdcf5;border-radius:14px;padding:14px;margin-bottom:16px;background:#fff">
         <div class="panel-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">🗓️ 게첩 희망 주 선택 <span class="sub" style="font-size:11px;color:var(--muted)">이번 주 · 다음 주 · 다다음 주 사전 접수</span></h3>
+          <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">🗓️ 게첩 희망 주 선택 <span class="sub" style="font-size:11px;color:var(--muted)">추첨 다음 주부터 · 사전 접수</span></h3>
           <span class="spacer" style="flex:1"></span>
           <span class="week-now" id="applyWeekNow">📅 2026.11.30 ~ 12.06 게첩 주</span>
           <button class="btn ghost sm" id="btnApplyWeekCal" type="button" data-caltoggle="apply" aria-expanded="false" aria-controls="applyWeekCal">📅 달력보기</button>
         </div>
-        <div class="hint-txt" id="applyWeekHint" style="margin:0 0 4px">주를 바꾸려면 <b>📅 달력보기</b>를 눌러 <b>게첩을 시작할 월요일이 포함된 주</b>를 고르세요. (월~일 7일 단위)</div>
+        <div class="rule-strip-wrap">
+          <div class="rule-strip" id="applyRuleStrip"></div>
+        </div>
+        <div class="hint-txt" id="applyWeekHint" style="margin:0 0 4px">주를 바꾸려면 <b>📅 달력보기</b>를 눌러 <b>게첩을 시작할 월요일이 포함된 주</b>를 고르세요. (월~일 7일 단위 · 이번 회차 게첩 주 이후만 선택)</div>
         <div class="hint-txt cal-off-note" style="margin:0;display:none">선택한 게첩 주는 위 <b>한 줄 요약</b>에서 확인할 수 있습니다. 주를 바꾸려면 <b>1단계</b>로 돌아가 주세요.</div>
         <div id="applyWeekCal" class="cal-collapsed"></div>
       </div>

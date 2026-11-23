@@ -42,7 +42,7 @@
       <div class="chip-round">
         <span class="dot"></span>
         <div>
-          <b id="roundName">2026년 11월 4주차 주간 추첨</b>
+          <b id="roundName">2026년 12월 1주차 주간 추첨</b>
           <small id="roundDue">입고 마감 수 18:00</small>
         </div>
       </div>
@@ -84,9 +84,9 @@
   <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
   <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
   <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입고 · 지시서</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입금·입고·서식</a>
   <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
-  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 코스 · 금지</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
   <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
   <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
@@ -112,15 +112,17 @@
         <button class="btn ghost sm" id="btnDrawWeekCal" type="button" data-caltoggle="draw" aria-expanded="false" aria-controls="drawWeekCal">📅 달력보기</button>
       </div>
       <div id="drawWeekCal" class="cal-collapsed"></div>
+      <div class="rule-strip-wrap"><div id="drawRuleStrip"></div></div>
       <div class="hint-txt" id="drawWeekInfo" style="margin:8px 0 0"></div>
       <div class="table-wrap" id="drawWeekTable" style="margin-top:10px"></div>
+      <div id="drawWeekResult"></div>
     </div>
 <div class="kpi" id="adminKpi"></div>
 <div class="panel">
       <div class="admin-head">
         <h3>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
-          주간 전산 추첨 — <span id="drawRoundLabel">2026년 11월 4주차</span>
+          주간 전산 추첨 — <span id="drawRoundLabel">2026년 12월 1주차</span>
         </h3>
         <span class="sub" id="drawPoolInfo"></span>
       </div>
