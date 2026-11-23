@@ -1065,7 +1065,9 @@
         });
         var miss = (r === 7);                       /* 당첨 후 수요일 미입고 → 취소 */
         var live = !!w.live;                         /* 11.23~11.29 — 이번 주 게첩 */
-        var status = !won.length ? '낙첨' : (miss ? '미입고취소' : (live ? '게시중' : '게시종료'));
+        /* 이번 주(11.23~11.29) 게첩분은 '게시중'이 대부분이고, 일부는 늦게 입고되어 '입고완료(게시 대기)'입니다
+           — 주차별 접수대장·추첨결과에서 당첨·미당첨·입고완료·게시중이 함께 보이도록 (2026-11-23 지시) */
+        var status = !won.length ? '낙첨' : (miss ? '미입고취소' : (live ? ((i % 9 === 3) ? '입고완료' : '게시중') : '게시종료'));
         var agency = (i % 6 === 1);
         out.push({
           id: w.id + '-A-' + pad4(101 + i), round: w.id, week: w.start,
@@ -1222,7 +1224,126 @@
     for (var i = 0; i < GRANT_LIMIT.length; i++) { if (GRANT_LIMIT[i].k === key) return GRANT_LIMIT[i]; }
     return { k: key, label: key || '권한 없음', limit: 0, memo: '부여 권한 없음' };
   }
-  function grantLimitOf(k) { return grantLimitMeta(k).limit; }
+  /* ── 직책별 가산점 부여 한도 — 최고권한(지부장·총괄 관리자)이 0~10%에서 조정해 저장
+     (2026-11-23 김재봉 님 지시 "가산점부여자에게 최고권한이 부여점수 변경하게 바꿔줘")
+     · db.bonusCaps = { chief: 5, senior: 3, field: 3, staff: 2 } (기본값)
+     · 사무국장·감사는 부여 권한이 없으므로 한도 대상이 아니다(항상 0%). */
+  var BONUS_CAP_MIN = 0, BONUS_CAP_MAX = 10;
+  var BONUS_CAP_KEYS = ['chief', 'senior', 'field', 'staff'];
+  var BONUS_CAP_DEFAULT = { chief: 5, senior: 3, field: 3, staff: 2 };
+  function bonusCaps() {
+    var out = {}, src = (db && db.bonusCaps && typeof db.bonusCaps === 'object') ? db.bonusCaps : {};
+    BONUS_CAP_KEYS.forEach(function (k) {
+      var v = Number(src[k]);
+      out[k] = isFinite(v) && String(src[k] || '').length ? Math.max(BONUS_CAP_MIN, Math.min(BONUS_CAP_MAX, Math.round(v))) : BONUS_CAP_DEFAULT[k];
+    });
+    return out;
+  }
+  function bonusCapTotal() {
+    var c = bonusCaps(), n = 0;
+    BONUS_CAP_KEYS.forEach(function (k) { n += c[k]; });
+    return n;
+  }
+  function bonusCapOf(k) {
+    var key = String(k == null ? '' : k);
+    if (key === 'super') key = 'chief';      /* 총괄 관리자는 지부장과 같은 한도 */
+    var caps = bonusCaps();
+    return caps[key] != null ? caps[key] : 0;
+  }
+  function grantLimitOf(k) { return bonusCapOf(k); }
+  /* 한도 변경 권한 — 지부장 또는 총괄 관리자(시연용 최고권한)만 */
+  function canEditBonusCaps() {
+    var r = currentAccessRole();
+    return r === 'chief' || r === 'super';
+  }
+  function setBonusCap(role, pct) {
+    var k = String(role || '');
+    if (BONUS_CAP_KEYS.indexOf(k) < 0) { toast('조정할 수 없는 직책입니다.', true); return null; }
+    if (!canEditBonusCaps()) {
+      toast('가산점 부여 한도는 최고권한(지부장·총괄 관리자)만 바꿀 수 있습니다. 현재 접속: ' + accessRoleLabel(), true);
+      return null;
+    }
+    var raw = String(pct == null ? '' : pct).replace('%', '').trim();
+    var v = Math.round(Number(raw));
+    if (raw === '' || !isFinite(v)) { toast('0~10% 사이 숫자를 입력해 주세요.', true); return null; }
+    var clamped = Math.max(BONUS_CAP_MIN, Math.min(BONUS_CAP_MAX, v));
+    if (!db.bonusCaps || typeof db.bonusCaps !== 'object') db.bonusCaps = bonusCaps();
+    var before = bonusCapOf(k);
+    db.bonusCaps[k] = clamped;
+    save();
+    return { k: k, label: grantLimitMeta(k).label, before: before, limit: clamped, clamped: clamped !== v };
+  }
+  /* 여러 직책을 한 번에 저장하고 감사 로그에 한 줄로 남긴다 */
+  function saveBonusCaps(changes) {
+    if (!canEditBonusCaps()) {
+      toast('가산점 부여 한도는 최고권한(지부장·총괄 관리자)만 바꿀 수 있습니다. 현재 접속: ' + accessRoleLabel(), true);
+      return null;
+    }
+    var out = [], bad = false;
+    (changes || []).forEach(function (c) {
+      var r = setBonusCap(c.k, c.pct);
+      if (!r) { bad = true; return; }
+      if (r.before !== r.limit) out.push(r);
+    });
+    if (out.length) {
+      audit('권한', '가산점 부여 한도 변경 — ' + out.map(function (r) {
+        return r.label + ' ' + r.before + '% → ' + r.limit + '%';
+      }).join(' · ') + ' (변경자 ' + accessDisplay().label + ')');
+      save();
+    }
+    renderGrantPanel(); renderAssocPanel(); renderUrgentGrantPanel(); renderBonusCapPanel();
+    if (out.length) {
+      toast('가산점 부여 한도를 바꿨습니다 — ' + out.map(function (r) { return r.label + ' ' + r.limit + '%'; }).join(' · ') +
+        ' · 부여 패널과 상한 검증에 바로 반영됩니다.');
+    } else if (!bad) {
+      toast('바뀐 한도가 없습니다.');
+    }
+    return out;
+  }
+  /* 한도 설정 패널 — 최고권한만 수정, 다른 직책은 읽기 전용 */
+  function renderBonusCapPanel() {
+    if (!has('bonusCapTable')) return;
+    var caps = bonusCaps(), editable = canEditBonusCaps();
+    if ($('#bonusCapInfo')) {
+      $('#bonusCapInfo').textContent = '부여자 4인 합산 최대 +' + bonusCapTotal() + '% · ' +
+        (editable ? '최고권한 — 한도를 바꿀 수 있습니다' : '읽기 전용 (' + accessRoleLabel() + ')');
+    }
+    if ($('#bonusCapLock')) {
+      $('#bonusCapLock').classList.toggle('hidden', editable);
+      $('#bonusCapLock').textContent = '가산점 부여 한도는 최고권한(지부장·총괄 관리자)만 바꿀 수 있습니다. 현재 접속: ' +
+        accessRoleLabel() + ' — 지금 설정된 한도를 확인만 하실 수 있습니다.';
+    }
+    var box = $('#bonusCapTable');
+    if (!box) return;
+    box.innerHTML = '<table><thead><tr><th>직책 (부여자)</th><th style="text-align:right">현재 한도</th>' +
+      '<th style="text-align:right">변경 (0~10%)</th><th>비고</th></tr></thead><tbody>' +
+      BONUS_CAP_KEYS.map(function (k) {
+        var meta = grantLimitMeta(k);
+        return '<tr><td><span class="co">' + esc(meta.label) + '</span>' +
+          '<span class="sm">' + esc(meta.memo || '') + '</span></td>' +
+          '<td class="mono" style="text-align:right"><b>+' + caps[k] + '%</b>' +
+          '<span class="sm" id="bcNow_' + k + '">' + (caps[k] ? '' : '부여 불가') + '</span></td>' +
+          '<td style="text-align:right;white-space:nowrap">' +
+          '<input class="input sm bc-input" id="bc_' + k + '" type="number" min="' + BONUS_CAP_MIN + '" max="' + BONUS_CAP_MAX +
+          '" step="1" value="' + caps[k] + '" style="max-width:88px" data-bonuscap="' + k + '" aria-label="' + esc(meta.label) + ' 부여 한도"' +
+          (editable ? '' : ' disabled') + '> <span class="sm">%</span></td>' +
+          '<td class="sm">' + (caps[k] >= BONUS_CAP_MAX ? '최대(10%)' : (caps[k] === 0 ? '부여 불가로 설정' : '한도 내 부여')) + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="off-actions" style="margin-top:10px">' +
+      '<button class="btn primary" id="btnBonusCapSave" type="button"' + (editable ? '' : ' disabled') + '>한도 저장</button>' +
+      '<button class="btn" id="btnBonusCapReset" type="button"' + (editable ? '' : ' disabled') + '>기본값으로 (5·3·3·2)</button>' +
+      '<span class="hint-txt" style="margin:0">바꾸면 <b>시한임박 가산점</b>·<b>회원사 가산점</b>의 선택지와 상한 검증·합산 안내가 곧바로 새 한도로 바뀌고 감사 로그에 남습니다. 사무국장·감사는 부여 권한이 없어 대상이 아닙니다.</span></div>';
+  }
+  function saveBonusCapsFromForm() {
+    var changes = BONUS_CAP_KEYS.map(function (k) {
+      var el = $('#bc_' + k);
+      return { k: k, pct: el ? el.value : bonusCapOf(k) };
+    });
+    return saveBonusCaps(changes);
+  }
+  function resetBonusCaps() {
+    return saveBonusCaps(BONUS_CAP_KEYS.map(function (k) { return { k: k, pct: BONUS_CAP_DEFAULT[k] }; }));
+  }
   /* 지금 접속 권한으로 가산점을 부여할 수 있는가 — 승인 완료된 직책자 또는 총괄 관리자 */
   function canGrantBonus() {
     var r = currentAccessRole();
@@ -1231,6 +1352,7 @@
     return !!accessOfficer();
   }
   function myGrantLimit() { return canGrantBonus() ? grantLimitOf(currentAccessRole()) : 0; }
+  function myGrantLimitLabel() { return canGrantBonus() ? accessRoleLabel() + ' 최대 +' + myGrantLimit() + '%' : '없음 (부여 권한 없음)'; }
   function myGrantWho() {
     var who = accessDisplay();
     return { role: who.role, label: who.label, name: who.name };
@@ -1860,10 +1982,12 @@
     applyOffAccess();
     applyRolePanels();
     renderOfficerPanel();
-    /* 가산점 부여 패널의 '내 몫' 선택지·한도 안내도 새 직책 기준으로 다시 그린다(2026-11-22) */
+    /* 가산점 부여 패널의 '내 몫' 선택지·한도 안내도 새 직책 기준으로 다시 그린다(2026-11-22)
+       · 직책별 부여 한도 설정 패널도 권한(최고권한 여부)에 맞춰 다시 그린다(2026-11-23) */
     renderUrgentGrantPanel();
     renderAssocPanel();
     renderGrantPanel();
+    renderBonusCapPanel();
     toast('접속 권한을 ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : '') + '(으)로 전환했습니다.');
     return meta.k;
   }
@@ -3941,6 +4065,7 @@
       }].concat(pastWeekOfficialSeed()),
       seedVersion: 5,
       eventApprovers: seedEventApprovers(),
+      bonusCaps: { chief: 5, senior: 3, field: 3, staff: 2 },
       penalties: SEED_PENALTIES.map(function (p) { var o = {}; for (var k in p) { o[k] = p[k]; } return o; }),
       reclaimed: { P59: 0, P21: 0 },
       customPlaces: [],
@@ -8633,6 +8758,7 @@
     renderAssocPanel();
     renderDesigBatch();
     renderPhotoPanel();
+    renderBonusCapPanel();
     renderReportPanel();
     renderOffPanel();
     renderReview(reviewing);
@@ -9714,12 +9840,15 @@
       (canGrantBonus() ? accessRoleLabel() + ' 최대 ' + lim + '%' : '없음 (부여 권한 없음)');
     var chips = $('#roleBonusChips');
     if (chips) {
+      var capsNow = bonusCaps();
       chips.innerHTML = GRANT_LIMIT.map(function (r) {
-        var on = r.limit > 0 && (r.k === currentAccessRole() || r.k === 'super');
+        var lim = bonusCapOf(r.k);
+        var on = lim > 0 && (r.k === currentAccessRole() || r.k === 'super');
         return '<span class="chip' + (on ? ' on' : '') + '" style="cursor:default">' + esc(r.label) +
-          ' <b>' + (r.limit > 0 ? '최대 +' + r.limit + '%' : '부여 불가') + '</b></span>';
+          ' <b>' + (lim > 0 ? '최대 +' + lim + '%' : '부여 불가') + '</b></span>';
       }).join('') +
-        '<span class="chip" style="cursor:default">부여자 4인 합산 <b>최대 +13%</b></span>';
+        '<span class="chip" style="cursor:default">부여자 4인 합산 <b>최대 +' + bonusCapTotal() + '%</b></span>' +
+        (canEditBonusCaps() ? '<span class="chip" style="cursor:default">한도 변경 <b>최고권한</b></span>' : '');
     }
     var box = $('#adminRoleTable');
     if (!box) return;
@@ -10698,6 +10827,82 @@
     ui.statusWeek = s; renderStatus();
   }
 
+  /* ══════════════════════════════════════════════════════════════════════
+     PC / 모바일 2종 버전 — 접속 환경 자동 판별 · 수동 전환 · 기억
+     (2026-11-23 김재봉 님 지시 "모바일버전 피씨버전 두가지로 만들고 접속환경에 따라 버전별로 띄워줘")
+     · head 인라인 스크립트가 첫 페인트 전에 html[data-device-view] 를 정한다(FOUC 없음).
+       여기서는 ?view= 파라미터·저장된 수동 선택을 다시 확인하고 토글·푸터 초기화를 붙인다. */
+  var VIEW_KEY = 'seosan-device-view';
+  var VIEW_LABEL = { mobile: '모바일 버전', pc: 'PC 버전' };
+  function autoDeviceView() {
+    var ua = (navigator && navigator.userAgent) || '';
+    return (/Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (window.innerWidth || 0) <= 768) ? 'mobile' : 'pc';
+  }
+  function storedDeviceView() {
+    var v = '';
+    try { v = sessionStorage.getItem(VIEW_KEY) || localStorage.getItem(VIEW_KEY) || ''; } catch (e) { v = ''; }
+    return (v === 'mobile' || v === 'pc') ? v : '';
+  }
+  function deviceView() {
+    var cur = document.documentElement.getAttribute('data-device-view');
+    return (cur === 'mobile' || cur === 'pc') ? cur : autoDeviceView();
+  }
+  function updateViewToggle() {
+    var cur = deviceView(), other = cur === 'mobile' ? 'pc' : 'mobile';
+    $$('#btnViewToggle').forEach(function (b) {
+      b.textContent = (other === 'mobile' ? '📱 모바일 버전' : '🖥️ PC 버전');
+      b.setAttribute('aria-label', VIEW_LABEL[other] + '(으)로 보기');
+      b.setAttribute('data-next', other);
+    });
+    var page = (document.body && document.body.getAttribute('data-page')) || '';
+    $$('#mobileTabbar a').forEach(function (a) {
+      var k = a.getAttribute('data-mtab');
+      var on = (k === 'status' && (page === 'status')) || (k === 'apply' && page === 'apply') ||
+        (k === 'first' && page === 'first') || (k === 'mypage' && (page === 'mypage' || page === 'mypage-detail')) ||
+        (k === 'admin' && /^admin-/.test(page));
+      a.classList.toggle('on', !!on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+  }
+  function applyDeviceView(v, opts) {
+    var want = (v === 'mobile' || v === 'pc') ? v : autoDeviceView();
+    document.documentElement.setAttribute('data-device-view', want);
+    updateViewToggle();
+    if (!(opts && opts.silent)) {
+      var why = (v === 'mobile' || v === 'pc') ? '선택한 ' : '접속 환경에 맞춘 ';
+      if (window.console && console.debug) console.debug('[view]', want, why);
+    }
+    return want;
+  }
+  function setDeviceView(v) {
+    if (v !== 'mobile' && v !== 'pc') return deviceView();
+    try { sessionStorage.setItem(VIEW_KEY, v); localStorage.setItem(VIEW_KEY, v); } catch (e) { }
+    applyDeviceView(v);
+    toast(v === 'mobile'
+      ? '📱 모바일 버전으로 봅니다 — 1열 카드 화면 · 하단 탭바 · 큰 터치 버튼'
+      : '🖥️ PC 버전으로 봅니다 — 넓은 화면(1280px) · 다단 대시보드 · 넓은 표');
+    return v;
+  }
+  function resetDeviceView() {
+    try { sessionStorage.removeItem(VIEW_KEY); localStorage.removeItem(VIEW_KEY); } catch (e) { }
+    var v = applyDeviceView('');
+    toast('접속 환경 자동 감지로 돌아갔습니다 — ' + VIEW_LABEL[v]);
+    return v;
+  }
+  function toggleDeviceView() { return setDeviceView(deviceView() === 'mobile' ? 'pc' : 'mobile'); }
+  function initDeviceView() {
+    var q = paramOf('view');
+    if (q === 'mobile' || q === 'pc') { try { sessionStorage.setItem(VIEW_KEY, q); localStorage.setItem(VIEW_KEY, q); } catch (e) { } }
+    applyDeviceView(deviceView(), { silent: true });
+    /* 토글·초기화 클릭은 공통 onClick 처리기가 받는다(중복 바인딩 방지) */
+    var t = null;
+    window.addEventListener('resize', function () {
+      if (storedDeviceView()) return;                 /* 수동 선택은 유지 */
+      clearTimeout(t);
+      t = setTimeout(function () { applyDeviceView('', { silent: true }); }, 180);
+    });
+  }
+
   function onClick(e) {
     var t = e.target;
     var qn = (t && t.closest) ? t.closest('#docsQuickNav a') : null;
@@ -10717,7 +10922,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle]') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle]') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -10730,6 +10935,11 @@
     if (el.id === 'btnOffFilePick') { if ($('#offFile')) $('#offFile').click(); return; }
     if (el.hasAttribute('data-offsample')) { loadOfficialSample(el.getAttribute('data-offsample')); return; }
     if (el.hasAttribute('data-offzoom')) { showOfficialZoom(); return; }
+    /* 가산점 부여 한도 — 최고권한만 저장 (2026-11-23) */
+    if (el.id === 'btnViewToggle') { toggleDeviceView(); return; }
+    if (el.id === 'btnViewAuto') { resetDeviceView(); return; }
+    if (el.id === 'btnBonusCapSave') { saveBonusCapsFromForm(); return; }
+    if (el.id === 'btnBonusCapReset') { resetBonusCaps(); return; }
     /* 행사 우선접수 — 5명 권한자 투표·권한자 변경 (2026-11-22) */
     if (el.hasAttribute('data-fccover')) { askFcCover(el.getAttribute('data-fccover')); return; }
     if (el.hasAttribute('data-polapprove')) { polApprove(el.getAttribute('data-polapprove'), el.getAttribute('data-polwho')); return; }
@@ -11280,6 +11490,7 @@
   }
 
   function init() {
+    initDeviceView();                 /* PC/모바일 버전을 화면을 그리기 전에 먼저 정한다 */
     var saved = load();
     db = saved || seedDatabase();
     if (!db.placements) db.placements = [];
@@ -11296,6 +11507,8 @@
     ensureDemoData();
     /* 현장 게첨사진 — 저장 데이터에 photos 가 없으면 시연 샘플을 만든다 (2026-11-23) */
     if (!Array.isArray(db.photos)) db.photos = photoSampleSeed(db.apps);
+    /* 가산점 부여 한도 — 없으면 기본값(지부장 5·수석 3·현장 3·사무 2) */
+    if (!db.bonusCaps || typeof db.bonusCaps !== 'object') db.bonusCaps = { chief: 5, senior: 3, field: 3, staff: 2 };
     if (!memberById(db.session)) db.session = null;
     /* 이전 저장 데이터 호환 — 가산점 구조(2026-11-22): 부여자 1명 단일 기록 → **부여자별 배열(최종 합산)**
        · urgentGrant(단일) → urgentGrants(배열) · assocGrant(단일) → assocGrants(배열)
@@ -11528,7 +11741,40 @@
     urgentWeightOf: function (id) { var a = findApp(id); return a ? urgentWeightOf(a) : 1; },
     urgentHint: function () { return { hidden: !$('#urgentHint') || $('#urgentHint').classList.contains('hidden'), text: $('#urgentHint') ? String($('#urgentHint').textContent) : '' }; },
     setUrgent: function (id, pct) { return setUrgentGrant(id, pct); },
-    grantLimits: function () { return GRANT_LIMIT.map(function (r) { return { k: r.k, label: r.label, limit: r.limit }; }); },
+    grantLimits: function () { return GRANT_LIMIT.map(function (r) { return { k: r.k, label: r.label, limit: bonusCapOf(r.k) }; }); },
+    /* 부여 한도 설정 검증용 (2026-11-23) */
+    deviceView: function () { return deviceView(); },
+    autoDeviceView: autoDeviceView,
+    setDeviceView: function (v) { return setDeviceView(v); },
+    resetDeviceView: function () { return resetDeviceView(); },
+    toggleDeviceView: function () { return toggleDeviceView(); },
+    deviceViewState: function () {
+      var html = document.documentElement, bar = document.getElementById('mobileTabbar');
+      var b = bar ? bar.getBoundingClientRect() : null;
+      var btn = document.getElementById('btnViewToggle');
+      return { view: html.getAttribute('data-device-view'), stored: storedDeviceView(), auto: autoDeviceView(),
+        tabbar: !!bar && getComputedStyle(bar).display !== 'none',
+        tabbarBottom: b ? Math.round(window.innerHeight - b.bottom) : -1,
+        toggle: btn ? String(btn.textContent || '').trim() : '',
+        wrapWidth: Math.round((document.querySelector('.wrap') || document.body).getBoundingClientRect().width),
+        bodyWidth: Math.round(document.body.getBoundingClientRect().width),
+        smallTargets: Array.prototype.slice.call(document.querySelectorAll('nav.site-nav a.tab, #mobileTabbar a'))
+          .filter(function (el) { return el.getBoundingClientRect().height < 42; }).length };
+    },
+    bonusCaps: function () { return bonusCaps(); },
+    bonusCapTotal: bonusCapTotal,
+    bonusCapOf: bonusCapOf,
+    canEditBonusCaps: function () { return canEditBonusCaps(); },
+    setBonusCap: function (k, pct) { var r = setBonusCap(k, pct); renderGrantPanel(); renderAssocPanel(); renderUrgentGrantPanel(); renderBonusCapPanel(); return r; },
+    saveBonusCaps: function (list) { return saveBonusCaps(list); },
+    resetBonusCaps: function () { return resetBonusCaps(); },
+    bonusCapPanel: function () {
+      renderBonusCapPanel();
+      return { info: String(($('#bonusCapInfo') || {}).textContent || ''),
+        rows: document.querySelectorAll('#bonusCapTable tbody tr').length,
+        disabled: Array.prototype.slice.call(document.querySelectorAll('#bonusCapTable input[data-bonuscap]')).map(function (el) { return !!el.disabled; }),
+        lock: !($('#bonusCapLock') || { classList: { contains: function () { return true; } } }).classList.contains('hidden') };
+    },
     grantLimitOf: grantLimitOf,
     canGrant: function () { return canGrantBonus(); },
     myGrantLimit: function () { return myGrantLimit(); },

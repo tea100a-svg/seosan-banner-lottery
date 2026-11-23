@@ -1581,3 +1581,55 @@ table.pp-info th{background:#eef2f8;font-weight:700}
 .off-hit{font-size:11.5px;background:#e8f1ff;color:#1b4b8f;border:1px solid #c7dcfb;border-radius:999px;padding:3px 9px}
 .off-hit.ghost{background:#f2f5f9;color:var(--muted);border-color:var(--line)}
 @media (max-width:640px){.off-file-tools .btn{width:100%;justify-content:center}.off-file-thumb img{width:52px;height:72px}}
+
+/* ══════════════════════════════════════════════════════════════════════
+   접속 환경별 2종 버전 — PC(html[data-device-view="pc"]) / 모바일(…"mobile")
+   (2026-11-23 김재봉 님 지시 "모바일버전 피씨버전 두가지로 만들고 접속환경에 따라 버전별로 띄워줘")
+   · 자동 판별: 화면 폭 768px 이하 또는 모바일 UA → mobile
+   · ?view=mobile / ?view=pc, 헤더 토글, 푸터 '자동 감지로'로 언제든 전환
+   ══════════════════════════════════════════════════════════════════════ */
+html[data-device-view="pc"] .wrap{max-width:1280px}
+html[data-device-view="pc"] .demo-banner{font-size:12.5px}
+@media (min-width:1180px){
+  html[data-device-view="pc"] .dash-2col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+  html[data-device-view="pc"] .dash-2col > .panel{margin:0}
+  html[data-device-view="pc"] .dash-2col > .panel.wide{grid-column:1 / -1}
+}
+.view-toggle{margin-left:8px;font:inherit;font-size:11.5px;font-weight:800;letter-spacing:-.01em;color:#0d1e33;background:#bfd8ff;border:0;border-radius:999px;padding:3px 10px;cursor:pointer;vertical-align:middle;white-space:nowrap}
+.view-toggle:hover{background:#dbe9ff}
+.view-auto{background:none;border:0;color:inherit;font:inherit;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:0}
+.mtabbar{display:none}
+/* ── 모바일 버전: 1열 카드 · 큰 터치 타겟 · 하단 고정 탭바 · 콤팩트 헤더 · 430px 프레임 미리보기 ── */
+html[data-device-view="mobile"]{background:#e9edf3}
+html[data-device-view="mobile"] body{max-width:430px;margin:0 auto;background:#fff;
+  box-shadow:0 0 0 1px rgba(15,30,55,.06),0 16px 44px rgba(15,30,55,.12);min-height:100vh}
+@media (max-width:480px){html[data-device-view="mobile"] body{max-width:100%;box-shadow:none}}
+html[data-device-view="mobile"] .wrap{max-width:100%;padding:0 13px}
+html[data-device-view="mobile"] .demo-banner{font-size:10.5px;line-height:1.55;padding:6px 10px}
+html[data-device-view="mobile"] .hdr{padding-top:10px;padding-bottom:12px;gap:8px}
+html[data-device-view="mobile"] .brand{gap:9px}
+html[data-device-view="mobile"] .brand .org{display:none}
+html[data-device-view="mobile"] .brand h1{font-size:15px;margin-top:0}
+html[data-device-view="mobile"] .brand .mark{width:32px;height:32px;flex-basis:32px;border-radius:9px}
+html[data-device-view="mobile"] .ime-badge{font-size:10px;padding:3px 7px}
+html[data-device-view="mobile"] nav.site-nav{display:flex;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+html[data-device-view="mobile"] nav.site-nav::-webkit-scrollbar{display:none}
+html[data-device-view="mobile"] .tab{flex:0 0 auto;min-height:44px}
+html[data-device-view="mobile"] .subtab{min-height:40px}
+html[data-device-view="mobile"] .btn{min-height:44px}
+html[data-device-view="mobile"] .btn.sm{min-height:38px}
+html[data-device-view="mobile"] input.input,html[data-device-view="mobile"] select.input,html[data-device-view="mobile"] textarea.input{min-height:44px}
+html[data-device-view="mobile"] .panel{padding:13px;border-radius:12px}
+html[data-device-view="mobile"] .photo-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+html[data-device-view="mobile"] .photo-card .pc-img img{height:104px}
+html[data-device-view="mobile"] main.main{padding-bottom:92px}
+html[data-device-view="mobile"] footer.footer{padding-bottom:84px}
+html[data-device-view="mobile"] .to-top{bottom:80px}
+html[data-device-view="mobile"] .mtabbar{display:flex}
+.mtabbar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:#fff;border-top:1px solid var(--line);
+  padding:5px 6px calc(5px + env(safe-area-inset-bottom));gap:2px;box-shadow:0 -6px 18px rgba(15,30,55,.06)}
+@media (min-width:481px){html[data-device-view="mobile"] .mtabbar{max-width:430px;left:50%;right:auto;transform:translateX(-50%);border-radius:14px 14px 0 0}}
+.mtabbar a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:46px;
+  border-radius:10px;text-decoration:none;color:var(--muted);font-size:10.5px;font-weight:800}
+.mtabbar a i{font-style:normal;font-size:17px;line-height:1}
+.mtabbar a.on{color:var(--blue);background:#eaf2ff}

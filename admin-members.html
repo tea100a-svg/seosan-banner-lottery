@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>(function(){try{
+  var q=(location.search.match(/[?&]view=(mobile|pc)/)||[])[1]||'';
+  var m='';try{m=sessionStorage.getItem('seosan-device-view')||localStorage.getItem('seosan-device-view')||'';}catch(e){}
+  var auto=(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')||(window.innerWidth||0)<=768)?'mobile':'pc';
+  var v=(q==='mobile'||q==='pc')?q:((m==='mobile'||m==='pc')?m:auto);
+  if(q==='mobile'||q==='pc'){try{sessionStorage.setItem('seosan-device-view',q);localStorage.setItem('seosan-device-view',q);}catch(e){}}
+  document.documentElement.setAttribute('data-device-view',v);
+}catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
 <title>협회 관리자 · 회원 · 권한 · 가산점 · 행사권한자 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
 <link rel="stylesheet" href="assets/style.css">
@@ -11,6 +19,7 @@
 <div class="demo-banner">
   <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
   <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+  <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
 </div>
 
 <header class="site-header">
@@ -114,7 +123,7 @@
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회에 등록된 회원사에는 <b>부여자 각각이 자기 권한 한도까지</b> 추첨 가산점을 부여합니다. <b>기본 0%</b>이며, 부여 한도는 <b>지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>(사무국장·감사·일반 회원은 부여 불가)입니다. 한 부여자가 2%를 주고 다른 부여자가 5%를 주면 <b>부여자별 몫을 더해 합산 +7%</b>가 되며(최대 +13%), 로그인한 직책의 한도를 넘는 %는 선택할 수 없습니다. 부여하면 <b>부여자(직책·성명)와 %</b>가 표에 남고, 해제도 <b>내 몫만</b> 빠집니다. 추첨 가중치는 <b>1.00 + (시한임박 합산 % + 협회 회원사 합산 %) / 100</b>입니다.</div>
+        <div>협회에 등록된 회원사에는 <b>부여자 각각이 자기 권한 한도까지</b> 추첨 가산점을 부여합니다. <b>기본 0%</b>이며, 부여 한도는 <b>지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>(사무국장·감사·일반 회원은 부여 불가)가 <b>기본값</b>이며, 아래 <b>직책별 가산점 부여 한도 설정</b>에서 최고권한이 바꿀 수 있습니다. 한 부여자가 2%를 주고 다른 부여자가 5%를 주면 <b>부여자별 몫을 더해 합산 +7%</b>가 되며(최대 +13%), 로그인한 직책의 한도를 넘는 %는 선택할 수 없습니다. 부여하면 <b>부여자(직책·성명)와 %</b>가 표에 남고, 해제도 <b>내 몫만</b> 빠집니다. 추첨 가중치는 <b>1.00 + (시한임박 합산 % + 협회 회원사 합산 %) / 100</b>입니다.</div>
       </div>
       <div class="table-wrap" id="assocTable"></div>
     </div>
@@ -182,6 +191,21 @@
       </div>
       <div class="table-wrap" id="eventApproverTable"></div>
     </div>
+<div class="callout warn hidden" id="bonusCapLock"></div>
+<div class="panel" id="bonusCapPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h7M4 18h5"/><circle cx="17" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/></svg>
+          🎚 직책별 가산점 부여 한도 설정
+        </h3>
+        <span class="sub" id="bonusCapInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>가산점 <b>부여자(지부장·수석부지부장·현장실무원·사무실무원)</b>가 줄 수 있는 <b>최대 %</b>를 직책별로 정합니다(기본 지부장 +5% · 수석 +3% · 현장 +3% · 사무 +2%, <b>0~10%</b> 조정). 이 설정은 <b>최고권한(지부장 또는 총괄 관리자)</b>만 저장할 수 있고, 다른 직책은 현재 한도를 <b>읽기 전용</b>으로 봅니다. 바꾸면 <b>시한임박 가산점(시안 심사)</b>·<b>회원사 가산점</b>의 선택지와 한도 초과 차단, 부여자 합산 상한 안내가 곧바로 새 한도로 바뀌며 <b>감사 로그</b>에 남습니다.</div>
+      </div>
+      <div class="table-wrap" id="bonusCapTable"></div>
+    </div>
 <div class="panel" id="roleBonusPanel">
       <div class="admin-head">
         <h3>
@@ -192,7 +216,7 @@
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div><b>가산점은 직책자 본인에게 주는 것이 아닙니다.</b> 직책자가 <b>시한임박 현수막</b>과 <b>협회 등록 회원사</b>에 부여하는 권한이며, 두 가산 모두 <b>기본 0%</b>입니다. 부여 한도는 <b>지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>이고, 사무국장·감사·일반 회원은 부여할 수 없습니다. <b>부여자 각각이 자기 한도까지 부여하면 최종 합산</b>됩니다(+5%와 +2%가 모여 +7%). 시한임박 인정 범위는 <b>차차주까지</b>입니다. 지금까지 부여된 내역(부여자·내 몫·대상별 합산)과 그 대상의 추첨 가중치를 아래에서 확인합니다.</div>
+        <div><b>가산점은 직책자 본인에게 주는 것이 아닙니다.</b> 직책자가 <b>시한임박 현수막</b>과 <b>협회 등록 회원사</b>에 부여하는 권한이며, 두 가산 모두 <b>기본 0%</b>입니다. 부여 한도는 <b>지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>가 기본값이며 <b>최고권한이 직책별로 조정</b>할 수 있습니다(사무국장·감사·일반 회원은 부여 불가). <b>부여자 각각이 자기 한도까지 부여하면 최종 합산</b>됩니다(+5%와 +2%가 모여 +7%). 시한임박 인정 범위는 <b>차차주까지</b>입니다. 지금까지 부여된 내역(부여자·내 몫·대상별 합산)과 그 대상의 추첨 가중치를 아래에서 확인합니다.</div>
       </div>
       <div class="chips" id="roleBonusChips" style="margin-bottom:10px"></div>
       <div class="table-wrap" id="adminRoleTable"></div>
@@ -228,10 +252,21 @@
       <span>실제 서비스 아님</span>
       <span>·</span>
       <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
+      <span>·</span>
+      <button class="view-auto" id="btnViewAuto" type="button" title="접속 환경 자동 감지로 돌아갑니다">🔄 자동 감지로</button>
     </div>
   </div>
 </footer>
 
+
+
+<nav class="mtabbar" id="mobileTabbar" aria-label="모바일 빠른 탭바">
+  <a href="index.html" data-mtab="status"><i>🏠</i>현황</a>
+  <a href="apply.html" data-mtab="apply"><i>📝</i>접수</a>
+  <a href="first.html" data-mtab="first"><i>⏱</i>선착순</a>
+  <a href="mypage.html" data-mtab="mypage"><i>👤</i>마이</a>
+  <a href="admin-draw.html" data-mtab="admin"><i>🛡</i>관리자</a>
+</nav>
 
 <div class="toast" id="toast"></div>
 <div class="modal" id="modal">
