@@ -3901,7 +3901,7 @@
   function prioOf(a, n) {
     if (!a) return [];
     if (a.randomMode && Array.isArray(a.randomPool) && a.randomPool.length) {
-      return a.randomPool.slice();
+      return n === 1 ? a.randomPool.slice() : [];
     }
     var key = 'priority' + n;
     if (Array.isArray(a[key])) return a[key].slice();
@@ -5569,7 +5569,7 @@
       var needR = rawQty();
       $('#rankStatus').innerHTML =
         '<span class="rank-chip ok"><i></i>🎲 ' + esc(ui.randomLabel || '무작위 전체 풀') + '</span>' +
-        '<span class="rank-chip purple"><i></i>1·2순위와 동시 경쟁 · 추첨 시 ' + needR + '매 배정 (2·3순위 선택 불필요)</span>';
+        '<span class="rank-chip purple"><i></i>1순위와 같은 룰 추첨 · 신청 수량 ' + needR + '매 배정 (2·3순위 선택 불필요)</span>';
       return;
     }
     var need = rawQty();
@@ -5650,9 +5650,9 @@
       st.className = 'pick-status ok';
       st.innerHTML = '<div class="ps-top"><b>🎲 무작위 추첨 풀 선택됨 — ' + esc(ui.randomLabel || '전체 게시대') + '</b><span class="ps-count">' + ui.randomPool.length + '개소 후보 · ' + need + '매 추첨</span></div>' +
         '<div class="bar"><i style="width:100%"></i></div>' +
-        '<div class="ps-msg"><b>게시대 전체 풀(' + ui.randomPool.length + '개소)</b>이 추첨 후보로 등록되었습니다. 추첨 시 1·2순위와 함께 경쟁해 신청 수량(<b>' + need + '매</b>)만큼 배정되며, <b>2·3순위를 따로 고를 필요가 없습니다.</b></div>';
+        '<div class="ps-msg"><b>게시대 전체 풀(' + ui.randomPool.length + '개소)</b>이 추첨 후보로 등록되었습니다. 추첨 시 <b>1순위와 같은 룰</b>로 신청 수량(<b>' + need + '매</b>)만큼 배정되며, <b>2·3순위를 따로 고를 필요가 없습니다.</b></div>';
       $('#pickSlots').innerHTML = '<div class="slot filled"><span class="rank">무작위</span>' + esc(ui.randomLabel || ('전체 ' + ui.randomPool.length + '개소')) +
-        ' <span class="d">· 1·2순위와 동시 경쟁 · ' + need + '매 추첨 배정</span>' +
+        ' <span class="d">· 1순위와 같은 룰 · ' + need + '매 추첨 배정</span>' +
         '<button type="button" id="btnClearRandom" aria-label="무작위 해제">×</button></div>';
       if ($('#btnClearRandom')) onEl('#btnClearRandom', 'click', function () { clearRandomMode(); });
       $('#pickSlotsInfo').textContent = '무작위 선택 (' + ui.randomPool.length + '개소 전체 후보) · 2·3순위 선택 불필요 · 개별 게시대를 누르면 직접 선택으로 전환됩니다.';
@@ -5742,7 +5742,7 @@
     ui.rank = 1;
     ui.designatedOnly = false;
     renderPickUI();
-    toast('🎲 ' + ui.randomLabel + ' 전체를 추첨 후보로 선택했습니다 — 추첨 시 1·2순위와 경쟁해 ' + need + '매를 배정합니다. (2·3순위 선택 불필요)');
+    toast('🎲 ' + ui.randomLabel + ' 전체를 추첨 후보로 선택했습니다 — 추첨 시 1순위와 같은 룰로 ' + need + '매를 배정합니다. (2·3순위 선택 불필요)');
     if (!ui._noAutoPick && validateStep(3)) {
       setStep(4);
       scrollTopSmooth();
@@ -6500,7 +6500,7 @@
         : (v.designated
           ? '<b style="color:var(--purple)">지정</b> — 1순위 지정 장소만 추첨 · 1순위 낙첨 시 낙첨 처리 (2·3순위 미추첨)'
           : '미지정 — 1순위 → 2순위 → 3순위 순차 배정')],
-      ['1순위 게시대', v.randomMode ? ('🎲 <b>무작위 선택</b> — ' + esc(v.randomLabel || ('전체 ' + v.randomPool.length + '개소')) + ' (1·2순위와 동시 경쟁 · ' + v.qty + '매 추첨)') : placeListHTML(v.priority1, v)],
+      ['1순위 게시대', v.randomMode ? ('🎲 <b>무작위 선택</b> — ' + esc(v.randomLabel || ('전체 ' + v.randomPool.length + '개소')) + ' (1순위와 같은 룰 · ' + v.qty + '매 추첨)') : placeListHTML(v.priority1, v)],
       ['2순위 게시대', v.randomMode ? '미적용 (무작위 선택 — 전체 풀 통합 추첨)' : (v.designated ? '미적용 (고객장소 지정)' : (v.priority2.length ? placeListHTML(v.priority2, v) : '미선택 — 선택 사항'))],
       ['3순위 게시대', v.randomMode ? '미적용 (무작위 선택 — 전체 풀 통합 추첨)' : (v.designated ? '미적용 (고객장소 지정)' : (v.priority3.length ? placeListHTML(v.priority3, v) : '미선택 — 선택 사항'))],
       ['세부 위치', slotAssignTxt(v) || '위치 무관 — 게시대 안 빈 칸(동·단)에 자동 배정'],
@@ -6624,7 +6624,7 @@
     db.apps.push(app);
     var f = feeFor(app.qty, app.days);
     audit('접수', id + ' ' + app.company + ' → 광고주 ' + app.advertiser + ' · ' + app.qty + '매(1개소 1매) · ' +
-      (app.randomMode ? ('🎲 무작위 선택(' + (app.randomLabel || (app.randomPool.length + '개소')) + ' · 1·2순위 경쟁)')
+      (app.randomMode ? ('🎲 무작위 선택(' + (app.randomLabel || (app.randomPool.length + '개소')) + ' · 1순위와 같은 룰)')
         : (app.designatedOnly ? '고객장소 지정(1순위 ' + pr1.length + '개소)' : '1순위 ' + pr1.length + ' · 2순위 ' + pr2.length + ' · 3순위 ' + pr3.length + '개소')) +
       (slotAssignTxt(app) ? ' · 세부 위치 지정 ' + slotAssignTxt(app) : ' · 세부 위치 위치 무관') +
       (urgentStateOf(app).urgent ? ' · 임박 행사 감지(' + urgentStateOf(app).date + ', 가산 기본 0% — 직책자 부여 시 부여자별 몫 합산)' : '') +
@@ -6729,7 +6729,7 @@
       (a.license ? '<dt>옥외광고업 등록증</dt><dd>' + esc(a.license) + ' <span class="sm">(사본 첨부)</span></dd>' : '') +
       '<dt>신청 수량</dt><dd>' + qty + '매 (1순위 ' + prioOf(a, 1).length + '개소 · 1개소당 1매)' + (a.assignedTo ? ' → <b>배정 ' + awQty + '매</b>' : ' (추첨 후 배정 확정)') + '</dd>' +
       '<dt>접수 방식</dt><dd>' + (a.randomMode
-        ? ('🎲 <b>무작위 선택</b> — ' + esc(a.randomLabel || ('전체 ' + (a.randomPool ? a.randomPool.length : prioOf(a, 1).length) + '개소')) + ' (1·2순위와 동시 경쟁 · ' + qty + '매 추첨)')
+        ? ('🎲 <b>무작위 선택</b> — ' + esc(a.randomLabel || ('전체 ' + (a.randomPool ? a.randomPool.length : prioOf(a, 1).length) + '개소')) + ' (1순위와 같은 룰 · ' + qty + '매 추첨)')
         : (a.designatedOnly
           ? '<b style="color:var(--purple)">고객장소 지정</b> — 1순위 지정 장소만 추첨 (1순위 낙첨 시 낙첨 처리)'
           : '순위 접수 — 1순위 → 2순위 → 3순위 순차 배정')) + '</dd>' +
@@ -15602,6 +15602,7 @@
       var r = addMakerBlock();
       if (r) toast('제작업체 금지 게시대 등록 — ' + (r.maker || r.oade) + ' · ' + r.pids.length + '곳');
     });
+    if ($('#btnStep2Random')) onEl('#btnStep2Random', 'click', function () { if (!validateStep(2)) return; pickRandom('all'); });
     if ($('#btnRandAll')) onEl('#btnRandAll', 'click', function () { pickRandom('all'); });
     if ($('#btnRandFilter')) onEl('#btnRandFilter', 'click', function () { pickRandom('filter'); });
     if ($('#btnOffClear')) onEl('#btnOffClear', 'click', function () { ui.offSel = {}; renderOffPanel(); });
