@@ -1893,6 +1893,65 @@
       return o.status === 'pending' || (o.status === 'active' && o.reviewedAt);
     });
   }
+
+  /* ── 협회관리자 로그인/직책 전환 — 결재 대기 안내 팝업 (2026-11-23 김재봉 님 지시) ──
+     "협회관리자가 로그인하면 결재가 대기중이면 팝업해주고 팝업에 결재하러가기 버튼" */
+  function pendingApprovalsFor() {
+    var role = currentAccessRole();
+    if (role === 'super') return [];
+    var out = [];
+    var offN = 0;
+    (db.official || []).forEach(function (o) {
+      if (o.status !== 'pending') return;
+      var done = officialApprovedKeys(o), next = officialNextStep(o);
+      if (next && !done[next] && canApproveStep(next, next === 'audit' ? '감사1' : OFFICIAL_ACTOR[next])) offN += 1;
+    });
+    if (offN) out.push({ key: 'officialreview', page: 'admin-official-review.html', label: '2주 공문 심사', n: offN });
+    var polN = 0;
+    (db.apps || []).forEach(function (a) {
+      if (!a.polApp || a.status !== '정치심사중') return;
+      var d = polApprovedKeys(a);
+      var canChief = role === 'chief' && !d['chief'];
+      var canAudit = (role === 'audit1' || role === 'audit2') && !d['audit'];
+      if (canChief || canAudit) polN += 1;
+    });
+    if (polN) out.push({ key: 'political', page: 'admin-political.html', label: '정치행정 심사', n: polN });
+    var evN = 0, meOff = accessOfficer();
+    if (meOff && meOff.eventApprover) {
+      (db.apps || []).forEach(function (a) {
+        if (!a.eventApp || a.status !== '행사심사중') return;
+        var voted = (a.eventVotes || []).some(function (v) { return v.id === meOff.id; });
+        if (!voted) evN += 1;
+      });
+    }
+    if (evN) out.push({ key: 'event', page: 'admin-event.html', label: '행사 심사', n: evN });
+    return out;
+  }
+  function maybeShowApprovalPopup() {
+    try {
+      if (!isAdminPage()) return false;
+      var list = pendingApprovalsFor();
+      if (!list.length) return false;
+      if (ui.approvalPopupShownFor === currentAccessRole()) return false;
+      ui.approvalPopupShownFor = currentAccessRole();
+      var total = list.reduce(function (s2, x) { return s2 + x.n; }, 0);
+      var summary = list.map(function (x) { return '<b>' + esc(x.label) + '</b> ' + x.n + '건'; }).join(' · ');
+      openModal({
+        title: '🔔 결재 대기 안내',
+        sub: accessRoleLabel() + ' — 결재·심사 대기 ' + total + '건',
+        body: '<div class="callout warn" id="approvalPop"><div><b>' + esc(accessRoleLabel()) + '님, 결재할 건이 ' + total + '건 있습니다.</b><br>' + summary + '</div></div>' +
+          '<div class="hint-txt" style="margin-top:8px">아래 버튼으로 바로 결재 화면으로 이동합니다.</div>',
+        foot: list.slice(0, 1).map(function (x) {
+          return '<a class="btn primary" id="btnGoApprove" href="' + x.page + '">✅ 결재하러 가기 →</a>';
+        }).join('') +
+          (list.length > 1 ? list.slice(1).map(function (x) {
+            return ' <a class="btn" href="' + x.page + '">' + esc(x.label) + ' ' + x.n + '건</a>';
+          }).join('') : '') +
+          ' <button class="btn ghost" type="button" data-close>닫기</button>'
+      });
+      return true;
+    } catch (e) { return false; }
+  }
   function renderOfficialReview() {
     if (!has('offReviewList')) return;
     var list = (db.official || []).filter(function (o) { return o.status === 'pending'; });
@@ -1907,13 +1966,16 @@
     $('#offReviewList').innerHTML = '<table><thead><tr><th>기관 · 공문</th><th>문구</th><th>배정 게시대</th><th>기간</th><th>결재 진행</th><th style="text-align:center">결재</th></tr></thead><tbody>' +
       list.map(function (o) {
         var names = (o.pids || []).map(function (pid) { var p = boardById(pid); return p ? p.name : pid; });
-        var next = officialNextStep(o), clen = officialChainLen(o), done = officialDoneCount(o);
+        var next = myApprovalStep(o), clen = officialChainLen(o), done = officialDoneCount(o);
         var dd = officialDaysOf(o), wks = officialWeekOf(o);
         var period = o.exception ? '<b>⚠️ 40% 초과 예외</b>' : '<b>2주(14일)</b> ' + weekRangeTxt(wks) + ' ~ ' + dstr(addDays(wks, 13));
         var btns;
-        if (next === 'audit') {
-          btns = '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="감사1" type="button">감사1 결재</button> ' +
-                 '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="감사2" type="button">감사2 결재</button>';
+        var ar = currentAccessRole();
+        if (ar === 'audit1' || ar === 'audit2') {
+          btns = '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="' + (ar === 'audit2' ? '감사2' : '감사1') + '" type="button">감사 결재</button>';
+        } else if (next === 'audit') {
+          btns = '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="감사1" type="button">감사 결재</button> ' +
+                 '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="감사2" type="button">감사 결재</button>';
         } else {
           btns = '<button class="btn sm primary" data-offapprove="' + o.id + '" type="button">' + esc(officialStepLabel(next).replace(' 결재', '')) + ' 결재</button>';
         }
@@ -2081,6 +2143,7 @@
     renderGrantPanel();
     renderBonusCapPanel();
     try { applySubtabPerms(); renderPermMatrix(); enforcePagePermission(); } catch (e) { }
+    try { ui.approvalPopupShownFor = ''; setTimeout(maybeShowApprovalPopup, 350); } catch (e) { }
     toast('접속 권한을 ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : '') + '(으)로 전환했습니다.');
     return meta.k;
   }
@@ -9398,6 +9461,18 @@
     (o && o.approvals ? o.approvals : []).forEach(function (a) { m[a.k] = 1; });
     return m;
   }
+  /* 현재 접속 직책으로 지금 결재할 수 있는 단계 — 감사 접속 시 '지부장 결재'로 잘못 뜨지 않게 */
+  function myApprovalStep(o) {
+    var next = officialNextStep(o);
+    if (!next) return '';
+    var role = currentAccessRole();
+    if (role === 'super') return next;
+    var want = (role === 'audit1' || role === 'audit2' || role === 'audit') ? 'audit' : (role === 'chief' ? 'chief' : '');
+    if (!want) return next;
+    var done = officialApprovedKeys(o);
+    var open = officialChainFor(o).filter(function (c) { return !done[c.k]; }).map(function (c) { return c.k; });
+    return open.indexOf(want) >= 0 ? want : next;
+  }
   function officialNextStep(o) {
     var d = officialApprovedKeys(o), chain = officialChainFor(o);
     for (var i = 0; i < chain.length; i++) { if (!d[chain[i].k]) return chain[i].k; }
@@ -10124,11 +10199,15 @@
             ? '<span class="sm perm-off" title="현재 접속 권한: ' + esc(accessRoleLabel()) + '">🔒 권한 필요</span> '
             : '';
           var act = permNote;
-          if (pend && next === 'audit') {
-            act = '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="감사1" type="button">감사1 결재</button> ' +
-                  '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="감사2" type="button">감사2 결재</button> ';
+          var myStep = pend ? myApprovalStep(o) : '';
+          var ar2 = currentAccessRole();
+          if (pend && (ar2 === 'audit1' || ar2 === 'audit2')) {
+            act = '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="' + (ar2 === 'audit2' ? '감사2' : '감사1') + '" type="button">감사 결재</button> ';
+          } else if (pend && myStep === 'audit') {
+            act = '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="감사1" type="button">감사 결재</button> ' +
+                  '<button class="btn sm primary" data-offapprove="' + o.id + '" data-offwho="감사2" type="button">감사 결재</button> ';
           } else if (pend) {
-            act = '<button class="btn sm primary" data-offapprove="' + o.id + '" type="button">' + esc(officialStepLabel(next).replace(' 결재', '')) + ' 결재</button> ';
+            act = '<button class="btn sm primary" data-offapprove="' + o.id + '" type="button">' + esc(officialStepLabel(myStep).replace(' 결재', '')) + ' 결재</button> ';
           }
           return '<tr><td><span class="co">' + esc(o.org) + '</span><span class="sm">' + esc(o.docNo || '공문') + ' · ' + esc(o.at) + '</span></td>' +
             '<td class="sm">' + esc(o.receivedBy || o.draftedBy || '—') + '</td>' +
@@ -12844,10 +12923,15 @@
     var denied = false;
     if (PAGE === 'admin-roles') denied = !isTotalManager();
     else if (key) denied = !canSeePage(key);
-    if (!denied) { var lk = $('#permLockBox'); if (lk) lk.remove(); return true; }
+    if (!denied) {
+      var lk0 = $('#permLockBox'); if (lk0) lk0.remove();
+      document.querySelectorAll('main.main > section .view-head, main.main > section .panel, main.main > section .loc-wrap').forEach(function (el) { el.style.display = ''; });
+      return true;
+    }
     var main = document.querySelector('main.main') || document.querySelector('main');
     if (!main) return false;
-    main.querySelectorAll(':scope > section').forEach(function (sec) { sec.style.display = 'none'; });
+    main.querySelectorAll(':scope > section').forEach(function (sec) { sec.style.display = ''; });
+    main.querySelectorAll(':scope > section .view-head, :scope > section .panel, :scope > section .loc-wrap').forEach(function (el) { el.style.display = 'none'; });
     if (!main.querySelector('#permLockBox')) {
       var d = document.createElement('div');
       d.id = 'permLockBox';
@@ -14872,6 +14956,8 @@
     photoFileNameOf: function (phId) { var ph = null; photoStore().forEach(function (x) { if (x.id === phId) ph = x; }); return ph ? photoFileName(null, ph) : ''; },
     locDeliver: function (id) { return toggleLocDelivered(id); },
     eventSetRole: function () { return true; },
+    pendingApprovals: function () { return pendingApprovalsFor(); },
+    showApprovalPopup: function () { ui.approvalPopupShownFor = ''; return maybeShowApprovalPopup(); },
     permRoles: function () { return PERM_ROLES.map(function (r) { return r.k; }); },
     permPages: function () { return PERM_PAGES.map(function (p) { return p.k + ':' + p.page; }); },
     permOf: function (role, key) { return permOf(role, key); },
