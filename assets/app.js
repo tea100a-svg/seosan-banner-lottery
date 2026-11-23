@@ -5373,6 +5373,52 @@
     var digits = raw.replace(/[^0-9]/g, '');
     return digits === '' ? 0 : Number(digits);
   }
+  /* ── 🚫 광고문구 비방·욕설·매매혼 필터 (2026-11-23 김재봉 님 지시) ────────────
+     · 공백·특수문자·숫자를 끼워 우회하는 표기까지 정규화해서 잡는다.
+     · 결혼중개업법 위반·인권침해(매매혼·성상품화) 표현도 함께 차단한다. */
+  var ABUSE_WORDS = ['씨발', '시발', 'ㅅㅂ', '병신', 'ㅂㅅ', '지랄', '개새끼', '미친놈', '미친년', '죽어라', '꺼져', '엿먹어',
+    '좆', '보지', '자지', '섹스', '야동', '성인광고', '조건만남', '원조교제', '도박', '카지노', '불법대출', '사채'];
+  var MARRIAGE_WORDS = ['매매혼', '신부보증', '신부교환', '도망안가는', '도망없는', '처녀맞선', '후불결혼', '선불결혼',
+    '외국인신부특가', '신부알선', '즉시혼인', '성상품화'];
+  var MARRIAGE_NATIONS = ['베트남', '필리핀', '캄보디아', '우즈벡', '태국', '중국', '러시아', '몽골', '네팔', '미얀마'];
+  function normFilterText(t) {
+    return String(t || '').toLowerCase().replace(/[\s\.\-_*·.,!?~'"()\[\]{}<>\/\\|=+0-9]/g, '');
+  }
+  function checkAbusiveText(txt) {
+    var n = normFilterText(txt), abuse = [], marriage = [];
+    ABUSE_WORDS.forEach(function (w) { if (n.indexOf(normFilterText(w)) >= 0) abuse.push(w); });
+    MARRIAGE_WORDS.forEach(function (w) { if (n.indexOf(normFilterText(w)) >= 0) marriage.push(w); });
+    MARRIAGE_NATIONS.forEach(function (k) {
+      ['처녀', '신부알선', '매매', '신부특가'].forEach(function (suf) {
+        if (n.indexOf(normFilterText(k + suf)) >= 0) marriage.push(k + suf);
+      });
+    });
+    return { abuse: abuse, marriage: marriage, bad: (abuse.length + marriage.length) > 0 };
+  }
+  function abuseWarnHTML(st) {
+    if (!st || !st.bad) return '';
+    var msg = st.marriage.length
+      ? '🚫 결혼중개업법 위반 및 인권 침해(매매혼·성상품화·부당 알선) 우려 표현이 포함되어 접수할 수 없습니다. 문구를 수정해 주세요.'
+      : '🚫 비방·욕설·미풍양속 저해 문구가 포함되어 접수할 수 없습니다. 문구를 수정해 주세요.';
+    return '<div class="callout danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></svg><div><b>' + esc(msg) + '</b></div></div>';
+  }
+  function syncAbuseNote(sel, txt) {
+    var box = $(sel);
+    if (!box) return { bad: false };
+    var st = checkAbusiveText(txt);
+    box.innerHTML = abuseWarnHTML(st);
+    box.classList.toggle('hidden', !st.bad);
+    return st;
+  }
+  function syncApplyAbuseNote() {
+    var v = readApply();
+    return syncAbuseNote('#abuseNote', (v.advertiser || '') + ' ' + (v.text || ''));
+  }
+  function syncFcAbuseNote() {
+    var v = readFc();
+    return syncAbuseNote('#fcAbuseNote', (v.advertiser || '') + ' ' + (v.text || ''));
+  }
+
   /* 🏥 의료광고 심의 안내 — 의료기관 키워드가 보이면 접수 단계에서 한 번 더 강조 (2026-11-23 김재봉 님 지시) */
   var MEDICAL_RE = /(병원|의원|치과|한의원|약국|성형|피부과|정형외과|내과|외과|소아과|안과|이비인후과|비뇨기과|산부인과|재활의학과|신경외과|정신건강의학과|클리닉|메디컬|진료|시술)/;
   function medicalAdText() {
@@ -5472,6 +5518,12 @@
         return false;
       }
       if (v.text.length < 4) { fieldErr('#fText'); ok = false; }
+      var abuse = checkAbusiveText((v.advertiser || '') + ' ' + (v.text || ''));
+      if (abuse.bad) {
+        syncApplyAbuseNote(); fieldErr('#fText');
+        toast(abuse.marriage.length ? '결혼중개업법 위반·인권침해(매매혼·성상품화) 우려 표현이 포함되어 접수할 수 없습니다.' : '비방·욕설·미풍양속 저해 문구가 포함되어 접수할 수 없습니다.', true);
+        return false;
+      }
       /* 행사 심사 신청 — 행사명·기간 필수 (미승인 시 일반 추첨으로 자동 전환되므로 1·2·3순위는 3단계에서 그대로 받는다) */
       if (v.eventApp) {
         if (String(v.eventName || '').length < 2) { fieldErr('#fEventName'); ok = false; }
@@ -7378,6 +7430,12 @@
       }
       if (v.advertiserPhone && !/^0\d{1,2}[- ]?\d{3,4}[- ]?\d{4}$/.test(String(v.advertiserPhone).replace(/\s/g, ''))) { fcErr('#fcFAdvPhone'); ok = false; }
       if (String(v.text || '').length < 4) { fcErr('#fcFText'); ok = false; }
+      var fcAb = checkAbusiveText((v.advertiser || '') + ' ' + (v.text || ''));
+      if (fcAb.bad) {
+        syncFcAbuseNote(); fcErr('#fcFText');
+        toast(fcAb.marriage.length ? '결혼중개업법 위반·인권침해(매매혼·성상품화) 우려 표현이 포함되어 접수할 수 없습니다.' : '비방·욕설·미풍양속 저해 문구가 포함되어 접수할 수 없습니다.', true);
+        return false;
+      }
       if (!v.file) {
         fcErr('#fcFDesign');
         toast('현수막 시안 파일 첨부가 필수입니다 — 시안을 첨부하거나 [시연용 샘플 시안 첨부]를 눌러 주세요.', true);
@@ -9864,6 +9922,14 @@
   function renderAdmin() {
     var appsR = db.apps.filter(function (a) { return a.round === ROUND.id; });
     var reviewing = db.apps.filter(function (a) { return a.round === ROUND.id && a.status === '시안심사중'; });
+    /* 시한임박(행사·긴급) 건을 목록 최상단으로 (2026-11-23 김재봉 님 지시) */
+    reviewing = reviewing.slice().sort(function (a, b) {
+      var ua = urgentStateOf(a).urgent ? 1 : 0, ub = urgentStateOf(b).urgent ? 1 : 0;
+      if (ua !== ub) return ub - ua;
+      var ea = a.eventApp ? 1 : 0, eb = b.eventApp ? 1 : 0;
+      if (ea !== eb) return eb - ea;
+      return String(a.appliedAt || '') < String(b.appliedAt || '') ? 1 : -1;
+    });
     var paying = db.apps.filter(function (a) { return ['입고대기', '선착순확정'].indexOf(a.status) >= 0 && !a.paid; });
     var waiting = db.apps.filter(function (a) { return ['입고대기', '선착순확정'].indexOf(a.status) >= 0 && !a.delivered; });
     var posted = db.apps.filter(function (a) { return a.round === ROUND.id && (a.status === '입고완료' || a.status === '게시중'); });
@@ -12850,6 +12916,7 @@
       $('#fText').classList.remove('invalid');
       renderUrgentHint();
       syncApplyMedicalNote();
+      syncApplyAbuseNote();
     });
     onEl('#applyCompany', 'input', function () {
       $('#fCompany').classList.remove('invalid');
@@ -12861,7 +12928,7 @@
       var st = smsState();
       if (st.sent && normDigits(this.value) !== normDigits(st.phone)) { st.verified = false; st.sent = false; st.code = ''; renderSmsBox(); }
     });
-    onEl('#applyAdvertiser', 'input', function () { $('#fAdvertiser').classList.remove('invalid'); renderDedupHint(); syncApplyMedicalNote(); });
+    onEl('#applyAdvertiser', 'input', function () { $('#fAdvertiser').classList.remove('invalid'); renderDedupHint(); syncApplyMedicalNote(); syncApplyAbuseNote(); });
     if ($('#applyText')) onEl('#applyText', 'input', renderDedupHint);
     onEl('#applyAdvPhone', 'input', function () { $('#fAdvPhone').classList.remove('invalid'); });
     if ($('#applyBiz')) onEl('#applyBiz', 'input', function () { $('#fBiz').classList.remove('invalid'); });
@@ -12950,8 +13017,9 @@
       if ($('#fcTextCount')) $('#fcTextCount').textContent = String(this.value.length);
       if ($('#fcFText')) $('#fcFText').classList.remove('invalid');
       syncFcMedicalNote();
+      syncFcAbuseNote();
     });
-    onEl('#fcAdvertiser', 'input', function () { if ($('#fcFAdv')) $('#fcFAdv').classList.remove('invalid'); syncFcMedicalNote(); });
+    onEl('#fcAdvertiser', 'input', function () { if ($('#fcFAdv')) $('#fcFAdv').classList.remove('invalid'); syncFcMedicalNote(); syncFcAbuseNote(); });
     onEl('#fcAdvBiz', 'input', function () { if ($('#fcFAdvBiz')) $('#fcFAdvBiz').classList.remove('invalid'); });
     onEl('#fcAdvPhone', 'input', function () { if ($('#fcFAdvPhone')) $('#fcFAdvPhone').classList.remove('invalid'); });
     onEl('#fcQty', 'input', function () {
@@ -14041,6 +14109,14 @@
     setNow: function (iso) { return setDemoNow(iso || ''); },
     setNowDay: function (d) { return demoNowWeekday(d); },
     firstNav: function () { return { allowed: firstNavAllowed(), hidden: !!document.querySelector('nav.site-nav a[href="first.html"].hidden') }; },
+    checkText: function (t) { return checkAbusiveText(t); },
+    abuseNote: function (sel) { var e = $(sel || '#abuseNote'); return e ? { hidden: e.classList.contains('hidden'), text: e.textContent.trim() } : null; },
+    setApplyText2: function (adv, txt) {
+      if ($('#applyAdvertiser')) $('#applyAdvertiser').value = String(adv || '');
+      if ($('#applyText')) $('#applyText').value = String(txt || '');
+      syncApplyAbuseNote();
+      return checkAbusiveText(String(adv || '') + ' ' + String(txt || ''));
+    },
     preCancel: function (id) {
       preDrawCancel(id);
       return { open: !!($('#modal') && $('#modal').classList.contains('open')),
@@ -14300,6 +14376,7 @@
         ui.sms = { sent: false, code: '', phone: '', verified: false, at: '' };
         renderSmsBox();
       }
+      try { syncApplyMedicalNote(); syncApplyAbuseNote(); } catch (e) { }
       return readApply();
     },
     readApply: readApply,
