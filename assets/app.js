@@ -1250,7 +1250,45 @@
     { id: 'M-1012', loginId: 'injiad', pw: '1234', type: 'agency',
       company: '인지애드', owner: '한인지', phone: phoneOf(10),
       biz: '318-77-90129', email: 'injiad@seosan.kr', oade: '제 2016-4530186-08-5-00129 호',
-      licenseFile: { name: '인지애드_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } }
+      licenseFile: { name: '인지애드_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    /* ── 임의회원사 30개 (2026-11-24 김재봉 님 지시) — 일반업체 15곳 + 광고대행사 15곳 ── */
+    { id: 'M-1013', loginId: 'demo01', pw: '1234', type: 'direct', company: '동문정형외과', owner: '강동문', phone: '010-4101-1001', biz: '312-11-20001', email: 'demo01@seosan.kr', oade: '' },
+    { id: 'M-1014', loginId: 'demo02', pw: '1234', type: 'direct', company: '석남바른치과', owner: '이석남', phone: '010-4101-1002', biz: '312-11-20002', email: 'demo02@seosan.kr', oade: '' },
+    { id: 'M-1015', loginId: 'demo03', pw: '1234', type: 'direct', company: '수석가구백화점', owner: '박수석', phone: '010-4101-1003', biz: '312-11-20003', email: 'demo03@seosan.kr', oade: '' },
+    { id: 'M-1016', loginId: 'demo04', pw: '1234', type: 'direct', company: '부춘수학교습소', owner: '최부춘', phone: '010-4101-1004', biz: '312-11-20004', email: 'demo04@seosan.kr', oade: '' },
+    { id: 'M-1017', loginId: 'demo05', pw: '1234', type: 'direct', company: '온석모터스', owner: '정온석', phone: '010-4101-1005', biz: '312-11-20005', email: 'demo05@seosan.kr', oade: '' },
+    { id: 'M-1018', loginId: 'demo06', pw: '1234', type: 'direct', company: '잠홍꽃식물원', owner: '윤잠홍', phone: '010-4101-1006', biz: '312-11-20006', email: 'demo06@seosan.kr', oade: '' },
+    { id: 'M-1019', loginId: 'demo07', pw: '1234', type: 'direct', company: '예천키즈카페', owner: '조예천', phone: '010-4101-1007', biz: '312-11-20007', email: 'demo07@seosan.kr', oade: '' },
+    { id: 'M-1020', loginId: 'demo08', pw: '1234', type: 'direct', company: '대산항수산시장', owner: '장대산', phone: '010-4101-1008', biz: '312-11-20008', email: 'demo08@seosan.kr', oade: '' },
+    { id: 'M-1021', loginId: 'demo09', pw: '1234', type: 'direct', company: '해미읍성떡집', owner: '임해미', phone: '010-4101-1009', biz: '312-11-20009', email: 'demo09@seosan.kr', oade: '' },
+    { id: 'M-1022', loginId: 'demo10', pw: '1234', type: 'direct', company: '운산사과농장', owner: '한운산', phone: '010-4101-1010', biz: '312-11-20010', email: 'demo10@seosan.kr', oade: '' },
+    { id: 'M-1023', loginId: 'demo11', pw: '1234', type: 'direct', company: '음암요양병원', owner: '서음암', phone: '010-4101-1011', biz: '312-11-20011', email: 'demo11@seosan.kr', oade: '' },
+    { id: 'M-1024', loginId: 'demo12', pw: '1234', type: 'direct', company: '성연테크노마트', owner: '권성연', phone: '010-4101-1012', biz: '312-11-20012', email: 'demo12@seosan.kr', oade: '' },
+    { id: 'M-1025', loginId: 'demo13', pw: '1234', type: 'direct', company: '지곡우드공방', owner: '황지곡', phone: '010-4101-1013', biz: '312-11-20013', email: 'demo13@seosan.kr', oade: '' },
+    { id: 'M-1026', loginId: 'demo14', pw: '1234', type: 'direct', company: '고북황토알타리', owner: '안고북', phone: '010-4101-1014', biz: '312-11-20014', email: 'demo14@seosan.kr', oade: '' },
+    { id: 'M-1027', loginId: 'demo15', pw: '1234', type: 'direct', company: '부석간월도횟집', owner: '송부석', phone: '010-4101-1015', biz: '312-11-20015', email: 'demo15@seosan.kr', oade: '' },
+    { id: 'M-1028', loginId: 'demo16', pw: '1234', type: 'agency', company: '서산중앙간판', owner: '유중앙', phone: '010-4201-2001', biz: '312-22-30001', email: 'demo16@seosan.kr', oade: '제 2018-4530186-08-5-00201 호', licenseFile: { name: '서산중앙간판_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1029', loginId: 'demo17', pw: '1234', type: 'agency', company: '동문사인기획', owner: '오동문', phone: '010-4201-2002', biz: '312-22-30002', email: 'demo17@seosan.kr', oade: '제 2019-4530186-08-5-00202 호', licenseFile: { name: '동문사인기획_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1030', loginId: 'demo18', pw: '1234', type: 'agency', company: '예천애드비전', owner: '백예천', phone: '010-4201-2003', biz: '312-22-30003', email: 'demo18@seosan.kr', oade: '제 2020-4530186-08-5-00203 호', licenseFile: { name: '예천애드비전_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1031', loginId: 'demo19', pw: '1234', type: 'agency', company: '온석출력센터', owner: '남온석', phone: '010-4201-2004', biz: '312-22-30004', email: 'demo19@seosan.kr', oade: '제 2021-4530186-08-5-00204 호', licenseFile: { name: '온석출력센터_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1032', loginId: 'demo20', pw: '1234', type: 'agency', company: '잠홍현수막제작소', owner: '신잠홍', phone: '010-4201-2005', biz: '312-22-30005', email: 'demo20@seosan.kr', oade: '제 2017-4530186-08-5-00205 호', licenseFile: { name: '잠홍현수막제작소_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1033', loginId: 'demo21', pw: '1234', type: 'agency', company: '읍내동광고마을', owner: '전읍내', phone: '010-4201-2006', biz: '312-22-30006', email: 'demo21@seosan.kr', oade: '제 2016-4530186-08-5-00206 호', licenseFile: { name: '읍내동광고마을_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1034', loginId: 'demo22', pw: '1234', type: 'agency', company: '갈산디자인랩', owner: '문갈산', phone: '010-4201-2007', biz: '312-22-30007', email: 'demo22@seosan.kr', oade: '제 2022-4530186-08-5-00207 호', licenseFile: { name: '갈산디자인랩_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1035', loginId: 'demo23', pw: '1234', type: 'agency', company: '운산옥외광고', owner: '양운산', phone: '010-4201-2008', biz: '312-22-30008', email: 'demo23@seosan.kr', oade: '제 2015-4530186-08-5-00208 호', licenseFile: { name: '운산옥외광고_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1036', loginId: 'demo24', pw: '1234', type: 'agency', company: '음암종합광고', owner: '손음암', phone: '010-4201-2009', biz: '312-22-30009', email: 'demo24@seosan.kr', oade: '제 2018-4530186-08-5-00209 호', licenseFile: { name: '음암종합광고_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1037', loginId: 'demo25', pw: '1234', type: 'agency', company: '지곡배너프린트', owner: '배지곡', phone: '010-4201-2010', biz: '312-22-30010', email: 'demo25@seosan.kr', oade: '제 2019-4530186-08-5-00210 호', licenseFile: { name: '지곡배너프린트_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1038', loginId: 'demo26', pw: '1234', type: 'agency', company: '고북사인아트', owner: '허고북', phone: '010-4201-2011', biz: '312-22-30011', email: 'demo26@seosan.kr', oade: '제 2020-4530186-08-5-00211 호', licenseFile: { name: '고북사인아트_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1039', loginId: 'demo27', pw: '1234', type: 'agency', company: '부석미디어웍스', owner: '차부석', phone: '010-4201-2012', biz: '312-22-30012', email: 'demo27@seosan.kr', oade: '제 2021-4530186-08-5-00212 호', licenseFile: { name: '부석미디어웍스_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1040', loginId: 'demo28', pw: '1234', type: 'agency', company: '정미광고기획', owner: '곽정미', phone: '010-4201-2013', biz: '312-22-30013', email: 'demo28@seosan.kr', oade: '제 2017-4530186-08-5-00213 호', licenseFile: { name: '정미광고기획_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1041', loginId: 'demo29', pw: '1234', type: 'agency', company: '가야산인쇄광고', owner: '성가야', phone: '010-4201-2014', biz: '312-22-30014', email: 'demo29@seosan.kr', oade: '제 2018-4530186-08-5-00214 호', licenseFile: { name: '가야산인쇄광고_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    { id: 'M-1042', loginId: 'demo30', pw: '1234', type: 'agency', company: '서해안애드컴', owner: '노서해', phone: '010-4201-2015', biz: '312-22-30015', email: 'demo30@seosan.kr', oade: '제 2022-4530186-08-5-00215 호', licenseFile: { name: '서해안애드컴_옥외광고업등록증.pdf', data: '', mime: 'application/pdf' } },
+    /* ── 임의직원 6명 (2026-11-24 김재봉 님 지시) — 리스트에서 바로 직책 임명·임명권자·최고권한 부여 가능 ── */
+    { id: 'M-2008', loginId: 'emp1', pw: '1234', type: 'staff', isStaff: true, admin: false, company: '서산시지부 사무국(직원)', owner: '박서산', phone: '010-3100-0001', biz: '', email: 'emp1@seosan.kr', oade: '' },
+    { id: 'M-2009', loginId: 'emp2', pw: '1234', type: 'staff', isStaff: true, admin: false, company: '서산시지부 사무국(직원)', owner: '김해미', phone: '010-3100-0002', biz: '', email: 'emp2@seosan.kr', oade: '' },
+    { id: 'M-2010', loginId: 'emp3', pw: '1234', type: 'staff', isStaff: true, admin: false, company: '서산시지부 사무국(직원)', owner: '정석남', phone: '010-3100-0003', biz: '', email: 'emp3@seosan.kr', oade: '' },
+    { id: 'M-2011', loginId: 'emp4', pw: '1234', type: 'staff', isStaff: true, admin: false, company: '서산시지부 현장팀(직원)', owner: '이대산', phone: '010-3100-0004', biz: '', email: 'emp4@seosan.kr', oade: '' },
+    { id: 'M-2012', loginId: 'emp5', pw: '1234', type: 'staff', isStaff: true, admin: false, company: '서산시지부 현장팀(직원)', owner: '최팔봉', phone: '010-3100-0005', biz: '', email: 'emp5@seosan.kr', oade: '' },
+    { id: 'M-2013', loginId: 'emp6', pw: '1234', type: 'staff', isStaff: true, admin: false, company: '서산시지부 감사팀(직원)', owner: '강부춘', phone: '010-3100-0006', biz: '', email: 'emp6@seosan.kr', oade: '' }
   ];
   /* 시연용 광고대행사 10곳 — 로그인 화면 안내용 (3곳은 대형: 5건 이상 다건 대리접수) */
   var AGENCY_IDS = ['M-1002', 'M-1004', 'M-1005', 'M-1006', 'M-1007', 'M-1008', 'M-1009', 'M-1010', 'M-1011', 'M-1012'];
@@ -1684,6 +1722,14 @@
        (신청할 때 미리 받아 둔 1·2·3순위를 그대로 사용합니다)
      · 수수료는 일반 접수와 같습니다 — 1매 10,700원(탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000, 1주 7일) */
   var EVENT_VOTERS = 5, EVENT_QUORUM = 3;
+  function eventVotersCount() {
+    var n = Number(db && db.eventVoterCount);
+    if (!isFinite(n) || n < 1) return EVENT_VOTERS;
+    return Math.max(1, Math.min(15, Math.round(n)));
+  }
+  function eventQuorumCount() {
+    return Math.floor(eventVotersCount() / 2) + 1;
+  }
   /* 투표 표기 — 화면 버튼은 '찬성 · 반려 · 기권' (2026-11-23 김재봉 님 지시 "행사우선접수에서 찬성,반려버튼이 없어").
      기존 저장 데이터·시연 데이터의 '반대'도 같은 뜻으로 함께 집계합니다. */
   function normEventVote(v) {
@@ -1728,7 +1774,16 @@
     return '';
   }
   function eventApprovers() {
-    if (!Array.isArray(db.eventApprovers) || db.eventApprovers.length !== EVENT_VOTERS) db.eventApprovers = seedEventApprovers();
+    var cnt = eventVotersCount();
+    if (!Array.isArray(db.eventApprovers) || !db.eventApprovers.length) db.eventApprovers = seedEventApprovers();
+    while (db.eventApprovers.length < cnt) {
+      var idx = db.eventApprovers.length + 1;
+      db.eventApprovers.push({
+        id: 'EV-' + pad2(idx), memberId: '', name: '승인권자' + idx, role: '사무실무원',
+        company: '미지정', at: nowStamp(), by: '총괄 관리자'
+      });
+    }
+    if (db.eventApprovers.length > cnt) db.eventApprovers = db.eventApprovers.slice(0, cnt);
     return db.eventApprovers;
   }
   function eventApproverById(id) {
@@ -1748,8 +1803,9 @@
       else abs += 1;
     });
     var st = (a && a.eventStatus) || (on ? '심사중' : 'none');
+    var votersN = eventVotersCount(), quorumN = eventQuorumCount();
     return { on: on, status: st, votes: votes, yes: yes, no: no, abs: abs, cast: votes.length,
-      need: EVENT_QUORUM, voters: EVENT_VOTERS,
+      need: quorumN, voters: votersN,
       approved: on && st === '승인', reviewing: on && st === '심사중', converted: on && st === '미승인',
       label: on ? (EVENT_STATUS_LABEL[st] || st) : '' };
   }
@@ -1856,16 +1912,16 @@
     a.eventVotes.forEach(function (x) { if (x.id === approverId) hit = x; });
     if (hit) { hit.vote = v; hit.at = nowStamp(); }
     else a.eventVotes.push({ id: approverId, name: who.name, role: who.role, vote: v, at: nowStamp() });
-    var e = eventStateOf(a), decided = '';
-    if (e.yes >= EVENT_QUORUM) decided = '승인';
-    else if (e.no + e.abs >= EVENT_QUORUM) decided = '미승인';
-    else if (e.cast >= EVENT_VOTERS) decided = '미승인';
+    var e = eventStateOf(a), decided = '', votersN = eventVotersCount(), quorumN = eventQuorumCount();
+    if (e.yes >= quorumN) decided = '승인';
+    else if (e.no + e.abs >= quorumN) decided = '미승인';
+    else if (e.cast >= votersN) decided = '미승인';
     if (decided) { decideEvent(a, decided); }
     else {
       audit('행사심사', a.id + ' ' + (a.eventName || '행사 우선접수') + ' — ' + who.name + ' ' + v +
-        ' (찬성 ' + e.yes + ' · 반려 ' + e.no + ' · 기권 ' + e.abs + ' · ' + e.cast + '/' + EVENT_VOTERS + ')');
+        ' (찬성 ' + e.yes + ' · 반려 ' + e.no + ' · 기권 ' + e.abs + ' · ' + e.cast + '/' + votersN + ')');
       save();
-      toast('행사 심사 투표 — ' + who.name + ' ' + v + ' · 찬성 ' + e.yes + '/' + EVENT_QUORUM + ' 필요');
+      toast('행사 심사 투표 — ' + who.name + ' ' + v + ' · 찬성 ' + e.yes + '/' + quorumN + ' 필요');
     }
     renderAdmin(); renderMypage();
     return eventStateOf(a);
@@ -2146,7 +2202,7 @@
   function renderEventApprovers() {
     if (!has('eventApproverTable')) return;
     var list = eventApprovers();
-    if ($('#eventApproverInfo')) $('#eventApproverInfo').textContent = list.length + '명 등록 · ' + EVENT_QUORUM + '명 이상 찬성 시 확정';
+    if ($('#eventApproverInfo')) $('#eventApproverInfo').textContent = list.length + '명 등록 · ' + eventQuorumCount() + '명 이상 찬성 시 확정';
     var roleOpts = ['지부장', '수석부지부장', '사무국장', '사무실무원', '현장실무원', '감사'];
     $('#eventApproverTable').innerHTML = '<table><thead><tr>' +
       '<th>순번</th><th>성명</th><th>직책</th><th>소속</th><th>변경</th></tr></thead><tbody>' +
@@ -4318,7 +4374,7 @@
       var eids = {};
       db.apps.forEach(function (a) { eids[a.id] = 1; });
       eventAppsSeed().forEach(function (a) { if (!eids[a.id]) db.apps.push(a); });
-      if (!Array.isArray(db.eventApprovers) || db.eventApprovers.length !== EVENT_VOTERS) db.eventApprovers = seedEventApprovers();
+      if (!Array.isArray(db.eventApprovers) || !db.eventApprovers.length) db.eventApprovers = seedEventApprovers();
       db.seedVersion = 4;
       save();
     }
@@ -9062,7 +9118,7 @@
      · 시연용 간편 로그인 프리셋 3개 (원클릭) + 아이디·비밀번호 로그인 + 간편 회원가입
      · 로그인하면 1단계 입력칸(구분·업체명·대표자·연락처·사업자번호·이메일·옥외광고업 등록번호)이 자동 작성됩니다.
      · 로그아웃하면 자동 작성한 값이 지워지고, 비회원 직접 입력도 그대로 쓸 수 있습니다. */
-  var TYPE_LABEL = { direct: '일반업체', agency: '옥외광고대행사' };
+  var TYPE_LABEL = { direct: '일반업체', agency: '옥외광고대행사', staff: '직원' };
   function memberList() { if (!db.members) db.members = []; return db.members; }
   function agencyAppCount(memberId) {
     if (!memberId) return 0;
@@ -11208,6 +11264,8 @@
     renderDupSuspects();
     renderAdminRoleBar();
     renderOfficerPanel();
+    renderRoleQuotaPanel();
+    renderMemberAppointPanel();
     renderPay(paying);
     applyRolePanels();
     renderDeliver();
@@ -13643,9 +13701,44 @@
     return on;
   }
 
-  /* ── 총괄관리자 권한 매트릭스 (2026-11-23 김재봉 님 지시) ─────────────────────
-     9직책 × 전 관리자 페이지 — 권한부여/권한해제가 서브탭 노출·페이지 접근과 1:1 연동.
-     · 총괄(super)만 전체 허용 · admin-roles는 총괄 전용, 지부장도 매트릭스로 부여/해제 */
+  /* ── 총괄관리자 권한 매트릭스 + 권한자 수량 변경 + 회원사·직원 임명/임명권자/최고권한 ── */
+  var ROLE_QUOTA_GROUPS = [
+    { base: 'chief',  label: '지부장',     def: 1, min: 0, max: 5,  officerRole: 'chief' },
+    { base: 'senior', label: '수석부지부장', def: 1, min: 0, max: 5,  officerRole: 'senior' },
+    { base: 'office', label: '사무국장',   def: 1, min: 0, max: 5,  officerRole: 'office' },
+    { base: 'staff',  label: '사무실무원', def: 2, min: 1, max: 10, officerRole: 'staff' },
+    { base: 'field',  label: '현장실무원', def: 2, min: 1, max: 10, officerRole: 'field' },
+    { base: 'audit',  label: '감사',       def: 2, min: 1, max: 10, officerRole: 'audit' }
+  ];
+  function roleQuotas() {
+    var out = {}, src = (db && db.roleQuotas && typeof db.roleQuotas === 'object') ? db.roleQuotas : {};
+    ROLE_QUOTA_GROUPS.forEach(function (g) {
+      var v = src[g.base];
+      var n = (v === undefined || v === null || v === '') ? g.def : Number(v);
+      if (!isFinite(n)) n = g.def;
+      out[g.base] = Math.max(g.min, Math.min(g.max, Math.round(n)));
+    });
+    return out;
+  }
+  function permRoles() {
+    var q = roleQuotas(), list = [];
+    ROLE_QUOTA_GROUPS.forEach(function (g) {
+      var cnt = q[g.base] || 0;
+      for (var i = 1; i <= cnt; i++) {
+        var k, lbl, offRole = g.officerRole;
+        if (g.base === 'chief' || g.base === 'senior' || g.base === 'office') {
+          k = (i === 1) ? g.base : (g.base + i);
+          lbl = (cnt === 1) ? g.label : (g.label + i);
+        } else {
+          k = g.base + i;
+          lbl = g.label + i;
+          if (g.base === 'audit') offRole = (i <= 2) ? ('audit' + i) : 'audit1';
+        }
+        list.push({ k: k, label: lbl, base: g.base, officerRole: offRole });
+      }
+    });
+    return list;
+  }
   var PERM_ROLES = [
     { k: 'chief', label: '지부장' }, { k: 'senior', label: '수석부지부장' }, { k: 'office', label: '사무국장' },
     { k: 'staff1', label: '사무실무원1' }, { k: 'staff2', label: '사무실무원2' },
@@ -13717,8 +13810,24 @@
     if (r === 'field') return 'field1';
     return r;
   }
-  /* 최고권한 = **총괄관리자(super) 한 명만** — 지부장은 현수막 접수·결재를 하는 일반 직책 (2026-11-23 김재봉 님 지시) */
-  function isTotalManager() { return currentAccessRole() === 'super'; }
+  /* 최고권한 = **총괄관리자(super)** 또는 회원/직책자에 최고권한(`isSuper`) 부여된 계정 */
+  function isTotalManager() {
+    if (currentAccessRole() === 'super') return true;
+    var m = currentMember();
+    if (m && m.isSuper) return true;
+    var off = accessOfficer();
+    if (off && off.isSuper) return true;
+    return false;
+  }
+  /* 임명권자 = 최고권한자 또는 임명권자(`canAppoint`)로 지정된 회원/직책자 */
+  function canAppointNow() {
+    if (isTotalManager()) return true;
+    var m = currentMember();
+    if (m && m.canAppoint) return true;
+    var off = accessOfficer();
+    if (off && off.canAppoint) return true;
+    return false;
+  }
   function permOf(role, key) {
     var t = (db.rolePermissions && db.rolePermissions[role]) || null;
     if (!t || t[key] === undefined) return permDefaultOn(role, key);      /* 기본 — 페이지는 부여, 가산점부여는 직책별 기본값 */
@@ -13736,7 +13845,7 @@
     if (!db.rolePermissions[role]) db.rolePermissions[role] = {};
     db.rolePermissions[role][key] = !!on;
     var rl = '', pl = '';
-    PERM_ROLES.forEach(function (r) { if (r.k === role) rl = r.label; });
+    permRoles().forEach(function (r) { if (r.k === role) rl = r.label; });
     PERM_PAGES.forEach(function (p) { if (p.k === key) pl = p.label; });
     audit('권한', rl + ' — ' + pl + ' ' + (on ? '권한부여' : '권한해제') + ' (' + accessRoleLabel() + ')');
     save();
@@ -13749,11 +13858,13 @@
   function saveRolePermissions() {
     if (!isTotalManager()) { toast('권한 저장은 총괄관리자만 할 수 있습니다.', true); return null; }
     save();
-    audit('권한', '권한 매트릭스 저장 — ' + PERM_ROLES.length + '직책 × ' + PERM_PAGES.length + '행');
+    audit('권한', '권한 매트릭스 저장 — ' + permRoles().length + '직책 × ' + PERM_PAGES.length + '행');
     try { renderPermMatrix(); } catch (e) { }
     try { applySubtabPerms(); } catch (e) { }
     try { renderAdminRoleBar(); } catch (e) { }
     try { renderOfficerPanel(); } catch (e) { }
+    try { renderRoleQuotaPanel(); } catch (e) { }
+    try { renderMemberAppointPanel(); } catch (e) { }
     try { applyRolePanels(); } catch (e) { }
     try { applyGrantPermLock(); } catch (e) { }
     try { renderAdmin(); } catch (e) { }
@@ -13781,16 +13892,18 @@
   function renderPermMatrix() {
     var box = $('#permMatrix');
     if (!box) return;
+    var roles = permRoles();
+    if ($('#permRoleCountLabel')) $('#permRoleCountLabel').textContent = String(roles.length);
     if (!isTotalManager()) {
-      box.innerHTML = '<div class="callout danger" id="permMatrixLock"><div><b>🔒 총괄관리자 전용 페이지입니다.</b><br>권한 매트릭스는 총괄관리자만 열람·변경할 수 있습니다. 현재 접속 권한: <b>' + esc(accessRoleLabel()) + '</b></div></div>';
+      box.innerHTML = '<div class="callout danger" id="permMatrixLock"><div><b>🔒 총괄관리자 전용 영역입니다.</b><br>권한 매트릭스는 최고권한(총괄관리자)만 열람·변경할 수 있습니다. 현재 접속 권한: <b>' + esc(accessRoleLabel()) + '</b></div></div>';
       return;
     }
-    var head = '<tr><th style="text-align:left">업무 · 메뉴</th>' + PERM_ROLES.map(function (r) {
+    var head = '<tr><th style="text-align:left">업무 · 메뉴</th>' + roles.map(function (r) {
       return '<th style="text-align:center;white-space:nowrap">' + esc(r.label) + '</th>';
     }).join('') + '</tr>';
     var body = PERM_PAGES.map(function (p) {
       return '<tr><td style="text-align:left"><b>' + esc(p.label) + '</b><div class="sm">' + esc(p.page) + '.html</div></td>' +
-        PERM_ROLES.map(function (r) {
+        roles.map(function (r) {
           var on = permOf(r.k, p.k);
           return '<td style="text-align:center"><button type="button" class="perm-cell' + (on ? ' on' : '') + '"' +
             ' data-permrole="' + r.k + '" data-permkey="' + p.k + '">' +
@@ -13805,13 +13918,306 @@
       '<div class="hint-txt" style="margin-top:8px">셀을 누르면 즉시 <b>권한부여 ↔ 권한해제</b>가 바뀌고, 그 직책으로 접속했을 때 <b>협회관리자 서브탭 노출·페이지 접근</b>이 바로 따라 바뀝니다. <b>가산점부여</b> 행은 시한임박·회원사 가산점 부여/수정 권한입니다. 변경은 감사 로그에 기록됩니다.</div>';
     try { applyGrantPermLock(); } catch (e) { }
   }
+
+  /* ── 권한자 수량(정원) 설정 · 임의회원사/직원 임명 · 임명권자 · 최고권한 ── */
+  function appointedCountByPermKey(permKey) {
+    var n = 0;
+    officerList().forEach(function (o) {
+      if (o.status !== 'approved') return;
+      var pk = o.permRole || (o.role === 'staff' ? 'staff1' : (o.role === 'field' ? 'field1' : o.role));
+      if (pk === permKey) n += 1;
+    });
+    return n;
+  }
+  function appointedCountByBase(base) {
+    var n = 0;
+    permRoles().forEach(function (r) { if (r.base === base) n += appointedCountByPermKey(r.k); });
+    return n;
+  }
+  function renderRoleQuotaPanel() {
+    var box = $('#roleQuotaBox');
+    if (!box) return;
+    var q = roleQuotas();
+    var evCnt = eventVotersCount(), evQuorum = eventQuorumCount();
+    var canEdit = isTotalManager();
+    var totalSeats = 0;
+    ROLE_QUOTA_GROUPS.forEach(function (g) { totalSeats += (q[g.base] || 0); });
+    if ($('#roleQuotaInfo')) {
+      $('#roleQuotaInfo').textContent = '직책 정원 합계 ' + totalSeats + '명 · 행사승인권한자 ' + evCnt + '명 (과반 ' + evQuorum + '명)';
+    }
+    var rows = ROLE_QUOTA_GROUPS.map(function (g) {
+      var cur = q[g.base] || 0;
+      var filled = appointedCountByBase(g.base);
+      return '<tr>' +
+        '<td><b>' + esc(g.label) + '</b></td>' +
+        '<td class="sm">현재 임명 <b>' + filled + '</b> / 정원 <b>' + cur + '명</b></td>' +
+        '<td><input class="input sm" type="number" id="rq_' + g.base + '" min="' + g.min + '" max="' + g.max + '" value="' + cur + '"' + (canEdit ? '' : ' disabled') + ' style="width:78px;text-align:center"> 명</td>' +
+        '<td class="sm">기본 ' + g.def + '명 (' + g.min + '~' + g.max + '명)</td>' +
+        '</tr>';
+    }).join('');
+    rows += '<tr style="background:#f8faff">' +
+      '<td><b>🎪 행사승인권한자</b></td>' +
+      '<td class="sm">등록 <b>' + eventApprovers().length + '명</b> · 과반 <b>' + evQuorum + '명</b></td>' +
+      '<td><input class="input sm" type="number" id="rq_eventVoters" min="1" max="15" value="' + evCnt + '"' + (canEdit ? '' : ' disabled') + ' style="width:78px;text-align:center"> 명</td>' +
+      '<td class="sm">기본 5명 (1~15명 · 홀수 권장)</td>' +
+      '</tr>';
+    box.innerHTML = '<div class="table-wrap"><table><thead><tr><th>권한 구분</th><th>현재 인원 / 정원</th><th>수량 변경</th><th>기준</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<div class="perm-save-row" style="margin-top:10px">' +
+      '<button class="btn primary" id="btnRoleQuotaSave" type="button"' + (canEdit ? '' : ' disabled') + '>💾 권한자 수량 저장</button>' +
+      '<button class="btn ghost" id="btnRoleQuotaReset" type="button"' + (canEdit ? '' : ' disabled') + '>↺ 기본 수량 복원</button>' +
+      '<span class="sm">' + (canEdit ? '수량을 바꾸고 저장하면 매트릭스 열·임명 드롭다운·행사 심사 기준이 즉시 바뀝니다.' : '🔒 최고권한(총괄관리자)만 수량을 변경할 수 있습니다.') + '</span>' +
+      '</div>';
+  }
+  function saveRoleQuotas() {
+    if (!isTotalManager()) { toast('권한자 수량 변경은 최고권한(총괄관리자)만 가능합니다.', true); return null; }
+    if (!db.roleQuotas || typeof db.roleQuotas !== 'object') db.roleQuotas = {};
+    var summary = [];
+    ROLE_QUOTA_GROUPS.forEach(function (g) {
+      var el = $('#rq_' + g.base);
+      var v = el ? Number(el.value) : g.def;
+      if (!isFinite(v)) v = g.def;
+      v = Math.max(g.min, Math.min(g.max, Math.round(v)));
+      db.roleQuotas[g.base] = v;
+      summary.push(g.label + ' ' + v + '명');
+    });
+    var evEl = $('#rq_eventVoters');
+    var evN = evEl ? Number(evEl.value) : 5;
+    if (!isFinite(evN)) evN = 5;
+    evN = Math.max(1, Math.min(15, Math.round(evN)));
+    db.eventVoterCount = evN;
+    eventApprovers();
+    audit('권한', '권한자 수량 변경 — ' + summary.join(', ') + ', 행사승인권한자 ' + evN + '명');
+    save();
+    renderRoleQuotaPanel();
+    renderPermMatrix();
+    renderMemberAppointPanel();
+    renderEventApprovers();
+    renderEventPanel();
+    toast('권한자 수량을 저장했습니다 — 매트릭스 ' + permRoles().length + '직책 · 행사권한자 ' + evN + '명');
+    return true;
+  }
+  function resetRoleQuotas() {
+    if (!isTotalManager()) { toast('권한자 수량 복원은 최고권한(총괄관리자)만 가능합니다.', true); return null; }
+    db.roleQuotas = {};
+    db.eventVoterCount = 5;
+    eventApprovers();
+    audit('권한', '권한자 수량 기본값 복원 (9직책 · 행사승인권한자 5명)');
+    save();
+    renderRoleQuotaPanel();
+    renderPermMatrix();
+    renderMemberAppointPanel();
+    renderEventApprovers();
+    renderEventPanel();
+    toast('권한자 수량을 기본값으로 되돌렸습니다.');
+    return true;
+  }
+
+  function memberOfficerRecord(m) {
+    if (!m) return null;
+    var hit = null;
+    officerList().forEach(function (o) {
+      if (hit) return;
+      if (o.memberId && o.memberId === m.id && o.status === 'approved') hit = o;
+    });
+    return hit;
+  }
+  function memberPermRoleOf(m) {
+    var o = memberOfficerRecord(m);
+    if (o) return o.permRole || (o.role === 'staff' ? 'staff1' : (o.role === 'field' ? 'field1' : o.role));
+    if (m && m.admin && m.roleKey) {
+      if (m.roleKey === 'staff') return 'staff1';
+      if (m.roleKey === 'field') return 'field1';
+      return m.roleKey;
+    }
+    return '';
+  }
+  function permRoleLabelOf(permKey) {
+    var lbl = '';
+    permRoles().forEach(function (r) { if (r.k === permKey) lbl = r.label; });
+    return lbl || permKey;
+  }
+  function permRoleToOfficerRole(permKey) {
+    var out = permKey;
+    permRoles().forEach(function (r) { if (r.k === permKey) out = r.officerRole; });
+    return out;
+  }
+  function superMemberCount() {
+    var n = 0;
+    memberList().forEach(function (m) { if (m && m.isSuper) n += 1; });
+    return n;
+  }
+  function appointMemberRole(memberId, permKey) {
+    if (!canAppointNow()) { toast('직책 임명은 총괄관리자 또는 임명권자만 할 수 있습니다.', true); return null; }
+    var m = memberById(memberId);
+    if (!m) return null;
+    if (!permKey) { return unappointMemberRole(memberId); }
+    var roles = permRoles();
+    var target = null;
+    roles.forEach(function (r) { if (r.k === permKey) target = r; });
+    if (!target) { toast('선택한 직책이 현재 권한자 수량 범위에 없습니다.', true); return null; }
+    /* 같은 직책 자리에 이미 다른 사람이 승인되어 있으면 정원 안내 */
+    var occupied = null;
+    officerList().forEach(function (o) {
+      if (o.status === 'approved' && o.memberId !== m.id) {
+        var pk = o.permRole || (o.role === 'staff' ? 'staff1' : (o.role === 'field' ? 'field1' : o.role));
+        if (pk === permKey) occupied = o;
+      }
+    });
+    if (occupied) {
+      toast(target.label + ' 자리에 이미 ' + occupied.name + ' 님이 임명되어 있습니다. 먼저 해제하거나 위에서 수량을 늘려주세요.', true);
+      return null;
+    }
+    var offRole = permRoleToOfficerRole(permKey);
+    var rec = null;
+    officerList().forEach(function (o) { if (!rec && o.memberId === m.id) rec = o; });
+    if (!rec) {
+      rec = { id: nextOfficerId(), role: offRole, permRole: permKey, name: m.owner || m.company,
+        company: m.company || '', memberId: m.id, status: 'approved', at: nowStamp(), by: accessDisplay().label };
+      officerList().push(rec);
+    } else {
+      rec.role = offRole; rec.permRole = permKey; rec.name = m.owner || m.company;
+      rec.company = m.company || ''; rec.status = 'approved'; rec.at = nowStamp(); rec.by = accessDisplay().label;
+    }
+    m.admin = true;
+    m.roleKey = offRole;
+    m.permRole = permKey;
+    m.roleLabel = target.label;
+    audit('권한', '직책 임명 — ' + (m.owner || m.company) + ' (' + m.company + ') → ' + target.label);
+    save();
+    renderMemberAppointPanel(); renderOfficerPanel(); renderRoleQuotaPanel(); renderAdminRoleBar(); applySubtabPerms();
+    toast((m.owner || m.company) + ' 님을 ' + target.label + '(으)로 임명했습니다.');
+    return m;
+  }
+  function unappointMemberRole(memberId) {
+    if (!canAppointNow()) { toast('직책 해제는 총괄관리자 또는 임명권자만 할 수 있습니다.', true); return null; }
+    var m = memberById(memberId);
+    if (!m) return null;
+    officerList().forEach(function (o) {
+      if (o.memberId === m.id && o.status === 'approved') {
+        o.status = 'revoked'; o.at = nowStamp(); o.by = accessDisplay().label;
+      }
+    });
+    var prev = m.roleLabel || '직책';
+    m.admin = false; m.roleKey = ''; m.permRole = ''; m.roleLabel = '';
+    audit('권한', '직책 해제 — ' + (m.owner || m.company) + ' (' + prev + ' 해제)');
+    save();
+    renderMemberAppointPanel(); renderOfficerPanel(); renderRoleQuotaPanel(); renderAdminRoleBar(); applySubtabPerms();
+    toast((m.owner || m.company) + ' 님의 직책을 해제했습니다.');
+    return m;
+  }
+  function toggleMemberAppointer(memberId) {
+    if (!isTotalManager()) { toast('임명권자 지정/해제는 최고권한(총괄관리자)만 할 수 있습니다.', true); return null; }
+    var m = memberById(memberId);
+    if (!m) return null;
+    m.canAppoint = !m.canAppoint;
+    officerList().forEach(function (o) { if (o.memberId === m.id) o.canAppoint = !!m.canAppoint; });
+    audit('권한', '임명권자 ' + (m.canAppoint ? '지정' : '해제') + ' — ' + (m.owner || m.company) + ' (' + m.company + ')');
+    save();
+    renderMemberAppointPanel(); renderAdminRoleBar();
+    toast((m.owner || m.company) + ' 님을 임명권자에서 ' + (m.canAppoint ? '지정' : '해제') + '했습니다.');
+    return m;
+  }
+  function toggleMemberSuper(memberId) {
+    if (!isTotalManager()) { toast('최고권한 부여/해제는 최고권한(총괄관리자)만 할 수 있습니다.', true); return null; }
+    var m = memberById(memberId);
+    if (!m) return null;
+    if (m.isSuper && currentAccessRole() !== 'super' && superMemberCount() <= 1) {
+      toast('최소 1명의 최고권한은 유지해야 합니다.', true);
+      return null;
+    }
+    m.isSuper = !m.isSuper;
+    if (m.isSuper) m.canAppoint = true;
+    officerList().forEach(function (o) { if (o.memberId === m.id) { o.isSuper = !!m.isSuper; if (m.isSuper) o.canAppoint = true; } });
+    audit('권한', '최고권한 ' + (m.isSuper ? '부여' : '해제') + ' — ' + (m.owner || m.company) + ' (' + m.company + ')');
+    save();
+    renderMemberAppointPanel(); renderAdminRoleBar(); applySubtabPerms();
+    toast((m.owner || m.company) + ' 님에게 최고권한을 ' + (m.isSuper ? '부여' : '해제') + '했습니다.');
+    return m;
+  }
+  function renderMemberAppointPanel() {
+    var box = $('#memberAppointBox');
+    if (!box) return;
+    var all = memberList();
+    var q = String(ui.maSearch || '').trim().toLowerCase();
+    var flt = ui.maFilter || 'all';
+    var roles = permRoles();
+    var canApp = canAppointNow(), canSuper = isTotalManager();
+    var nComp = 0, nStaff = 0, nAppointed = 0, nAppointer = 0, nSuper = 0;
+    all.forEach(function (m) {
+      if (m.type === 'staff' || m.isStaff) nStaff += 1; else nComp += 1;
+      if (memberPermRoleOf(m)) nAppointed += 1;
+      if (m.canAppoint) nAppointer += 1;
+      if (m.isSuper) nSuper += 1;
+    });
+    if ($('#memberAppointInfo')) {
+      $('#memberAppointInfo').textContent = '회원사 ' + nComp + '곳 · 직원 ' + nStaff + '명 · 임명 ' + nAppointed + '명 · 임명권자 ' + nAppointer + '명 · 최고권한 ' + nSuper + '명';
+    }
+    var filtered = all.filter(function (m) {
+      var pr = memberPermRoleOf(m);
+      var isSt = (m.type === 'staff' || m.isStaff);
+      if (flt === 'company' && isSt) return false;
+      if (flt === 'staff' && !isSt) return false;
+      if (flt === 'appointed' && !pr) return false;
+      if (flt === 'appointer' && !m.canAppoint) return false;
+      if (flt === 'super' && !m.isSuper) return false;
+      if (q) {
+        var hay = [m.company, m.owner, m.loginId, m.id, pr ? permRoleLabelOf(pr) : ''].join(' ').toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+    var tabs = [
+      ['all', '전체 (' + all.length + ')'],
+      ['company', '회원사 (' + nComp + ')'],
+      ['staff', '직원 (' + nStaff + ')'],
+      ['appointed', '임명됨 (' + nAppointed + ')'],
+      ['appointer', '임명권자 (' + nAppointer + ')'],
+      ['super', '최고권한 (' + nSuper + ')']
+    ];
+    var bar = '<div class="ma-toolbar">' +
+      '<div class="chips">' + tabs.map(function (t) {
+        return '<button type="button" class="chip' + (flt === t[0] ? ' on' : '') + '" data-ma-filter="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div>' +
+      '<input class="input sm ko-ime" id="maSearch" lang="ko" value="' + esc(ui.maSearch || '') + '" placeholder="업체명 · 성명 · 아이디 검색" style="max-width:240px">' +
+      '</div>';
+    var rows = filtered.map(function (m) {
+      var pr = memberPermRoleOf(m);
+      var isSt = (m.type === 'staff' || m.isStaff);
+      var typeBadge = isSt
+        ? '<span class="badge b-blue"><i></i>직원</span>'
+        : (m.type === 'agency' ? '<span class="badge b-purple"><i></i>대행사</span>' : '<span class="badge b-gray"><i></i>일반업체</span>');
+      var roleOpts = '<option value="">미임명</option>' + roles.map(function (r) {
+        return '<option value="' + esc(r.k) + '"' + (r.k === pr ? ' selected' : '') + '>' + esc(r.label) + '</option>';
+      }).join('');
+      return '<tr>' +
+        '<td>' + typeBadge + '</td>' +
+        '<td><b>' + esc(m.owner || m.company) + '</b> <span class="sm">(' + esc(m.loginId || m.id) + ')</span>' +
+          '<div class="sm">' + esc(m.company) + ' · ' + esc(m.phone || '') + '</div></td>' +
+        '<td><div class="ma-role-cell">' +
+          '<select class="input sm" id="maRoleSel_' + esc(m.id) + '"' + (canApp ? '' : ' disabled') + '>' + roleOpts + '</select>' +
+          '<button class="btn sm primary" type="button" data-ma-appoint="' + esc(m.id) + '"' + (canApp ? '' : ' disabled') + '>임명</button>' +
+          (pr ? '<button class="btn sm ghost" type="button" data-ma-unappoint="' + esc(m.id) + '"' + (canApp ? '' : ' disabled') + '>해제</button>' : '') +
+        '</div></td>' +
+        '<td style="text-align:center"><button type="button" class="btn sm ' + (m.canAppoint ? 'ok' : 'ghost') + '" data-ma-appointer="' + esc(m.id) + '"' + (canSuper ? '' : ' disabled') + '>' +
+          (m.canAppoint ? '✓ 임명권자' : '지정') + '</button></td>' +
+        '<td style="text-align:center"><button type="button" class="btn sm ' + (m.isSuper ? 'primary' : 'ghost') + '" data-ma-super="' + esc(m.id) + '"' + (canSuper ? '' : ' disabled') + '>' +
+          (m.isSuper ? '★ 최고권한' : '부여') + '</button></td>' +
+        '</tr>';
+    }).join('');
+    if (!rows) rows = '<tr><td colspan="5" class="sm" style="text-align:center;padding:18px">조건에 맞는 회원사·직원이 없습니다.</td></tr>';
+    box.innerHTML = bar +
+      '<div class="table-wrap ma-table-wrap"><table><thead><tr>' +
+      '<th>구분</th><th>성명 · 업체 · 아이디</th><th>직책 임명 / 해제</th><th style="text-align:center">임명권자</th><th style="text-align:center">최고권한</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
   /* 서브탭 — 권한 없는 탭은 아예 렌더하지 않는다 */
   function applySubtabPerms() {
     var total = isTotalManager();
+    var appointer = canAppointNow();
     $$('#adminSub a[data-perm]').forEach(function (a) {
       var key = a.getAttribute('data-perm') || '';
       var show = total ? true : canSeePage(key);
-      if (key === 'roles') show = total;
+      if (key === 'roles') show = total || appointer;
       a.classList.toggle('hidden', !show);
       a.setAttribute('aria-hidden', show ? 'false' : 'true');
       if (!show && a.classList.contains('on')) a.classList.remove('on');
@@ -13823,7 +14229,7 @@
     var key = '';
     PERM_PAGES.forEach(function (p) { if (p.page === PAGE) key = p.k; });
     var denied = false;
-    if (PAGE === 'admin-roles') denied = !isTotalManager();
+    if (PAGE === 'admin-roles') denied = !(isTotalManager() || canAppointNow());
     else if (key) denied = !canSeePage(key);
     if (!denied) {
       var lk0 = $('#permLockBox'); if (lk0) lk0.remove();
@@ -14285,7 +14691,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,[data-ma-filter],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-ma-super],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -14591,6 +14997,22 @@
       if (added && ofCoEl) ofCoEl.value = '';
       return;
     }
+    if (el.id === 'btnRoleQuotaSave') { saveRoleQuotas(); return; }
+    if (el.id === 'btnRoleQuotaReset') { resetRoleQuotas(); return; }
+    if (el.hasAttribute('data-ma-filter')) {
+      ui.maFilter = el.getAttribute('data-ma-filter') || 'all';
+      renderMemberAppointPanel();
+      return;
+    }
+    if (el.hasAttribute('data-ma-appoint')) {
+      var maId = el.getAttribute('data-ma-appoint');
+      var maSel = document.getElementById('maRoleSel_' + maId);
+      appointMemberRole(maId, maSel ? maSel.value : '');
+      return;
+    }
+    if (el.hasAttribute('data-ma-unappoint')) { unappointMemberRole(el.getAttribute('data-ma-unappoint')); return; }
+    if (el.hasAttribute('data-ma-appointer')) { toggleMemberAppointer(el.getAttribute('data-ma-appointer')); return; }
+    if (el.hasAttribute('data-ma-super')) { toggleMemberSuper(el.getAttribute('data-ma-super')); return; }
     if (el.hasAttribute('data-officerapprove')) {
       var ofId = el.getAttribute('data-officerapprove');
       var selEl = document.getElementById('ofRoleSel_' + ofId);
@@ -14990,6 +15412,14 @@
     /* 입금 확인 실시간 검색 (2026-11-23 김재봉 님 지시) */
     onEl('#paySearch', 'input', function () { ui.payq = this.value; renderAdmin(); });
     /* 마이페이지 실시간 검색 — 위임 처리(목록을 다시 그려도 입력이 이어진다) */
+    document.addEventListener('input', function (e) {
+      var t = e.target;
+      if (!t || t.id !== 'maSearch') return;
+      ui.maSearch = t.value;
+      renderMemberAppointPanel();
+      var el = document.getElementById('maSearch');
+      if (el) { try { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } catch (err) { } }
+    });
     document.addEventListener('input', function (e) {
       var t = e.target;
       if (!t || t.id !== 'mpSearch') return;
@@ -16100,7 +16530,7 @@
     eventSetRole: function () { return true; },
     pendingApprovals: function () { return pendingApprovalsFor(); },
     showApprovalPopup: function () { ui.approvalPopupShownFor = ''; return maybeShowApprovalPopup(); },
-    permRoles: function () { return PERM_ROLES.map(function (r) { return r.k; }); },
+    permRoles: function () { return permRoles().map(function (r) { return r.k; }); },
     permPages: function () { return PERM_PAGES.map(function (p) { return p.k + ':' + p.page; }); },
     permOf: function (role, key) { return permOf(role, key); },
     setPerm: function (role, key, on) { return setPerm(role, key, on); },
