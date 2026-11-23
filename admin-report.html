@@ -98,7 +98,9 @@
   <a class="subtab" href="admin-docs.html" data-adminsub="docs">📋 작업지시서</a>
   <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
   <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
-  <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
+
+  <a class="subtab" href="admin-roles.html" data-adminsub="roles">🛡️ 관리자 권한</a>
+  <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 가산점</a>
   <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
 <div class="view-head">
@@ -131,6 +133,12 @@
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
         <div>시청에 제출할 <b>현수막 접수현황 표지</b>입니다. 업체별 건수·매수·수수료·세액·인지대·금액을 집계하고, <b>공문 건은 인지대 -</b>(면제·살구색)로 따로 모읍니다. <b>A4 세로 1장</b>으로 인쇄합니다.</div>
+      </div>
+      <div class="report-date-row">
+        <label for="reportDate"><b>표지 날짜</b></label>
+        <input class="input sm" type="date" id="reportDate" aria-label="신고 표지 기준 날짜">
+        <span class="chips" id="reportWeekChips" aria-label="게첨 주 빠른 선택"></span>
+        <span class="hint-txt" style="margin:0">고른 날짜가 속한 게첨 주의 배정 건으로 제목·집계가 즉시 다시 계산됩니다.</span>
       </div>
       <div class="off-actions" style="margin-bottom:10px">
         <button class="btn primary" id="btnReportShow" type="button">미리보기</button>

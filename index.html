@@ -136,8 +136,16 @@
         <input type="search" id="statusSearch" class="ko-ime" lang="ko" placeholder="게시대 · 읍면동 검색" aria-label="게시대 검색">
       </div>
     </div>
-    <div class="pl-sum" id="statusListInfo"></div>
-    <div class="plrows" id="placementGrid"></div>
+    <div class="pl-foldbar">
+      <button class="btn primary" id="btnPlaceToggle" type="button" aria-expanded="false" aria-controls="placementFold">
+        📋 게시대 현황 펼쳐보기 (<b id="btnPlaceCount">77</b>개소)
+      </button>
+      <span class="sm" id="placeFoldHint">필요할 때만 펼쳐 보세요 — 접수는 위 <b>접수하러 가기</b>에서 바로 할 수 있습니다.</span>
+    </div>
+    <div class="pl-fold" id="placementFold" hidden>
+      <div class="pl-sum" id="statusListInfo"></div>
+      <div class="plrows" id="placementGrid"></div>
+    </div>
   
 </section>
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>

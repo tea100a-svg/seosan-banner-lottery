@@ -13,7 +13,7 @@
     guide: 'guide.html', mypage: 'mypage.html', admin: 'admin-draw.html' };
   var ADMIN_PAGES = ['admin-draw', 'admin-review', 'admin-event', 'admin-official',
     'admin-pay', 'admin-deliver', 'admin-report', 'admin-desig', 'admin-photos', 'admin-docs',
-    'admin-board', 'admin-course', 'admin-members', 'admin-system'];
+    'admin-board', 'admin-course', 'admin-roles', 'admin-members', 'admin-system'];
   function isAdminPage() { return ADMIN_PAGES.indexOf(PAGE) >= 0; }
   function has(id) { return !!document.getElementById(id); }
   function onEl(sel, ev, fn, opt) { var el = $(sel); if (el && el.addEventListener) el.addEventListener(ev, fn, opt); return el; }
@@ -1154,6 +1154,32 @@
     { id: 'M-1003', loginId: 'hanwoo', pw: '1234', type: 'direct',
       company: '서산한우직판장', owner: '박영호', phone: phoneOf(1),
       biz: '314-82-15530', email: 'hanwoo@seosan.kr', oade: '제 2019-4530186-08-5-00077 호' },
+    /* ── 협회 관리자 직책자 7명 (2026-11-23 김재봉 님 지시 — 샘플회원에 관리자 추가)
+       · OFFICERS(시연 임원 명단)와 같은 인물·업체. 로그인하면 관리자 화면 권한이 그대로 적용됩니다.
+       · roleKey: 지부장=chief · 수석부지부장=senior · 사무국장=office · 사무실무원=staff
+                   현장실무원=field · 감사1=audit1 · 감사2=audit2 / grantCap = 가산점 부여 한도(%)
+       · eventApprover: 행사심사위원(5명) 여부 */
+    { id: 'M-2001', loginId: 'chief', pw: '1234', type: 'agency', admin: true, roleKey: 'chief', roleLabel: '지부장',
+      grantCap: 5, eventApprover: true, company: '서산광고기획(가상)', owner: '김서산', phone: '010-3000-0001',
+      biz: '301-11-10001', email: 'chief@seosan.kr', oade: '제 2016-4530186-08-5-00101 호' },
+    { id: 'M-2002', loginId: 'senior', pw: '1234', type: 'agency', admin: true, roleKey: 'senior', roleLabel: '수석부지부장',
+      grantCap: 3, eventApprover: true, company: '해미애드(가상)', owner: '박해미', phone: '010-3000-0002',
+      biz: '301-12-10002', email: 'senior@seosan.kr', oade: '제 2017-4530186-08-5-00102 호' },
+    { id: 'M-2003', loginId: 'office', pw: '1234', type: 'agency', admin: true, roleKey: 'office', roleLabel: '사무국장',
+      grantCap: 0, eventApprover: true, company: '부춘인쇄(가상)', owner: '이부춘', phone: '010-3000-0003',
+      biz: '301-13-10003', email: 'office@seosan.kr', oade: '제 2018-4530186-08-5-00103 호' },
+    { id: 'M-2004', loginId: 'staff', pw: '1234', type: 'agency', admin: true, roleKey: 'staff', roleLabel: '사무실무원',
+      grantCap: 2, eventApprover: true, company: '석남디자인(가상)', owner: '한은지', phone: '010-3000-0004',
+      biz: '301-14-10004', email: 'staff@seosan.kr', oade: '제 2019-4530186-08-5-00104 호' },
+    { id: 'M-2005', loginId: 'field', pw: '1234', type: 'agency', admin: true, roleKey: 'field', roleLabel: '현장실무원',
+      grantCap: 3, eventApprover: false, company: '수석현수막(가상)', owner: '최수석', phone: '010-3000-0005',
+      biz: '301-15-10005', email: 'field@seosan.kr', oade: '제 2020-4530186-08-5-00105 호' },
+    { id: 'M-2006', loginId: 'audit1', pw: '1234', type: 'agency', admin: true, roleKey: 'audit1', roleLabel: '감사',
+      grantCap: 0, eventApprover: false, company: '대산애드(가상)', owner: '홍대산', phone: '010-3000-0006',
+      biz: '301-16-10006', email: 'audit1@seosan.kr', oade: '제 2021-4530186-08-5-00106 호' },
+    { id: 'M-2007', loginId: 'audit2', pw: '1234', type: 'agency', admin: true, roleKey: 'audit2', roleLabel: '감사',
+      grantCap: 0, eventApprover: false, company: '팔봉기획(가상)', owner: '윤팔봉', phone: '010-3000-0007',
+      biz: '301-17-10007', email: 'audit2@seosan.kr', oade: '제 2022-4530186-08-5-00107 호' },
     /* ── 시연용 광고대행사 10곳 (2026-11-22 김재봉 님 지시) ─────────────────
        · 재봉기획 포함 10곳. 위 3곳(재봉기획·서산애드컴·해미미디어랩)은 5건 이상
          다건 대리접수하는 '대형 광고대행사'로 시연 데이터를 구성했습니다.
@@ -1523,7 +1549,7 @@
           '<td class="sm">' + esc(u.date) + '<span class="sm">' + (u.days === 0 ? '게첨 시작일' : '게첨 ' + u.days + '일 전') + '</span></td>' +
           '<td>' + (u.within ? '<span class="badge b-green"><i></i>차차주 이내</span>' : '<span class="badge b-gray"><i></i>차차주 이후</span>') + '</td>' +
           '<td style="max-width:300px">' + (u.within
-            ? '<div class="grant-chips">' + grantChipsHTML(gs) + '</div><div style="margin-top:5px">' + grantSumHTML(gs) +
+            ? '<div>' + grantSumChipHTML(gs, '부여 내역 없음') + '</div><div style="margin-top:5px">' + grantSumHTML(gs) +
               ' <span class="sm">가중치 ' + drawWeightOf(a).toFixed(2) + '배</span></div>'
             : '<span class="sm">— (대상 아님)</span>') + '</td>' +
           '<td>' + (u.within
@@ -1597,7 +1623,7 @@
         return '<tr><td><span class="co">' + esc(m.company) + '</span><span class="sm">' + esc(m.loginId || m.id) + '</span></td>' +
           '<td class="sm">' + esc(m.owner || '') + ' · ' + esc(memberTypeLabel(m)) + '</td>' +
           '<td><label class="check" style="margin:0"><input type="checkbox" id="assocOn' + i + '"' + (m.assocMember ? ' checked' : '') + ' aria-label="협회 등록 회원사"> <span>등록</span></label></td>' +
-          '<td style="max-width:290px"><div class="grant-chips">' + (m.assocMember ? grantChipsHTML(gs) : '<span class="sm">미등록</span>') + '</div>' +
+          '<td style="max-width:290px"><div>' + (m.assocMember ? grantSumChipHTML(gs, '부여 내역 없음') : '<span class="sm">미등록</span>') + '</div>' +
             '<div style="margin-top:5px">' + (m.assocMember ? grantSumHTML(gs) + ' <span class="sm">가산 ' + pct + '%</span>' : '<span class="sm">가산 0%</span>') + '</div></td>' +
           '<td>' + (canGrantBonus() && lim ? '<select class="input sm" id="assocRate' + i + '" aria-label="내 회원사 가산점 퍼센트">' + grantOptionsHTML(myPct, Math.max(lim, myPct)) + '</select>'
             : '<span class="sm">' + myPct + '% (권한 없음)</span>') + '</td>' +
@@ -1934,12 +1960,12 @@
   /* 시연·테스트용 임원 명단 — 모두 가공 인물·가상 업체 (김재봉 님 지시: "테스트 임원도 추가") */
   function seedOfficers() {
     return [
-      { id: 'OF-01', role: 'chief', name: '김서산', company: '서산광고기획(가상)', memberId: '', status: 'approved', at: '2026-11-18 09:20', by: '총괄 관리자' },
-      { id: 'OF-02', role: 'senior', name: '박해미', company: '해미애드(가상)', memberId: '', status: 'approved', at: '2026-11-18 09:25', by: '총괄 관리자' },
-      { id: 'OF-03', role: 'office', name: '이부춘', company: '부춘인쇄(가상)', memberId: '', status: 'approved', at: '2026-11-18 10:05', by: '총괄 관리자' },
-      { id: 'OF-04', role: 'staff', name: '한은지', company: '석남디자인(가상)', memberId: '', status: 'approved', at: '2026-11-18 10:10', by: '총괄 관리자' },
-      { id: 'OF-05', role: 'field', name: '최수석', company: '수석현수막(가상)', memberId: '', status: 'approved', at: '2026-11-18 10:20', by: '총괄 관리자' },
-      { id: 'OF-06', role: 'audit1', name: '홍대산', company: '대산애드(가상)', memberId: '', status: 'approved', at: '2026-11-18 11:00', by: '총괄 관리자' },
+      { id: 'OF-01', role: 'chief', name: '김서산', memberId: 'M-2001', company: '서산광고기획(가상)', status: 'approved', at: '2026-11-18 09:20', by: '총괄 관리자' },
+      { id: 'OF-02', role: 'senior', name: '박해미', memberId: 'M-2002', company: '해미애드(가상)', status: 'approved', at: '2026-11-18 09:25', by: '총괄 관리자' },
+      { id: 'OF-03', role: 'office', name: '이부춘', memberId: 'M-2003', company: '부춘인쇄(가상)', status: 'approved', at: '2026-11-18 10:05', by: '총괄 관리자' },
+      { id: 'OF-04', role: 'staff', name: '한은지', memberId: 'M-2004', company: '석남디자인(가상)', status: 'approved', at: '2026-11-18 10:10', by: '총괄 관리자' },
+      { id: 'OF-05', role: 'field', name: '최수석', memberId: 'M-2005', company: '수석현수막(가상)', status: 'approved', at: '2026-11-18 10:20', by: '총괄 관리자' },
+      { id: 'OF-06', role: 'audit1', name: '홍대산', memberId: 'M-2006', company: '대산애드(가상)', status: 'approved', at: '2026-11-18 11:00', by: '총괄 관리자' },
       { id: 'OF-07', role: 'audit2', name: '윤운산', company: '운산기획(가상)', memberId: '', status: 'approved', at: '2026-11-18 11:10', by: '총괄 관리자' },
       /* 승인 대기 테스트 신청자 */
       { id: 'OF-08', role: 'field', name: '한지우', company: '지우광고(가상)', memberId: '', status: 'pending', at: '2026-11-20 16:40', by: '현장 추천' }
@@ -1995,6 +2021,7 @@
     applyOffAccess();
     applyRolePanels();
     renderOfficerPanel();
+    try { renderRolesLock(); } catch (e) { }
     /* 가산점 부여 패널의 '내 몫' 선택지·한도 안내도 새 직책 기준으로 다시 그린다(2026-11-22)
        · 직책별 부여 한도 설정 패널도 권한(최고권한 여부)에 맞춰 다시 그린다(2026-11-23) */
     renderUrgentGrantPanel();
@@ -2141,7 +2168,7 @@
   var ui = { tab: (PAGE === 'status' ? 'status' : (PAGE === 'apply' ? 'apply' : (PAGE === 'first' ? 'first' : (PAGE === 'mypage' || PAGE === 'mypage-detail' ? 'mypage' : (isAdminPage() ? 'admin' : 'guide'))))), day: '', dong: '', q: '', pDay: '', pDong: '', pq: '', step: 1,
     ranks: { 1: [], 2: [], 3: [] }, slots: {}, rank: 1, designatedOnly: false,
     file: null, filePreview: null, licName: '', licData: '', licMime: '', licNo: '', licNoSrc: '', licNoFail: false, suLicNo: '', suLicNoSrc: '', fcLic: null, drawing: false, daySim: null, appType: 'direct', appTypeTouched: false, adminBrokenOnly: false,
-    locSel: '', locDay: '', locq: '', woLow: false, ppPer: 1, applyWarnShown: false, mpSel: '', guestAck: false, guestPromptOpen: false, pendingAdvance: '',
+    locSel: '', locDay: '', locq: '', woLow: false, ppPer: 1, placeFold: false, applyWarnShown: false, mpSel: '', guestAck: false, guestPromptOpen: false, pendingAdvance: '',
     theme: '', pTheme: '', fcTheme: '', woDay: '', woAll: false, offDay: '', offSel: {}, authTab: 'login', fcTimeSim: '', fcMode: 'live', liveKind: '',
     locAddrOpen: false, locAddrRows: {}, coverOk: {}, fcCover: {}, otherOk: {},
     suLicName: '', suLicData: '', suLicMime: '', licFromMember: false,
@@ -4269,6 +4296,19 @@
     return { shown: list.slice(pg * size, (pg + 1) * size), page: pg, size: size, total: list.length };
   }
 
+  /* 게시대 현황 접기/펼치기 — 첫 화면은 접어 두고 버튼으로 펼친다 (2026-11-23) */
+  function applyPlaceFold(open) {
+    if (open !== undefined) ui.placeFold = !!open;
+    var box = $('#placementFold'), b = $('#btnPlaceToggle');
+    if (!box) return;
+    box.hidden = !ui.placeFold;
+    if (b) {
+      b.setAttribute('aria-expanded', ui.placeFold ? 'true' : 'false');
+      b.innerHTML = (ui.placeFold ? '📋 게시대 현황 접기' : '📋 게시대 현황 펼쳐보기') +
+        ' (<b id="btnPlaceCount">' + (db.placements ? db.placements.length : 77) + '</b>개소)';
+    }
+    if ($('#placeFoldHint')) $('#placeFoldHint').classList.toggle('hidden', !!ui.placeFold);
+  }
   function renderStatus() {
     if (!has('statusStats')) return;
     var wk = weekStartOf(ui.statusWeek || ROUND.postStart);
@@ -4349,6 +4389,7 @@
     /* 필터링된 게시대 전체를 페이지 넘김 없이 한 줄로 (77개소 모두) */
     var list = statusVisible();
     ui.statusAll = true;
+    applyPlaceFold();
     $('#placementGrid').innerHTML = list.length
       ? list.map(function (p) { return placementRow(p, { week: wk }); }).join('')
       : '<div class="empty" style="grid-column:1/-1">' + IC.empty + '<div>조건에 맞는 게시대가 없습니다.</div></div>';
@@ -5556,6 +5597,7 @@
     clearErrs();
     applyAutofill(false);
     setStep(1);
+    scrollTopSmooth();   /* 다음 건 접수 — 화면 맨 위로 */
   }
 
   function submitApply() {
@@ -5674,6 +5716,7 @@
         if (yes) yes.addEventListener('click', function () {
           closeModal();
           agencyNextApply();
+          scrollTopSmooth();
           toast('다음 광고주 건을 접수합니다 — 대행사 정보는 그대로 두었습니다.');
         });
       }
@@ -5836,10 +5879,26 @@
      · 제목 ■ YYYY/MM/DD 현수막 접수현황 · 연두색(#92d050) 헤더
      · 일반·행사 확정 건은 업체별 집계(1매 10,700원), 공문 확정 건은 '(공문)'으로 아래쪽에 모으고 인지대 '-'·살구색 음영
      · 표 아래 요약 박스(총건·공문건·인지대대상건 / 총매·공문매·인지대대상매 / 인지대 ₩) + 하단 연두색 합계 행 */
-  function reportWeekOf(w) { return weekStartOf(w || ui.statusWeek || ROUND.postStart); }
+  /* 신고 표지 날짜 — 사용자가 고른 날짜(ui.reportDate)가 있으면 그 날짜·그 주 기준 (2026-11-23 지시) */
+  function reportWeekOf(w) { return weekStartOf(w || ui.reportDate || ui.statusWeek || ROUND.postStart); }
   function reportDateOf(w) {
+    if (!w && ui.reportDate) return String(ui.reportDate).replace(/-/g, '/');
     var wk = reportWeekOf(w), wi = weekInfoOf(wk);
     return String(wi.drawDate || wk).replace(/-/g, '/');
+  }
+  function renderReportDateBox() {
+    var el = $('#reportDate');
+    if (el && !el.value) el.value = String(reportDateOf().replace(/\//g, '-'));
+    var chips = $('#reportWeekChips');
+    if (!chips) return;
+    var cur = reportWeekOf();
+    var out = [];
+    for (var i = -2; i <= 2; i++) {
+      var wk = addDays(weekStartOf(ROUND.postStart), i * 7);
+      var lbl = (i === 0 ? '이번 ' : (i > 0 ? '+' + i + '주 ' : i + '주 ')) + wk.slice(5).replace('-', '.');
+      out.push('<button class="chip' + (wk === cur ? ' active' : '') + '" type="button" data-reportweek="' + wk + '">' + lbl + '</button>');
+    }
+    chips.innerHTML = out.join('');
   }
   function reportRowsOf(w) {
     var wk = reportWeekOf(w);
@@ -5931,6 +5990,7 @@
   }
   function renderReportPanel() {
     if (!has('reportPreview')) return;
+    renderReportDateBox();
     var rows = reportRowsOf(), t = reportSummaryOf(rows);
     if ($('#reportInfo')) $('#reportInfo').textContent = reportDateOf() + ' 기준 · ' + t.count + '건 / ' + t.seats + '매 · 인지대 ₩' + won(t.genSeats * 3000);
     $('#reportPreview').innerHTML = reportCoverHTML();
@@ -7243,11 +7303,12 @@
     openModal({
       title: '접수 완료 — 진행 중 주간 잔여석', sub: app.id + ' · ' + (app.advertiser || ''),
       body: body,
-      foot: '<button class="btn ghost" data-close type="button">닫기</button>' +
+      foot: '<button class="btn ghost" id="btnLiveDone" type="button">닫기 (다음 건 접수)</button>' +
         '<button class="btn" id="btnLiveReceipt" type="button">접수증 보기</button>' +
         '<button class="btn primary" id="btnLiveMypage" type="button">마이페이지에서 보기</button>',
       after: function () {
         onEl('#btnLiveMypage', 'click', function () { closeModal(); goPage('mypage.html'); });
+        onEl('#btnLiveDone', 'click', function () { closeModal(); scrollTopSmooth(); });
         onEl('#btnLiveReceipt', 'click', function () { closeModal(); showReceiptModal(app, false); });
       }
     });
@@ -9123,6 +9184,7 @@
     renderGrantPanel();
     renderUrgentGrantPanel();
     renderPolicyPanel();
+    renderRolesLock();
     renderAdminPlace();
     renderThemeAdmin();
     renderMakerBlock();
@@ -11307,6 +11369,31 @@
              : '한 주 쉬어가기 정책을 껐습니다 — 매주 접수 가능합니다.');
     return !!on;
   }
+  /* 🛡️ 관리자 권한 페이지 — 총괄관리자(지부장·총괄) 전용 */
+  function renderRolesLock() {
+    if (!has('rolesLock') && !has('rolesIntro')) return;
+    var can = canEditPolicy();
+    if ($('#rolesLock')) {
+      $('#rolesLock').classList.toggle('hidden', can);
+      $('#rolesLock').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>' +
+        '<div><b>읽기 전용</b> — 관리자 권한 부여·회수는 <b>지부장·총괄 관리자</b>만 할 수 있습니다. 현재 접속 권한: <b>' + accessRoleLabel() + '</b>. 시연용 직책 전환에서 지부장 또는 총괄 관리자를 선택해 주세요.</div>';
+    }
+    ['#btnOfficerAdd', '#btnBonusCapSave', '#btnBonusCapReset'].forEach(function (sel) {
+      if ($(sel)) $(sel).disabled = !can;
+    });
+    $$('[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-assocsave],[data-urgentgrant]').forEach(function (b) {
+      if (can) b.removeAttribute('disabled'); else b.setAttribute('disabled', 'disabled');
+    });
+  }
+  /* 가산점 표시 — 평소엔 '합계 +N%' 배지만, 마우스 오버/탭하면 부여자별 세부내역 (2026-11-23 지시) */
+  function grantSumChipHTML(list, emptyLabel) {
+    var pct = grantSumPct(list || []);
+    var detail = (list || []).map(function (g) { return g.label + ' ' + g.name + ' +' + g.pct + '%'; }).join(' · ');
+    var title = detail || (emptyLabel || '부여 내역 없음');
+    return '<span class="grant-chip' + (pct ? ' on' : '') + '" tabindex="0" title="' + esc(title) + '" data-granttip="' + esc(title) + '">' +
+      '<b>' + (pct ? '합계 +' + pct + '%' : '0%') + '</b>' +
+      '<span class="gtip">' + esc(title) + '</span></span>';
+  }
   function renderPolicyPanel() {
     var el = $('#policySkipWeek');
     if (!el) return;
@@ -11568,7 +11655,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle]') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle],.grant-chip') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -11589,6 +11676,11 @@
     /* 행사 우선접수 — 5명 권한자 투표·권한자 변경 (2026-11-22) */
     if (el.hasAttribute('data-fccover')) { askFcCover(el.getAttribute('data-fccover')); return; }
     if (el.hasAttribute('data-polapprove')) { polApprove(el.getAttribute('data-polapprove'), el.getAttribute('data-polwho')); return; }
+    if (el.classList && el.classList.contains('grant-chip')) {
+      $$('.grant-chip.open').forEach(function (x) { if (x !== el) x.classList.remove('open'); });
+      el.classList.toggle('open');
+      return;
+    }
     if (el.hasAttribute('data-evvote')) { eventVote(el.getAttribute('data-evvote'), el.getAttribute('data-evwho'), el.getAttribute('data-evval')); return; }
     if (el.hasAttribute('data-assocsave')) { saveAssocRow(el.getAttribute('data-assocsave'), el.getAttribute('data-associdx') || '0'); return; }
     if (el.hasAttribute('data-evsave')) { saveEventApprover(el.getAttribute('data-evsave'), el.getAttribute('data-evidx') || '0'); return; }
@@ -11914,8 +12006,29 @@
       nextStep();
     });
 
+    if ($('#reportDate')) {
+      onEl('#reportDate', 'change', function () {
+        ui.reportDate = this.value || '';
+        renderReportPanel();
+        toast('신고 표지 날짜를 ' + reportDateOf() + ' 기준으로 다시 계산했습니다.');
+      });
+    }
+    if ($('#reportWeekChips')) {
+      onEl('#reportWeekChips', 'click', function (e) {
+        var b = e.target && e.target.closest ? e.target.closest('[data-reportweek]') : null;
+        if (!b) return;
+        var wk = b.getAttribute('data-reportweek');
+        ui.reportDate = '';
+        ui.statusWeek = wk;
+        renderReportPanel();
+        toast('신고 표지를 ' + wk + ' 게첨 주 기준으로 다시 계산했습니다.');
+      });
+    }
     if ($('#policySkipWeek')) {
       onEl('#policySkipWeek', 'change', function () { setSkipWeekRule(!!this.checked); });
+    }
+    if ($('#adminRoleSel')) {
+      onEl('#adminRoleSel', 'change', function () { try { renderRolesLock(); } catch (e) { } });
     }
     if ($('#btnRepeatWeek')) onEl('#btnRepeatWeek', 'click', function () { openRepeatCalendar(); });
     if ($('#repeatCancelBtn')) onEl('#repeatCancelBtn', 'click', function () { clearRepeat(); });
@@ -12025,6 +12138,10 @@
     }
 
     onEl('#btnRefresh', 'click', function () { renderStatus(); toast('현황을 새로 불러왔습니다.'); });
+    onEl('#btnPlaceToggle', 'click', function () {
+      applyPlaceFold(!ui.placeFold);
+      if (ui.placeFold) toast('게시대 현황 ' + db.placements.length + '개소를 펼쳤습니다.');
+    });
     onEl('#statusSearch', 'input', function () { ui.q = this.value; renderStatus(); });
     onEl('#statusDong', 'change', function () { ui.dong = this.value || ''; ui.statusPage = 0; renderStatus(); });
     onEl('#pickDong', 'change', function () { ui.pDong = this.value || ''; ui.pickPage = 0; renderPickUI(); });
@@ -12410,6 +12527,12 @@
       return { statusAll: ui.statusAll, pickAll: ui.pickAll, size: PAGE_SIZE };
     },
     paging: function () { return { statusAll: ui.statusAll, pickAll: ui.pickAll, statusPage: ui.statusPage, pickPage: ui.pickPage, size: PAGE_SIZE }; },
+    resetApply: function () { try { resetApply(); } catch (e) { return false; } return true; },
+    expandPlacements: function (open) { ui.placeFold = open !== false; applyPlaceFold(ui.placeFold); return { open: !!ui.placeFold, rows: document.querySelectorAll('#placementGrid .plrow, #placementGrid .card').length }; },
+    placeFoldState: function () { return { open: !!ui.placeFold, hidden: $('#placementFold') ? $('#placementFold').hidden : null,
+      label: $('#btnPlaceToggle') ? $('#btnPlaceToggle').textContent.trim() : '', rows: document.querySelectorAll('#placementGrid .plrow, #placementGrid .card').length }; },
+    setReportDate: function (d) { ui.reportDate = String(d || ''); try { renderReportPanel(); } catch (e) { } return reportDateOf(); },
+    reportDateNow: function () { return reportDateOf(); },
     statusPageTo: function (n) { ui.statusAll = false; ui.statusPage = Math.max(0, Number(n) || 0); renderStatus(); return (String($('#placementGrid').innerHTML).match(/class="card"/g) || []).length; },
     pickPageTo: function (n) { ui.pickAll = false; ui.pickPage = Math.max(0, Number(n) || 0); renderPickUI(); return (String($('#applyGrid').innerHTML).match(/pick-card/g) || []).length; },
     statusPagerHtml: function () { return String($('#statusPager') ? $('#statusPager').innerHTML : ''); },
@@ -13223,6 +13346,12 @@
     readApply: readApply,
 
     /* 회원 로그인 · 자동 작성 검증용 */
+    adminMembers: function () {
+      return SEED_MEMBERS.filter(function (m) { return !!m.admin; }).map(function (m) {
+        return { id: m.id, company: m.company, owner: m.owner, roleKey: m.roleKey, roleLabel: m.roleLabel,
+          grantCap: m.grantCap, eventApprover: !!m.eventApprover };
+      });
+    },
     members: function () {
       return memberList().map(function (m) {
         return { id: m.id, loginId: m.loginId, type: m.type, company: m.company, owner: m.owner,

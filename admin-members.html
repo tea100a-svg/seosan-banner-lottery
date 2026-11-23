@@ -98,13 +98,14 @@
   <a class="subtab" href="admin-docs.html" data-adminsub="docs">📋 작업지시서</a>
   <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
   <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
-  <a class="subtab on" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
+  <a class="subtab" href="admin-roles.html" data-adminsub="roles">🛡️ 관리자 권한</a>
+  <a class="subtab on" href="admin-members.html" data-adminsub="members">👥 회원 · 가산점</a>
   <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
 </div>
 <div class="view-head">
       <div>
-        <h2>👥 회원 · 임원 권한 · 가산점 부여 · 행사승인권한자</h2>
-        <p>협회 직책과 결재 권한, <b>직책자가 시한임박 현수막·협회 등록 회원사에 부여하는 추첨 가산점</b>, 행사 우선접수를 투표로 결정하는 <b>행사승인권한자 5명</b>, 제재(페널티) 현황을 관리합니다.</p>
+        <h2>👥 회원 · 회원사 가산점</h2>
+        <p>협회 <b>회원·회원사</b>와 <b>회원사 가산점</b> 부여, 제재(페널티) 현황을 관리합니다. <b>임원 직책·결재 권한·가산점 한도·행사승인권한자</b>는 <a href="admin-roles.html">🛡️ 관리자 권한</a> 페이지에서 관리합니다.</p>
       </div>
     </div>
 <div class="role-bar" id="adminRoleBar">
@@ -128,76 +129,6 @@
         <div>협회에 등록된 회원사에는 <b>부여자 각각이 자기 권한 한도까지</b> 추첨 가산점을 부여합니다. <b>기본 0%</b>이며, 부여 한도는 <b>지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>(사무국장·감사·일반 회원은 부여 불가)가 <b>기본값</b>이며, 아래 <b>직책별 가산점 부여 한도 설정</b>에서 최고권한이 바꿀 수 있습니다. 한 부여자가 2%를 주고 다른 부여자가 5%를 주면 <b>부여자별 몫을 더해 합산 +7%</b>가 되며(최대 +13%), 로그인한 직책의 한도를 넘는 %는 선택할 수 없습니다. 부여하면 <b>부여자(직책·성명)와 %</b>가 표에 남고, 해제도 <b>내 몫만</b> 빠집니다. 추첨 가중치는 <b>1.00 + (시한임박 합산 % + 협회 회원사 합산 %) / 100</b>입니다.</div>
       </div>
       <div class="table-wrap" id="assocTable"></div>
-    </div>
-<div class="panel" id="officerPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 5 5.6.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.6-.8Z"/></svg>
-          직책·권한 승인 관리
-        </h3>
-        <span class="sub" id="officerInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회 임원·실무자(<b>지부장 · 수석부지부장 · 사무국장 · 사무실무원 · 현장실무원 · 감사1 · 감사2</b>)의 직책과 권한을 관리합니다. <b>승인 완료</b>된 직책자만 해당 단계의 공문 결재를 할 수 있고, <b>승인 대기</b>·<b>해제</b> 상태면 결재할 수 없습니다. 총괄 관리자는 모든 단계를 결재·승인·회수할 수 있으며, 모든 처리는 감사 로그에 기록됩니다. (가산점 부여는 아래 <b>가산점 부여 권한 · 부여 내역</b>과 회원사 표에서 합니다.)</div>
-      </div>
-      <div class="table-wrap" id="officerTable"></div>
-      <div class="place-add" id="officerAdd" style="margin-top:14px">
-        <div class="pa-head"><b>직책자 등록</b><span>직책·성명·업체를 적고 등록하면 <b>승인 대기</b>로 접수됩니다.</span></div>
-        <div class="field-row">
-          <div class="field"><label for="ofRole">직책</label><select class="input" id="ofRole"></select></div>
-          <div class="field"><label for="ofName">성명<span class="req">*</span></label><input class="input ko-ime" id="ofName" lang="ko" maxlength="20" placeholder="예) 김재봉" autocomplete="off"></div>
-          <div class="field"><label for="ofCompany">업체·소속</label><input class="input ko-ime" id="ofCompany" lang="ko" maxlength="30" placeholder="예) 재봉기획" autocomplete="off"></div>
-        </div>
-        <div class="off-actions">
-          <button class="btn primary" id="btnOfficerAdd" type="button" data-officeradd="1">직책자 등록</button>
-          <span class="hint-txt" style="margin:0">등록 후 [승인]을 눌러야 결재 권한이 생깁니다.</span>
-        </div>
-      </div>
-    </div>
-<div class="panel" id="eventApproverPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
-          🎪 행사승인권한자 5명 관리
-        </h3>
-        <span class="sub" id="eventApproverInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>행사 심사를 투표로 결정하는 <b>행사승인권한자 5명</b>입니다. 5명 중 <b>3명 이상 찬성</b>이면 <b>행사 우선 승인</b>이 확정되고(일반 추첨보다 먼저 배정), <b>반대·기권 3명 이상</b> 또는 과반 미달이면 <b>미승인 → 일반 추첨 전환</b>됩니다. 성명·직책·소속은 언제든지 바꿀 수 있고, 변경 내역은 감사 로그에 남습니다. (투표는 <b>시안 심사</b> 화면의 행사 심사 패널에서 합니다.)</div>
-      </div>
-      <div class="table-wrap" id="eventApproverTable"></div>
-    </div>
-<div class="callout warn hidden" id="bonusCapLock"></div>
-<div class="panel" id="bonusCapPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h7M4 18h5"/><circle cx="17" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/></svg>
-          🎚 직책별 가산점 부여 한도 설정
-        </h3>
-        <span class="sub" id="bonusCapInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>가산점 <b>부여자(지부장·수석부지부장·현장실무원·사무실무원)</b>가 줄 수 있는 <b>최대 %</b>를 직책별로 정합니다(기본 지부장 +5% · 수석 +3% · 현장 +3% · 사무 +2%, <b>0~10%</b> 조정). 이 설정은 <b>최고권한(지부장 또는 총괄 관리자)</b>만 저장할 수 있고, 다른 직책은 현재 한도를 <b>읽기 전용</b>으로 봅니다. 바꾸면 <b>시한임박 가산점(시안 심사)</b>·<b>회원사 가산점</b>의 선택지와 한도 초과 차단, 부여자 합산 상한 안내가 곧바로 새 한도로 바뀌며 <b>감사 로그</b>에 남습니다.</div>
-      </div>
-      <div class="table-wrap" id="bonusCapTable"></div>
-    </div>
-<div class="panel" id="roleBonusPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9Z"/></svg>
-          🎖 가산점 부여 권한 · 부여 내역
-        </h3>
-        <span class="sub" id="roleBonusInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div><b>가산점은 직책자 본인에게 주는 것이 아닙니다.</b> 직책자가 <b>시한임박 현수막</b>과 <b>협회 등록 회원사</b>에 부여하는 권한이며, 두 가산 모두 <b>기본 0%</b>입니다. 부여 한도는 <b>지부장 최대 +5% · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2%</b>가 기본값이며 <b>최고권한이 직책별로 조정</b>할 수 있습니다(사무국장·감사·일반 회원은 부여 불가). <b>부여자 각각이 자기 한도까지 부여하면 최종 합산</b>됩니다(+5%와 +2%가 모여 +7%). 시한임박 인정 범위는 <b>차차주까지</b>입니다. 지금까지 부여된 내역(부여자·내 몫·대상별 합산)과 그 대상의 추첨 가중치를 아래에서 확인합니다.</div>
-      </div>
-      <div class="chips" id="roleBonusChips" style="margin-bottom:10px"></div>
-      <div class="table-wrap" id="adminRoleTable"></div>
     </div>
 <div class="panel">
       <div class="admin-head">
