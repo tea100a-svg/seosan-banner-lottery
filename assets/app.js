@@ -7002,7 +7002,7 @@
       msg: '현장 게첨 작업 준비로 인해 금요일은 잔여석 접수가 제한됩니다. 목요일 선착순 당첨분은 ' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '까지 입고해야 하며, 미입고 시 자동 취소(반려)됩니다.' };
     return { open: false, kind: 'wait', badge: WEEK_DAYS[d] + '요일 · 접수 시간 아님',
       title: WEEK_DAYS[d] + '요일 · 접수 시간이 아닙니다',
-      msg: '선착순 접수는 ' + dfmt(ROUND.firstComeDate) + '(목) 일과시간 <b>09:00 ~ 18:00</b>에만 운영합니다.' };
+      msg: '선착순 접수는 ' + dfmt(ROUND.firstComeDate) + ' 일과시간 <b>09:00 ~ 18:00</b>에만 운영합니다.' };
   }
 
   /* ═════════════════════════════════════════════════════════════════════════
