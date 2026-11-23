@@ -11,14 +11,14 @@
   if(q==='mobile'||q==='pc'){try{sessionStorage.setItem('seosan-device-view',q);localStorage.setItem('seosan-device-view',q);}catch(e){}}
   document.documentElement.setAttribute('data-device-view',v);
 }catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
-<title>협회 관리자 · 행사 우선접수 심사 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<title>협회 관리자 · 행사 심사 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-page="admin-event">
 <div class="demo-banner">
   <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
-  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
   <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
 </div>
 
@@ -38,9 +38,6 @@
       </div>
     </div>
     <div class="hdr-side">
-      <button class="ime-badge on" id="imeToggle" type="button" aria-pressed="true" title="영타 입력 시 한글 자동변환 ON — 영문 키보드 상태로 입력해도 한글로 바뀝니다. 누르면 끕니다." aria-label="영타 입력 시 한글 자동변환 ON">
-        <span class="dot"></span><span id="imeText">영타 입력 시 한글 자동변환 <b>ON</b></span>
-      </button>
       <div class="hdr-auth">
         <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
         <div class="hdr-user hidden" id="authUser">
@@ -90,10 +87,15 @@
 <section class="view active" id="view-admin">
 <div class="subtabs" id="adminSub">
   <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
-  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
+  <a class="subtab on" href="admin-event.html" data-adminsub="event">🎪 행사 심사</a>
   <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
   <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입금·입고·서식</a>
+  <a class="subtab" href="admin-pay.html" data-adminsub="pay">💰 입금 확인</a>
+  <a class="subtab" href="admin-deliver.html" data-adminsub="deliver">📦 현수막 입고</a>
+  <a class="subtab" href="admin-report.html" data-adminsub="report">🏛️ 시청 신고 표지</a>
+  <a class="subtab" href="admin-desig.html" data-adminsub="desig">🖨️ 게시 지정서</a>
+  <a class="subtab" href="admin-photos.html" data-adminsub="photos">📸 게첨사진</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">📋 작업지시서</a>
   <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
   <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
   <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
@@ -101,7 +103,7 @@
 </div>
 <div class="view-head">
       <div>
-        <h2>🎪 행사 우선접수 심사 · 행사승인권한자 투표</h2>
+        <h2>🎪 행사 심사 심사 · 행사승인권한자 투표</h2>
         <p><b>회원이 주간 추첨 접수 페이지(<a href="apply.html">apply.html</a>) 1단계에서 직접 신청</b>한 행사 우선접수 건을 불러와, 시안 심사를 승인한 뒤 행사승인권한자 <b>5명 중 3명 이상 찬성</b>으로 확정합니다. 미승인 건은 일반 추첨으로 자동 전환됩니다.</p>
       </div>
     </div>
@@ -117,13 +119,13 @@
       <div class="admin-head">
         <h3>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16M6 5h12l1 3.5H5L6 5Z"/><path d="M5 8.5V19h14V8.5"/><path d="M9.5 12.5h5M9.5 16h3"/></svg>
-          🎪 행사 우선접수 심사 (행사승인권한자 5명)
+          🎪 행사 심사 심사 (행사승인권한자 5명)
         </h3>
         <span class="sub" id="eventInfo"></span>
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div><b>접수는 회원이 직접</b> 합니다 — 회원이 <b>주간 추첨 접수(apply.html)</b> 1단계에서 <b>🎪 행사 우선접수 신청</b>을 고르고 행사명·행사일·사유(증빙)를 적어 접수하면, 이 화면에 그 건이 올라와 <b>관리자(행사승인권한자 5명)가 심사</b>합니다. 관리자가 대신 접수하지 않습니다(시연용 보조 등록도 회원 접수와 같은 절차를 따릅니다). 배정 순서는 <b>① 시청 공문 우선접수 → ② 행사 우선접수(승인 완료) → ③ 일반 추첨</b>입니다. 시안 심사를 <b>승인</b>하면 이 패널로 넘어와 행사승인권한자 <b>5명 중 3명 이상 찬성</b>이면 <b>행사 우선 승인</b>으로 확정되고, <b>반대·기권 3명 이상</b> 또는 5명 투표에서 찬성이 3명에 못 미치면 <b>미승인 → 일반 추첨 자동 전환</b>(신청한 1·2·3순위 그대로 적용)됩니다. 수수료는 일반 접수와 같습니다.</div>
+        <div><b>접수는 회원이 직접</b> 합니다 — 회원이 <b>주간 추첨 접수(apply.html)</b> 1단계에서 <b>🎪 행사 심사 신청</b>을 고르고 행사명·행사일·사유(증빙)를 적어 접수하면, 이 화면에 그 건이 올라와 <b>관리자(행사승인권한자 5명)가 심사</b>합니다. 관리자가 대신 접수하지 않습니다(시연용 보조 등록도 회원 접수와 같은 절차를 따릅니다). 배정 순서는 <b>① 시청 공문 우선접수 → ② 행사 우선접수(승인 완료) → ③ 일반 추첨</b>입니다. 시안 심사를 <b>승인</b>하면 이 패널로 넘어와 행사승인권한자 <b>5명 중 3명 이상 찬성</b>이면 <b>행사 우선 승인</b>으로 확정되고, <b>반대·기권 3명 이상</b> 또는 5명 투표에서 찬성이 3명에 못 미치면 <b>미승인 → 일반 추첨 자동 전환</b>(신청한 1·2·3순위 그대로 적용)됩니다. 수수료는 일반 접수와 같습니다.</div>
       </div>
       <div id="eventList"></div>
     </div>

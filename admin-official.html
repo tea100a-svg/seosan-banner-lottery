@@ -18,7 +18,7 @@
 <body data-page="admin-official">
 <div class="demo-banner">
   <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
-  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
   <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
 </div>
 
@@ -38,9 +38,6 @@
       </div>
     </div>
     <div class="hdr-side">
-      <button class="ime-badge on" id="imeToggle" type="button" aria-pressed="true" title="영타 입력 시 한글 자동변환 ON — 영문 키보드 상태로 입력해도 한글로 바뀝니다. 누르면 끕니다." aria-label="영타 입력 시 한글 자동변환 ON">
-        <span class="dot"></span><span id="imeText">영타 입력 시 한글 자동변환 <b>ON</b></span>
-      </button>
       <div class="hdr-auth">
         <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
         <div class="hdr-user hidden" id="authUser">
@@ -90,10 +87,15 @@
 <section class="view active" id="view-admin">
 <div class="subtabs" id="adminSub">
   <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
-  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
+  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 심사</a>
   <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
-  <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입금·입고·서식</a>
+  <a class="subtab on" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
+  <a class="subtab" href="admin-pay.html" data-adminsub="pay">💰 입금 확인</a>
+  <a class="subtab" href="admin-deliver.html" data-adminsub="deliver">📦 현수막 입고</a>
+  <a class="subtab" href="admin-report.html" data-adminsub="report">🏛️ 시청 신고 표지</a>
+  <a class="subtab" href="admin-desig.html" data-adminsub="desig">🖨️ 게시 지정서</a>
+  <a class="subtab" href="admin-photos.html" data-adminsub="photos">📸 게첨사진</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs">📋 작업지시서</a>
   <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
   <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
   <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
@@ -135,7 +137,7 @@
       </div>
       <div class="callout info" id="offIntakeHint" style="margin-bottom:14px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>시청 공문 현수막은 <b>추첨 전에 게시대를 먼저 확정</b>합니다. 게시대별 공문 배정은 그 게시대 <b>전체 게시면의 40% 이하(내림, 예: 정원 20면 → 최대 8면)</b>까지만 가능하며, 상한을 넘으려 하면 등록이 차단됩니다. 등록 즉시 <b>공문 우선배정</b> 상태가 되어 해당 게시대의 <b>가용 면을 먼저 차감</b>하고, 월요일 전산 추첨은 <b>남은 면으로만</b> 진행됩니다(정원 초과 없음). 공문 건은 <b>광고주 중복 제한·페널티 대상에서 제외</b>되며, <b>시청 인지대 3,000원은 면제(0원)</b>입니다 — 1매 <b>7,700원</b>(탈부착·관리 7,000 + 부가세 700) 또는 <b>공문 별도정산</b>. 현장 게첩 작업지시서에도 <b>(공문)</b> 표기로 설치 대상에 자동 포함됩니다.</div>
+        <div>시청 공문 현수막은 <b>추첨 전에 게시대를 먼저 확정</b>합니다. 게시대별 공문 배정은 그 게시대 <b>전체 게시면의 40% 이하(내림, 예: 정원 20면 → 최대 8면)</b>까지만 가능하며, 상한을 넘으려 하면 등록이 차단됩니다. 등록 즉시 <b>공문 우선배정</b> 상태가 되어 해당 게시대의 <b>가용 면을 먼저 차감</b>하고, 월요일 전산 추첨은 <b>남은 면으로만</b> 진행됩니다(정원 초과 없음). 공문 건은 <b>광고주 중복 제한·페널티 대상에서 제외</b>되며, <b>시청 인지대 3,000원은 면제(0원)</b>입니다 — 1매 <b>7,700원</b>(탈부착·관리 7,000 + 부가세 700) 또는 <b>공문 별도정산</b>. 현장 게첨 작업지시서에도 <b>(공문)</b> 표기로 설치 대상에 자동 포함됩니다.</div>
       </div>
       <div id="offIntake">
       <div class="off-file-box" id="offFileBox">
@@ -168,9 +170,9 @@
           <div class="err-txt">현수막 문구를 입력해 주세요.</div></div>
       </div>
       <div class="field" id="fOffWeek">
-        <label>게첩 희망 주 (월요일 ~ 일요일)<span class="req">*</span></label>
+        <label>게첨 희망 주 (월요일 ~ 일요일)<span class="req">*</span></label>
         <div id="offRuleStrip"></div>
-        <div class="hint-txt" style="margin:0 0 6px">공문 현수막을 <b>어느 주에 게첩할지</b> 고릅니다 — 공문 배정은 그 주 <b>전주 월요일 추첨 전</b>에 끝나야 하며, 게첩은 선택한 주 월요일부터 1주일(2주 승인 건은 2주)입니다. 주를 바꾸려면 <b>📅 달력보기</b>를 누르세요.</div>
+        <div class="hint-txt" style="margin:0 0 6px">공문 현수막을 <b>어느 주에 게첨할지</b> 고릅니다 — 공문 배정은 그 주 <b>전주 월요일 추첨 전</b>에 끝나야 하며, 게첨은 선택한 주 월요일부터 1주일(2주 승인 건은 2주)입니다. 주를 바꾸려면 <b>📅 달력보기</b>를 누르세요.</div>
         <div class="cal-toggle-row" style="margin:0 0 6px">
           <button class="btn ghost sm" id="btnOffWeekCal" type="button" data-caltoggle="official" aria-expanded="false" aria-controls="offWeekCal">📅 달력보기</button>
           <span class="week-now" id="offWeekNow">📅 2026.11.30 ~ 12.06 · 공문 0건</span>

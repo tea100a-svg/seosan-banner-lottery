@@ -18,7 +18,7 @@
 <body data-page="status">
 <div class="demo-banner">
   <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
-  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
   <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
 </div>
 
@@ -38,9 +38,6 @@
       </div>
     </div>
     <div class="hdr-side">
-      <button class="ime-badge on" id="imeToggle" type="button" aria-pressed="true" title="영타 입력 시 한글 자동변환 ON — 영문 키보드 상태로 입력해도 한글로 바뀝니다. 누르면 끕니다." aria-label="영타 입력 시 한글 자동변환 ON">
-        <span class="dot"></span><span id="imeText">영타 입력 시 한글 자동변환 <b>ON</b></span>
-      </button>
       <div class="hdr-auth">
         <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
         <div class="hdr-user hidden" id="authUser">
@@ -99,20 +96,20 @@
         새로고침
       </button>
     </div>
-    <a class="cta-next" id="ctaApplyNext" href="apply.html?week=2026-11-30" aria-label="다음 게첩 주차 접수하러 가기">
+    <a class="cta-next" id="ctaApplyNext" href="apply.html?week=2026-11-30" aria-label="다음 게첨 주차 접수하러 가기">
       <span class="cta-ico" aria-hidden="true">📝</span>
       <span class="cta-txt">
-        <b id="ctaNextTitle">2026년 12월 1주차 <em>(11.30 ~ 12.06 게첩)</em> 접수하러 가기 →</b>
-        <span class="cta-sub" id="ctaNextSub">추첨 11.23(월) 10:00 · 입고 마감 11.25(수) 18:00 · 게첩 11.30(월)~12.06(일)</span>
+        <b id="ctaNextTitle">2026년 12월 1주차 <em>(11.30 ~ 12.06 게첨)</em> 접수하러 가기 →</b>
+        <span class="cta-sub" id="ctaNextSub">추첨 11.23(월) 10:00 · 입고 마감 11.25(수) 18:00 · 게첨 11.30(월)~12.06(일)</span>
       </span>
     </a>
     <div class="cal-toggle-row">
       <button class="btn ghost sm" id="btnWeekCal" type="button" aria-expanded="false" aria-controls="weekCalPanel">📅 달력보기</button>
-      <span class="sm" id="weekCalHint">게첩 주(월~일)별 접수·배정을 달력으로 봅니다</span>
+      <span class="sm" id="weekCalHint">게첨 주(월~일)별 접수·배정을 달력으로 봅니다</span>
     </div>
     <div class="panel week-cal-panel collapsed" id="weekCalPanel">
       <div class="panel-head">
-        <h3>🗓️ 주별 현황 달력 <span class="sub">게첩 주(월~일) 단위</span></h3>
+        <h3>🗓️ 주별 현황 달력 <span class="sub">게첨 주(월~일) 단위</span></h3>
         <span class="sub" id="weekCalSub"></span>
         <span class="spacer"></span>
         <button class="btn ghost sm" id="btnWeekCalClose" type="button">닫기</button>

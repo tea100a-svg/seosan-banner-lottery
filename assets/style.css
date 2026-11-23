@@ -101,7 +101,7 @@ a{color:var(--blue)}
 .wk small{display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45}
 .wk em{font-style:normal;color:var(--bad);font-weight:800}
 
-/* ---------- 주간 규칙 한 줄 (매주 월요일 추첨 → 다음 주 월요일 게첩) ---------- */
+/* ---------- 주간 규칙 한 줄 (매주 월요일 추첨 → 다음 주 월요일 게첨) ---------- */
 .rule-strip{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;border:1px solid #cfe0f7;
   background:linear-gradient(180deg,#f5f9ff,#edf4ff);border-radius:12px;padding:9px 12px;margin:0 0 14px;max-width:100%}
 .rule-strip .rs-tag{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--navy3);background:#dbe9ff;
@@ -548,11 +548,6 @@ textarea.input{resize:vertical;min-height:92px;line-height:1.6}
 .role-bar .role-who{font-size:11.5px;color:#3c6299}
 .role-bar .role-note{color:#3c6299}
 .role-bar select{max-width:190px;height:34px;padding:4px 8px;font-size:12.5px}
-.deleg-card{border:1px solid #f0d6a8;background:#fffaef;border-radius:12px;padding:12px 14px;margin:0 0 14px}
-.deleg-card .deleg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.deleg-card .deleg-head b{font-size:13.5px;color:#7a4a00}
-.deleg-card .deleg-head .sm{color:#8a5a00}
-.deleg-card select,.deleg-card input{height:36px}
 .officer-row td{vertical-align:middle}
 .officer-chip{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:12px;color:var(--navy)}
 .officer-name{font-weight:800;color:var(--ink)}
@@ -923,13 +918,6 @@ details.faq p{font-size:13px;color:var(--body);margin-top:9px;line-height:1.65}
 .hdr-user{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:6px 7px 6px 12px}
 .hdr-user b{display:block;font-size:12.5px;color:#fff;letter-spacing:-.01em;white-space:nowrap}
 .hdr-user small{display:block;font-size:10.5px;color:#9db9e2;white-space:nowrap;margin-top:1px}
-.ime-badge{appearance:none;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#c9d9f2;font-size:11.5px;font-weight:700;padding:7px 11px;border-radius:99px;cursor:pointer;white-space:nowrap;transition:.15s;letter-spacing:-.01em}
-.ime-badge:hover{background:rgba(255,255,255,.14)}
-.ime-badge .dot{width:7px;height:7px;border-radius:50%;background:#8aa0bd;flex:0 0 auto}
-.ime-badge.on{border-color:rgba(74,222,128,.55);color:#e8fff2}
-.ime-badge.on .dot{background:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,.18)}
-.ime-badge b{color:#fff}
-.ko-ime{ime-mode:active}
 .auth-tabs{display:flex;gap:6px;margin-bottom:14px;background:#f1f5fb;padding:4px;border-radius:12px}
 .auth-tab{flex:1;appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:800;padding:9px 6px;border-radius:9px;cursor:pointer}
 .auth-tab.on{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(13,30,60,.12)}
@@ -1214,7 +1202,6 @@ details.faq p{font-size:13px;color:var(--body);margin-top:9px;line-height:1.65}
   .chip-round{display:none}
   .switch-label{display:inline;font-size:11.5px}
   .hdr-side{flex-wrap:wrap;justify-content:flex-start;gap:8px}
-  .ime-badge{font-size:10.5px;padding:6px 9px}
   .btn-auth{padding:7px 10px;font-size:11.5px}
   .hdr-user small{display:none}
   .auth-presets{gap:7px}
@@ -1260,8 +1247,6 @@ details.faq p{font-size:13px;color:var(--body);margin-top:9px;line-height:1.65}
   .hdr-side{width:100%;justify-content:flex-start;gap:8px}
   .hdr-auth{order:1}
   .admin-switch{order:2;margin-left:auto;padding:4px 10px 4px 8px}
-  .ime-badge{order:3;width:100%;justify-content:center;font-size:11.5px;padding:8px 12px;border-radius:10px}
-  .ime-badge .dot{width:6px;height:6px}
   .btn-auth{padding:8px 12px;font-size:12.5px}
   .hdr-user{padding:5px 6px 5px 11px;min-width:0}
   .hdr-user > span{min-width:0;overflow:hidden}
@@ -1328,7 +1313,7 @@ a.mp-back{text-decoration:none}
 .footer .credit b{color:#0a1c33}
 
 /* =====================================================================
-   게시대 한 줄 보기 · 주별 현황 달력 · 게첩 주 선택 (2026-11-22)
+   게시대 한 줄 보기 · 주별 현황 달력 · 게첨 주 선택 (2026-11-22)
    ===================================================================== */
 /* ---------- 한 줄(compact single-row) 게시대 목록 ---------- */
 .plrows{display:grid;gap:6px}
@@ -1370,7 +1355,7 @@ a.mp-back{text-decoration:none}
 .cal-week.on{border-color:#9dbcEE;background:transparent;box-shadow:none}
 .cal-d{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;
   font-size:11.5px;font-weight:700;color:var(--body);min-height:30px;min-width:0;line-height:1.2;border-radius:7px}
-/* 선택한 게첩 주(월~일)의 날짜 칸만 칠한다 — 일~토 줄과 월~일 주차가 어긋나도 정확히 표시 */
+/* 선택한 게첨 주(월~일)의 날짜 칸만 칠한다 — 일~토 줄과 월~일 주차가 어긋나도 정확히 표시 */
 .cal-d.on{background:#e8f1ff;box-shadow:inset 0 0 0 1px #c9dcf8}
 .cal-d.sun .n{color:#c0392b}
 .cal-d.sat .n{color:#1f6fb2}
@@ -1411,7 +1396,7 @@ a.mp-back{text-decoration:none}
 .wk-placebox{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:5px;background:#fbfcfe}
 .wk-placebox .plrow{box-shadow:none;border-color:#e8eef7}
 .wk-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
-/* 접수 페이지 게첩 주 선택 */
+/* 접수 페이지 게첨 주 선택 */
 .week-select-panel{margin-bottom:16px;border-color:#cbdcf5}
 .week-select-panel .panel-head h3{display:flex;align-items:center;gap:6px}
 .week-now{font-size:12px;font-weight:800;color:var(--blue-d);background:var(--sky);border-radius:8px;padding:5px 10px;white-space:normal;flex:0 1 auto;min-width:0;line-height:1.45}
@@ -1611,7 +1596,6 @@ html[data-device-view="mobile"] .brand{gap:9px}
 html[data-device-view="mobile"] .brand .org{display:none}
 html[data-device-view="mobile"] .brand h1{font-size:15px;margin-top:0}
 html[data-device-view="mobile"] .brand .mark{width:32px;height:32px;flex-basis:32px;border-radius:9px}
-html[data-device-view="mobile"] .ime-badge{font-size:10px;padding:3px 7px}
 html[data-device-view="mobile"] nav.site-nav{display:flex;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
 html[data-device-view="mobile"] nav.site-nav::-webkit-scrollbar{display:none}
 html[data-device-view="mobile"] .tab{flex:0 0 auto;min-height:44px}
@@ -1634,7 +1618,7 @@ html[data-device-view="mobile"] .mtabbar{display:flex}
 .mtabbar a i{font-style:normal;font-size:17px;line-height:1}
 .mtabbar a.on{color:var(--blue);background:#eaf2ff}
 
-/* ── 다음 게첩 주차 대형 CTA (2026-11-23 김재봉 님 지시: "대빵 크게 / 날짜도 넣어주고 다음주차 한개만") ── */
+/* ── 다음 게첨 주차 대형 CTA (2026-11-23 김재봉 님 지시: "대빵 크게 / 날짜도 넣어주고 다음주차 한개만") ── */
 .cta-next{display:flex;align-items:center;gap:16px;width:100%;box-sizing:border-box;padding:22px 26px;margin:0 0 16px;
   border-radius:18px;text-decoration:none;color:#fff;border:1px solid rgba(255,255,255,.16);
   background:linear-gradient(135deg,#16304f 0%,#26578f 55%,#3b82d6 100%);
@@ -1652,3 +1636,107 @@ html[data-device-view="mobile"] .mtabbar{display:flex}
   .cta-next b{font-size:15.5px;line-height:1.38}
   .cta-next .cta-sub{font-size:11px}
 }
+
+/* 접수 화면 안내문구 — 입력/선택 본문 아래쪽에 모아 둔다 (2026-11-23 김재봉 님 지시 "안내문구 아래로") */
+.step-notes{margin-top:18px;padding-top:14px;border-top:1px dashed #d7e2f2;display:flex;flex-direction:column;gap:10px}
+.step-notes .callout{margin:0}
+.step-notes .hint-txt{margin:0}
+/* 옥외광고업 등록증 — 등록번호 자동 추출 결과 */
+.lic-extract{margin-top:6px;font-size:12px;font-weight:700;color:#0b6b3a;background:#e9f9ef;border:1px solid #b7e4c7;border-radius:9px;padding:7px 10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lic-extract.fail{color:#8a5a00;background:#fff7e6;border-color:#f0d9a8}
+.lic-extract b{color:#08492a;letter-spacing:.01em}
+.lic-extract.fail b{color:#7a4d00}
+.lic-no-input{margin-top:6px;max-width:320px}
+
+/* 행사 우선접수 심사 — 모바일 카드형: 찬성 · 반려 · 기권 버튼이 표 오른쪽 끝에 잘리지 않게 (2026-11-23) */
+.btn.no{background:#fff;border-color:#f0b4b4;color:#b42318}
+.btn.no:hover{background:#fdecec}
+
+@media (max-width:900px){
+  #eventList .table-wrap{overflow:visible;border:0;background:transparent}
+  #eventList table,#eventList thead,#eventList tbody,#eventList tr,#eventList td{display:block;width:100%}
+  #eventList thead{display:none}
+  #eventList tr{border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:10px;padding:10px 12px;box-shadow:0 1px 3px rgba(13,30,60,.05)}
+  #eventList td{border:0;padding:3px 0;text-align:left!important;white-space:normal!important}
+  #eventList td:last-child{border-top:1px dashed #dbe6f5;margin-top:8px;padding-top:10px}
+  #eventList .ev-vlist{min-width:0}
+  #eventList .ev-btns{width:100%;gap:6px;margin-top:4px;display:flex}
+  #eventList .ev-btns .btn{flex:1 1 0;padding:9px 6px;font-size:12.5px;min-height:40px;border-radius:9px}
+  #eventList .mono{font-size:12px}
+}
+html[data-device-view="mobile"] #eventList .table-wrap{overflow:visible;border:0;background:transparent}
+html[data-device-view="mobile"] #eventList table,html[data-device-view="mobile"] #eventList thead,html[data-device-view="mobile"] #eventList tbody,html[data-device-view="mobile"] #eventList tr,html[data-device-view="mobile"] #eventList td{display:block;width:100%}
+html[data-device-view="mobile"] #eventList thead{display:none}
+html[data-device-view="mobile"] #eventList tr{border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:10px;padding:10px 12px;box-shadow:0 1px 3px rgba(13,30,60,.05)}
+html[data-device-view="mobile"] #eventList td{border:0;padding:3px 0;text-align:left!important;white-space:normal!important}
+html[data-device-view="mobile"] #eventList td:last-child{border-top:1px dashed #dbe6f5;margin-top:8px;padding-top:10px}
+html[data-device-view="mobile"] #eventList .ev-vlist{min-width:0}
+html[data-device-view="mobile"] #eventList .ev-btns{width:100%;gap:6px;margin-top:4px;display:flex}
+html[data-device-view="mobile"] #eventList .ev-btns .btn{flex:1 1 0;padding:9px 6px;font-size:12.5px;min-height:40px;border-radius:9px}
+
+/* 협회관리자 서브탭 — 기능이 14개로 늘어 시인성 강화 (2026-11-23 페이지 분리 지시)
+   · PC: 2줄 그리드형 필 버튼 / 모바일: 한눈에 눌리는 가로 칩(스크롤) */
+#adminSub{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+#adminSub .subtab{display:inline-flex;align-items:center;gap:4px;min-height:36px;border-radius:10px;font-size:12.5px;padding:8px 12px}
+@media (min-width:760px){
+  #adminSub .subtab{flex:0 1 auto}
+  #adminSub .subtab.on{font-size:12.5px}
+}
+@media (max-width:759px){
+  #adminSub{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:5px}
+  #adminSub::-webkit-scrollbar{display:none}
+  #adminSub .subtab{flex:0 0 auto;min-height:40px;font-size:12px;padding:9px 12px}
+}
+html[data-device-view="mobile"] #adminSub{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:5px}
+html[data-device-view="mobile"] #adminSub::-webkit-scrollbar{display:none}
+html[data-device-view="mobile"] #adminSub .subtab{flex:0 0 auto;min-height:40px;font-size:12px;padding:9px 12px}
+
+/* 로그아웃 직후 — 지금 보던 화면 내용을 비활성화(잠금) + 로그인 유도 (2026-11-23) */
+.view.logout-locked{opacity:.22;filter:blur(.6px);pointer-events:none;user-select:none}
+.logout-lock{display:flex;gap:10px;align-items:flex-start;margin-bottom:14px}
+.logout-lock svg{width:20px;height:20px;flex:0 0 auto;margin-top:1px}
+.logout-lock b{display:block;margin-bottom:2px}
+
+/* 게첨 확인서 — A4 1장당 사진 수(1·2·4·6) 선택 (2026-11-23) */
+.pp-per-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.pp-per-row .chip{cursor:pointer}
+.pp-sheet{background:#fff;margin:0 auto 10px;page-break-after:always;break-after:page}
+.pp-sheet:last-child{page-break-after:auto;break-after:auto}
+.pp-sheet .pp-page{margin:0 auto}
+.pp-per-2 .pp-page,.pp-per-4 .pp-page,.pp-per-6 .pp-page{padding:6mm 6mm}
+.pp-per-2{display:grid;grid-template-columns:1fr;grid-auto-rows:1fr;gap:4mm}
+.pp-per-4{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:4mm}
+.pp-per-6{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:3mm}
+.pp-per-2 .pp-head b,.pp-per-4 .pp-head b,.pp-per-6 .pp-head b{font-size:15px;letter-spacing:.06em}
+.pp-per-2 .pp-head span,.pp-per-4 .pp-head span,.pp-per-6 .pp-head span,
+.pp-per-2 table.pp-info,.pp-per-4 table.pp-info,.pp-per-6 table.pp-info{font-size:9.5px}
+.pp-per-2 .pp-photo img{max-height:105mm;object-fit:contain}
+.pp-per-4 .pp-photo img{max-height:60mm;object-fit:contain}
+.pp-per-6 .pp-photo img{max-height:40mm;object-fit:contain}
+@media print{
+  body.print-photo .pp-sheet{page-break-after:always;break-after:page;margin:0;width:100%}
+  body.print-photo .pp-sheet .pp-page{padding:0 !important;margin:0 !important;page-break-after:auto;break-after:auto}
+  body.print-photo .pp-per-4,body.print-photo .pp-per-6{gap:3mm}
+}
+
+/* 🔁 같은 값으로 매주 신청 (자동반복접수) — 3단계 하단 */
+.repeat-box{margin-top:16px;border:1px solid #cfe0f7;background:#f6faff;border-radius:14px;padding:12px 14px}
+.repeat-box.on{border-color:#b7e4c7;background:#f2fbf5}
+.repeat-box .rb-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.repeat-box .rb-head b{font-size:13.5px;color:var(--navy)}
+.repeat-box .rb-head .sub{font-size:11px;color:var(--muted);font-weight:700}
+.repeat-box .rb-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.policy-box{padding:4px 2px}
+
+/* 행사 심사 투표 — 모바일 카드 폭 고정(가로 넘침 0) */
+@media (max-width:900px){
+  #eventList table{min-width:0 !important;width:100% !important;table-layout:fixed}
+  #eventList tbody tr{width:100%;box-sizing:border-box;display:block}
+  #eventList td{display:block;width:100% !important;box-sizing:border-box;word-break:break-all}
+  #eventList .evbtns{display:flex;gap:6px;flex-wrap:wrap}
+  #eventList .evbtn{flex:1 1 30%;min-height:40px}
+}
+html[data-device-view="mobile"] #eventList table{min-width:0 !important;width:100% !important;table-layout:fixed}
+html[data-device-view="mobile"] #eventList tbody tr{width:100%;box-sizing:border-box;display:block}
+html[data-device-view="mobile"] #eventList td{display:block;width:100% !important;box-sizing:border-box;word-break:break-all}
+html[data-device-view="mobile"] #eventList .evbtn{flex:1 1 30%;min-height:40px}

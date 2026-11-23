@@ -18,7 +18,7 @@
 <body data-page="guide-rules">
 <div class="demo-banner">
   <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
-  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
   <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
 </div>
 
@@ -38,9 +38,6 @@
       </div>
     </div>
     <div class="hdr-side">
-      <button class="ime-badge on" id="imeToggle" type="button" aria-pressed="true" title="영타 입력 시 한글 자동변환 ON — 영문 키보드 상태로 입력해도 한글로 바뀝니다. 누르면 끕니다." aria-label="영타 입력 시 한글 자동변환 ON">
-        <span class="dot"></span><span id="imeText">영타 입력 시 한글 자동변환 <b>ON</b></span>
-      </button>
       <div class="hdr-auth">
         <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
         <div class="hdr-user hidden" id="authUser">
@@ -101,7 +98,7 @@
     </div>
 <div class="callout warn" style="margin-bottom:16px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
-      <div><b>주간 운영 안내</b> — 전산 추첨은 <b>매주 월요일 10:00</b>, 당첨 현수막은 <b>수요일 18:00까지 협회 입고</b>입니다. 수요일 18:00까지 입고되지 않은 건은 <b>자동 취소(반려)</b>되고, 그 매는 <b>목요일 일과시간(09:00~18:00) 선착순</b> 또는 차순위 신청자에게 즉시 배정됩니다. <b>금요일은 잔여석 접수가 제한됩니다</b>(현수막 분류·게첩 준비일). <b>게첩은 월요일에 시작해 월~일 1주일</b> 게시합니다.</div>
+      <div><b>주간 운영 안내</b> — 전산 추첨은 <b>매주 월요일 10:00</b>, 당첨 현수막은 <b>수요일 18:00까지 협회 입고</b>입니다. 수요일 18:00까지 입고되지 않은 건은 <b>자동 취소(반려)</b>되고, 그 매는 <b>목요일 일과시간(09:00~18:00) 선착순</b> 또는 차순위 신청자에게 즉시 배정됩니다. <b>금요일은 잔여석 접수가 제한됩니다</b>(현수막 분류·게첨 준비일). <b>게첨은 월요일에 시작해 월~일 1주일</b> 게시합니다.</div>
     </div>
 <div class="guide-grid">
       <div class="panel">
@@ -168,7 +165,7 @@
           </li>
           <li class="yes">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
-            <div><b>실명제 박스 200×125mm 부착</b> — 6칸(게첩위치·게첩기간·광고내용·광고주·광고업체(제작업체·연락처)·옥외광고업 등록번호) 중 <b>게첩위치·게첩기간은 협회에서 수기 작성</b>하므로 <b>공란</b>으로 두고, 나머지 4칸을 기재합니다.</div>
+            <div><b>실명제 박스 200×125mm 부착</b> — 6칸(게첨위치·게첨기간·광고내용·광고주·광고업체(제작업체·연락처)·옥외광고업 등록번호) 중 <b>게첨위치·게첨기간은 협회에서 수기 작성</b>하므로 <b>공란</b>으로 두고, 나머지 4칸을 기재합니다.</div>
           </li>
           <li class="yes">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
@@ -185,8 +182,8 @@
             <div class="proc-item"><span class="n wide">수</span><div><b>18:00 현수막 실물 입고 마감</b><span>협회 사무국에 실물 입고 · <b>미입고 시 자동 취소(반려)</b> → 목요일 선착순·차순위로 즉시 전환</span></div></div>
             <div class="proc-item"><span class="n wide">취</span><div><b>추첨 전 취소는 페널티 없음</b><span>접수중·시안심사중·행사심사중·추첨대기에서 마이페이지 <b>[접수 취소(페널티 없음)]</b>로 자유 취소 · 같은 회차 재접수 가능. 페널티는 <b>당첨 후</b> 취소·미입금·미입고에만 적용됩니다.</span></div></div>
             <div class="proc-item"><span class="n wide">목</span><div><b>미입고 잔여석 실시간 선착순 접수</b><span>일과시간 <b>09:00 ~ 18:00</b>에만 운영 · 누르는 즉시 확정 · 당첨분은 <b>금요일 10:00까지 입고</b>(미입고 자동 취소)</span></div></div>
-            <div class="proc-item"><span class="n wide">금</span><div><b>잔여석 접수 제한</b><span>현수막 분류·현장 게첩 작업 준비일 · 접수 제한(남은 면은 다음 주 회차로 이월)</span></div></div>
-            <div class="proc-item"><span class="n wide">월</span><div><b>월요일 현장 게첩 · 게시 시작</b><span>입고 확인된 현수막을 게시대에 부착 · <b>월~일 1주일</b> 게시 후 협회 일괄 철거</span></div></div>
+            <div class="proc-item"><span class="n wide">금</span><div><b>잔여석 접수 제한</b><span>현수막 분류·현장 게첨 작업 준비일 · 접수 제한(남은 면은 다음 주 회차로 이월)</span></div></div>
+            <div class="proc-item"><span class="n wide">월</span><div><b>월요일 현장 게첨 · 게시 시작</b><span>입고 확인된 현수막을 게시대에 부착 · <b>월~일 1주일</b> 게시 후 협회 일괄 철거</span></div></div>
           </div>
         </div>
         <div class="panel">
@@ -218,25 +215,6 @@
         · 게첨 확인서(A4)로 인쇄한 서류는 삭제와 무관하게 계속 보관하실 수 있습니다.</div>
       </div>
     </div>
-<div class="panel" style="margin-top:16px" id="guideBonusPanel">
-      <div class="panel-head"><h3>추첨 가산점 규칙</h3><span class="sub">시한임박 · 협회 등록 회원사 — 기본 0%, 부여자별 부여 후 최종 합산</span></div>
-      <div class="callout info" style="margin-bottom:12px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>가산점은 <b>직책자 본인에게 주는 것이 아닙니다.</b> <b>직책자가 시한임박 현수막과 협회 등록 회원사에 부여</b>하는 권한이며, 두 가산 모두 <b>기본 0%</b>입니다. 부여하지 않으면 추첨 가중치는 <b>1.00배</b>이고, <b>부여자 각각이 자기 권한 한도까지 부여하면 부여된 가산점은 최종 합산</b>됩니다(예: 지부장 +5% + 사무실무원 +2% = <b>합산 +7%</b> → 가중치 1.07배, 네 직책 모두 부여 시 최대 +13%).</div>
-      </div>
-      <div class="table-wrap" style="border:0">
-        <table style="min-width:auto">
-          <thead><tr><th>구분</th><th style="text-align:center">기본</th><th>부여 한도 (직책자)</th><th>비고</th></tr></thead>
-          <tbody>
-            <tr><td><b>시한임박 현수막</b></td><td class="mono" style="text-align:center"><b>0%</b></td><td><b>지부장 최대 +5%</b> · 수석부지부장 +3% · 현장실무원 +3% · 사무실무원 +2% — <b>부여자별로 각각 부여하고 최종 합산(최대 +13%)</b></td><td><b>인정 범위: 차차주까지</b> — 게첩 시작일부터 2주 뒤 주(차차주) 일요일까지 도래하는 행사. 그 뒤 장기 일정은 시한임박 대상이 아닙니다.</td></tr>
-            <tr><td><b>협회 등록 회원사</b></td><td class="mono" style="text-align:center"><b>0%</b></td><td>같은 한도 (지부장 5% · 수석·현장 3% · 사무 2%) — 부여자별 합산</td><td>회원사 등록만으로는 가산되지 않습니다.</td></tr>
-            <tr><td>같은 부여자가 다시 부여·해제</td><td style="text-align:center">—</td><td>자기 몫만 변경</td><td>다른 직책자가 부여한 몫은 그대로 남습니다(덮어쓰지 않음).</td></tr>
-            <tr><td>사무국장 · 감사 · 일반 회원</td><td style="text-align:center">—</td><td>부여 불가</td><td>접수자 본인의 직책으로 자동 가산하지 않습니다.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="hint-txt">추첨 가중치 = <b>1.00 + (시한임박 합산 % + 협회 등록 회원사 합산 %) / 100</b>. <b>부여자 각각 최대 권한까지 부여 가능하며, 부여된 가산점은 최종 합산됩니다</b> — 지부장 +5% + 사무실무원 +2% = 합산 +7%(1.07배), 네 직책 모두 부여 시 최대 +13%(1.13배). 부여 내역(직책·성명·%)은 관리자 화면과 감사 로그에 기록되고, 배정 결과는 명단·시드로 재현됩니다. 부여 한도를 넘는 %는 받아들지 않습니다.</div>
-    </div>
 <div class="panel" style="margin-top:16px" id="guideSpecPanel">
       <div class="panel-head"><h3>현수막 실명제 박스 · 제작·제출 요령</h3><span class="sub">서산시지부 공식 안내(실명제 안내문 · 현수막 제작 및 제출 요령)</span></div>
       <div class="guide-grid">
@@ -255,9 +233,9 @@
               <div class="nb-vdim" aria-hidden="true"><b>세로<br>125mm</b></div>
             </div>
             <div class="nb-hdim">가로 200mm</div>
-            <div class="nb-cap">실제 인쇄 비율 그대로 — 가로 200mm × 세로 125mm (8:5). 게첩위치·게첩기간은 협회에서 손글씨로 적는 칸이라 다른 칸보다 약 2배 높고, 오른쪽 칸은 공란입니다.</div>
+            <div class="nb-cap">실제 인쇄 비율 그대로 — 가로 200mm × 세로 125mm (8:5). 게첨위치·게첨기간은 협회에서 손글씨로 적는 칸이라 다른 칸보다 약 2배 높고, 오른쪽 칸은 공란입니다.</div>
           </div>
-          <div class="nb-note"><b>※ 게첩위치·게첩기간은 출력 시 공란으로 두세요 (협회에서 수기 작성)</b> — 출력 후 협회에서 직접 적습니다. 나머지 4칸(광고내용·광고주·광고업체·옥외광고업 등록번호)은 신청 내용대로 인쇄합니다.</div>
+          <div class="nb-note"><b>※ 게첨위치·게첨기간은 출력 시 공란으로 두세요 (협회에서 수기 작성)</b> — 출력 후 협회에서 직접 적습니다. 나머지 4칸(광고내용·광고주·광고업체·옥외광고업 등록번호)은 신청 내용대로 인쇄합니다.</div>
           <ul class="rule-list" style="margin-top:12px">
             <li class="yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg><div><b>바탕색</b> — 투명 또는 흰색. 단 <b>C·M 중 50% 이상, K 30% 이상, 사진 인쇄</b>인 경우에는 <b>반드시 백색 바탕</b>으로 인쇄합니다.</div></li>
             <li class="yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg><div><b>글꼴·색상</b> — 헤드라인 계열 글꼴을 사용하고, 테두리·글꼴 색상은 바탕과 구별되는 색을 자유롭게 사용합니다(색상 규정 없음).</div></li>

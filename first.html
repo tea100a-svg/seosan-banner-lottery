@@ -18,7 +18,7 @@
 <body data-page="first">
 <div class="demo-banner">
   <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
-  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
   <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
 </div>
 
@@ -38,9 +38,6 @@
       </div>
     </div>
     <div class="hdr-side">
-      <button class="ime-badge on" id="imeToggle" type="button" aria-pressed="true" title="영타 입력 시 한글 자동변환 ON — 영문 키보드 상태로 입력해도 한글로 바뀝니다. 누르면 끕니다." aria-label="영타 입력 시 한글 자동변환 ON">
-        <span class="dot"></span><span id="imeText">영타 입력 시 한글 자동변환 <b>ON</b></span>
-      </button>
       <div class="hdr-auth">
         <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
         <div class="hdr-user hidden" id="authUser">
@@ -92,14 +89,13 @@
     <div class="view-head">
       <div>
         <h2>미배정 잔여석 접수</h2>
-        <p id="firstRoundLine">2026년 12월 1주차(게첩 11.30~12.06) 게시분 · 미입고 회수 면을 목요일 일과시간(09:00~18:00)에만 선착순으로 접수합니다.</p>
+        <p id="firstRoundLine">2026년 12월 1주차(게첨 11.30~12.06) 게시분 · 미입고 회수 면을 목요일 일과시간(09:00~18:00)에만 선착순으로 접수합니다.</p>
       </div>
       <span class="badge b-gray" id="fcBadge"><i></i>접수 시간 아님</span>
     </div>
     <div class="chips" id="fcModeChips" style="margin-bottom:10px"></div>
     <div class="toolbar" style="margin-bottom:12px">
       <div class="chips" id="fcDayChips"></div>
-      <span class="hint-txt" style="margin:0">접수 창구는 <b>목요일 일과시간 09:00 ~ 18:00</b>입니다. 금요일은 현장 게첩 준비일로 잔여석 접수가 제한되며, 목요일 선착순 당첨분은 <b>금요일 10:00까지 입고</b>해야 합니다 (미입고 시 자동 취소).</span>
     </div>
     <div class="chips" id="fcThemeChips" style="margin-bottom:12px"></div>
     <div id="fcBanner"></div>
@@ -112,6 +108,10 @@
         <span class="sub" id="firstCount">잔여 26면</span>
       </div>
       <div class="fc-list" id="firstList"></div>
+    </div>
+    <div class="step-notes" id="fcNotes">
+      <div class="hint-txt">접수 창구는 <b>목요일 일과시간 09:00 ~ 18:00</b>입니다. 금요일은 현장 게첨 준비일로 잔여석 접수가 제한되며, 목요일 선착순 당첨분은 <b>금요일 10:00까지 입고</b>해야 합니다 (미입고 시 자동 취소). 진행 중인 주간(잔여석)은 요일·시간 제한 없이 접수하며, 설치 안내는 위 <b>설치 안내 배너</b>를 확인해 주세요.</div>
+      <div class="hint-txt">일반업체·비회원은 옥외광고업 <b>등록증 사본</b>을 접수창에서 첨부해야 하며, 첨부하면 <b>등록번호가 자동 추출</b>됩니다. 광고대행사는 회원가입 때 제출한 등록증으로 갈음합니다.</div>
     </div>
   
 </section>

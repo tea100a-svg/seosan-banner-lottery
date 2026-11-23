@@ -11,14 +11,14 @@
   if(q==='mobile'||q==='pc'){try{sessionStorage.setItem('seosan-device-view',q);localStorage.setItem('seosan-device-view',q);}catch(e){}}
   document.documentElement.setAttribute('data-device-view',v);
 }catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
-<title>협회 관리자 · 입고 · 작업지시서 · 게시 지정서 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<title>📋 작업지시서 | 협회 관리자 · 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-page="admin-docs">
 <div class="demo-banner">
   <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
-  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첩(1주일)
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
   <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
 </div>
 
@@ -38,9 +38,6 @@
       </div>
     </div>
     <div class="hdr-side">
-      <button class="ime-badge on" id="imeToggle" type="button" aria-pressed="true" title="영타 입력 시 한글 자동변환 ON — 영문 키보드 상태로 입력해도 한글로 바뀝니다. 누르면 끕니다." aria-label="영타 입력 시 한글 자동변환 ON">
-        <span class="dot"></span><span id="imeText">영타 입력 시 한글 자동변환 <b>ON</b></span>
-      </button>
       <div class="hdr-auth">
         <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
         <div class="hdr-user hidden" id="authUser">
@@ -90,10 +87,15 @@
 <section class="view active" id="view-admin">
 <div class="subtabs" id="adminSub">
   <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
-  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 우선접수</a>
+  <a class="subtab" href="admin-event.html" data-adminsub="event">🎪 행사 심사</a>
   <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
   <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">🧾 입금·입고·서식</a>
+  <a class="subtab" href="admin-pay.html" data-adminsub="pay">💰 입금 확인</a>
+  <a class="subtab" href="admin-deliver.html" data-adminsub="deliver">📦 현수막 입고</a>
+  <a class="subtab" href="admin-report.html" data-adminsub="report">🏛️ 시청 신고 표지</a>
+  <a class="subtab" href="admin-desig.html" data-adminsub="desig">🖨️ 게시 지정서</a>
+  <a class="subtab" href="admin-photos.html" data-adminsub="photos">📸 게첨사진</a>
+  <a class="subtab on" href="admin-docs.html" data-adminsub="docs">📋 작업지시서</a>
   <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
   <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
   <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 권한</a>
@@ -101,8 +103,8 @@
 </div>
 <div class="view-head">
       <div>
-        <h2>🧾 입금·입고 확인 · 현장 작업지시서 · 게시 지정서</h2>
-        <p>당첨 건의 입금·현수막 실물 입고를 확인하고, 현장 게첩 작업지시서와 시청 제출용 게시 지정서를 출력합니다.</p>
+        <h2>📋 작업지시서</h2>
+        <p>현장 게첨 <b>작업지시서</b>를 출력합니다. 설치요일·저단 포함·전체 보기를 고르고 <b>게시동 단위 굵은 구분선</b>으로 인쇄합니다.</p>
       </div>
     </div>
 <div class="role-bar" id="adminRoleBar">
@@ -113,97 +115,16 @@
       <select class="input sm" id="adminRoleSel"></select>
       <span class="sm role-note" id="adminRoleNote"></span>
     </div>
-<div class="quick-nav" id="docsQuickNav" aria-label="출력·확인 메뉴 빠른 이동">
-  <span class="qn-label">빠른 이동</span>
-  <a class="btn sm ghost" href="#payPanel">💰 입금 확인</a>
-  <a class="btn sm ghost" href="#deliverPanel">🚚 현수막 입고</a>
-  <a class="btn sm ghost" href="#reportPanel">🏛️ 시청 신고 표지</a>
-  <a class="btn sm ghost" href="#desigBatchPanel">🖨️ 게시 지정서 일괄 출력</a>
-  <a class="btn sm ghost" href="#woPanel">📋 현장 작업지시서</a>
-  <a class="btn sm ghost" href="#photoPanel">📸 게첨사진 등록</a>
+<div class="quick-nav" id="docsQuickNav" aria-label="관련 화면">
+  <span class="qn-label">관련 화면</span>
+  <a class="btn sm ghost" href="admin-photos.html">📸 게첨사진</a>
+  <a class="btn sm ghost" href="admin-desig.html">🖨️ 게시 지정서</a>
 </div>
-<div class="callout info" id="docsScopeHint" style="margin-bottom:14px">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-  <div><b>사무실무원이 쓰는 화면</b>입니다 — ① 입금 확인 → ② 현수막 입고 확인 → ③ <b>시청 신고 표지(접수현황)</b> → ④ <b>게시 지정서 일괄 출력</b> → ⑤ 현장 작업지시서 → ⑥ 게첨사진 등록 순서로 쓰면 됩니다. 위 <b>빠른 이동</b>을 누르면 해당 칸으로 바로 내려가고, <b>출력 버튼은 배정 건이 0건이어도 항상 보입니다</b>(0건이면 안내 문구만 뜹니다). ① 입금 확인은 사무실무원, ② 입고 확인·⑥ 게첨사진 등록은 현장실무원 직책에서 열립니다.</div>
-</div>
-<div class="callout warn hidden" id="payLocked"></div>
-<div class="panel" id="payPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19M6 15h4"/></svg>
-          입금 확인
-        </h3>
-        <span class="sub" id="payInfo"></span>
-      </div>
-      <div class="bulkbar">
-        <label class="check" style="margin:0;padding:0;border:0;background:transparent;font-size:12.5px">
-          <input type="checkbox" id="payAll"> <span>전체 선택</span>
-        </label>
-        <span class="spacer"></span>
-        <button class="btn sm ok" id="btnPayConfirm">선택 건 입금 확인</button>
-      </div>
-      <div class="table-wrap" id="payTable"></div>
-    </div>
-<div class="callout warn hidden" id="deliverLocked"></div>
-<div class="panel" id="deliverPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="9.5" rx="1.6"/><path d="M6 13.5v6M18 13.5v6M6.5 7.4h11M6.5 10.2h7"/></svg>
-          현수막 실물 입고 확인
-        </h3>
-        <span class="sub" id="deliverInfo"></span>
-      </div>
-      <div class="bulkbar">
-        <label class="check" style="margin:0;padding:0;border:0;background:transparent;font-size:12.5px">
-          <input type="checkbox" id="deliverAll"> <span>전체 선택</span>
-        </label>
-        <span class="spacer"></span>
-        <button class="btn sm ok" id="btnDeliverConfirm">선택 건 입고 확인</button>
-        <button class="btn sm danger" id="btnMissed">수요일 미입고 일괄 취소(반려)</button>
-      </div>
-      <div class="callout warn" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
-        <div>입고 마감은 <b>수요일 18:00</b>입니다. 일괄 취소를 실행하면 미입고 당첨 건이 <b>자동 취소(반려 · 사유: 현수막 실물 미제출)</b>되고, 그 매는 차순위 신청자 또는 <b>목요일 선착순 접수</b>로 즉시 전환됩니다. 목요일에 남은 매는 금요일부터 접수가 제한되며 다음 주 회차로 이월됩니다.</div>
-      </div>
-      <div class="table-wrap" id="deliverTable"></div>
-    </div>
-<div class="panel" id="reportPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
-          🏛️ 시청 신고 표지 — 현수막 접수현황
-        </h3>
-        <span class="sub" id="reportInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>시청에 제출할 <b>현수막 접수현황 표지</b>입니다. 업체별 건수·매수·수수료·세액·인지대·금액을 집계하고, <b>공문 건은 인지대 -</b>(면제·살구색)로 따로 모읍니다. <b>A4 세로 1장</b>으로 인쇄합니다.</div>
-      </div>
-      <div class="off-actions" style="margin-bottom:10px">
-        <button class="btn primary" id="btnReportShow" type="button">미리보기</button>
-        <button class="btn" id="btnReportPrint2" type="button">A4 1장 인쇄</button>
-      </div>
-      <div class="report-preview" id="reportPreview"></div>
-    </div>
-<div class="panel" id="desigBatchPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-          🖨️ 게시 지정서 일괄 출력
-        </h3>
-        <span class="sub" id="desigBatchInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>이번 회차 <b>확정·배정 건 전체</b> 또는 <b>체크한 건</b>의 시청제출용 게시 지정서를 한 번에 인쇄합니다. <b>건마다 A4 1장</b>으로 페이지가 나뉘고, 60칸 2단 표·서명란 없음 규격은 단건 출력과 같습니다.</div>
-      </div>
-      <div id="desigBatchList"></div>
-    </div>
 <div class="panel" id="woPanel">
       <div class="admin-head">
         <h3>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7.5h8M8 11h8M8 14.5h5"/><path d="M15.5 19.5l1.5 1.5 3-3.5"/></svg>
-          현장 게첩 작업지시서
+          현장 게첨 작업지시서
         </h3>
         <span class="sub" id="woInfo"></span>
       </div>
@@ -237,38 +158,7 @@
       </div>
       <style id="printPageRule"></style>
     </div>
-<div class="callout warn hidden" id="photoLocked"></div>
-<div class="panel" id="photoPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.1-1.6A1.5 1.5 0 0 1 9 4.8h6a1.5 1.5 0 0 1 1.2.6L17.3 7h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5Z"/><circle cx="12" cy="13" r="3.4"/></svg>
-          📸 현장 게첨사진 등록 (게시대 동 단위)
-        </h3>
-        <span class="sub" id="photoInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:12px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>현장 게첩이 끝난 뒤 <b>게시대 · 동 단위</b>로 사진을 올립니다. 사진은 그 주차에 그 게시대·동으로 배정된 <b>접수번호에 자동으로 연결</b>되어, 접수자가 <b>마이페이지 → 접수 상세</b>에서 사진을 내려받거나 <b>게첨 확인서(A4)</b>로 인쇄할 수 있습니다. 등록은 <b>현장실무원 · 총괄 관리자</b>가 합니다.</div>
-      </div>
-      <div class="callout warn" id="photoRetainNote" style="margin-bottom:12px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16.4v.1"/></svg>
-        <div><b>사진 보관기간: 등록일로부터 3개월(90일) 후 자동 삭제됩니다.</b> 게첨 완료 사진은 등록일로부터 3개월(90일)간 보관 후 자동 삭제됩니다. 증빙이 필요한 경우 기간 내에 미리 다운로드하거나 인쇄해 보관해 주세요.<br><span class="sm" id="photoRetainInfo"></span></div>
-      </div>
-      <div class="photo-tools">
-        <label for="photoWeek">주차 <select class="input sm" id="photoWeek"></select></label>
-        <label for="photoPid">게시대 <select class="input sm" id="photoPid"></select></label>
-        <label for="photoDong">동 <select class="input sm" id="photoDong"></select></label>
-        <span class="spacer"></span>
-        <input type="file" id="photoFile" accept="image/*" multiple style="display:none">
-        <button class="btn sm primary" id="btnPhotoPick" type="button">📁 사진 선택해서 올리기</button>
-        <button class="btn sm" id="btnPhotoSample" type="button">🧪 시연용 샘플 게첨사진 생성</button>
-        <span class="photo-msg" id="photoMsg"></span>
-      </div>
-      <div class="sect-label" style="margin:2px 0 6px">이 게시대·동에 배정된 접수 <span id="photoAwardCount"></span></div>
-      <div class="table-wrap" id="photoAwardList"></div>
-      <div class="sect-label" style="margin:14px 0 6px">등록된 게첨사진 <span id="photoCount"></span></div>
-      <div class="photo-grid" id="photoList"></div>
-    </div>
+
 <div class="panel" id="locPanel">
       <div class="admin-head">
         <h3>
@@ -279,7 +169,7 @@
       </div>
       <div class="callout info" style="margin-bottom:12px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>게첩 사전작업용 화면입니다. 왼쪽 <b>이번 주 배정·접수 목록</b>에서 업체를 누르면 오른쪽에 <b>설치코스(설치요일 · 게시장소 · 관리번호 · 주소 · 위치설명)</b>가 바로 나옵니다. 현수막을 분류해 <b>게첨 사전준비 완료</b>를 체크하고 <b>인쇄(A4)</b>로 작업반에 넘기세요.</div>
+        <div>게첨 사전작업용 화면입니다. 왼쪽 <b>이번 주 배정·접수 목록</b>에서 업체를 누르면 오른쪽에 <b>설치코스(설치요일 · 게시장소 · 관리번호 · 주소 · 위치설명)</b>가 바로 나옵니다. 현수막을 분류해 <b>게첨 사전준비 완료</b>를 체크하고 <b>인쇄(A4)</b>로 작업반에 넘기세요.</div>
       </div>
       <div class="loc-wrap">
         <div class="loc-left">
