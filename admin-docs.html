@@ -111,10 +111,11 @@
   <a class="btn sm ghost" href="#reportPanel">🏛️ 시청 신고 표지</a>
   <a class="btn sm ghost" href="#desigBatchPanel">🖨️ 게시 지정서 일괄 출력</a>
   <a class="btn sm ghost" href="#woPanel">📋 현장 작업지시서</a>
+  <a class="btn sm ghost" href="#photoPanel">📸 게첨사진 등록</a>
 </div>
 <div class="callout info" id="docsScopeHint" style="margin-bottom:14px">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-  <div><b>사무실무원이 쓰는 화면</b>입니다 — ① 입금 확인 → ② 현수막 입고 확인 → ③ <b>시청 신고 표지(접수현황)</b> → ④ <b>게시 지정서 일괄 출력</b> → ⑤ 현장 작업지시서 순서로 쓰면 됩니다. 위 <b>빠른 이동</b>을 누르면 해당 칸으로 바로 내려가고, <b>출력 버튼은 배정 건이 0건이어도 항상 보입니다</b>(0건이면 안내 문구만 뜹니다). ① 입금 확인은 사무실무원, ② 입고 확인은 현장실무원 직책에서 열립니다.</div>
+  <div><b>사무실무원이 쓰는 화면</b>입니다 — ① 입금 확인 → ② 현수막 입고 확인 → ③ <b>시청 신고 표지(접수현황)</b> → ④ <b>게시 지정서 일괄 출력</b> → ⑤ 현장 작업지시서 → ⑥ 게첨사진 등록 순서로 쓰면 됩니다. 위 <b>빠른 이동</b>을 누르면 해당 칸으로 바로 내려가고, <b>출력 버튼은 배정 건이 0건이어도 항상 보입니다</b>(0건이면 안내 문구만 뜹니다). ① 입금 확인은 사무실무원, ② 입고 확인·⑥ 게첨사진 등록은 현장실무원 직책에서 열립니다.</div>
 </div>
 <div class="callout warn hidden" id="payLocked"></div>
 <div class="panel" id="payPanel">
@@ -226,6 +227,34 @@
         <div class="wo-sample">※ 시연용 출력물입니다. 실제 작업지시서에는 사무국 직인을 날인합니다.</div>
       </div>
       <style id="printPageRule"></style>
+    </div>
+<div class="callout warn hidden" id="photoLocked"></div>
+<div class="panel" id="photoPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.1-1.6A1.5 1.5 0 0 1 9 4.8h6a1.5 1.5 0 0 1 1.2.6L17.3 7h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5Z"/><circle cx="12" cy="13" r="3.4"/></svg>
+          📸 현장 게첨사진 등록 (게시대 동 단위)
+        </h3>
+        <span class="sub" id="photoInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>현장 게첩이 끝난 뒤 <b>게시대 · 동 단위</b>로 사진을 올립니다. 사진은 그 주차에 그 게시대·동으로 배정된 <b>접수번호에 자동으로 연결</b>되어, 접수자가 <b>마이페이지 → 접수 상세</b>에서 사진을 내려받거나 <b>게첨 확인서(A4)</b>로 인쇄할 수 있습니다. 등록은 <b>현장실무원 · 총괄 관리자</b>가 합니다.</div>
+      </div>
+      <div class="photo-tools">
+        <label for="photoWeek">주차 <select class="input sm" id="photoWeek"></select></label>
+        <label for="photoPid">게시대 <select class="input sm" id="photoPid"></select></label>
+        <label for="photoDong">동 <select class="input sm" id="photoDong"></select></label>
+        <span class="spacer"></span>
+        <input type="file" id="photoFile" accept="image/*" multiple style="display:none">
+        <button class="btn sm primary" id="btnPhotoPick" type="button">📁 사진 선택해서 올리기</button>
+        <button class="btn sm" id="btnPhotoSample" type="button">🧪 시연용 샘플 게첨사진 생성</button>
+        <span class="photo-msg" id="photoMsg"></span>
+      </div>
+      <div class="sect-label" style="margin:2px 0 6px">이 게시대·동에 배정된 접수 <span id="photoAwardCount"></span></div>
+      <div class="table-wrap" id="photoAwardList"></div>
+      <div class="sect-label" style="margin:14px 0 6px">등록된 게첨사진 <span id="photoCount"></span></div>
+      <div class="photo-grid" id="photoList"></div>
     </div>
 <div class="panel" id="locPanel">
       <div class="admin-head">

@@ -2239,7 +2239,9 @@
     suLicName: '', suLicData: '', suLicMime: '', licFromMember: false,
     adminSub: 'draw', guideSub: 'file', sort: 'comp-desc', pSort: 'comp-desc', calOpen: false, statusPage: 0, pickPage: 0, statusAll: true, pickAll: false,
     statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, drawWeek: ROUND.postStart, calMonth: {}, offSlots: {},
-    themeSel: {}, themeSearch: '', themeEditSel: {} };
+    themeSel: {}, themeSearch: '', themeEditSel: {},
+    /* 현장 게첨사진 — 게시대 동 단위 등록 화면의 선택값 (2026-11-23) */
+    photoWeek: '', photoPid: '', photoDong: '' };
 
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
   function pad4(n) { return ('000' + n).slice(-4); }
@@ -3919,6 +3921,7 @@
       apps: apps,
       draws: [],
       drawArchive: pastDrawArchiveSeed(apps),
+      photos: photoSampleSeed(apps),
       members: SEED_MEMBERS.map(function (m) { var o = {}; for (var k in m) { o[k] = m[k]; } return o; }),
       /* 테마별 추천 코스 — 기본 3종(관리자 화면에서 게시대 추가·해제·테마 삭제 가능) */
       themeCourses: defaultThemeCourses(),
@@ -6120,6 +6123,498 @@
     }, 600);
   }
 
+  /* ══════════════════════════════════════════════════════════════════════
+     7-9. 현장 게첨사진 — 게시대 '동' 단위 등록 → 접수번호별 자동 매칭 · 다운로드 · 인쇄
+     (2026-11-23 김재봉 님 지시 "실무자가 게첨사진 올리고 접수자는 접수번호별로
+      사진 인쇄하거나 다운 받을수 있으면 좋겠다. 게첨사진은 게시대 동 단위로 올릴께.")
+     · db.photos 원소: { id, week(게첩 주 시작일), pid, dong('A'… · ''=동 미지정·1면),
+                         at, by, name, data(DataURL), w, h, sample }
+     · 매칭: 접수의 배정(assignedPlaces[].slot)에서 동 글자를 뽑아 사진의 dong 과 비교한다.
+       한쪽이 ''(동 미지정)이면 그 게시대의 사진과 모두 연결한다.
+     ══════════════════════════════════════════════════════════════════════ */
+  var PHOTO_MAX_SIDE = 1280, PHOTO_QUALITY = 0.72;
+  var PHOTO_SAMPLE_PLACES = ['의료원사거리', '동문동', '석지제사거리', '중앙고', '부춘', '오토밸리', '코아루'];
+  function photoStore() { if (!Array.isArray(db.photos)) db.photos = []; return db.photos; }
+  function dongLetterOfSlot(slot) { var c = String(slot || ''); return /^[A-G]/.test(c) ? c.charAt(0) : ''; }
+  function photoWeekOf() { return weekStartOf(ui.photoWeek || addDays(currentPostingWeek(), -7)); }
+  function escXml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m];
+    });
+  }
+  function boardLettersOf(p) {
+    var out = [];
+    if (p) slotCodesOf(p).forEach(function (s) { if (out.indexOf(s.letter) < 0) out.push(s.letter); });
+    if (!out.length) out.push('');
+    return out;
+  }
+  function photoDongLabel(pid, letter) {
+    var p = boardById(pid);
+    if (String(letter || '')) return String(letter) + '동';
+    return (p && (Number(p.boards) || 1) > 1) ? '동 미지정' : '전체(1면)';
+  }
+  function photoLooseMatch(awardLetter, photoLetter) {
+    var A = String(awardLetter || ''), P = String(photoLetter || '');
+    return A === P || P === '' || A === '';
+  }
+  /* 사진 실데이터 — 업로드본은 data(DataURL), 시연 샘플은 저장 없이 그때그때 합성한다 */
+  function photoDataOf(ph) {
+    if (!ph) return '';
+    if (ph.data) return ph.data;
+    var o = ph.svg || {};
+    return samplePhotoSvg({ place: o.place || '', dong: o.dong || '', text: o.text || '', at: o.at || ph.at || '', seed: o.seed || 1 });
+  }
+  function photoMeta(ph) {
+    return { id: ph.id, week: weekStartOf(ph.week), pid: ph.pid, dong: String(ph.dong || ''), at: ph.at || '', by: ph.by || '',
+      name: ph.name || '', w: ph.w || 0, h: ph.h || 0, sample: !!ph.sample, size: String(photoDataOf(ph) || '').length,
+      head: String(photoDataOf(ph) || '').slice(0, 40) };
+  }
+  function photosOfCell(week, pid, letter) {
+    var s = weekStartOf(week), L = String(letter == null ? '' : letter);
+    return photoStore().filter(function (ph) {
+      return weekStartOf(ph.week) === s && String(ph.pid) === String(pid) && String(ph.dong || '') === L;
+    }).sort(function (x, y) {
+      return String(x.at || '').localeCompare(String(y.at || '')) || String(x.id).localeCompare(String(y.id));
+    });
+  }
+  function photoAppsOfCell(week, pid, letter) {
+    var s = weekStartOf(week);
+    return db.apps.filter(function (a) {
+      if (['반려', '미입고취소', '미입금취소', '본인취소', '접수취소', '낙첨'].indexOf(a.status) >= 0) return false;
+      if (weekStartOf(a.start || ROUND.postStart) !== s) return false;
+      return awardedPlacesOf(a).some(function (x) {
+        return String(x.pid) === String(pid) && photoLooseMatch(dongLetterOfSlot(x.slot), letter);
+      });
+    });
+  }
+  function photosForApp(a) {
+    if (!a) return [];
+    var s = weekStartOf(a.start || ROUND.postStart), out = [];
+    photoStore().forEach(function (ph) {
+      if (weekStartOf(ph.week) !== s) return;
+      var hit = awardedPlacesOf(a).some(function (x) {
+        return String(x.pid) === String(ph.pid) && photoLooseMatch(dongLetterOfSlot(x.slot), ph.dong);
+      });
+      if (hit) out.push(ph);
+    });
+    return out.sort(function (x, y) {
+      return String(x.at || '').localeCompare(String(y.at || '')) || String(x.id).localeCompare(String(y.id));
+    });
+  }
+  function photoNextId() {
+    var n = 1;
+    photoStore().forEach(function (p) { var m = /^PH-(\d+)$/.exec(String(p.id)); if (m && Number(m[1]) >= n) n = Number(m[1]) + 1; });
+    return 'PH-' + pad4(n);
+  }
+  /* 시연용 게첨사진 — 5단 현수막 게시대에 현수막이 걸린 현장 느낌의 SVG(용량 가볍게) */
+  function samplePhotoSvg(o) {
+    o = o || {};
+    var ad = String(o.text || '현수막 게첩 완료');
+    var place = String(o.place || '게시대');
+    var dong = String(o.dong || '');
+    var at = String(o.at || '');
+    var k = Math.abs(Number(o.seed) || 1);
+    var hue = (k * 37) % 360;
+    var rows = 5, y0 = 92, rowH = 48, x0 = 236, w = 500;
+    var cards = '';
+    for (var r = 0; r < rows; r++) {
+      var yy = y0 + r * rowH;
+      var on = (r + k) % 4 !== 3;
+      var fill = on ? 'hsl(' + ((hue + r * 43) % 360) + ',58%,' + (74 - r * 2) + '%)' : '#e3e9f0';
+      var t = on ? ad.slice(0, 16) : '';
+      cards += '<rect x="' + x0 + '" y="' + yy + '" width="' + w + '" height="' + (rowH - 6) + '" rx="2" fill="' + fill + '" stroke="#4c5866" stroke-width="2"/>' +
+        (t ? '<text x="' + (x0 + 14) + '" y="' + (yy + 28) + '" font-family="sans-serif" font-size="17" font-weight="700" fill="#15202c">' + escXml(t) + '</text>' : '');
+    }
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640">' +
+      '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe1f4"/><stop offset="1" stop-color="#eff5fb"/></linearGradient></defs>' +
+      '<rect width="960" height="640" fill="url(#sky)"/>' +
+      '<rect y="470" width="960" height="170" fill="#a9bda4"/>' +
+      '<rect y="556" width="960" height="84" fill="#77828c"/>' +
+      '<rect x="0" y="236" width="140" height="234" fill="#b3c1cf"/>' +
+      '<rect x="18" y="258" width="30" height="28" fill="#97a9ba"/><rect x="62" y="258" width="30" height="28" fill="#97a9ba"/>' +
+      '<rect x="18" y="300" width="30" height="28" fill="#97a9ba"/><rect x="62" y="300" width="30" height="28" fill="#97a9ba"/>' +
+      '<circle cx="158" cy="330" r="52" fill="#7fa66b"/><rect x="152" y="374" width="12" height="96" fill="#6b5744"/>' +
+      '<circle cx="826" cy="330" r="46" fill="#7fa66b"/><rect x="820" y="368" width="12" height="102" fill="#6b5744"/>' +
+      '<rect x="226" y="80" width="520" height="276" rx="4" fill="#f7f9fb" stroke="#404b58" stroke-width="6"/>' +
+      cards +
+      '<rect x="234" y="356" width="16" height="160" fill="#59636f"/><rect x="722" y="356" width="16" height="160" fill="#59636f"/>' +
+      '<rect x="214" y="510" width="60" height="16" fill="#7b8794"/><rect x="702" y="510" width="60" height="16" fill="#7b8794"/>' +
+      '<rect x="10" y="92" width="176" height="74" rx="8" fill="#ffffff" opacity="0.94" stroke="#93a1b0"/>' +
+      '<text x="26" y="122" font-family="sans-serif" font-size="16" font-weight="700" fill="#1c2a3a">' + escXml(place.slice(0, 12)) + '</text>' +
+      '<text x="26" y="148" font-family="sans-serif" font-size="14" fill="#3c4a5a">' + escXml(dong || '현수막 게시대') + '</text>' +
+      '<rect x="0" y="590" width="960" height="50" fill="#0d1e33" opacity="0.78"/>' +
+      '<text x="18" y="621" font-family="sans-serif" font-size="17" fill="#ffffff">현장 게첨 확인 · 시연용' + (at ? ' · ' + escXml(at) : '') + '</text>' +
+      '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  /* 시드 단계(db 가 아직 없는 시점)에서도 쓰는 게시대 조회 — RAW/LOW 상수만 본다 */
+  function photoRawBoard(id) {
+    var i;
+    for (i = 0; i < PLACEMENTS.length; i++) { if (PLACEMENTS[i].id === id) return PLACEMENTS[i]; }
+    for (i = 0; i < LOW_BOARDS.length; i++) { if (LOW_BOARDS[i].id === id) return LOW_BOARDS[i]; }
+    return null;
+  }
+  function photoRawName(id) { var p = photoRawBoard(id); return p ? p.name : ''; }
+  function photoRawLetters(id) {
+    var p = photoRawBoard(id), boards = Number(p && p.boards) || 1, out = [], i;
+    if (boards <= 1) return [''];
+    for (i = 0; i < boards; i++) out.push(colLabelOf(p, i));
+    return out;
+  }
+  function photoIsMajor(name) {
+    return PHOTO_SAMPLE_PLACES.some(function (q) { return String(name || '').indexOf(q) >= 0; });
+  }
+  /* 시연 데이터 — 이번 주 게첩분 + 지난 3주(11월 1·2·3주차) 주요 게시대 '동' 단위 샘플 사진
+     · 주요 게시대(의료원사거리·동문동·석지제사거리·중앙고·부춘·오토밸리·코아루)는 실제 동마다,
+       나머지 배정 게시대는 게시대 단위(동 미지정)로 1장씩 넣어 모든 당첨 건이 사진을 갖게 한다. */
+  function photoSampleSeed(apps) {
+    var base = currentPostingWeek();
+    var weeks = [addDays(base, -7), addDays(base, -14), addDays(base, -21), addDays(base, -28)];
+    var out = [], n = 0;
+    weeks.forEach(function (wk) {
+      var cellMap = {}, order = [];
+      function addCell(pid, letter, app) {
+        var L = String(letter || '');
+        var key = wk + '|' + pid + '|' + L;
+        if (cellMap[key]) return;
+        cellMap[key] = { key: key, wk: wk, pid: pid, letter: L, app: app, major: photoIsMajor(photoRawName(pid)) };
+        order.push(cellMap[key]);
+      }
+      var weekApps = (apps || []).filter(function (a) {
+        return weekStartOf(a.start || ROUND.postStart) === wk &&
+          ['반려', '미입고취소', '미입금취소', '본인취소', '접수취소', '낙첨'].indexOf(a.status) < 0;
+      });
+      var pidApp = {};
+      weekApps.forEach(function (a) {
+        awardedPlacesOf(a).forEach(function (x) { if (!pidApp[x.pid]) pidApp[x.pid] = a; });
+      });
+      /* ① 주요 게시대 — 실제 동마다 사진 */
+      Object.keys(pidApp).forEach(function (pid) {
+        if (!photoIsMajor(photoRawName(pid))) return;
+        photoRawLetters(pid).forEach(function (L) { addCell(pid, L, pidApp[pid]); });
+      });
+      /* ② 그 밖의 배정 게시대 — 게시대 단위(동 미지정) 1장 */
+      Object.keys(pidApp).forEach(function (pid) {
+        if (photoIsMajor(photoRawName(pid))) return;
+        addCell(pid, '', pidApp[pid]);
+      });
+      /* ③ 남은 배정(동 지정)도 빠뜨리지 않는다 */
+      weekApps.forEach(function (a) {
+        awardedPlacesOf(a).forEach(function (x) { addCell(x.pid, dongLetterOfSlot(x.slot), a); });
+      });
+      order.slice(0, 26).forEach(function (c) {
+        n += 1;
+        var pnm = photoRawName(c.pid) || '게시대';
+        var at = c.wk + ' ' + (n % 3 === 0 ? '09:40' : (n % 3 === 1 ? '08:55' : '10:20'));
+        var ad = (c.app && c.app.text) ? c.app.text : '현수막 게첩 완료';
+        out.push({
+          id: 'PH-S' + pad4(n), week: c.wk, pid: c.pid, dong: c.letter, at: at,
+          by: n % 4 === 0 ? '김현장 (현장실무원)' : '이현장 (현장실무원)',
+          name: '게첨사진_' + pnm + '_' + (c.letter ? c.letter + '동' : '전체') + '.svg',
+          svg: { place: pnm, dong: c.letter ? c.letter + '동' : '', text: ad, at: at, seed: n },
+          w: 960, h: 640, sample: true
+        });
+      });
+    });
+    return out;
+  }
+  function photoCanEdit() { var r = currentAccessRole(); return r === 'field' || r === 'super'; }
+  function photoByLabel() { return currentAccessRole() === 'super' ? '총괄 관리자' : (accessRoleLabel() + ' · ' + ((accessOfficer() || {}).name || '현장실무원')); }
+  function addPhotoRecord(o) {
+    o = o || {};
+    var ph = {
+      id: photoNextId(), week: weekStartOf(o.week || photoWeekOf()), pid: o.pid || ui.photoPid,
+      dong: String(o.dong == null ? ui.photoDong : o.dong), at: o.at || nowStamp(), by: o.by || photoByLabel(),
+      name: o.name || '게첨사진.png', data: o.data || '', w: o.w || 0, h: o.h || 0, sample: !!o.sample
+    };
+    photoStore().push(ph);
+    save();
+    return ph;
+  }
+  function readAndScalePhoto(file, cb) {
+    var fr = new FileReader();
+    fr.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var w = img.naturalWidth || img.width || 900, h = img.naturalHeight || img.height || 600;
+          var sc = Math.min(1, PHOTO_MAX_SIDE / Math.max(w, h));
+          var c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+          var ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          cb(c.toDataURL('image/jpeg', PHOTO_QUALITY), c.width, c.height);
+        } catch (e) { cb(String(fr.result || ''), img.width || 0, img.height || 0); }
+      };
+      img.onerror = function () { cb(String(fr.result || ''), 0, 0); };
+      img.src = String(fr.result || '');
+    };
+    fr.onerror = function () { cb('', 0, 0); };
+    fr.readAsDataURL(file);
+  }
+  function handlePhotoFiles(files) {
+    if (!photoCanEdit()) { toast('게첨사진 등록은 현장실무원·총괄 관리자만 할 수 있습니다.', true); return; }
+    var arr = Array.prototype.slice.call(files || []), imgs = arr.filter(function (f) { return /^image\//.test(f.type || '') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name || ''); });
+    if (!imgs.length) { toast('사진 파일(PNG·JPG)을 선택해 주세요.', true); return; }
+    var wk = photoWeekOf(), pid = ui.photoPid, L = ui.photoDong, n = 0, left = imgs.length;
+    imgs.forEach(function (f) {
+      readAndScalePhoto(f, function (data, w, h) {
+        if (data) { addPhotoRecord({ week: wk, pid: pid, dong: L, data: data, w: w, h: h, name: f.name || '게첨사진.jpg' }); n += 1; }
+        left -= 1;
+        if (!left) {
+          renderPhotoPanel();
+          var p = boardById(pid);
+          toast(n + '장의 게첨사진을 등록했습니다 — ' + (p ? p.name : '') + ' ' + photoDongLabel(pid, L) + ' (접수번호에 자동 연결)');
+        }
+      });
+    });
+  }
+  function addSamplePhotos() {
+    if (!photoCanEdit()) { toast('게첨사진 등록은 현장실무원·총괄 관리자만 할 수 있습니다.', true); return; }
+    var wk = photoWeekOf(), pid = ui.photoPid, L = ui.photoDong;
+    if (!pid) { toast('게시대를 먼저 선택해 주세요.', true); return; }
+    var p = boardById(pid), apps = photoAppsOfCell(wk, pid, L);
+    var before = photosOfCell(wk, pid, L).length, n = 2;
+    for (var i = 0; i < n; i++) {
+      addPhotoRecord({
+        week: wk, pid: pid, dong: L, sample: true, w: 960, h: 640,
+        name: '게첨사진_시연_' + (before + i + 1) + '.svg',
+        svg: {
+          place: p ? p.name : '게시대', dong: photoDongLabel(pid, L),
+          text: apps.length ? (apps[i % apps.length].text || '현수막') : '현수막 게첩 완료',
+          at: nowStamp(), seed: before + i + 13
+        }
+      });
+    }
+    renderPhotoPanel();
+    toast(n + '장의 시연용 샘플 게첨사진을 만들었습니다 — 인쇄·다운로드 확인용');
+  }
+  function deletePhoto(id) {
+    var store = photoStore(), i = -1;
+    store.forEach(function (x, k) { if (x.id === id) i = k; });
+    if (i < 0) return;
+    store.splice(i, 1);
+    save(); renderPhotoPanel();
+    toast('게첨사진을 삭제했습니다.');
+  }
+  function previewPhoto(id) {
+    var ph = null;
+    photoStore().forEach(function (x) { if (x.id === id) ph = x; });
+    if (!ph) return;
+    var p = boardById(ph.pid);
+    openModal({
+      title: '게첨사진 미리보기', sub: (p ? p.name : '게시대') + ' ' + photoDongLabel(ph.pid, ph.dong) + ' · ' + weekRangeTxt(ph.week), wide: true,
+      body: '<div style="text-align:center"><img src="' + photoDataOf(ph) + '" alt="게첨사진" style="max-width:100%;height:auto;border:1px solid #ccd6e2;border-radius:8px"></div>' +
+        '<div class="hint-txt" style="margin-top:8px">' + esc(ph.at || '') + ' · ' + esc(ph.by || '') + ' · ' + esc(ph.name || '') + '</div>',
+      foot: '<button class="btn ghost" data-close type="button">닫기</button>'
+    });
+  }
+  function photoPngOf(ph, cb) {
+    var done = false;
+    var img = new Image();
+    img.onload = function () {
+      if (done) return; done = true;
+      try {
+        var w = img.naturalWidth || img.width || 900, h = img.naturalHeight || img.height || 600;
+        var sc = Math.min(1, PHOTO_MAX_SIDE / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        cb(c.toDataURL('image/png'), c.width, c.height);
+      } catch (e) { cb(photoDataOf(ph), ph.w || 900, ph.h || 600); }
+    };
+    img.onerror = function () { if (done) return; done = true; cb(photoDataOf(ph), ph.w || 900, ph.h || 600); };
+    img.src = photoDataOf(ph);
+  }
+  function downloadDataUrl(url, name) {
+    var a = document.createElement('a');
+    a.href = url; a.download = name; a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 0);
+  }
+  function photoSafeName(s) { return String(s == null ? '' : s).replace(/[\\/:*?"<>|\s]+/g, '').slice(0, 24); }
+  function photoFileName(a, ph) {
+    var p = boardById(ph.pid);
+    return '게첨사진_' + photoSafeName(a ? a.id : '') + '_' + photoSafeName(p ? p.name : '게시대') + '_' +
+      photoSafeName(ph.dong ? ph.dong + '동' : '전체') + '.png';
+  }
+  function downloadPhoto(a, phId) {
+    var ph = null;
+    photoStore().forEach(function (x) { if (x.id === phId) ph = x; });
+    if (!ph) { toast('사진을 찾을 수 없습니다.', true); return; }
+    var name = photoFileName(a, ph);
+    photoPngOf(ph, function (url) {
+      downloadDataUrl(url, name);
+      toast('게첨사진을 내려받았습니다 — ' + name);
+    });
+  }
+  /* 게첨 확인서(사진) — 건마다 A4 1장 */
+  function photoProofPageHTML(a, ph) {
+    var p = boardById(ph.pid);
+    var nm = p ? p.name : '—';
+    var dong = photoDongLabel(ph.pid, ph.dong);
+    var wk = weekStartOf(ph.week);
+    return '<div class="pp-page" data-photoid="' + esc(ph.id) + '">' +
+      '<div class="pp-head"><b>게 첩 확 인 서</b><span>' + esc(weekRangeTxt(wk)) + ' 게시 · ' + esc(nm) + ' ' + esc(dong) + '</span></div>' +
+      '<table class="pp-info">' +
+        '<tr><th>접수번호</th><td>' + esc(a.id) + '</td><th>게시대 · 동</th><td>' + esc(nm) + ' ' + esc(dong) + '</td></tr>' +
+        '<tr><th>신청 업체</th><td>' + esc(a.company || '—') + '</td><th>실제 광고주</th><td>' + esc(advOfApp(a).name || '—') + '</td></tr>' +
+        '<tr><th>현수막 문구</th><td colspan="3">' + esc(a.text || '—') + '</td></tr>' +
+        '<tr><th>게첩 기간</th><td>' + esc(dfmt(a.start || ROUND.postStart) + ' ~ ' + dfmt(roundPostEnd(a))) + '</td>' +
+          '<th>사진 등록</th><td>' + esc((ph.at || '') + ' · ' + (ph.by || '')) + '</td></tr>' +
+      '</table>' +
+      '<div class="pp-photo"><img src="' + photoDataOf(ph) + '" alt="게첨사진"></div>' +
+      '<div class="pp-foot">위 사진은 위 접수 건의 현수막이 지정게시대에 게첩된 현장 사진입니다. · (사)충청남도옥외광고협회 서산시지부 · <b>시연용</b></div>' +
+      '</div>';
+  }
+  function showPhotoProof(id, phId) {
+    var a = findApp(id);
+    if (!a) { toast('접수를 찾을 수 없습니다.', true); return; }
+    var list = photosForApp(a);
+    if (phId) list = list.filter(function (ph) { return ph.id === phId; });
+    if (!list.length) {
+      openModal({
+        title: '게첨 확인서(사진) 인쇄', sub: a.id,
+        body: '<div class="callout info">' + IC.info + '<div><b>게첨사진 등록 대기중</b>입니다. 현장실무자가 게시대 동 단위로 사진을 등록하면 이 접수번호에 자동으로 연결되어 인쇄할 수 있습니다.</div></div>',
+        foot: '<button class="btn ghost" data-close type="button">닫기</button>'
+      });
+      return;
+    }
+    openModal({
+      title: '게첨 확인서(사진) 인쇄', sub: a.id + ' · ' + list.length + '장 · A4 1장씩', wide: true,
+      body: '<div class="callout info" style="margin-bottom:12px">' + IC.doc +
+        '<div>접수번호·광고주·문구·게시대/동·게첩기간과 <b>게첨사진</b>이 함께 인쇄됩니다. <b>사진마다 A4 1장</b>입니다.</div></div>' +
+        '<div id="photoProof">' + list.map(function (ph) { return photoProofPageHTML(a, ph); }).join('') + '</div>',
+      foot: '<button class="btn ghost" data-close type="button">닫기</button>' +
+        '<button class="btn primary" id="btnPhotoProofPrint" type="button">' + IC.print + list.length + '장 인쇄</button>',
+      after: function () { onEl('#btnPhotoProofPrint', 'click', function () { printPhotoProof(); }); }
+    });
+  }
+  function printPhotoProof() {
+    var rule = $('#printPageRule');
+    if (rule) rule.textContent = '@page{size:A4 portrait;margin:8mm}';
+    if (document.body && document.body.classList) document.body.classList.add('print-photo');
+    try { window.print(); } catch (e) { /* 인쇄 불가 환경 */ }
+    setTimeout(function () {
+      if (document.body && document.body.classList) document.body.classList.remove('print-photo');
+      if (rule) rule.textContent = '';
+    }, 600);
+  }
+  /* 사진 카드 — 관리자(미리보기·삭제) / 접수자(다운로드·인쇄) */
+  function photoCardHTML(ph, mode, a) {
+    var p = boardById(ph.pid);
+    var cell = (p ? p.name : '게시대') + ' ' + photoDongLabel(ph.pid, ph.dong);
+    var apps = photoAppsOfCell(ph.week, ph.pid, ph.dong);
+    var btns = (mode === 'admin')
+      ? '<button class="btn sm ghost" type="button" data-photoview="' + esc(ph.id) + '">🔍 미리보기</button>' +
+        '<button class="btn sm danger" type="button" data-photodel="' + esc(ph.id) + '">🗑 삭제</button>'
+      : '<button class="btn sm primary" type="button" data-photodl="' + esc(ph.id) + '" data-photofor="' + esc(a ? a.id : '') + '">📥 사진 다운로드</button>' +
+        '<button class="btn sm" type="button" data-photoproof="' + esc(a ? a.id : '') + '" data-phid="' + esc(ph.id) + '">🖨️ 인쇄</button>';
+    return '<div class="photo-card' + (ph.sample ? ' sample' : '') + '">' +
+      '<div class="pc-img"><img src="' + photoDataOf(ph) + '" alt="' + esc(cell) + ' 게첨사진" loading="lazy"></div>' +
+      '<div class="pc-meta"><b>' + esc(cell) + '</b>' +
+        '<span>' + esc(ph.at || '') + ' · ' + esc(ph.by || '') + '</span>' +
+        '<span>접수 ' + apps.length + '건 연결 · ' + esc(weekRangeTxt(ph.week)) + '</span></div>' +
+      '<div class="pc-btns">' + btns + '</div></div>';
+  }
+  /* 접수자 마이페이지 — 접수번호 기준으로 배정 게시대·동 사진 자동 표시 */
+  function photoSectionHTML(a) {
+    var list = photosForApp(a);
+    if (!list.length) {
+      return '<div class="callout info" id="mpPhotoBox" style="margin-top:14px">' + IC.info +
+        '<div><b>📸 게첨사진 등록 대기중</b> — 현장 게첩 후 실무자가 게시대 동 단위로 사진을 등록하면, 이 접수번호에 배정된 게시대·동의 사진이 여기에 자동으로 표시됩니다(등록되면 사진 내려받기·게첨 확인서 인쇄).</div></div>';
+    }
+    return '<div class="panel" id="mpPhotoBox" style="margin-top:14px">' +
+      '<div class="panel-head"><h3>' + IC.doc + ' 📸 게첨사진 · 게첩 확인</h3>' +
+      '<span class="sub">' + list.length + '장 · 배정 게시대·동 사진 자동 연결</span></div>' +
+      '<div class="photo-grid">' + list.map(function (ph) { return photoCardHTML(ph, 'owner', a); }).join('') + '</div>' +
+      '<div class="off-actions" style="margin-top:10px">' +
+        '<button class="btn primary" type="button" data-photoproof="' + esc(a.id) + '">🖨️ 게첨 확인서(사진) 전체 인쇄 (' + list.length + '장)</button>' +
+        '<span class="hint-txt" style="margin:0">사진마다 A4 1장 · 접수번호·광고주·문구·게시대/동·게첩기간이 함께 인쇄됩니다.</span>' +
+      '</div></div>';
+  }
+  /* 관리자 — 게시대 동 단위 등록 화면 */
+  function renderPhotoPanel() {
+    if (!has('photoList')) return;
+    if (!ui.photoWeek) ui.photoWeek = addDays(currentPostingWeek(), -7);
+    var wk = weekStartOf(ui.photoWeek), base = currentPostingWeek();
+    var wsel = $('#photoWeek');
+    if (wsel) {
+      var wopts = [];
+      for (var i = -4; i <= 1; i++) wopts.push(addDays(base, i * 7));
+      wsel.innerHTML = wopts.reverse().map(function (s) {
+        var tag = s === base ? ' · 이번 회차(추첨 전)' : (s === addDays(base, -7) ? ' · 이번 주 게첩' : ' · 지난 주');
+        return '<option value="' + s + '"' + (s === wk ? ' selected' : '') + '>' + weekRangeTxt(s) + tag + '</option>';
+      }).join('');
+    }
+    var cnt = {};
+    db.apps.forEach(function (a) {
+      if (weekStartOf(a.start || ROUND.postStart) !== wk) return;
+      if (['반려', '미입고취소', '미입금취소', '본인취소', '접수취소', '낙첨'].indexOf(a.status) >= 0) return;
+      awardedPlacesOf(a).forEach(function (x) { cnt[x.pid] = (cnt[x.pid] || 0) + (x.qty || 1); });
+    });
+    var pids = Object.keys(cnt).sort(function (a, b) {
+      /* 주요 게시대(의료원·동문동·석지제·중앙고…)를 먼저 — 사무실에서 사진 올릴 때 찾기 쉽게 */
+      var ma = photoIsMajor((boardById(a) || {}).name) ? 0 : 1, mb = photoIsMajor((boardById(b) || {}).name) ? 0 : 1;
+      return (ma - mb) || (cnt[b] - cnt[a]) || String(a).localeCompare(String(b));
+    });
+    if (!pids.length) pids = db.placements.slice(0, 24).map(function (p) { return p.id; });
+    if (!ui.photoPid || pids.indexOf(ui.photoPid) < 0) {
+      /* 기본 선택 — 그 주차에 사진이 이미 있는 게시대를 먼저 보여 준다 */
+      var withPhoto = pids.filter(function (id) { return photoStore().some(function (ph) { return weekStartOf(ph.week) === wk && String(ph.pid) === String(id); }); });
+      ui.photoPid = (withPhoto[0] || pids[0]) || '';
+      ui.photoDong = '';
+    }
+    var psel = $('#photoPid');
+    if (psel) {
+      psel.innerHTML = pids.map(function (id) {
+        var p = boardById(id);
+        return '<option value="' + esc(id) + '"' + (id === ui.photoPid ? ' selected' : '') + '>' +
+          esc(p ? p.name : id) + (cnt[id] ? ' · 배정 ' + cnt[id] + '매' : '') + '</option>';
+      }).join('');
+    }
+    var p = boardById(ui.photoPid);
+    var letters = p ? boardLettersOf(p) : [''];
+    if (letters.indexOf(ui.photoDong) < 0) ui.photoDong = letters[0];
+    var dsel = $('#photoDong');
+    if (dsel) {
+      dsel.innerHTML = letters.map(function (L) {
+        var m = photoAppsOfCell(wk, ui.photoPid, L).length;
+        return '<option value="' + esc(L) + '"' + (L === ui.photoDong ? ' selected' : '') + '>' +
+          esc(photoDongLabel(ui.photoPid, L)) + (m ? ' · 접수 ' + m + '건' : '') + '</option>';
+      }).join('');
+    }
+    var awardApps = photoAppsOfCell(wk, ui.photoPid, ui.photoDong);
+    var cells = photosOfCell(wk, ui.photoPid, ui.photoDong);
+    if ($('#photoInfo')) $('#photoInfo').textContent = (p ? p.name : '—') + ' ' + photoDongLabel(ui.photoPid, ui.photoDong) + ' · ' + weekRangeTxt(wk) +
+      ' · 사진 ' + cells.length + '장 / 배정 접수 ' + awardApps.length + '건';
+    if ($('#photoAwardCount')) $('#photoAwardCount').textContent = awardApps.length + '건';
+    if ($('#photoAwardList')) {
+      $('#photoAwardList').innerHTML = awardApps.length
+        ? '<table><thead><tr><th>접수번호</th><th>업체 · 실제 광고주</th><th style="text-align:right">배정</th><th>배정 위치</th><th>상태</th></tr></thead><tbody>' +
+          awardApps.map(function (a) {
+            var loc = awardedPlacesOf(a).filter(function (x) { return String(x.pid) === String(ui.photoPid); })
+              .map(function (x) { return x.slot ? slotName(boardById(x.pid), x.slot) : photoDongLabel(x.pid, dongLetterOfSlot(x.slot)); }).join(' · ');
+            return '<tr><td class="mono">' + esc(a.id) + '</td>' +
+              '<td><span class="co">' + esc(a.company) + '</span><span class="sm">' + esc(advOfApp(a).name) + '</span></td>' +
+              '<td class="mono" style="text-align:right"><b>' + awardedOf(a) + '매</b></td>' +
+              '<td class="sm">' + esc(loc || '—') + '</td><td>' + statusBadge(a.status) + '</td></tr>';
+          }).join('') + '</tbody></table>'
+        : '<div class="photo-empty">이 주차 · 게시대 · 동에 배정된 접수가 없습니다. 주차·게시대·동을 바꿔 보세요.</div>';
+    }
+    if ($('#photoCount')) $('#photoCount').textContent = cells.length + '장' + (cells.length ? '' : ' — 아직 등록된 사진이 없습니다');
+    if ($('#photoList')) {
+      $('#photoList').innerHTML = cells.length
+        ? cells.map(function (ph) { return photoCardHTML(ph, 'admin'); }).join('')
+        : '<div class="photo-empty">등록된 게첨사진이 없습니다. <b>📁 사진 선택해서 올리기</b>로 현장 사진을 올리거나, <b>🧪 시연용 샘플 게첨사진 생성</b>으로 확인해 보세요.</div>';
+    }
+    if ($('#photoMsg')) $('#photoMsg').textContent = photoCanEdit() ? '' : '등록·삭제는 현장실무원·총괄 관리자만 가능합니다.';
+  }
+
   /* ---------------------------------------------------------------
      8. 미배정(선착순) 예약
      --------------------------------------------------------------- */
@@ -6436,7 +6931,8 @@
       '<span class="mr-top"><b class="mr-no">' + esc(a.id) + '</b>' + statusBadge(a.status) + eventBadgeHTML(a) +
         (a.designatedOnly ? '<span class="badge b-purple"><i></i>고객장소 지정</span>' : '') + '</span>' +
       '<span class="mr-main">' + esc(advOfApp(a).name || a.company || '—') + ' — "' + esc(a.text || '') + '"</span>' +
-      '<span class="mr-sub">' + qtyOf(a) + '매 · ' + esc(place) + ' · 게첩 ' + esc(weekRangeTxt(weekStartOf(a.start || ROUND.postStart))) + ' · 접수 ' + esc(a.appliedAt || '—') + '</span>' +
+      '<span class="mr-sub">' + qtyOf(a) + '매 · ' + esc(place) + ' · 게첩 ' + esc(weekRangeTxt(weekStartOf(a.start || ROUND.postStart))) + ' · 접수 ' + esc(a.appliedAt || '—') +
+        (photosForApp(a).length ? ' · 📸 게첨사진 ' + photosForApp(a).length + '장' : '') + '</span>' +
       '<span class="mr-go">상세 보기 ›</span></button>';
   }
   /* ── 마이페이지 세부 페이지 (1건 전체 상세 · 목록으로 돌아가기) ── */
@@ -6471,6 +6967,7 @@
           feeRows +
           '<dt>수수료 합계</dt><dd><b>' + won(fee.total) + '</b></dd>' +
         '</dl></div>' +
+        photoSectionHTML(a) +
         '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">' +
           '<button class="btn sm" data-receipt="' + esc(a.id) + '" type="button">접수증 출력</button>' +
           (['입고대기', '입고완료', '게시중', '선착순확정'].indexOf(a.status) >= 0
@@ -7579,6 +8076,220 @@
     $$('#offTable [data-desig]').forEach(function (b) { b.classList.toggle('hidden', mode === 'none'); });
   }
 
+  /* ══════════════════════════════════════════════════════════════════════
+     8-6. 공문 파일 자동 인식 · 시연용 공문 샘플 (2026-11-23 김재봉 님 지시
+     "공문우선배정도 공문파일 올리면 자동 완성되게 해주고 시연용 샘플도 여러개 준비해줘.")
+     · PDF(가능한 범위) · 이미지 · 텍스트 파일에서 기관명·공문번호·문구·매수·기간을 뽑아
+       접수 폼(#offOrg·#offDoc·#offText·#offQty·#offDays·게첩 주)을 자동으로 채운다.
+     · 파일 없이도 확인할 수 있게 시연용 공문 4종을 버튼으로 제공한다.
+     ══════════════════════════════════════════════════════════════════════ */
+  var OFFICE_SAMPLES = [
+    { k: 'welfare', tag: '복지과', org: '서산시청 복지과', docNo: '서산시청 복지과-1247',
+      title: '겨울철 취약계층 난방비·돌봄 지원 안내', qty: 6, days: 7,
+      body: ['겨울철 취약계층의 난방비 부담을 덜고 돌봄 공백을 막기 위하여', '아래와 같이 지원 계획을 안내하오니 협조하여 주시기 바랍니다.',
+        '○ 지원 대상 : 기초생활수급자·차상위계층 1,240가구', '○ 지원 내용 : 난방비 긴급 지원 및 방문 돌봄 연계'] },
+    { k: 'culture', tag: '문화관광과', org: '서산시청 문화관광과', docNo: '서산시청 문화관광과-0963',
+      title: '해미읍성 주말 야간문화행사 안내', qty: 10, days: 14,
+      body: ['해미읍성에서 개최되는 주말 야간문화행사를 시민께 알리고자 하오니', '현수막 게첩에 협조하여 주시기 바랍니다.',
+        '○ 행사기간 : 2026. 12. 5.(토) ~ 12. 20.(일) 매주 토·일 18:00~21:00', '○ 장   소 : 해미읍성 일원 (야간 상설 프로그램)'] },
+    { k: 'safety', tag: '안전총괄과', org: '서산시청 안전총괄과', docNo: '서산시청 안전총괄과-1582',
+      title: '겨울철 제설·도로결빙 안전운전 캠페인', qty: 8, days: 7,
+      body: ['겨울철 강설과 도로결빙으로 인한 교통사고 예방을 위하여', '시민 안전운전 캠페인을 전개하오니 적극 협조하여 주시기 바랍니다.',
+        '○ 캠페인 기간 : 2026. 12. 1. ~ 2027. 2. 28.', '○ 주요 내용 : 감속운전·안전거리 확보·월동장비 점검'] },
+    { k: 'health', tag: '보건소', org: '서산시보건소', docNo: '서산시보건소-0751',
+      title: '동절기 어르신 무료 독감·폐렴구균 예방접종 안내', qty: 5, days: 7,
+      body: ['동절기 어르신 건강보호를 위하여 무료 예방접종을 아래와 같이', '실시하오니 많은 시민께서 참여하실 수 있도록 홍보에 협조하여 주시기 바랍니다.',
+        '○ 접종대상 : 만 65세 이상 어르신', '○ 접종기간 : 2026. 12. 1. ~ 12. 31. (보건지소·위탁의료기관)'] }
+  ];
+  function officialSampleOf(k) {
+    var hit = null;
+    OFFICE_SAMPLES.forEach(function (s) { if (s.k === k) hit = s; });
+    return hit;
+  }
+  function officialDocDataUrl(o) {
+    o = o || {};
+    var org = escXml(o.org || '서산시청'), docNo = escXml(o.docNo || ''), title = escXml(o.title || '');
+    var body = (o.body || []).slice(0, 6);
+    var lines = body.map(function (t, i) {
+      return '<text x="86" y="' + (392 + i * 40) + '" font-family="sans-serif" font-size="18" fill="#22303f">' + escXml(t.slice(0, 44)) + '</text>';
+    }).join('');
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1130" viewBox="0 0 800 1130">' +
+      '<rect width="800" height="1130" fill="#eef1f5"/>' +
+      '<rect x="30" y="24" width="740" height="1082" fill="#ffffff" stroke="#c8d2de"/>' +
+      '<rect x="52" y="48" width="696" height="4" fill="#c0392b" opacity="0.75"/>' +
+      '<text x="400" y="126" text-anchor="middle" font-family="serif" font-size="30" font-weight="700" fill="#1c2a3a">' + org + '</text>' +
+      '<text x="86" y="196" font-family="sans-serif" font-size="17" fill="#3c4a5a">문서번호 : ' + docNo + '</text>' +
+      '<text x="86" y="228" font-family="sans-serif" font-size="17" fill="#3c4a5a">시   행 : 2026. 11. 20.</text>' +
+      '<text x="86" y="292" font-family="serif" font-size="27" font-weight="700" fill="#121f2d">제   목</text>' +
+      '<text x="200" y="292" font-family="serif" font-size="25" font-weight="700" fill="#121f2d">' + title + '</text>' +
+      '<line x1="86" y1="318" x2="714" y2="318" stroke="#33414f" stroke-width="2"/>' +
+      '<text x="86" y="360" font-family="sans-serif" font-size="18" fill="#22303f">1. 관련 : 지정게시대 현수막 게첩 협조 요청</text>' +
+      lines +
+      '<text x="400" y="720" text-anchor="middle" font-family="serif" font-size="22" font-weight="700" fill="#121f2d">' + org + '장</text>' +
+      '<circle cx="646" cy="742" r="52" fill="none" stroke="#c0392b" stroke-width="4"/>' +
+      '<text x="646" y="752" text-anchor="middle" font-family="serif" font-size="22" fill="#c0392b">직인</text>' +
+      '<line x1="86" y1="860" x2="714" y2="860" stroke="#8fa0b3" stroke-width="1.5"/>' +
+      '<text x="86" y="900" font-family="sans-serif" font-size="16" fill="#4a5a6b">시행 ' + docNo + ' (2026. 11. 20.)   접수 ' + escXml(o.docNo || '') + '</text>' +
+      '<text x="86" y="932" font-family="sans-serif" font-size="16" fill="#4a5a6b">우 31968 충남 서산시 해미면 남문2로 143   /   전화 041-660-2000   /   Fax 041-660-2001</text>' +
+      '<rect x="640" y="1000" width="130" height="44" rx="6" fill="#0d1e33" opacity="0.82"/>' +
+      '<text x="705" y="1029" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#ffffff">시연용 공문</text>' +
+      '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  function officialFilePreview(url, caption) {
+    var box = $('#offFilePreview');
+    if (!box) return;
+    if (!url) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    box.classList.remove('hidden');
+    box.innerHTML = '<button type="button" class="off-file-thumb" data-offzoom="1" title="눌러서 크게 보기">' +
+      '<img src="' + url + '" alt="공문 미리보기">' +
+      '<span>' + esc(caption || '') + '<b>클릭하면 크게 봅니다</b></span></button>';
+    box.setAttribute('data-offsrc', url);
+  }
+  function showOfficialZoom() {
+    var box = $('#offFilePreview');
+    var url = box ? box.getAttribute('data-offsrc') : '';
+    if (!url) return;
+    openModal({
+      title: '공문 미리보기', sub: '시연용 공문 양식 · 실제 공문이 아닙니다', wide: true,
+      body: '<div style="text-align:center"><img src="' + url + '" alt="공문 미리보기" style="max-width:100%;height:auto;border:1px solid #ccd6e2;border-radius:8px"></div>',
+      foot: '<button class="btn ghost" data-close type="button">닫기</button>'
+    });
+  }
+  function officialHitsHTML(hits, tail) {
+    var box = $('#offFileHits');
+    if (!box) return;
+    box.innerHTML = (hits && hits.length)
+      ? '<div class="off-hits"><b>자동 인식</b>' + hits.map(function (h) { return '<span class="off-hit">' + esc(h) + '</span>'; }).join('') +
+        (tail ? '<span class="off-hit ghost">' + esc(tail) + '</span>' : '') + '</div>'
+      : '';
+  }
+  /* 텍스트·파일명에서 항목 뽑기 — 못 뽑은 항목은 건드리지 않는다 */
+  function parseOfficialDoc(doc) {
+    var name = String((doc && doc.name) || ''), text = String((doc && doc.text) || '');
+    var all = name + '\n' + text;
+    var out = { org: '', docNo: '', title: '', qty: 0, days: 0, week: '', hits: [], found: 0 };
+    var m = all.match(/(서산시청\s*[가-힣]{2,8}과|서산시\s*[가-힣]{2,8}과|서산시보건소|서산시\s*[가-힣]{2,8}소|충청남도\s*[가-힣]{2,10}과|충청남도\s*[가-힣]{2,8}시)/);
+    if (m) { out.org = m[1].replace(/\s+/g, ' ').trim(); out.hits.push('기관명 · ' + out.org); out.found += 1; }
+    var dm = all.match(/([가-힣]{2,12}(?:과|소|청|시|군|구)\s*-\s*\d{1,6}(?:-\d{1,4})?)/);
+    if (dm) { out.docNo = dm[1].replace(/\s+/g, ' ').trim(); out.hits.push('공문번호 · ' + out.docNo); out.found += 1; }
+    var tm = text.match(/제\s*목\s*[::]?\s*([^\n]{4,60})/) || text.match(/([^\n]{4,40}(?:안내|캠페인|홍보|지원|요청)[^\n]{0,20})/);
+    if (tm) { out.title = tm[1].replace(/\s+/g, ' ').trim().slice(0, 40); out.hits.push('문구 · ' + out.title); out.found += 1; }
+    var qm = all.match(/(\d{1,2})\s*(?:매|장)/);
+    if (qm) { out.qty = Math.max(1, Math.min(QTY_MAX, Number(qm[1]))); out.hits.push('매수 · ' + out.qty + '매'); out.found += 1; }
+    if (/2\s*주|14\s*일|이주/.test(all)) { out.days = 14; out.hits.push('기간 · 2주(14일, 결재 대상)'); out.found += 1; }
+    else if (/1\s*주|7\s*일|일주/.test(all)) { out.days = 7; out.hits.push('기간 · 1주(7일)'); out.found += 1; }
+    var wm = all.match(/(\d{1,2})\s*[.월]\s*(\d{1,2})\s*일?/) || all.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (wm) {
+      var mo = 0, da = 0;
+      if (wm[0].indexOf('-') > 0 && wm.length >= 4) { mo = Number(wm[2]); da = Number(wm[3]); }
+      else { mo = Number(wm[1]); da = Number(wm[2]); }
+      if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31) {
+        var y = (mo < 10 ? 2027 : 2026);
+        var dt = new Date(y, mo - 1, da);
+        var monday = addDays(dstr2iso(dt), -((dt.getDay() + 6) % 7));
+        if (monday >= currentPostingWeek()) { out.week = monday; out.hits.push('게첩 주 · ' + weekRangeTxt(monday)); out.found += 1; }
+      }
+    }
+    return out;
+  }
+  function dstr2iso(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function applyOfficialParsed(p, opts) {
+    opts = opts || {};
+    if (p.org && $('#offOrg')) $('#offOrg').value = p.org;
+    if (p.docNo && $('#offDoc')) $('#offDoc').value = p.docNo;
+    if (p.title && $('#offText')) $('#offText').value = String(p.title).slice(0, 40);
+    if (p.qty && $('#offQty')) $('#offQty').value = String(Math.max(1, Math.min(QTY_MAX, p.qty)));
+    if (p.days && $('#offDays')) $('#offDays').value = String(p.days === 14 ? 14 : 7);
+    if ($('#offMaker') && !String($('#offMaker').value || '').trim()) $('#offMaker').value = '광고랜드(공문)';
+    if (p.week && weekStartOf(p.week) >= currentPostingWeek()) calPickWeek('official', weekStartOf(p.week));
+    renderOffQty();
+    renderOffPanel();
+    officialHitsHTML(p.hits, opts.tail || '');
+    if (!opts.silent) {
+      toast('공문에서 ' + (p.hits || []).length + '개 항목을 자동으로 채웠습니다 — 기관·문구·수량·기간을 확인하고 게시대를 골라 주세요.');
+    }
+  }
+  function pdfTextBestEffort(bytes) {
+    return new Promise(function (resolve) {
+      try {
+        var out = '';
+        var head = '';
+        var n = Math.min(bytes.length, 300000);
+        for (var i = 0; i < n; i++) head += String.fromCharCode(bytes[i]);
+        var re = /\(([^()\\]{2,80})\)/g, mm;
+        while ((mm = re.exec(head))) {
+          var t = mm[1];
+          if (/[가-힣]/.test(t)) out += t + '\n';
+        }
+        var hx = /<([0-9A-Fa-f]{8,120})>/g, mh;
+        while ((mh = hx.exec(head))) {
+          var s = mh[1], dec = '';
+          for (var j = 0; j + 3 < s.length; j += 4) {
+            var code = parseInt(s.substr(j, 4), 16);
+            if (code > 0x1f) dec += String.fromCharCode(code);
+          }
+          if (/[가-힣]/.test(dec)) out += dec + '\n';
+        }
+        resolve(out);
+      } catch (e) { resolve(''); }
+    });
+  }
+  function readOfficialFile(file, done) {
+    var name = file ? (file.name || '') : '';
+    if (!file) { done({ name: name, text: '' }); return; }
+    if (/\.(txt|md|csv)$/i.test(name) || /^text\//.test(file.type || '')) {
+      var fr = new FileReader();
+      fr.onload = function () { done({ name: name, text: String(fr.result || '') }); };
+      fr.onerror = function () { done({ name: name, text: '' }); };
+      fr.readAsText(file, 'utf-8');
+      return;
+    }
+    if (/\.pdf$/i.test(name) || file.type === 'application/pdf') {
+      var fb = new FileReader();
+      fb.onload = function () {
+        pdfTextBestEffort(new Uint8Array(fb.result || [])).then(function (t) { done({ name: name, text: t || '' }); });
+      };
+      fb.onerror = function () { done({ name: name, text: '' }); };
+      fb.readAsArrayBuffer(file);
+      return;
+    }
+    done({ name: name, text: '' });      /* 이미지 — 파일명 키워드로만 인식 */
+  }
+  function handleOfficialFile(file) {
+    if (!file) return;
+    readOfficialFile(file, function (doc) {
+      var p = parseOfficialDoc(doc);
+      if (!p.found) {
+        officialHitsHTML([], '파일명·본문에서 항목을 찾지 못했습니다 — 직접 입력해 주세요');
+        toast('공문에서 항목을 자동으로 찾지 못했습니다. 파일명에 기관·수량을 넣거나 직접 입력해 주세요.', true);
+        return;
+      }
+      applyOfficialParsed(p, { tail: '파일 · ' + doc.name });
+    });
+  }
+  function loadOfficialSample(k) {
+    var s = officialSampleOf(k);
+    if (!s) return;
+    var url = officialDocDataUrl(s);
+    officialFilePreview(url, s.org + ' · ' + s.docNo);
+    var week = currentPostingWeek();
+    applyOfficialParsed({
+      org: s.org, docNo: s.docNo, title: s.title, qty: s.qty, days: s.days, week: week,
+      hits: ['기관명 · ' + s.org, '공문번호 · ' + s.docNo, '문구 · ' + s.title, '매수 · ' + s.qty + '매',
+        '기간 · ' + (s.days === 14 ? '2주(14일, 결재 대상)' : '1주(7일)'), '게첩 주 · ' + weekRangeTxt(week)]
+    }, { tail: '시연용 샘플 공문' });
+  }
+
+  /* 자동 채우기 결과 — 검증·요약용 */
+  function officialFormState() {
+    return {
+      org: String(($('#offOrg') || {}).value || ''), docNo: String(($('#offDoc') || {}).value || ''),
+      title: String(($('#offText') || {}).value || ''), qty: Number(($('#offQty') || {}).value || 0),
+      days: Number(($('#offDays') || {}).value || 0), week: weekStartOf(ui.offWeek || ROUND.postStart),
+      maker: String(($('#offMaker') || {}).value || '')
+    };
+  }
   function renderOffPanel() {
     if (!has('offPlaces')) return;
     if (!$('#offPlaces')) return;
@@ -7921,6 +8632,7 @@
     renderEventApprovers();
     renderAssocPanel();
     renderDesigBatch();
+    renderPhotoPanel();
     renderReportPanel();
     renderOffPanel();
     renderReview(reviewing);
@@ -8652,8 +9364,14 @@
     if (!has('payPanel') && !has('deliverPanel')) return;
     var r = currentAccessRole();
     var payOn = (r === 'staff'), dlvOn = (r === 'field');
+    var photoOn = (r === 'field' || r === 'super');
     if ($('#payPanel')) $('#payPanel').classList.toggle('hidden', !payOn);
     if ($('#deliverPanel')) $('#deliverPanel').classList.toggle('hidden', !dlvOn);
+    if ($('#photoPanel')) $('#photoPanel').classList.toggle('hidden', !photoOn);
+    if ($('#photoLocked')) {
+      $('#photoLocked').classList.toggle('hidden', photoOn);
+      $('#photoLocked').textContent = '게첨사진 등록은 현장실무원·총괄 관리자 화면입니다. 시연용 직책 전환에서 현장실무원을 선택해 주세요.';
+    }
     if ($('#payLocked')) { $('#payLocked').classList.toggle('hidden', payOn); $('#payLocked').textContent = '입금 확인은 사무실무원 전용 화면입니다. 시연용 직책 전환에서 사무실무원을 선택해 주세요.'; }
     if ($('#deliverLocked')) { $('#deliverLocked').classList.toggle('hidden', dlvOn); $('#deliverLocked').textContent = '현수막 입고 확인은 현장실무원 전용 화면입니다. 시연용 직책 전환에서 현장실무원을 선택해 주세요.'; }
   }
@@ -9999,8 +10717,19 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle]') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle]') : null;
     if (!el) return;
+    /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
+    if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
+    if (el.id === 'btnPhotoSample') { addSamplePhotos(); return; }
+    if (el.hasAttribute('data-photoview')) { previewPhoto(el.getAttribute('data-photoview')); return; }
+    if (el.hasAttribute('data-photodel')) { deletePhoto(el.getAttribute('data-photodel')); return; }
+    if (el.hasAttribute('data-photodl')) { downloadPhoto(findApp(el.getAttribute('data-photofor') || ''), el.getAttribute('data-photodl')); return; }
+    if (el.hasAttribute('data-photoproof')) { showPhotoProof(el.getAttribute('data-photoproof'), el.getAttribute('data-phid') || ''); return; }
+    /* 공문 파일 첨부 — 파일 선택·시연용 샘플·미리보기 확대 (2026-11-23) */
+    if (el.id === 'btnOffFilePick') { if ($('#offFile')) $('#offFile').click(); return; }
+    if (el.hasAttribute('data-offsample')) { loadOfficialSample(el.getAttribute('data-offsample')); return; }
+    if (el.hasAttribute('data-offzoom')) { showOfficialZoom(); return; }
     /* 행사 우선접수 — 5명 권한자 투표·권한자 변경 (2026-11-22) */
     if (el.hasAttribute('data-fccover')) { askFcCover(el.getAttribute('data-fccover')); return; }
     if (el.hasAttribute('data-polapprove')) { polApprove(el.getAttribute('data-polapprove'), el.getAttribute('data-polwho')); return; }
@@ -10274,6 +11003,12 @@
     });
     onEl('#adminToggle', 'change', onAdminToggle);
     if ($('#adminRoleSel')) onEl('#adminRoleSel', 'change', function () { setAdminRole(this.value); });
+    /* 현장 게첨사진 — 주차·게시대·동 선택, 사진 파일 첨부 (2026-11-23) */
+    if ($('#photoWeek')) onEl('#photoWeek', 'change', function () { ui.photoWeek = this.value; ui.photoPid = ''; ui.photoDong = ''; renderPhotoPanel(); });
+    if ($('#photoPid')) onEl('#photoPid', 'change', function () { ui.photoPid = this.value; ui.photoDong = ''; renderPhotoPanel(); });
+    if ($('#photoDong')) onEl('#photoDong', 'change', function () { ui.photoDong = this.value; renderPhotoPanel(); });
+    if ($('#photoFile')) onEl('#photoFile', 'change', function () { handlePhotoFiles(this.files); this.value = ''; });
+    if ($('#offFile')) onEl('#offFile', 'change', function () { handleOfficialFile(this.files && this.files[0]); this.value = ''; });
     if ($('#btnPlaceAdd')) onEl('#btnPlaceAdd', 'click', function () { addPlace(); });
     /* 공지 팝업 관리 */
     if ($('#btnNoticeSave')) onEl('#btnNoticeSave', 'click', function () { saveNotice(); });
@@ -10559,6 +11294,8 @@
       db.members = SEED_MEMBERS.map(function (m) { var o = {}; for (var k in m) { o[k] = m[k]; } return o; });
     }
     ensureDemoData();
+    /* 현장 게첨사진 — 저장 데이터에 photos 가 없으면 시연 샘플을 만든다 (2026-11-23) */
+    if (!Array.isArray(db.photos)) db.photos = photoSampleSeed(db.apps);
     if (!memberById(db.session)) db.session = null;
     /* 이전 저장 데이터 호환 — 가산점 구조(2026-11-22): 부여자 1명 단일 기록 → **부여자별 배열(최종 합산)**
        · urgentGrant(단일) → urgentGrants(배열) · assocGrant(단일) → assocGrants(배열)
@@ -10678,6 +11415,37 @@
     apps: function () { return db.apps; },
     round: function () { return { ROUND: ROUND, CUR: CUR, NEXT: ROUND_NEXT, FEE: FEE, QTY_MIN: QTY_MIN, QTY_MAX: QTY_MAX }; },
     freeSeat: function (pid) { return freeOf(placementById(pid)); },
+    /* 현장 게첨사진 검증용 (2026-11-23) */
+    photosOf: function (week, pid, dong) { return photosOfCell(week, pid, dong).map(photoMeta); },
+    photosFor: function (id) { var a = findApp(id); return a ? photosForApp(a).map(photoMeta) : []; },
+    photoCell: function (week, pid, dong) {
+      return photoAppsOfCell(week, pid, dong).map(function (a) {
+        return { id: a.id, company: a.company, qty: awardedOf(a), places: awardsTxt(a, 3) };
+      });
+    },
+    photoAppIds: function () {
+      return db.apps.filter(function (a) { return photosForApp(a).length > 0; })
+        .map(function (a) { return { id: a.id, n: photosForApp(a).length, week: weekStartOf(a.start || ROUND.postStart) }; });
+    },
+    photoAdd: function (o) { var ph = addPhotoRecord(o || {}); renderPhotoPanel(); return photoMeta(ph); },
+    photoDelete: deletePhoto,
+    photoProof: function (id, phId) {
+      var a = findApp(id);
+      if (!a) return null;
+      var list = photosForApp(a);
+      if (phId) list = list.filter(function (ph) { return ph.id === phId; });
+      return { n: list.length, names: list.map(function (ph) { return photoFileName(a, ph); }),
+        html: list.map(function (ph) { return photoProofPageHTML(a, ph); }).join('') };
+    },
+    photoDongLabel: photoDongLabel,
+    photoSeed: function () { return photoStore().filter(function (p) { return p.sample; }).length; },
+    photoWeekSet: function (w) { ui.photoWeek = w; ui.photoPid = ''; ui.photoDong = ''; renderPhotoPanel(); return photoWeekOf(); },
+    /* 공문 파일 자동 인식 검증용 (2026-11-23) */
+    offSample: function (k) { loadOfficialSample(k); return officialFormState(); },
+    offParse: function (doc) { return parseOfficialDoc(doc || {}); },
+    offForm: function () { return officialFormState(); },
+    offHits: function () { return String(($('#offFileHits') || {}).textContent || ''); },
+    offPreview: function () { var b = $('#offFilePreview'); return { hidden: !b || b.classList.contains('hidden'), src: b ? String(b.getAttribute('data-offsrc') || '').slice(0, 30) : '' }; },
     drawPool: function () { return db.apps.filter(function (a) { return a.round === ROUND.id && a.status === '추첨대기'; }); },
     drawEngine: function (pool, seed) { return drawEngine(pool, seed); },
     executeDraw: executeDraw,
