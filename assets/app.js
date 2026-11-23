@@ -534,7 +534,9 @@
       tag: cap >= 20 ? '경쟁 최다' : (cap >= 15 ? '대형 게시대' : ''),
       broken: !!bkr, brokenSample: !!bkr, brokenReason: bkr, brokenAt: bkr ? '2026-11-20 16:40' : null,
       code: meta.code || '', addr: meta.addr || '', desc: meta.desc || '',
-      themes: (meta.themes || []).slice()
+      themes: (meta.themes || []).slice(),
+      /* 🚸 학교·유치원 초인접(청소년유해 차단) — 학교·통학로 테마 게시대가 기본, 관리자가 켜고 끌 수 있다 */
+      youthProtect: (meta.themes || []).indexOf('school') >= 0
     };
   });
 
@@ -5373,6 +5375,23 @@
     var digits = raw.replace(/[^0-9]/g, '');
     return digits === '' ? 0 : Number(digits);
   }
+  /* ── 🚸 청소년유해광고 자동 차단 (2026-11-23 김재봉 님 지시) ──────────────
+     · 유흥·성인·도박·대부 키워드가 광고주·문구에 있으면 학교·유치원 초인접 게시대는 담을 수 없다. */
+  var YOUTH_RE = /(유흥주점|단란주점|룸살롱|나이트클럽|나이트|성인용품|성인방송|19금|카지노|도박|사설토토|토토|바카라|대부업|대부|사채|일수|전자담배|액상|유흥업소|호스트바|퇴폐|마사지)/;
+  function youthHitOf(txt) { return YOUTH_RE.test(String(txt || '')); }
+  function youthBoards() { return db.placements.filter(function (p) { return !!p.youthProtect; }); }
+  function syncYouthNote(sel, txt) {
+    var box = $(sel);
+    if (!box) return false;
+    var hit = youthHitOf(txt);
+    if (hit) {
+      var n = youthBoards().length;
+      box.innerHTML = '<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg><div><b>🚸 청소년유해광고 감지</b> — 학교·유치원 초인접 게시대(<b>' + n + '개소</b>) 선택이 자동 차단됩니다.</div></div>';
+    }
+    box.classList.toggle('hidden', !hit);
+    return hit;
+  }
+
   /* ── 🚫 광고문구 비방·욕설·매매혼 필터 (2026-11-23 김재봉 님 지시) ────────────
      · 공백·특수문자·숫자를 끼워 우회하는 표기까지 정규화해서 잡는다.
      · 결혼중개업법 위반·인권침해(매매혼·성상품화) 표현도 함께 차단한다. */
@@ -7163,6 +7182,8 @@
     if (m && el && kind !== 'agency' && !String(el.value || '').trim()) el.value = m.company || '';
     if ($('#fcTextCount')) $('#fcTextCount').textContent = String(String(($('#fcText') ? $('#fcText').value : '') || '').length);
     syncFcMedicalNote();
+    syncFcAbuseNote();
+    try { syncYouthNote('#fcYouthNote', String(($('#fcAdvertiser') ? $('#fcAdvertiser').value : '') || '') + ' ' + String(($('#fcText') ? $('#fcText').value : '') || '')); } catch (e) { }
   }
 
   /* 2단계 — 창구 선택 · 신청 수량 · 설치 안내 */
@@ -7216,15 +7237,18 @@
       var rem = fcLeftOf(p), picked = picks.indexOf(p.id) >= 0;
       var bk = p.broken || slotAllDown(p);
       var fsum = slotFlagSummary(p), rec = fcIsLive() ? 0 : reclaimedOf(p);
-      var label = picked ? '담김 ✓'
+      var yBlocked = p.youthProtect && youthHitOf(((($('#fcAdvertiser') || {}).value) || '') + ' ' + ((($('#fcText') || {}).value) || ''));
+      var label = yBlocked ? '🚫 청소년유해 차단'
+        : (picked ? '담김 ✓'
         : (p.broken ? '고장·수리중'
           : (slotAllDown(p) ? '전체 고장·풀가림'
-            : (!rem ? '마감' : (open ? '담기' : '접수 시간 아님'))));
+            : (!rem ? '마감' : (open ? '담기' : '접수 시간 아님')))));
       var coverBtn = (!fcIsLive() && !bk && rem && fcCoverSeatsOf(p).length)
         ? ' <button class="btn sm ghost fc-cover-btn" data-fccover="' + esc(p.id) + '" type="button" title="풀가림·기타사유 단수 선택 — 안내 확인 후 담기">풀가림·기타 자리</button>'
         : '';
       return '<div class="fc-item' + (picked ? ' picked' : '') + '">' +
         '<div class="fmain"><b>' + esc(p.name) +
+        (p.youthProtect ? ' <span class="tag broken">🚸 초인접</span>' : '') +
         (p.broken ? ' <span class="tag broken">고장·수리중</span>'
           : (fsum ? ' <span class="tag broken">' + esc(fsum) + '</span>'
             : (rec ? ' <span class="tag hot">미입고 회수 ' + rec + '면</span>' : ''))) + coverBtn + '</b>' +
@@ -7234,7 +7258,7 @@
           (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
         '<div class="fcount' + (rem ? '' : ' sold') + '"><b>' + rem + '</b><span>' + (p.broken ? '가용 면 제외' : (fcIsLive() ? '잔여 면' : '잔여 매')) + '</span></div>' +
         '<button class="btn sm' + (picked ? ' primary' : '') + '" data-fcpick="' + p.id + '" type="button"' +
-          ((open && rem && !bk) ? '' : ' disabled') + '>' + label + '</button>' +
+          ((open && rem && !bk && !yBlocked) ? '' : ' disabled') + '>' + label + '</button>' +
         '</div>';
     }).join('');
   }
@@ -7356,6 +7380,11 @@
     var max = fcQtyNow();
     if (arr.length >= max) {
       toast('이미 ' + max + '개소를 담았습니다 — 2단계 신청 수량(' + max + '매)만큼만 고를 수 있습니다. 수량을 늘리려면 2단계로 돌아가세요.', true);
+      return false;
+    }
+    var yTxt = String(($('#fcAdvertiser') ? $('#fcAdvertiser').value : '') || '') + ' ' + String(($('#fcText') ? $('#fcText').value : '') || '');
+    if (p.youthProtect && youthHitOf(yTxt)) {
+      toast('🚸 청소년유해광고 감지 — ' + p.name + '은(는) 학교·유치원 초인접 게시대라 담을 수 없습니다.', true);
       return false;
     }
     var mb = makerBlockOf(pid, currentMakerInfo());
@@ -12917,6 +12946,7 @@
       renderUrgentHint();
       syncApplyMedicalNote();
       syncApplyAbuseNote();
+      syncYouthNote('#youthNote', this.value + ' ' + (($('#applyText') || {}).value || ''));
     });
     onEl('#applyCompany', 'input', function () {
       $('#fCompany').classList.remove('invalid');
@@ -13018,6 +13048,7 @@
       if ($('#fcFText')) $('#fcFText').classList.remove('invalid');
       syncFcMedicalNote();
       syncFcAbuseNote();
+      syncYouthNote('#fcYouthNote', this.value + ' ' + (($('#fcText') || {}).value || ''));
     });
     onEl('#fcAdvertiser', 'input', function () { if ($('#fcFAdv')) $('#fcFAdv').classList.remove('invalid'); syncFcMedicalNote(); syncFcAbuseNote(); });
     onEl('#fcAdvBiz', 'input', function () { if ($('#fcFAdvBiz')) $('#fcFAdvBiz').classList.remove('invalid'); });
@@ -13928,6 +13959,7 @@
         ui.fcQty = Math.max(ui.fcPicks.length, 1);
       }
       renderFirst();
+      try { syncFcMedicalNote(); syncFcAbuseNote(); } catch (e) { }
       return { qty: ui.fcQty, picks: fcPicks().slice(), step: ui.fcStep || 1, kind: applicantKind() };
     },
     applicantKind: function () { return applicantKind(); },
@@ -14117,6 +14149,9 @@
       syncApplyAbuseNote();
       return checkAbusiveText(String(adv || '') + ' ' + String(txt || ''));
     },
+    youthList: function () { return youthBoards().map(function (p) { return p.id; }); },
+    youthToggle: function (pid, on) { var p = boardById(pid); if (!p) return null; p.youthProtect = !!on; save(); renderStatus(); renderPickUI(); renderFirst(); renderAdmin(); return !!p.youthProtect; },
+    youthHit: function (t) { return youthHitOf(t); },
     preCancel: function (id) {
       preDrawCancel(id);
       return { open: !!($('#modal') && $('#modal').classList.contains('open')),
@@ -14376,7 +14411,7 @@
         ui.sms = { sent: false, code: '', phone: '', verified: false, at: '' };
         renderSmsBox();
       }
-      try { syncApplyMedicalNote(); syncApplyAbuseNote(); } catch (e) { }
+      try { syncApplyMedicalNote(); syncApplyAbuseNote(); syncYouthNote('#youthNote', String(($('#applyAdvertiser') ? $('#applyAdvertiser').value : '') || '') + ' ' + String(($('#applyText') ? $('#applyText').value : '') || '')); } catch (e) { }
       return readApply();
     },
     readApply: readApply,
