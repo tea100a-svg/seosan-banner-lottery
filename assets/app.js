@@ -67,10 +67,14 @@
     postStart: '2026-12-07', postEnd: '2026-12-13'
   };
   /* ── 회차(게첨 주) 목록 — 회차 이름은 게첨 주 기준 ──────────────────────
-     11월 1주차 11.02~11.08 (추첨 10.26) … 12월 2주차 12.07~12.13 (추첨 11.30)
-     · 과거 회차는 모두 추첨이 끝났고, 11.16~11.22(3주차)까지 게시 종료
-     · 11.23~11.29(4주차)는 이번 주 게첨 진행 중, 11.30~12.06(12월 1주차)이 이번 회차 */
+     10월 1주차 10.05~10.11 (추첨 09.28) … 12월 2주차 12.07~12.13 (추첨 11.30)
+     · 과거 회차(10월 1주차~11월 3주차)는 모두 추첨·게시 종료('게시종료')
+     · 11.23~11.29(11월 4주차)는 이번 주 게첨 진행 중, 11.30~12.06(12월 1주차)이 이번 회차 */
   var WEEKS = [
+    { id: '2026-W39', label: '2026년 10월 1주차', start: '2026-10-05', end: '2026-10-11', draw: '2026-09-28' },
+    { id: '2026-W40', label: '2026년 10월 2주차', start: '2026-10-12', end: '2026-10-18', draw: '2026-10-05' },
+    { id: '2026-W41', label: '2026년 10월 3주차', start: '2026-10-19', end: '2026-10-25', draw: '2026-10-12' },
+    { id: '2026-W42', label: '2026년 10월 4주차', start: '2026-10-26', end: '2026-11-01', draw: '2026-10-19' },
     { id: '2026-W43', label: '2026년 11월 1주차', start: '2026-11-02', end: '2026-11-08', draw: '2026-10-26' },
     { id: '2026-W44', label: '2026년 11월 2주차', start: '2026-11-09', end: '2026-11-15', draw: '2026-11-02' },
     { id: '2026-W45', label: '2026년 11월 3주차', start: '2026-11-16', end: '2026-11-22', draw: '2026-11-09' },
@@ -1065,75 +1069,156 @@
     ['서산꽃게직판', '차미영', '꽃게 직판 · 택배 접수']
   ];
   function pastWeekAppsSeed() {
-    var out = [], used = {};
-    function capOf(pid) {
-      for (var k = 0; k < PLACEMENTS.length; k++) { if (PLACEMENTS[k].id === pid) return PLACEMENTS[k].cap; }
-      return 0;
-    }
-    WEEKS.slice(0, 4).forEach(function (w, wi) {
-      used[wi] = {};
-      for (var i = 0; i < 28; i++) {
-        var src = PAST_POOL[(wi * 15 + i * 2) % PAST_POOL.length];
-        var k0 = i + wi;
-        var qty = 1 + (k0 % 3);
-        var cand = [];
-        [7 * i + 11 * wi, 5 * i + 13 * wi + 3, 3 * i + 7 * wi + 9].forEach(function (k) {
-          var p = PLACEMENTS[(k % PLACEMENTS.length + PLACEMENTS.length) % PLACEMENTS.length];
-          if (p && cand.indexOf(p.id) < 0) cand.push(p.id);
+    var out = [];
+    var totalCap = PLACEMENTS.reduce(function (s, p) { return s + (p.cap || 0); }, 0);
+    var targetTotal = Math.round(totalCap * 0.90); /* 게시대 사용률 90% 목표 */
+    var offList = pastWeekOfficialSeed();
+    var pastWeeks = WEEKS.filter(function (w) { return w.id <= '2026-W46'; });
+
+    pastWeeks.forEach(function (w, wi) {
+      var used = {};
+      var curSeats = 0;
+      /* 공문 우선접수 점유 반영 */
+      offList.forEach(function (o) {
+        if (o.round === w.id) {
+          (o.pids || []).forEach(function (pid) {
+            used[pid] = (used[pid] || 0) + 1;
+            curSeats += 1;
+          });
+        }
+      });
+      /* 11월 4주차(W46) 고정 수동 시드(A-108·121·118·112) 점유 반영 */
+      if (w.id === '2026-W46') {
+        [['P68', 1], ['P59', 1], ['P21', 2], ['P22', 1]].forEach(function (kv) {
+          used[kv[0]] = (used[kv[0]] || 0) + kv[1];
+          curSeats += kv[1];
         });
-        var pr1 = cand.slice(0, qty), pr2 = cand.length > qty ? [cand[qty]] : [];
-        if (pr1.length < qty) qty = pr1.length;
-        var r = k0 % 9;
-        var wanted = (r === 4) ? [] : (r === 2 ? pr1.slice(0, 1) : pr1.slice());
-        var won = wanted.filter(function (pid) {
-          var cap = capOf(pid);
-          if (!cap) return false;
-          if ((used[wi][pid] || 0) + 1 > cap) return false;
-          used[wi][pid] = (used[wi][pid] || 0) + 1;
-          return true;
-        });
-        var miss = (r === 7);                       /* 당첨 후 수요일 미입고 → 취소 */
-        var live = !!w.live;                         /* 11.23~11.29 — 이번 주 게첨 */
-        /* 이번 주(11.23~11.29) 게첨분은 '게시중'이 대부분이고, 일부는 늦게 입고되어 '입고완료(게시 대기)'입니다
-           — 주차별 접수대장·추첨결과에서 당첨·미당첨·입고완료·게시중이 함께 보이도록 (2026-11-23 지시) */
-        var status = !won.length ? '낙첨' : (miss ? '미입고취소' : (live ? ((i % 9 === 3) ? '입고완료' : '게시중') : '게시종료'));
-        var agency = (i % 6 === 1);
+      }
+
+      /* 주차별로 다른 순서로 게시대 슬롯 풀 생성 (정원까지) */
+      var slotPool = [];
+      var nPlaces = PLACEMENTS.length;
+      var step = [17, 23, 29, 31, 37, 41, 43, 47][wi % 8];
+      for (var k = 0; k < nPlaces; k++) {
+        var p = PLACEMENTS[(k * step + wi * 7) % nPlaces];
+        if (!p || !p.cap) continue;
+        var avail = Math.max(0, p.cap - (used[p.id] || 0));
+        for (var s = 0; s < avail; s++) { slotPool.push(p.id); }
+      }
+      /* 슬롯 순서 섞기 (주차별 시드 기반 결정적 셔플) */
+      var seedVal = 13579 + wi * 9973;
+      for (var idx = slotPool.length - 1; idx > 0; idx--) {
+        seedVal = (seedVal * 1664525 + 1013904223) >>> 0;
+        var j = seedVal % (idx + 1);
+        var tmp = slotPool[idx]; slotPool[idx] = slotPool[j]; slotPool[j] = tmp;
+      }
+
+      var cursor = 0;
+      var seqNo = 201;
+      var live = !!w.live;
+
+      /* 목표 배정 매수(90%)에 도달할 때까지 1~3매 단위로 당첨 배정 생성 */
+      while (curSeats < targetTotal && cursor < slotPool.length) {
+        var rem = targetTotal - curSeats;
+        var wantQty = Math.min(rem, 1 + ((seqNo + wi) % 3));
+        var won = [];
+        while (won.length < wantQty && cursor < slotPool.length) {
+          var pid = slotPool[cursor++];
+          if (won.indexOf(pid) < 0) won.push(pid);
+          else {
+            /* 같은 신청 건 내 중복 게시대 방지: 뒤쪽 다른 게시대와 교환 */
+            var swapped = false;
+            for (var sw = cursor; sw < slotPool.length; sw++) {
+              if (won.indexOf(slotPool[sw]) < 0) {
+                var t = slotPool[sw]; slotPool[sw] = pid; pid = t;
+                won.push(pid);
+                swapped = true;
+                break;
+              }
+            }
+            if (!swapped) break;
+          }
+        }
+        if (!won.length) break;
+        curSeats += won.length;
+
+        var srcIdx = (wi * 17 + seqNo * 3) % PAST_POOL.length;
+        var src = PAST_POOL[srcIdx];
+        var agency = (seqNo % 5 === 1);
+        var status = live ? ((seqNo % 12 === 3) ? '입고완료' : '게시중') : '게시종료';
+        var isEvent = (seqNo === 205);
+
         out.push({
-          id: w.id + '-A-' + pad4(101 + i), round: w.id, week: w.start,
-          company: src[0], owner: src[1], phone: phoneOf(i + 3),
+          id: w.id + '-A-' + pad4(seqNo), round: w.id, week: w.start, pastSeed: true,
+          company: src[0], owner: src[1], phone: phoneOf(seqNo + wi),
           appType: agency ? 'agency' : 'direct',
           advertiser: agency ? (src[0] + ' 광고주') : src[0],
-          advertiserBiz: '3' + pad2(wi + 1) + '-' + pad2(i + 11) + '-' + pad4(20000 + i * 37 + wi * 5),
-          advertiserPhone: phoneOf(i + 41),
-          biz: '3' + pad2(wi + 1) + '-' + pad2(i + 11) + '-' + pad4(20000 + i * 37 + wi * 5),
+          advertiserBiz: '3' + pad2(wi + 1) + '-' + pad2((seqNo % 89) + 10) + '-' + pad4(20000 + seqNo * 13 + wi * 7),
+          advertiserPhone: phoneOf(seqNo + 23),
+          biz: '3' + pad2(wi + 1) + '-' + pad2((seqNo % 89) + 10) + '-' + pad4(20000 + seqNo * 13 + wi * 7),
           email: '', oade: '',
-          qty: qty, awardedQty: won.length,
-          placements: pr1.concat(pr2), assignedPlaces: won.map(function (pid) { return { pid: pid, qty: 1 }; }),
-          priority1: pr1, priority2: pr2, priority3: [], designatedOnly: false,
+          qty: won.length, awardedQty: won.length,
+          placements: won.slice(), assignedPlaces: won.map(function (pid2) { return { pid: pid2, qty: 1 }; }),
+          priority1: won.slice(), priority2: [], priority3: [], designatedOnly: false,
           priority1Slots: [], priority2Slots: [], priority3Slots: [],
-          p1: pr1[0] || '', p2: pr2[0] || '', p3: '',
-          eco: (i % 4 === 0), status: status, text: src[2],
-          appliedAt: addDays(w.start, -6 + (i % 5)) + ' ' + pad2(9 + (i % 8)) + ':' + pad2((i * 13) % 60),
+          p1: won[0] || '', p2: won[1] || '', p3: won[2] || '',
+          eco: (seqNo % 4 === 0), status: status, text: src[2],
+          appliedAt: addDays(w.start, -6 + (seqNo % 5)) + ' ' + pad2(9 + (seqNo % 8)) + ':' + pad2((seqNo * 13) % 60),
           start: w.start, days: 7,
-          file: null, preview: null, mine: false, paid: !!won.length && !miss,
-          delivered: !!won.length && !miss, deliveredAt: (won.length && !miss) ? addDays(w.start, -4) + ' 15:' + pad2((i * 7) % 60) : null,
+          file: null, preview: null, mine: false, paid: true,
+          delivered: true, deliveredAt: addDays(w.start, -4) + ' 15:' + pad2((seqNo * 7) % 60),
           deliveryDue: addDays(w.start, -5) + ' 18:00',
           assignedTo: won[0] || null, rank: null,
           reject: null, drawId: 'D-' + w.id + '-16',
-          eventApp: (i === 5), eventName: (i === 5 ? shortRound(w.label) + ' 지역 축제 홍보' : ''),
-          eventStatus: (i === 5 ? '승인' : ''),
-          /* 확정된 지난 회차 행사 건도 실제 찬성 수(3/5)를 남긴다 — 예전에는 투표 기록이 비어 '찬성 0/5'로 보였다 */
-          eventVotes: (i === 5 ? eventVotesSeed([['EV-01', '찬성'], ['EV-02', '찬성'], ['EV-03', '찬성']], addDays(w.start, -7) + ' 11:20') : []),
-          eventDecidedAt: (i === 5 ? addDays(w.start, -7) + ' 11:20' : ''),
-          eventPeriod: (i === 5 ? w.start : ''), eventReason: (i === 5 ? '지역 행사 홍보 — 이전 회차 확정분' : '')
+          eventApp: isEvent, eventName: (isEvent ? shortRound(w.label) + ' 지역 축제 홍보' : ''),
+          eventStatus: (isEvent ? '승인' : ''),
+          eventVotes: (isEvent ? eventVotesSeed([['EV-01', '찬성'], ['EV-02', '찬성'], ['EV-03', '찬성']], addDays(w.start, -7) + ' 11:20') : []),
+          eventDecidedAt: (isEvent ? addDays(w.start, -7) + ' 11:20' : ''),
+          eventPeriod: (isEvent ? w.start : ''), eventReason: (isEvent ? '지역 행사 홍보 — 이전 회차 확정분' : '')
         });
+        seqNo += 1;
+      }
+
+      /* 시연용 낙첨 8건 + 미입고취소 2건 추가 (사용률 90%에 영향 없음: awardedQty=0) */
+      for (var m = 0; m < 10; m++) {
+        var mSrc = PAST_POOL[(wi * 11 + m * 5 + 3) % PAST_POOL.length];
+        var mPid = PLACEMENTS[(m * 7 + wi * 3) % nPlaces].id;
+        var isMiss = (m >= 8);
+        out.push({
+          id: w.id + '-A-' + pad4(seqNo), round: w.id, week: w.start, pastSeed: true,
+          company: mSrc[0], owner: mSrc[1], phone: phoneOf(seqNo + m),
+          appType: 'direct', advertiser: mSrc[0],
+          advertiserBiz: '3' + pad2(wi + 1) + '-' + pad2(10 + m) + '-' + pad4(50000 + seqNo * 11),
+          advertiserPhone: phoneOf(seqNo + 19),
+          biz: '3' + pad2(wi + 1) + '-' + pad2(10 + m) + '-' + pad4(50000 + seqNo * 11),
+          email: '', oade: '',
+          qty: 1, awardedQty: 0,
+          placements: [mPid], assignedPlaces: [],
+          priority1: [mPid], priority2: [], priority3: [], designatedOnly: false,
+          priority1Slots: [], priority2Slots: [], priority3Slots: [],
+          p1: mPid, p2: '', p3: '',
+          eco: false, status: isMiss ? '미입고취소' : '낙첨', text: mSrc[2],
+          appliedAt: addDays(w.start, -6 + (m % 4)) + ' ' + pad2(10 + m) + ':15',
+          start: w.start, days: 7,
+          file: null, preview: null, mine: false, paid: false,
+          delivered: false, deliveredAt: null,
+          deliveryDue: addDays(w.start, -5) + ' 18:00',
+          assignedTo: null, rank: null,
+          reject: null, drawId: 'D-' + w.id + '-16',
+          eventApp: false, eventName: '', eventStatus: '', eventVotes: [], eventDecidedAt: '', eventPeriod: '', eventReason: ''
+        });
+        seqNo += 1;
       }
     });
     return out;
   }
-  /* 지난 회차 공문 우선접수 시연분 — 회차(게첨 주)마다 1건 */
+  /* 지난 회차 공문 우선접수 시연분 — 회차(게첨 주)마다 1건 (10월 1주차 ~ 11월 4주차) */
   function pastWeekOfficialSeed() {
     return [
+      { id: 'G-2026-W39-01', round: '2026-W39', week: '2026-10-05', org: '서산시청 도로관리과', pids: ['P01', 'P02'] },
+      { id: 'G-2026-W40-01', round: '2026-W40', week: '2026-10-12', org: '서산시청 보건소', pids: ['P05', 'P06'] },
+      { id: 'G-2026-W41-01', round: '2026-W41', week: '2026-10-19', org: '서산시청 환경과', pids: ['P15', 'P16'] },
+      { id: 'G-2026-W42-01', round: '2026-W42', week: '2026-10-26', org: '서산시청 평생교육과', pids: ['P21', 'P22'] },
       { id: 'G-2026-W43-01', round: '2026-W43', week: '2026-11-02', org: '서산시청 안전총괄과', pids: ['P11', 'P12'] },
       { id: 'G-2026-W44-01', round: '2026-W44', week: '2026-11-09', org: '서산시청 문화관광과', pids: ['P31', 'P32'] },
       { id: 'G-2026-W45-01', round: '2026-W45', week: '2026-11-16', org: '서산시청 복지과', pids: ['P37', 'P38'] },
@@ -1148,10 +1233,13 @@
       };
     });
   }
-  /* 지난 회차 추첨 아카이브 — 접수대장에서 주차별 추첨 결과를 바로 보여 준다 */
+  /* 지난 회차 추첨 아카이브 — 접수대장에서 주차별 추첨 결과를 바로 보여 준다 (10월 1주차~11월 4주차) */
   function pastDrawArchiveSeed(apps) {
-    var seeds = { '2026-W43': '3C91A0F2', '2026-W44': '8B47D1E9', '2026-W45': 'D2A65C14', '2026-W46': 'F07B9E32' };
-    return WEEKS.slice(0, 4).map(function (w) {
+    var seeds = {
+      '2026-W39': '9A14E2C1', '2026-W40': '7F22B8D4', '2026-W41': '4E61C9A8', '2026-W42': '1D83F5B7',
+      '2026-W43': '3C91A0F2', '2026-W44': '8B47D1E9', '2026-W45': 'D2A65C14', '2026-W46': 'F07B9E32'
+    };
+    return WEEKS.filter(function (w) { return w.id <= '2026-W46'; }).map(function (w) {
       var list = apps.filter(function (a) { return a.round === w.id; });
       var won = list.filter(function (a) { return awardedOf(a) > 0; }).length;
       var seats = list.reduce(function (n, a) { return n + awardedOf(a); }, 0);
@@ -4315,7 +4403,7 @@
         receivedBy: '이현장 (현장실무원)', receivedByRole: '현장실무원',
         fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
       }].concat(pastWeekOfficialSeed()),
-      seedVersion: 5,
+      seedVersion: 6,
       eventApprovers: seedEventApprovers(),
       bonusCaps: { chief: 5, senior: 3, field: 3, staff: 2 },
       penalties: SEED_PENALTIES.map(function (p) { var o = {}; for (var k in p) { o[k] = p[k]; } return o; }),
@@ -4378,17 +4466,18 @@
       db.seedVersion = 4;
       save();
     }
-    /* 시연 데이터 v5 (2026-11-23) — 11월 1·2·3주차 · 이번 주(4주차) 추첨 완료 결과
-       기존 저장분이 있어도 지난 회차 접수·배정·공문·추첨 아카이브를 빠짐없이 보강한다 */
-    if (Number(db.seedVersion || 3) < 5) {
+    /* 시연 데이터 v6 (2026-11-24) — 10월 1주차~현재(11월 4주차) 게시대 사용률 90% 임의 추첨 결과 반영 */
+    if (Number(db.seedVersion || 3) < 6) {
+      var oldSeedRe = /^2026-W4[3-6]-A-1(0[1-79]|1[013-79]|2[0235-8])$/;
+      db.apps = (db.apps || []).filter(function (a) { return !a.pastSeed && !oldSeedRe.test(String(a.id || '')); });
       var pids = {};
       db.apps.forEach(function (a) { pids[a.id] = 1; });
       pastWeekAppsSeed().forEach(function (a) { if (!pids[a.id]) db.apps.push(a); });
       var oids = {};
       (db.official || []).forEach(function (o) { oids[o.id] = 1; });
       pastWeekOfficialSeed().forEach(function (o) { if (!oids[o.id]) db.official.push(o); });
-      if (!Array.isArray(db.drawArchive) || !db.drawArchive.length) db.drawArchive = pastDrawArchiveSeed(db.apps);
-      db.seedVersion = 5;
+      db.drawArchive = pastDrawArchiveSeed(db.apps);
+      db.seedVersion = 6;
       save();
     }
   }
