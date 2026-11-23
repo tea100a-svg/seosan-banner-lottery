@@ -99,6 +99,13 @@
         새로고침
       </button>
     </div>
+    <a class="cta-next" id="ctaApplyNext" href="apply.html?week=2026-11-30" aria-label="다음 게첩 주차 접수하러 가기">
+      <span class="cta-ico" aria-hidden="true">📝</span>
+      <span class="cta-txt">
+        <b id="ctaNextTitle">2026년 12월 1주차 <em>(11.30 ~ 12.06 게첩)</em> 접수하러 가기 →</b>
+        <span class="cta-sub" id="ctaNextSub">추첨 11.23(월) 10:00 · 입고 마감 11.25(수) 18:00 · 게첩 11.30(월)~12.06(일)</span>
+      </span>
+    </a>
     <div class="cal-toggle-row">
       <button class="btn ghost sm" id="btnWeekCal" type="button" aria-expanded="false" aria-controls="weekCalPanel">📅 달력보기</button>
       <span class="sm" id="weekCalHint">게첩 주(월~일)별 접수·배정을 달력으로 봅니다</span>
@@ -113,6 +120,7 @@
       <div id="weekCal"></div>
     </div>
     <div class="rule-strip-wrap" id="weekRuleStrip"></div>
+    <div id="statusLiveNotice"></div>
     <div class="week-strip" id="weekStrip"></div>
     <div class="stats" id="statusStats"></div>
     <div class="hint-txt" id="statusReqInfo" style="margin:-10px 0 16px"></div>

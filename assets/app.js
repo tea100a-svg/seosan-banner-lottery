@@ -2358,7 +2358,7 @@
     ranks: { 1: [], 2: [], 3: [] }, slots: {}, rank: 1, designatedOnly: false,
     file: null, filePreview: null, licName: '', licData: '', licMime: '', drawing: false, daySim: null, appType: 'direct', appTypeTouched: false, adminBrokenOnly: false,
     locSel: '', locDay: '', locq: '', woLow: false, applyWarnShown: false, mpSel: '', guestAck: false, guestPromptOpen: false,
-    theme: '', pTheme: '', fcTheme: '', woDay: '', woAll: false, offDay: '', offSel: {}, imeOn: true, authTab: 'login', fcTimeSim: '',
+    theme: '', pTheme: '', fcTheme: '', woDay: '', woAll: false, offDay: '', offSel: {}, imeOn: true, authTab: 'login', fcTimeSim: '', fcMode: 'live', liveKind: '',
     locAddrOpen: false, locAddrRows: {}, coverOk: {}, fcCover: {}, otherOk: {},
     suLicName: '', suLicData: '', suLicMime: '', licFromMember: false,
     adminSub: 'draw', guideSub: 'file', sort: 'comp-desc', pSort: 'comp-desc', calOpen: false, statusPage: 0, pickPage: 0, statusAll: true, pickAll: false,
@@ -4398,7 +4398,8 @@
   function weekRequestCount(pid, week) { return weekRequestCountOf(pid, week); }
 
   /* 한 줄(compact single-row) 게시대 행 — 게시대현황·주간 현황 공통
-     `[게시요일·행정동] 게시대명 · 정원/접수중 · [상세/접수]` */
+     `[게시요일·행정동] 게시대명 · 정원/접수중 · [상세/접수]`
+     · 이번 주 게첩(진행 중 주간)을 보고 있을 때는 접수 버튼을 [잔여석 접수](first.html?mode=live)로 바꾼다. */
   function placementRow(p, opts) {
     opts = opts || {};
     var wk = weekStartOf(opts.week || activeWeekStart());
@@ -4406,13 +4407,21 @@
     var off = !!p.broken || slotAllDown(p);
     var assigned = weekAssignedSeatsOf(p.id, wk);
     var tagCls = p.broken ? ' broken' : '';
+    var isLive = (wk === weekStartOf(CUR.start));
+    var liveLeft = isLive ? liveAvailOf(p) : 0;
+    var liveBtn = isLive
+      ? '<button class="btn sm ' + (liveLeft && !off ? 'primary' : '') + '" data-fclive="' + esc(p.id) + '" type="button"' +
+        ((liveLeft && !off) ? '' : ' disabled') + '>' + (off ? '불가' : (liveLeft ? '잔여석 접수' : '마감')) + '</button>'
+      : '<button class="btn sm primary" data-apply="' + esc(p.id) + '" data-week="' + wk + '" type="button"' + (off ? ' disabled' : '') + '>' + (off ? '불가' : '접수') + '</button>';
     return '<div class="plrow' + (off ? ' off' : '') + '" data-detail="' + esc(p.id) + '" data-week="' + wk + '" role="button" tabindex="0" aria-label="' + esc(p.name + ' 상세 보기') + '">' +
       '<span class="pl-main"><span class="pl-tag' + tagCls + '">' + esc(p.day) + '·' + esc(p.dong) + '</span>' +
       '<span class="pl-name">' + esc(p.name) + '</span></span>' +
-      '<span class="pl-count"><b>' + reqN + '/' + p.cap + '</b>건 접수중' + (assigned ? ' · 배정 ' + assigned : '') + '</span>' +
+      '<span class="pl-count">' + (isLive
+        ? '<b>잔여 ' + liveLeft + '면</b>' + (assigned ? ' · 배정 ' + assigned + '면' : '')
+        : '<b>' + reqN + '/' + p.cap + '</b>건 접수중' + (assigned ? ' · 배정 ' + assigned : '')) + '</span>' +
       '<span class="pl-act">' +
         '<button class="btn sm hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
-        '<button class="btn sm primary" data-apply="' + esc(p.id) + '" data-week="' + wk + '" type="button"' + (off ? ' disabled' : '') + '>' + (off ? '불가' : '접수') + '</button>' +
+        liveBtn +
       '</span></div>';
   }
 
@@ -4660,6 +4669,28 @@
         '<div style="font-size:11.5px;color:var(--muted);margin-top:2px">' + esc(s.sub) + '</div></div>';
     }).join('');
     renderWeekStrip(wk);
+    /* 첫 화면 최상단 — 다음 게첩 주차 한 개만 크게 안내 (2026-11-23 김재봉 님 지시) */
+    if ($('#ctaApplyNext')) {
+      var ctaEl = $('#ctaApplyNext');
+      ctaEl.href = 'apply.html?week=' + encodeURIComponent(ROUND.postStart);
+      if ($('#ctaNextTitle')) $('#ctaNextTitle').innerHTML = esc(ROUND.label) + ' <em>(' +
+        dstr(ROUND.postStart) + ' ~ ' + dstr(ROUND.postEnd) + ' 게첩)</em> 접수하러 가기 →';
+      if ($('#ctaNextSub')) $('#ctaNextSub').textContent = '추첨 ' + dfmt(ROUND.drawDate) + ' ' + ROUND.drawTime +
+        ' · 입고 마감 ' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + ' · 게첩 ' + dfmt(ROUND.postStart) + '~' + dfmt(ROUND.postEnd);
+    }
+    /* 이번 주(11.23~11.29) 게첩 주간을 보고 있으면 — 진행 주간 잔여석 접수 안내 */
+    if ($('#statusLiveNotice')) {
+      if (wk === weekStartOf(CUR.start)) {
+        var lv = liveWeekState();
+        $('#statusLiveNotice').innerHTML = '<div class="callout warn" id="liveNoticeBox">' + IC.alert +
+          '<div><b>지금은 ' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + ' 게첩이 진행 중인 주간입니다.</b><br>' +
+          '협회 일괄 게첩(추첨 → 입고 → 게첩)이 끝난 주간이라 남은 잔여 면 <b>' + lv.left + '면</b>은 <b>요일·일과시간 제한 없이</b> 지금 바로 접수할 수 있습니다. ' +
+          '설치 안내 — <b>광고사(광고대행사)는 직접 현장에 설치(게첩)</b>, <b>일반인은 규정상 직접 설치가 금지되어 반드시 광고사에 의뢰</b>하셔야 합니다.' +
+          '<div style="margin-top:8px"><button class="btn sm primary" type="button" data-fclive="">🔥 진행 주간 잔여석 접수 열기</button></div></div></div>';
+      } else {
+        $('#statusLiveNotice').innerHTML = '';
+      }
+    }
     if ($('#statusReqInfo')) $('#statusReqInfo').innerHTML = '<b>' + weekRangeTxt(wk) + '</b> 게첩 주 — 접수 <b>' + appsR.length + '건</b> · 신청 <b>' + qtyR + '매</b> · 배정 <b>' + ws.awarded + '매</b> · 잔여 <b>' + ws.left + '면</b>. 카드의 <b>N/M건 접수중</b>은 그 게시대를 1·2·3순위로 신청한 건수입니다.';
 
     if ($('#statusSortChips')) $('#statusSortChips').innerHTML = sortChipsHTML(ui.sort, 'sort');
@@ -4714,6 +4745,8 @@
   function showPlacementDetail(id) {
     var p = placementById(id);
     if (!p) return;
+    var liveWk = (weekStartOf(ui.statusWeek || ROUND.postStart) === weekStartOf(CUR.start));
+    var liveLeft = liveWk ? liveAvailOf(p) : 0;
     var appsR = db.apps.filter(function (a) { return a.round === ROUND.id && requestedPlacesOf(a).indexOf(id) >= 0; });
     var qtyAppsR = appsR.reduce(function (s2, a) { return s2 + qtyOf(a); }, 0);
     var body = '<div class="summary" style="margin-bottom:14px"><dl>' +
@@ -4732,6 +4765,7 @@
         : '') +
       '<dt>상태</dt><dd>' + (p.broken ? '<span class="badge b-broken"><i></i>고장·수리중 — 접수·선착순·추첨 제외</span>' : '<span class="badge b-green"><i></i>정상 운영</span>') + '</dd>' +
       '<dt>이번 주 접수중</dt><dd>' + appsR.length + '건 · ' + qtyAppsR + '매 (1개소당 1매)</dd>' +
+      (liveWk ? '<dt>진행 중 주간</dt><dd><b>' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + '</b> · 잔여 <b>' + liveLeft + '면</b> — 협회 일괄 게첩이 끝난 주간입니다</dd>' : '') +
       '</dl></div>' +
       (function () {
         var bd = Number(p.boards) || 1;
@@ -4756,15 +4790,19 @@
       slotGridHTML(p) +
       (p.broken
         ? '<div class="callout warn">' + IC.alert + '<div>현재 <b>수리중</b>인 게시대입니다. 복구 전까지 접수·추첨·목요일 선착순에서 제외되며, 잔여 매수에도 포함되지 않습니다. (협회 관리자만 상태를 바꿀 수 있습니다.)</div></div>'
-        : '<div class="callout info">' + IC.info + '<div>한 게시대에는 <b>1매</b>만 표시할 수 있습니다. 잔여 매는 추첨 후 미배정 물량으로 <b>선착순 예약</b>에 공개됩니다.</div></div>');
+        : (liveWk && liveLeft
+          ? '<div class="callout warn" id="detailLiveCallout">' + IC.alert + '<div><b>진행 중 주간(' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + ') 잔여 ' + liveLeft + '면</b> — 협회 일괄 게첩이 종료된 주간이라 <b>광고사는 직접 설치</b>, <b>일반인은 반드시 광고사에 의뢰</b>해야 합니다. 아래 <b>[진행 주간 잔여석 접수]</b>로 바로 접수할 수 있습니다.</div></div>'
+          : '<div class="callout info">' + IC.info + '<div>한 게시대에는 <b>1매</b>만 표시할 수 있습니다. 잔여 매는 추첨 후 미배정 물량으로 <b>선착순 예약</b>에 공개됩니다.</div></div>'));
     openModal({
       title: p.name, sub: p.dong + ' · 지정게시대 ' + p.id,
       body: body,
       foot: '<button class="btn ghost" data-close type="button">닫기</button>' +
+        (liveWk && liveLeft && !p.broken ? '<button class="btn primary" id="mdlLive" type="button">🔥 진행 주간 잔여석 접수</button>' : '') +
         '<button class="btn" id="mdlFirst" type="button"' + (p.broken ? ' disabled' : '') + '>선착순 예약 보기</button>' +
         '<button class="btn primary" id="mdlApply" type="button"' + (p.broken ? ' disabled' : '') + '>주간 추첨 접수</button>',
       after: function () {
         if (p.broken) return;
+        onEl('#mdlLive', 'click', function () { closeModal(); goPage('first.html?mode=live&place=' + encodeURIComponent(id)); });
         onEl('#mdlApply', 'click', function () {
           closeModal(); goPage('apply.html?place=' + encodeURIComponent(id));
         });
@@ -5944,7 +5982,10 @@
       '<dt>세부 위치</dt><dd>' + (slotAssignTxt(a) ? esc(slotAssignTxt(a)) + ' — 지정한 자리에만 추첨' : '위치 무관 — 게시대 안 빈 칸(동·단)에 자동 배정') + '</dd>' +
       '<dt>배정 게시대</dt><dd>' + (aw.length ? awardListHTML(a) : '추첨 후 확정 — 선택한 게시대마다 1매씩 추첨') + '</dd>' +
       '<dt>게시 기간</dt><dd>' + (a.start || ROUND.periodStart) + ' ~ ' + end + '</dd>' +
-      '<dt>현수막 입고</dt><dd>당첨 시 ' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 협회 입고 (미입고 시 자동 취소·반려)</dd>' +
+      (a.directInstall
+        ? '<dt>설치 방식</dt><dd><b>진행 중 주간 잔여석</b> — ' + liveInstallLabel(liveInstallKindOf(a)) +
+          '<br>' + esc(a.directInstallMsg || liveMsgOf(liveInstallKindOf(a))) + ' (협회 일괄 게첩 없음)</dd>'
+        : '<dt>현수막 입고</dt><dd>당첨 시 ' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 협회 입고 (미입고 시 자동 취소·반려)</dd>') +
       '<dt>광고 문구</dt><dd>' + esc(a.text) + '</dd>' +
       '<dt>수수료</dt><dd>' + won(f.total) + ' (' + esc(feeText(f)) + ')' + (a.assignedTo && awQty !== qty ? ' · 납부는 배정 ' + awQty + '매 기준' : '') +
         '<span class="fee-sub">1매 단가 구성 — ' + esc(feeUnitText()) + '</span></dd>' +
@@ -6258,9 +6299,60 @@
        한쪽이 ''(동 미지정)이면 그 게시대의 사진과 모두 연결한다.
      ══════════════════════════════════════════════════════════════════════ */
   var PHOTO_MAX_SIDE = 1280, PHOTO_QUALITY = 0.72;
+  /* ── 게첨사진 보관기간 3개월(90일) — 등록 후 자동 삭제 (김재봉 님 지시 2026-11-23) ──
+     "사진보관기간은 3달로하자 / 3달후 자동삭제"
+     · 사진마다 uploadedAt(등록일) · expiresAt(등록+90일)을 남기고,
+       앱 초기화·사진 조회 시 현재 날짜로 지난 사진을 자동 정리하며 감사 로그에 기록한다. */
+  var PHOTO_RETAIN_DAYS = 90;
+  function photoDateOf(ph) {
+    var s = String((ph && (ph.uploadedAt || ph.at)) || '').slice(0, 10);
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return null;
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  function photoExpireISO(ph) {
+    if (ph && ph.expiresAt) return String(ph.expiresAt).slice(0, 10);
+    var d = photoDateOf(ph);
+    if (!d) return '';
+    d.setDate(d.getDate() + PHOTO_RETAIN_DAYS);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  /* 남은 보관일 — 오늘 기준 (만료일 당일은 0 = 삭제 대상) */
+  function photoDaysLeft(ph) {
+    var e = photoExpireISO(ph);
+    if (!e) return null;
+    var t = String(todayISO()).split('-'), x = e.split('-');
+    var a = new Date(Number(t[0]), Number(t[1]) - 1, Number(t[2])).getTime();
+    var b = new Date(Number(x[0]), Number(x[1]) - 1, Number(x[2])).getTime();
+    return Math.round((b - a) / 86400000);
+  }
+  function photoRetainBadgeHTML(ph) {
+    var e = photoExpireISO(ph), d = photoDaysLeft(ph);
+    if (!e || d == null) return '';
+    var cls = d <= 0 ? 'b-red' : (d <= 14 ? 'b-amber' : 'b-gray');
+    return '<span class="badge ' + cls + '" title="보관기간 3개월(90일) — 등록일로부터 ' + PHOTO_RETAIN_DAYS + '일 후 자동 삭제"><i></i>' +
+      (d > 0 ? '보관 D-' + d : '보관 만료') + ' · ' + esc(e) + ' 삭제</span>';
+  }
+  /* 보관기간이 지난 게첨사진 자동 삭제 — 초기화·사진 조회 시 호출 */
+  function photoPurgeExpired(opts) {
+    opts = opts || {};
+    var store = photoStore(), removed = [];
+    for (var i = store.length - 1; i >= 0; i--) {
+      var d = photoDaysLeft(store[i]);
+      if (d != null && d <= 0) { removed.push(store[i]); store.splice(i, 1); }
+    }
+    if (removed.length) {
+      removed.forEach(function (ph) {
+        audit('게첨사진', ph.id + ' 보관기간 3개월(90일) 경과 자동 삭제 — ' + (photoRawName(ph.pid) || ph.pid) + ' ' +
+          photoDongLabel(ph.pid, ph.dong) + ' · 등록 ' + (ph.uploadedAt || ph.at || '') + ' · 만료 ' + photoExpireISO(ph));
+      });
+      if (!opts.noSave) save();
+      if (opts.note && typeof toast === 'function') toast('보관기간(3개월)이 지난 게첨사진 ' + removed.length + '장을 자동 삭제했습니다.', false);
+    }
+    return removed;
+  }
   var PHOTO_SAMPLE_PLACES = ['의료원사거리', '동문동', '석지제사거리', '중앙고', '부춘', '오토밸리', '코아루'];
-  function photoStore() { if (!Array.isArray(db.photos)) db.photos = []; return db.photos; }
-  function dongLetterOfSlot(slot) { var c = String(slot || ''); return /^[A-G]/.test(c) ? c.charAt(0) : ''; }
+  function photoStore() { if (!Array.isArray(db.photos)) db.photos = []; return db.photos; }  function dongLetterOfSlot(slot) { var c = String(slot || ''); return /^[A-G]/.test(c) ? c.charAt(0) : ''; }
   function photoWeekOf() { return weekStartOf(ui.photoWeek || addDays(currentPostingWeek(), -7)); }
   function escXml(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (m) {
@@ -6291,10 +6383,12 @@
   }
   function photoMeta(ph) {
     return { id: ph.id, week: weekStartOf(ph.week), pid: ph.pid, dong: String(ph.dong || ''), at: ph.at || '', by: ph.by || '',
+      uploadedAt: ph.uploadedAt || ph.at || '', expiresAt: photoExpireISO(ph), daysLeft: photoDaysLeft(ph),
       name: ph.name || '', w: ph.w || 0, h: ph.h || 0, sample: !!ph.sample, size: String(photoDataOf(ph) || '').length,
       head: String(photoDataOf(ph) || '').slice(0, 40) };
   }
   function photosOfCell(week, pid, letter) {
+    photoPurgeExpired({ noSave: true });
     var s = weekStartOf(week), L = String(letter == null ? '' : letter);
     return photoStore().filter(function (ph) {
       return weekStartOf(ph.week) === s && String(ph.pid) === String(pid) && String(ph.dong || '') === L;
@@ -6314,6 +6408,7 @@
   }
   function photosForApp(a) {
     if (!a) return [];
+    photoPurgeExpired({ noSave: true });
     var s = weekStartOf(a.start || ROUND.postStart), out = [];
     photoStore().forEach(function (ph) {
       if (weekStartOf(ph.week) !== s) return;
@@ -6433,7 +6528,8 @@
         var at = c.wk + ' ' + (n % 3 === 0 ? '09:40' : (n % 3 === 1 ? '08:55' : '10:20'));
         var ad = (c.app && c.app.text) ? c.app.text : '현수막 게첩 완료';
         out.push({
-          id: 'PH-S' + pad4(n), week: c.wk, pid: c.pid, dong: c.letter, at: at,
+          id: 'PH-S' + pad4(n), week: c.wk, pid: c.pid, dong: c.letter, at: at, uploadedAt: at,
+          expiresAt: photoExpireISO({ at: at }),
           by: n % 4 === 0 ? '김현장 (현장실무원)' : '이현장 (현장실무원)',
           name: '게첨사진_' + pnm + '_' + (c.letter ? c.letter + '동' : '전체') + '.svg',
           svg: { place: pnm, dong: c.letter ? c.letter + '동' : '', text: ad, at: at, seed: n },
@@ -6447,10 +6543,12 @@
   function photoByLabel() { return currentAccessRole() === 'super' ? '총괄 관리자' : (accessRoleLabel() + ' · ' + ((accessOfficer() || {}).name || '현장실무원')); }
   function addPhotoRecord(o) {
     o = o || {};
+    var at = o.at || nowStamp();
     var ph = {
       id: photoNextId(), week: weekStartOf(o.week || photoWeekOf()), pid: o.pid || ui.photoPid,
-      dong: String(o.dong == null ? ui.photoDong : o.dong), at: o.at || nowStamp(), by: o.by || photoByLabel(),
-      name: o.name || '게첨사진.png', data: o.data || '', w: o.w || 0, h: o.h || 0, sample: !!o.sample
+      dong: String(o.dong == null ? ui.photoDong : o.dong), at: at, uploadedAt: o.uploadedAt || at, by: o.by || photoByLabel(),
+      name: o.name || '게첨사진.png', data: o.data || '', w: o.w || 0, h: o.h || 0, sample: !!o.sample,
+      expiresAt: o.expiresAt || photoExpireISO({ at: at })
     };
     photoStore().push(ph);
     save();
@@ -6643,24 +6741,29 @@
       '<div class="pc-img"><img src="' + photoDataOf(ph) + '" alt="' + esc(cell) + ' 게첨사진" loading="lazy"></div>' +
       '<div class="pc-meta"><b>' + esc(cell) + '</b>' +
         '<span>' + esc(ph.at || '') + ' · ' + esc(ph.by || '') + '</span>' +
+        '<span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + photoRetainBadgeHTML(ph) +
+          '<span class="sm">보관 만료 ' + esc(photoExpireISO(ph) || '—') + ' (등록일로부터 3개월)</span></span>' +
         '<span>접수 ' + apps.length + '건 연결 · ' + esc(weekRangeTxt(ph.week)) + '</span></div>' +
       '<div class="pc-btns">' + btns + '</div></div>';
   }
   /* 접수자 마이페이지 — 접수번호 기준으로 배정 게시대·동 사진 자동 표시 */
   function photoSectionHTML(a) {
     var list = photosForApp(a);
+    var retainNote = '<div class="callout info" id="mpPhotoRetain" style="margin-top:12px">' + IC.info +
+      '<div><b>게첨사진 보관기간 안내</b> — 게첨 완료 사진은 <b>등록일로부터 3개월(90일)간 보관 후 자동 삭제</b>됩니다. ' +
+      '증빙이 필요한 경우 기간 내에 미리 다운로드하거나 인쇄해 보관해 주세요.</div></div>';
     if (!list.length) {
       return '<div class="callout info" id="mpPhotoBox" style="margin-top:14px">' + IC.info +
-        '<div><b>📸 게첨사진 등록 대기중</b> — 현장 게첩 후 실무자가 게시대 동 단위로 사진을 등록하면, 이 접수번호에 배정된 게시대·동의 사진이 여기에 자동으로 표시됩니다(등록되면 사진 내려받기·게첨 확인서 인쇄).</div></div>';
+        '<div><b>📸 게첨사진 등록 대기중</b> — 현장 게첩 후 실무자가 게시대 동 단위로 사진을 등록하면, 이 접수번호에 배정된 게시대·동의 사진이 여기에 자동으로 표시됩니다(등록되면 사진 내려받기·게첨 확인서 인쇄).</div></div>' + retainNote;
     }
     return '<div class="panel" id="mpPhotoBox" style="margin-top:14px">' +
       '<div class="panel-head"><h3>' + IC.doc + ' 📸 게첨사진 · 게첩 확인</h3>' +
-      '<span class="sub">' + list.length + '장 · 배정 게시대·동 사진 자동 연결</span></div>' +
+      '<span class="sub">' + list.length + '장 · 배정 게시대·동 사진 자동 연결 · 보관 3개월</span></div>' +
       '<div class="photo-grid">' + list.map(function (ph) { return photoCardHTML(ph, 'owner', a); }).join('') + '</div>' +
       '<div class="off-actions" style="margin-top:10px">' +
         '<button class="btn primary" type="button" data-photoproof="' + esc(a.id) + '">🖨️ 게첨 확인서(사진) 전체 인쇄 (' + list.length + '장)</button>' +
         '<span class="hint-txt" style="margin:0">사진마다 A4 1장 · 접수번호·광고주·문구·게시대/동·게첩기간이 함께 인쇄됩니다.</span>' +
-      '</div></div>';
+      '</div>' + retainNote + '</div>';
   }
   /* 관리자 — 게시대 동 단위 등록 화면 */
   function renderPhotoPanel() {
@@ -6717,6 +6820,13 @@
     var cells = photosOfCell(wk, ui.photoPid, ui.photoDong);
     if ($('#photoInfo')) $('#photoInfo').textContent = (p ? p.name : '—') + ' ' + photoDongLabel(ui.photoPid, ui.photoDong) + ' · ' + weekRangeTxt(wk) +
       ' · 사진 ' + cells.length + '장 / 배정 접수 ' + awardApps.length + '건';
+    if ($('#photoRetainInfo')) {
+      photoPurgeExpired({});
+      var nowCells = photosOfCell(wk, ui.photoPid, ui.photoDong);
+      var soonN = nowCells.filter(function (ph) { var dd = photoDaysLeft(ph); return dd != null && dd > 0 && dd <= 14; }).length;
+      $('#photoRetainInfo').textContent = '보관기간 등록일로부터 3개월(90일) · 기간 경과 시 자동 삭제 — 이 화면 ' + nowCells.length + '장' +
+        (soonN ? ' · 삭제 임박 ' + soonN + '장' : '');
+    }
     if ($('#photoAwardCount')) $('#photoAwardCount').textContent = awardApps.length + '건';
     if ($('#photoAwardList')) {
       $('#photoAwardList').innerHTML = awardApps.length
@@ -6750,6 +6860,65 @@
      · 시연을 위해 '목요일'·'일과시간/18시 이후'를 화면에서 바꿔 볼 수 있다. */
   var FC_OPEN_FROM = 9, FC_OPEN_TO = 18;
   var FC_DELIVER = { date: ROUND.cutoffDate, time: '10:00' };
+
+  /* ── 진행 중 주간(이번 주 게첩) 잔여석 접수 — 김재봉 님 지시 2026-11-23 ─────────
+     "현재 진행 중인 주간에 잔여석 접수 열어주고 / 광고사에겐 직접설치 해야된다 메세지 /
+      일반인에겐 광고사의뢰 메세지."
+     · 11.23~11.29(11월 4주차)는 협회 일괄 게첩(추첨 → 입고 → 게첩)이 이미 끝난 주간입니다.
+       그래서 남은 면은 **요일·일과시간 제한 없이** 지금 바로 접수할 수 있게 엽니다.
+     · 설치 주체가 협회가 아니므로 접수자 유형에 따라 안내 문구를 나눕니다.
+       광고대행사(광고사) → 광고사가 직접 현장 설치 /
+       일반인(일반업체·일반회원·비회원) → **규정상 직접 설치 금지** — 반드시 옥외광고업 등록 광고사에 의뢰 */
+  var LIVE_MSG = {
+    agency: '현재 진행 중인 주간 잔여석 접수입니다. 협회 일괄 게첩이 종료된 주간이므로 광고사에서 직접 현장에 설치(게첩)하셔야 합니다.',
+    general: '현재 진행 중인 주간 잔여석 접수입니다. 관련 규정에 따라 일반인은 직접 설치가 금지되어 있으므로, 반드시 옥외광고업 등록 광고사에 설치를 의뢰하셔야 합니다.'
+  };
+  var LIVE_MSG_HTML = {
+    agency: '⚠️ 현재 진행 중인 주간 잔여석 접수입니다. 협회 일괄 게첩이 종료된 주간이므로 <b>광고사에서 직접 현장에 설치(게첩)</b>하셔야 합니다.',
+    general: '⚠️ 현재 진행 중인 주간 잔여석 접수입니다. 관련 규정에 따라 <b>일반인은 직접 설치가 금지</b>되어 있으므로, <b>반드시 옥외광고업 등록 광고사에 설치를 의뢰</b>하셔야 합니다.'
+  };
+  function liveInstallLabel(kind) {
+    return kind === 'agency' ? '광고사 직접 설치' : '광고사 의뢰 (일반인 직접설치 금지)';
+  }
+  function liveInstallKindOf(a) {
+    if (!a) return 'general';
+    if (a.installType === 'agency' || a.installType === 'general') return a.installType;
+    return a.appType === 'agency' ? 'agency' : 'general';
+  }
+  function liveMsgOf(kind) { return LIVE_MSG[kind === 'agency' ? 'agency' : 'general']; }
+  function liveMsgHTMLOf(kind) { return LIVE_MSG_HTML[kind === 'agency' ? 'agency' : 'general']; }
+  /* 로그인 회원 구분 — 광고대행사면 '광고사 직접 설치', 그 외(일반업체·비회원)는 '광고사 의뢰'(일반인 직접설치 금지) */
+  function applicantKind() { var m = currentMember(); return (m && m.type === 'agency') ? 'agency' : 'general'; }
+  function liveWeekOpenNow() { return todayISO() <= CUR.end; }
+  /* 진행 중 주간 잔여 면 — 그 주(11.23~11.29) 확정·공문 배정을 뺀 실제 빈 칸 수 */
+  function liveAvailOf(p) {
+    if (!p || p.broken) return 0;
+    var plan = slotPlan(p.id, CUR.start);
+    return Math.max(0, plan.free.length - prioritySeatReserved(p.id));
+  }
+  function liveLeftTotal() {
+    var n = 0;
+    db.placements.forEach(function (p) { n += liveAvailOf(p); });
+    return n;
+  }
+  function liveWeekState() {
+    var open = liveWeekOpenNow();
+    return {
+      open: open, kind: open ? 'open' : 'closed', id: CUR.id, label: CUR.label,
+      start: CUR.start, end: CUR.end, left: liveLeftTotal(),
+      badge: open ? '진행 중 주간 접수 중 (제한 없음)' : '진행 주간 접수 종료',
+      title: open ? '진행 중 주간 잔여석 접수 중 (' + dfmt(CUR.start) + ' ~ ' + dfmt(CUR.end) + ')'
+        : '진행 중 주간 접수 기간이 지났습니다',
+      msg: open
+        ? '협회 일괄 게첩이 끝난 주간입니다 — 남은 잔여 면을 요일·일과시간 제한 없이 지금 바로 접수할 수 있습니다.'
+        : '이번 주 게첩 주간(' + dfmt(CUR.start) + ' ~ ' + dfmt(CUR.end) + ')이 끝나 잔여석 접수를 마감했습니다. 다음 회차는 미배정 선착순(목요일 일과시간)으로 접수합니다.'
+    };
+  }
+  function setFcMode(m) {
+    ui.fcMode = (m === 'next' ? 'next' : 'live');
+    renderFirst();
+    return ui.fcMode;
+  }
   function firstComeOpenNow() {
     if (ui.fcTimeSim === 'after') return false;
     if (ui.fcTimeSim === 'open') return true;
@@ -6780,13 +6949,88 @@
       msg: '선착순 접수는 ' + dfmt(ROUND.firstComeDate) + '(목) 일과시간 <b>09:00 ~ 18:00</b>에만 운영합니다.' };
   }
 
+  /* 접수 창구 모드 칩 — 진행 중 주간(지금 바로) / 이번 회차 목요일 선착순 */
+  function fcModeChipsHTML() {
+    var live = (ui.fcMode !== 'next');
+    var lab = '<span style="font-size:12px;color:var(--muted);font-weight:700;align-self:center;margin-right:2px">접수 창구</span>';
+    return lab +
+      '<button class="chip' + (live ? ' active' : '') + '" data-fcmode="live" type="button" title="협회 일괄 게첩이 끝난 이번 주 게첩 주간의 남은 면을 지금 바로 접수합니다">' +
+        '🔥 진행 중 주간 잔여석 (' + dstr(CUR.start) + '~' + dstr(CUR.end) + ')</button>' +
+      '<button class="chip' + (!live ? ' active' : '') + '" data-fcmode="next" type="button" title="' + esc(ROUND.label) + ' 게시분 — 목요일 일과시간(09:00~18:00) 선착순">' +
+        esc(ROUND.label) + ' 선착순 (목요일)</button>';
+  }
+
   function renderFirst() {
     if (!has('firstList')) return;
+    if ($('#fcModeChips')) $('#fcModeChips').innerHTML = fcModeChipsHTML();
+    if (ui.fcMode === 'next') renderFirstNext(); else renderFirstLive();
+  }
+
+  /* ── 진행 중 주간(11.23~11.29) 잔여석 접수 — 요일·일과시간 제한 없음 ──────────
+     협회 일괄 게첩이 종료된 주간이라 남은 면을 지금 접수한다. 설치 주체가 협회가 아니므로
+     광고대행사=직접 설치 / 일반인=광고사 의뢰(규정상 직접설치 금지) 안내를 접수 전·후로 보여 준다. */
+  function renderFirstLive() {
+    var st = liveWeekState();
+    var left = st.left;
+    $('#firstCount').textContent = '잔여 ' + left + '면' + (brokenCount() ? ' (고장 ' + brokenCount() + '개소 제외)' : '');
+    $('#firstRoundLine').textContent = CUR.label + ' 게시분 (' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + ') · ' +
+      '협회 일괄 게첩이 끝난 주간이라 남은 면을 요일·일과시간 제한 없이 지금 바로 접수합니다.';
+    if ($('#roundName')) $('#roundName').textContent = CUR.label + ' 진행 중';
+    if ($('#roundDue')) $('#roundDue').textContent = '게첩 ' + dstr(CUR.start) + '~' + dstr(CUR.end);
+
+    var chip = $('#fcBadge');
+    chip.className = 'badge ' + (st.open ? 'b-green' : 'b-red');
+    chip.innerHTML = '<i></i>' + esc(st.badge);
+
+    /* 진행 주간은 요일·시간 시뮬레이션이 필요 없다 — 비워 둔다 */
+    $('#fcDayChips').innerHTML = '';
+
+    var kind = ui.liveKind || applicantKind();
+    var icon = st.open ? IC.check : IC.x;
+    $('#fcBanner').innerHTML =
+      '<div class="fc-window ' + st.kind + '">' + icon +
+        '<div><b>' + esc(st.title) + '</b><span>' + esc(st.msg) + '</span></div></div>' +
+      '<div class="callout warn" id="fcLiveMsg">' + IC.alert +
+        '<div>' + liveMsgHTMLOf(kind) +
+        '<span class="sm" style="display:block;margin-top:4px">' +
+          (kind === 'agency'
+            ? '광고대행사(광고사) 접수 — 협회가 게첩하지 않으므로 직접 현장에 설치해 주세요.'
+            : '일반업체·비회원 접수 — 관련 규정상 직접 설치가 금지되어 있으므로 반드시 광고사에 의뢰해 주세요.') +
+        '</span></div></div>';
+
+    if ($('#fcThemeChips')) $('#fcThemeChips').innerHTML = themeChipsHTML(ui.fcTheme, 'fctheme');
+    var html = db.placements.filter(function (p) {
+      return !ui.fcTheme || (p.themes || []).indexOf(ui.fcTheme) >= 0;
+    }).map(function (p) {
+      var rem = liveAvailOf(p);
+      var fsum = slotFlagSummary(p), bk = p.broken || slotAllDown(p);
+      var label = p.broken ? '고장·수리중'
+        : (slotAllDown(p) ? '전체 고장·풀가림'
+          : (!rem ? '마감' : (st.open ? '지금 접수' : '기간 종료')));
+      return '<div class="fc-item">' +
+        '<div class="fmain"><b>' + esc(p.name) +
+        (p.broken ? ' <span class="tag broken">고장·수리중</span>'
+          : (fsum ? ' <span class="tag broken">' + esc(fsum) + '</span>' : '')) + '</b>' +
+        '<span>' + esc(p.dong) + ' · ' + esc(p.day) + '요일 설치' +
+          (p.broken ? ' · 수리중 (가용 면 제외)' : ' · 진행 중 주간 배정 ' + (p.cap - rem - slotDownCount(p)) + '면') +
+          (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
+        '<div class="fcount' + (rem ? '' : ' sold') + '"><b>' + rem + '</b><span>' + (p.broken ? '가용 면 제외' : '잔여 면') + '</span></div>' +
+        '<button class="btn sm ' + (rem && st.open && !bk ? 'primary' : '') + '" data-livebook="' + p.id + '" type="button"' +
+          ((rem && st.open && !bk) ? '' : ' disabled') + '>' + label + '</button>' +
+        '</div>';
+    }).join('');
+    $('#firstList').innerHTML = html;
+  }
+
+  /* ── 이번 회차(12월 1주차) 목요일 잔여석 선착순 — 기존 동작 그대로 ──────────── */
+  function renderFirstNext() {
     var st = firstComeState();
     var left = 0;
     db.placements.forEach(function (p) { left += fcAvailOf(p); });
     $('#firstCount').textContent = '잔여 ' + left + '면' + (brokenCount() ? ' (고장 ' + brokenCount() + '개소 제외)' : '');
     $('#firstRoundLine').textContent = ROUND.label + ' 게시분 (' + dfmt(ROUND.postStart) + ' ~ ' + dfmt(ROUND.postEnd) + ') · 미입고 회수 면을 목요일 일과시간(09:00~18:00)에만 선착순 접수합니다.';
+    if ($('#roundName')) $('#roundName').textContent = ROUND.label + ' 주간 추첨';
+    if ($('#roundDue')) $('#roundDue').textContent = '입고 마감 ' + dfmt(ROUND.deliverBy);
 
     var chip = $('#fcBadge');
     chip.className = 'badge ' + (st.open ? 'b-green' : (st.kind === 'closed' ? 'b-red' : 'b-amber'));
@@ -6996,6 +7240,156 @@
     return app;
   }
 
+  /* ── 진행 중 주간(11.23~11.29) 잔여석 접수 — 신청자 유형별 설치 안내 분기 ──────
+     · 광고대행사(광고사) → "광고사에서 직접 현장에 설치(게첩)"
+     · 일반업체·일반회원·비회원 → "규정상 일반인 직접 설치 금지 — 반드시 광고사에 의뢰"
+     · 접수 완료 데이터에 directInstall:true · directInstallMsg 를 저장해 마이페이지·접수증에도 남긴다. */
+  function bookLive(id) {
+    var p = placementById(id);
+    var st = liveWeekState();
+    if (!p) return null;
+    if (p.broken || slotAllDown(p)) { toast('고장·수리(전체 풀가림) 중인 게시대입니다. 다른 게시대를 선택해 주세요.', true); return null; }
+    if (!st.open) { toast(st.msg, true); return null; }
+    if (liveAvailOf(p) <= 0) { toast('이미 마감된 게시대입니다.', true); return null; }
+    var mbLive = makerBlockOf(id, currentMakerInfo());
+    if (mbLive) { toast(p.name + ' — 제작업체 금지 게시대입니다. ' + (mbLive.block.reason ? '(' + mbLive.block.reason + ')' : ''), true); return null; }
+    var m = currentMember();
+    var firstKind = (ui.liveKind === 'agency' || ui.liveKind === 'general') ? ui.liveKind : applicantKind();
+    function liveMsgBoxHTML(k) {
+      return '<div class="callout warn" id="liveMsgBox" style="margin-top:10px">' + IC.alert +
+        '<div>' + liveMsgHTMLOf(k) +
+        '<span class="sm" style="display:block;margin-top:4px">' +
+          (k === 'agency' ? '광고대행사(광고사) 접수 — 협회가 게첩하지 않으므로 직접 현장에 설치해 주세요.'
+            : '일반업체·비회원 접수 — 관련 규정상 직접 설치가 금지되어 있으므로 반드시 광고사에 의뢰해 주세요.') +
+        '</span></div></div>';
+    }
+    var body = '<div class="summary" style="margin-bottom:14px"><dl>' +
+      '<dt>게시대</dt><dd>' + esc(p.name) + ' (' + esc(p.dong) + ')</dd>' +
+      '<dt>게시 기간</dt><dd><b>' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + '</b> — 진행 중인 게첩 주간</dd>' +
+      '<dt>접수 창구</dt><dd>진행 중 주간 잔여석 — <b>요일·일과시간 제한 없음</b> (지금 바로 접수)</dd>' +
+      '<dt>잔여 면수</dt><dd>' + liveAvailOf(p) + '면 / ' + p.cap + '면</dd>' +
+      '<dt>접수 수량</dt><dd>1매 (1건 1개소)</dd>' +
+      '<dt>수수료</dt><dd>' + won(FEE.total) + '<span class="fee-sub">' + esc(feeUnitText()) + '</span></dd>' +
+      '</dl></div>' +
+      '<div class="field"><label>신청자 구분<span class="req">*</span></label>' +
+      '<div class="chips" style="margin-top:4px" id="liveKindChips">' +
+        '<label class="check"><input type="radio" name="liveKind" value="agency"' + (firstKind === 'agency' ? ' checked' : '') + '><span>광고대행사(광고사)</span></label>' +
+        '<label class="check"><input type="radio" name="liveKind" value="general"' + (firstKind === 'general' ? ' checked' : '') + '><span>일반업체 · 일반인(비회원)</span></label>' +
+      '</div></div>' +
+      '<div id="liveMsgWrap">' + liveMsgBoxHTML(firstKind) + '</div>' +
+      '<div class="field-row" style="margin-top:12px">' +
+      '<div class="field"><label for="liveAdv">실제 광고주명<span class="req">*</span></label>' +
+      '<input class="input ko-ime" id="liveAdv" lang="ko" value="' + esc(m ? m.company : '재봉기획') + '" maxlength="30"><div class="hint-txt">페널티(접수 제한)는 실제 광고주 기준입니다.</div></div>' +
+      '<div class="field"><label for="liveBiz">광고주 사업자등록번호 (선택)</label>' +
+      '<input class="input" id="liveBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" value=""><div class="hint-txt">실제 광고주의 번호입니다 (광고대행사 번호가 아닙니다).</div></div>' +
+      '</div>' +
+      '<div class="callout info" style="margin-top:4px">' + IC.info +
+        '<div>접수 즉시 확정됩니다. 협회 일괄 게첩이 <b>이미 끝난 주간</b>이라 협회가 설치하지 않습니다 — ' +
+        '<b>광고사는 직접 설치</b>하고, <b>일반인은 반드시 옥외광고업 등록 광고사에 의뢰</b>해 설치한 뒤 게시 기간(' + dstr(CUR.start) + '~' + dstr(CUR.end) + ') 동안 게시해 주세요. 수수료 ' + won(FEE.total) + '은 접수 후 입금해 주세요.</div></div>' +
+      '<label class="check"><input type="checkbox" id="liveAgree"><span>진행 중 주간(협회 일괄 게첩 종료) 잔여석이며 <b>설치 안내(광고사 직접 설치 / 일반인은 광고사 의뢰)</b>를 확인했습니다.</span></label>';
+    openModal({
+      title: '🔥 진행 중 주간 잔여석 접수', sub: p.name + ' · ' + dstr(CUR.start) + '~' + dstr(CUR.end) + ' · 즉시 확정',
+      body: body,
+      foot: '<button class="btn ghost" data-close type="button">취소</button>' +
+        '<button class="btn primary" id="btnLiveGo" type="button">접수 확정</button>',
+      after: function () {
+        $$('input[name="liveKind"]').forEach(function (r) {
+          r.addEventListener('change', function () {
+            var k = r.value === 'agency' ? 'agency' : 'general';
+            ui.liveKind = k;
+            if ($('#liveMsgWrap')) $('#liveMsgWrap').innerHTML = liveMsgBoxHTML(k);
+          });
+        });
+        onEl('#btnLiveGo', 'click', function () {
+          var sel = document.querySelector('input[name="liveKind"]:checked');
+          var kind = (sel && sel.value === 'agency') ? 'agency' : 'general';
+          var name = String($('#liveAdv') ? $('#liveAdv').value : '').trim();
+          var biz = String($('#liveBiz') ? $('#liveBiz').value : '').trim();
+          if (!name) { toast('실제 광고주명을 입력해 주세요.', true); return; }
+          var pen = activePenaltyFor({ name: name, biz: biz, phone: '' });
+          if (pen) {
+            toast(name + ' 님은 페널티로 ' + penaltyRoundsTxt(pen) + ' 접수 제한 중입니다. (사유: ' + pen.reason + ' · ' + penaltyReleaseTxt(pen) + ')', true);
+            return;
+          }
+          if (!$('#liveAgree') || !$('#liveAgree').checked) { toast('확인 항목에 동의해 주세요.', true); return; }
+          var app = doBookLive(id, { name: name, biz: biz, kind: kind });
+          if (!app) return;
+          closeModal();
+          showLiveDone(app, p);
+        });
+      }
+    });
+    return true;
+  }
+
+  function doBookLive(id, adv) {
+    var p = placementById(id);
+    var st = liveWeekState();
+    if (!p || p.broken || !st.open || liveAvailOf(p) <= 0) {
+      toast('지금은 진행 중 주간 잔여석을 접수할 수 없거나 마감된 게시대입니다.', true);
+      return null;
+    }
+    adv = adv || {};
+    var kind = adv.kind === 'agency' ? 'agency' : 'general';
+    var name = String(adv.name || '').trim() || '재봉기획';
+    var biz = String(adv.biz || '').trim();
+    var pen = activePenaltyFor({ name: name, biz: biz, phone: '' });
+    if (pen) {
+      toast(name + ' 님은 페널티로 ' + penaltyRoundsTxt(pen) + ' 접수 제한 중입니다. (사유: ' + pen.reason + ' · ' + penaltyReleaseTxt(pen) + ')', true);
+      return null;
+    }
+    var plan = slotPlan(p.id, CUR.start);
+    var slot = plan.free[0] || '';
+    var m = currentMember();
+    var msg = liveMsgOf(kind);
+    var app = {
+      id: nextAppId(CUR.id + '-L-'), round: CUR.id, week: CUR.start,
+      company: m ? m.company : (kind === 'agency' ? name : '비회원 (게스트)'),
+      owner: m ? m.owner : name, phone: m ? (m.phone || '010-0000-0000') : '010-0000-0000',
+      appType: kind === 'agency' ? 'agency' : 'direct',
+      advertiser: name, advertiserBiz: biz, advertiserPhone: m ? (m.phone || '') : '',
+      memberId: m ? m.id : '',
+      qty: 1, awardedQty: 1, placements: [p.id], assignedPlaces: [{ pid: p.id, qty: 1, slot: slot }],
+      priority1: [p.id], priority2: [], priority3: [], designatedOnly: false,
+      p1: p.id, p2: '', p3: '',
+      eco: true, status: '게시중', text: '진행 중 주간 잔여석 접수 (문구는 사무국 확인)',
+      appliedAt: nowStamp(), start: CUR.start, days: 7,
+      file: null, preview: null, mine: true, paid: false, firstCome: false,
+      liveWeek: true, directInstall: true, installType: kind, directInstallMsg: msg,
+      delivered: false, deliveryDue: CUR.end + ' 18:00',
+      assignedTo: p.id, rank: null, reject: null, drawId: null
+    };
+    db.seq += 1;
+    db.apps.push(app);
+    audit('진행주간', app.id + ' ' + p.name + ' 1매 접수 확정 (광고주 ' + name + ' · 진행 중 주간 ' + dstr(CUR.start) + '~' + dstr(CUR.end) + ' · ' +
+      (kind === 'agency' ? '광고사 직접 설치' : '광고사 의뢰 · 일반인 직접설치 금지') + ')');
+    save();
+    renderFirst(); renderStatus(); renderMypage();
+    return app;
+  }
+
+  /* 접수 완료 안내 — 진행 중 주간은 설치 주체를 다시 한 번 분명히 알린다 */
+  function showLiveDone(app, p) {
+    var kind = liveInstallKindOf(app);
+    var slot = (app.assignedPlaces[0] && app.assignedPlaces[0].slot) || '';
+    var body = '<div class="callout ok">' + IC.check +
+      '<div><b>진행 중 주간 잔여석 접수가 완료되었습니다.</b><br>' + esc(p ? p.name : '') + (slot ? ' ' + esc(slotName(p, slot)) : '') +
+      ' 1매 · 게시 기간 <b>' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + '</b> · 접수번호 <b>' + esc(app.id) + '</b></div></div>' +
+      '<div class="callout warn" style="margin-bottom:6px">' + IC.alert + '<div>' + liveMsgHTMLOf(kind) + '</div></div>' +
+      '<div class="hint-txt">설치·게시 후 마이페이지에서 접수 내역과 게시 지정서를 확인하실 수 있습니다. 수수료 ' + won(FEE.total) + '은 접수 후 입금해 주세요.</div>';
+    openModal({
+      title: '접수 완료 — 진행 중 주간 잔여석', sub: app.id + ' · ' + (app.advertiser || ''),
+      body: body,
+      foot: '<button class="btn ghost" data-close type="button">닫기</button>' +
+        '<button class="btn" id="btnLiveReceipt" type="button">접수증 보기</button>' +
+        '<button class="btn primary" id="btnLiveMypage" type="button">마이페이지에서 보기</button>',
+      after: function () {
+        onEl('#btnLiveMypage', 'click', function () { closeModal(); goPage('mypage.html'); });
+        onEl('#btnLiveReceipt', 'click', function () { closeModal(); showReceiptModal(app, false); });
+      }
+    });
+  }
+
   /* ---------------------------------------------------------------
      9. 마이페이지
      --------------------------------------------------------------- */
@@ -7054,6 +7448,7 @@
     var place = placeNamesTxt(requestedPlacesOf(a), 2) || '—';
     return '<button type="button" class="mp-row" data-mppick="' + esc(a.id) + '">' +
       '<span class="mr-top"><b class="mr-no">' + esc(a.id) + '</b>' + statusBadge(a.status) + eventBadgeHTML(a) +
+        (a.directInstall ? '<span class="badge b-amber"><i></i>' + esc(liveInstallLabel(liveInstallKindOf(a))) + '</span>' : '') +
         (a.designatedOnly ? '<span class="badge b-purple"><i></i>고객장소 지정</span>' : '') + '</span>' +
       '<span class="mr-main">' + esc(advOfApp(a).name || a.company || '—') + ' — "' + esc(a.text || '') + '"</span>' +
       '<span class="mr-sub">' + qtyOf(a) + '매 · ' + esc(place) + ' · 게첩 ' + esc(weekRangeTxt(weekStartOf(a.start || ROUND.postStart))) + ' · 접수 ' + esc(a.appliedAt || '—') +
@@ -7082,6 +7477,10 @@
           '<dt>접수 매수</dt><dd>' + qty + '매' + (assigned !== qty ? ' (배정 ' + assigned + '매)' : '') + '</dd>' +
           '<dt>신청일</dt><dd>' + esc(a.appliedAt || '—') + '</dd>' +
           '<dt>게시 기간</dt><dd>' + esc((a.start || ROUND.periodStart) + ' ~ ' + roundPostEnd(a)) + '</dd>' +
+          (a.directInstall
+            ? '<dt>설치 방식</dt><dd><b>진행 중 주간 잔여석 — ' + liveInstallLabel(liveInstallKindOf(a)) + '</b><br>' +
+              esc(a.directInstallMsg || liveMsgOf(liveInstallKindOf(a))) + '</dd>'
+            : '') +
           design +
           '<dt>1순위 게시대</dt><dd>' + esc(placeNamesTxt(prioOf(a, 1), 4) || '—') + '</dd>' +
           '<dt>2·3순위</dt><dd>' + esc((a.designatedOnly ? '미적용 (고객장소 지정)' : (placeNamesTxt(prioOf(a, 2), 3) || '미선택') + ' / ' + (placeNamesTxt(prioOf(a, 3), 3) || '미선택'))) + '</dd>' +
@@ -7126,7 +7525,13 @@
       (a.paid ? '' : ' 수수료 <b>' + won(feeFor(awardedOf(a) || qtyOf(a), a.days).total) + '</b>(' + (awardedOf(a) || qtyOf(a)) + '매)도 함께 입금해 주세요.') +
       ' 미입고 시 자동 취소(반려)됩니다.</div></div>';
     if (a.status === '입고완료') extra = '<div class="callout ok" style="margin-top:10px;margin-bottom:0">' + IC.check + '<div><b>입고 완료 · 게시 대기</b> — ' + dfmt(a.start || ROUND.postStart) + ' 현장 게첩 후 게시가 시작됩니다.</div></div>';
-    if (a.status === '게시중') extra = '<div class="callout ok" style="margin-top:10px;margin-bottom:0">' + IC.check + '<div>게시 중 — ' + esc(a.start) + ' ~ ' + end + ' · 기간이 끝나면 협회가 일괄 철거합니다.</div></div>';
+    if (a.status === '게시중') extra = a.directInstall
+      ? '<div class="callout ok" style="margin-top:10px;margin-bottom:0">' + IC.check + '<div><b>게시 중 (진행 중 주간 잔여석)</b> — ' + esc(a.start) + ' ~ ' + end + ' · 설치·게첨은 접수자(광고사 또는 광고주)가 직접 진행한 건입니다.</div></div>'
+      : '<div class="callout ok" style="margin-top:10px;margin-bottom:0">' + IC.check + '<div>게시 중 — ' + esc(a.start) + ' ~ ' + end + ' · 기간이 끝나면 협회가 일괄 철거합니다.</div></div>';
+    /* 진행 중 주간 잔여석 — 설치 주체 안내를 접수 내역에도 남긴다 (2026-11-23 지시) */
+    if (a.directInstall) extra += '<div class="callout warn" style="margin-top:10px;margin-bottom:0">' + IC.alert +
+      '<div><b>설치 안내 (진행 중 주간)</b><br>' + esc(a.directInstallMsg || liveMsgOf(liveInstallKindOf(a))) +
+      '<span class="sm" style="display:block;margin-top:4px">수수료 ' + won(FEE.total) + '은 접수 후 입금해 주세요.</span></div></div>';
     return '<div class="app-card">' +
       '<div class="ac-top"><div><b>' + esc(place) + '</b>' +
       '<div class="ac-meta" style="margin-top:5px"><span>' + IC.doc + a.id + '</span><span>' + IC.cal +
@@ -7184,9 +7589,11 @@
       return String(b.id || '') < String(a.id || '') ? -1 : 1;
     });
     var curWk = currentPostingWeek();
+    var liveWk = weekStartOf(CUR.start);
+    var liveNow = mine.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) === liveWk; });
     var cur = mine.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) === curWk; });
     var upcoming = mine.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) > curWk; });
-    var past = mine.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) < curWk; });
+    var past = mine.filter(function (a) { var w = weekStartOf(a.start || ROUND.postStart); return w < curWk && w !== liveWk; });
     upcoming.sort(function (a, b) { return String(a.start) < String(b.start) ? -1 : 1; });
 
     /* 목록 한 건을 누르면 mypage-detail.html?id=... 로 이동한다 (별도 페이지) */
@@ -7202,9 +7609,17 @@
     }
 
     html += '<div class="panel"><div class="panel-head"><h3>' + IC.doc + ' ' + esc(weekRangeTxt(curWk)) + ' 게첩 주 접수</h3>' +
-      '<span class="sub">' + cur.length + '건 · 이번 주</span></div>' +
+      '<span class="sub">' + cur.length + '건 · 이번 회차</span></div>' +
       (cur.length ? '<div class="mp-list">' + cur.map(myAppRow).join('') + '</div>'
-        : '<div class="empty">' + IC.empty + '<div>아직 이번 주 게첩분 접수가 없습니다.</div></div>') + '</div>';
+        : '<div class="empty">' + IC.empty + '<div>아직 이번 회차 게첩분 접수가 없습니다.</div></div>') + '</div>';
+
+    /* 진행 중 주간(11.23~11.29) 잔여석 접수 — 설치 주체(광고사 직접/광고사 의뢰) 안내를 함께 보여 준다 */
+    if (liveNow.length) {
+      html += '<div class="panel"><div class="panel-head"><h3>🔥 진행 중 주간(' + dstr(liveWk) + ' ~ ' + dstr(CUR.end) + ') 잔여석 접수</h3>' +
+        '<span class="sub">' + liveNow.length + '건 · 협회 일괄 게첩 종료 주간</span></div>' +
+        '<div class="callout warn" style="margin:2px 0 12px">' + IC.alert + '<div>이 주간은 협회 일괄 게첩이 끝났습니다 — <b>광고대행사는 직접 현장에 설치(게첩)</b>, <b>일반인은 규정상 직접 설치가 금지되어 반드시 옥외광고업 등록 광고사에 의뢰</b>해야 합니다.</div></div>' +
+        '<div class="mp-list">' + liveNow.map(myAppRow).join('') + '</div></div>';
+    }
 
     if (upcoming.length) {
       html += '<div class="panel"><div class="panel-head"><h3>' + IC.cal + ' 사전 접수 · 게첩 예정</h3>' +
@@ -10922,7 +11337,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle]') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-mppick],[data-mpback],[data-dupscan],[data-deleg],[data-seatassign],[data-seatapprove],[data-seatcancel],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle]') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -11178,12 +11593,19 @@
     if (el.hasAttribute('data-payconfirm')) { confirmPay([el.getAttribute('data-payconfirm')]); return; }
     if (el.hasAttribute('data-deliverconfirm')) { confirmDeliver([el.getAttribute('data-deliverconfirm')]); return; }
     if (el.hasAttribute('data-poststart')) { markPosted(el.getAttribute('data-poststart')); return; }
-    if (el.hasAttribute('data-fctime')) { ui.fcTimeSim = el.getAttribute('data-fctime') || ''; ui.daySim = ui.daySim || 'thu'; renderFirst(); return; }
+    if (el.hasAttribute('data-fctime')) { ui.fcMode = 'next'; ui.fcTimeSim = el.getAttribute('data-fctime') || ''; ui.daySim = ui.daySim || 'thu'; renderFirst(); return; }
     if (el.hasAttribute('data-fcday')) {
       var fd = el.getAttribute('data-fcday');
+      ui.fcMode = 'next';
       ui.daySim = fd ? fd : null;
       renderFirst();
       if (ui.tab === 'status') renderWeekStrip();
+      return;
+    }
+    if (el.hasAttribute('data-fcmode')) { ui.liveKind = ''; setFcMode(el.getAttribute('data-fcmode')); return; }
+    if (el.hasAttribute('data-livebook')) { bookLive(el.getAttribute('data-livebook')); return; }
+    if (el.hasAttribute('data-fclive')) {
+      goPage('first.html?mode=live&place=' + encodeURIComponent(el.getAttribute('data-fclive') || ''));
       return;
     }
   }
@@ -11507,6 +11929,8 @@
     ensureDemoData();
     /* 현장 게첨사진 — 저장 데이터에 photos 가 없으면 시연 샘플을 만든다 (2026-11-23) */
     if (!Array.isArray(db.photos)) db.photos = photoSampleSeed(db.apps);
+    /* 게첨사진 보관기간 3개월(90일) — 초기화 시 기간 지난 사진 자동 삭제 (김재봉 님 지시 2026-11-23) */
+    photoPurgeExpired({});
     /* 가산점 부여 한도 — 없으면 기본값(지부장 5·수석 3·현장 3·사무 2) */
     if (!db.bonusCaps || typeof db.bonusCaps !== 'object') db.bonusCaps = { chief: 5, senior: 3, field: 3, staff: 2 };
     if (!memberById(db.session)) db.session = null;
@@ -11597,7 +12021,14 @@
       renderApply();
       maybeShowApplyWarning(false);
     } else if (PAGE === 'first') {
+      /* 진행 중 주간 잔여석 접수 바로가기 — index.html 카드의 [잔여석 접수] → first.html?mode=live&place=P01 */
+      if (paramOf('mode') === 'next') ui.fcMode = 'next';
+      else if (paramOf('mode') === 'live') ui.fcMode = 'live';
       renderFirst();
+      var livePlaceParam = paramOf('place');
+      if (livePlaceParam && ui.fcMode !== 'next' && placementById(livePlaceParam)) {
+        setTimeout(function () { bookLive(livePlaceParam); }, 120);
+      }
     } else if (PAGE === 'mypage') {
       renderMypage();
     } else if (PAGE === 'mypage-detail') {
@@ -11641,6 +12072,24 @@
         .map(function (a) { return { id: a.id, n: photosForApp(a).length, week: weekStartOf(a.start || ROUND.postStart) }; });
     },
     photoAdd: function (o) { var ph = addPhotoRecord(o || {}); renderPhotoPanel(); return photoMeta(ph); },
+    photoAddRaw: function (o) { return photoMeta(addPhotoRecord(o || {})); },
+    /* 게첨사진 보관기간 3개월(90일) 자동 삭제 — 검증용 훅 (2026-11-23) */
+    photoRetainDays: function () { return PHOTO_RETAIN_DAYS; },
+    photoCount: function () { return photoStore().length; },
+    photoPurge: function () {
+      var gone = photoPurgeExpired({});
+      return gone.map(function (ph) { return { id: ph.id, pid: ph.pid, dong: ph.dong, at: ph.uploadedAt || ph.at, expiresAt: photoExpireISO(ph) }; });
+    },
+    photoRetainOf: function (id) {
+      var ph = null;
+      photoStore().forEach(function (x) { if (x.id === id) ph = x; });
+      if (!ph) return null;
+      return { id: ph.id, uploadedAt: ph.uploadedAt || ph.at || '', expiresAt: photoExpireISO(ph), daysLeft: photoDaysLeft(ph) };
+    },
+    photoRetainHTML: function () {
+      var ph = photoStore()[photoStore().length - 1];
+      return ph ? photoCardHTML(ph, 'admin') : '';
+    },
     photoDelete: deletePhoto,
     photoProof: function (id, phId) {
       var a = findApp(id);
@@ -12058,6 +12507,21 @@
     largeAgencies: LARGE_AGENCY_IDS.slice(),
     agencyMembers: function () { return memberList().filter(function (m) { return m.type === 'agency'; }).map(function (m) { return { id: m.id, company: m.company, loginId: m.loginId, biz: m.biz }; }); },
     firstComeConfig: function () { return { from: FC_OPEN_FROM, to: FC_OPEN_TO, deliverDate: FC_DELIVER.date, deliverTime: FC_DELIVER.time }; },
+    /* 진행 중 주간(11.23~11.29) 잔여석 접수 — 검증용 훅 (2026-11-23) */
+    fcMode: function () { return ui.fcMode === 'next' ? 'next' : 'live'; },
+    setFcMode: function (m) { return setFcMode(m); },
+    liveWeek: function () {
+      var s = liveWeekState();
+      return { open: s.open, left: s.left, start: s.start, end: s.end, label: s.label, badge: s.badge, kind: s.kind };
+    },
+    liveAvail: function (pid) { return liveAvailOf(placementById(pid)); },
+    liveMsg: function (kind) { return { text: liveMsgOf(kind), html: liveMsgHTMLOf(kind), label: liveInstallLabel(kind) }; },
+    applicantKind: function () { return applicantKind(); },
+    liveBook: function (pid, o) {
+      var a = doBookLive(pid, o || {});
+      return a ? { id: a.id, round: a.round, start: a.start, status: a.status, directInstall: !!a.directInstall,
+        installType: a.installType, msg: a.directInstallMsg, appType: a.appType } : null;
+    },
     setFcTime: function (v) { ui.fcTimeSim = v || ''; renderFirst(); return firstComeState(); },
     registerOfficialRaw: registerOfficial,
     officialChain: function () { return OFFICIAL_CHAIN.map(function (c) { return c.label; }); },
