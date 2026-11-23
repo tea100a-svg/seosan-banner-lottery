@@ -2619,6 +2619,7 @@
   var db = null;
   var ui = { tab: (PAGE === 'status' ? 'status' : (PAGE === 'apply' ? 'apply' : (PAGE === 'first' ? 'first' : (PAGE === 'mypage' || PAGE === 'mypage-detail' ? 'mypage' : (isAdminPage() ? 'admin' : 'guide'))))), day: '', dong: '', q: '', pDay: '', pDong: '', pq: '', step: 1,
     ranks: { 1: [], 2: [], 3: [] }, slots: {}, rank: 1, designatedOnly: false,
+    randomMode: '', randomPool: [], randomLabel: '',
     file: null, filePreview: null, licName: '', licData: '', licMime: '', licNo: '', licNoSrc: '', licNoFail: false, suLicNo: '', suLicNoSrc: '', fcLic: null, drawing: false, daySim: null, appType: 'direct', appTypeTouched: false, adminBrokenOnly: false,
     locSel: '', locDay: '', locq: '', woLow: false, ppPer: 1, placeFold: false, applyWarnShown: false, mpSel: '', mpq: '', mpOpen: {}, guestAck: false, guestPromptOpen: false, pendingAdvance: '',
     theme: '', pTheme: '', fcTheme: '', woDay: '', woAll: false, offDay: '', offSel: {}, authTab: 'login', fcTimeSim: '', fcMode: 'live', liveKind: '',
@@ -3899,6 +3900,9 @@
   /* 순위별 선택 게시대 — priority1/2/3 (기존 데이터는 placements·p1~p3 호환) */
   function prioOf(a, n) {
     if (!a) return [];
+    if (a.randomMode && Array.isArray(a.randomPool) && a.randomPool.length) {
+      return a.randomPool.slice();
+    }
     var key = 'priority' + n;
     if (Array.isArray(a[key])) return a[key].slice();
     if (n !== 1) return [];
@@ -5538,9 +5542,13 @@
     return out;
   }
 
-  /* 순위 전환 탭 — 1·2·3순위 각각 수량만큼 선택 */
+  /* 순위 전환 탭 — 1·2·3순위 각각 수량만큼 선택 (무작위 선택 시 2·3순위 불필요) */
   function renderRankTabs() {
     if (!has('rankTabs')) return;
+    if (ui.randomMode) {
+      $('#rankTabs').innerHTML = '<button type="button" class="rank-tab active done" disabled><span class="rn">🎲</span>무작위 전체 풀 <span class="rc">' + (ui.randomPool ? ui.randomPool.length : 0) + '개소 · 2·3순위 불필요</span></button>';
+      return;
+    }
     var need = rawQty();
     var html = [1, 2, 3].map(function (n) {
       var c = rankList(n).length;
@@ -5557,6 +5565,13 @@
   /* 순위별 선택 현황 요약 — `1순위 10/10 · 2순위 10/10 · 3순위 10/10` */
   function renderRankStatus() {
     if (!has('rankStatus')) return;
+    if (ui.randomMode) {
+      var needR = rawQty();
+      $('#rankStatus').innerHTML =
+        '<span class="rank-chip ok"><i></i>🎲 ' + esc(ui.randomLabel || '무작위 전체 풀') + '</span>' +
+        '<span class="rank-chip purple"><i></i>1·2순위와 동시 경쟁 · 추첨 시 ' + needR + '매 배정 (2·3순위 선택 불필요)</span>';
+      return;
+    }
     var need = rawQty();
     var parts = [1, 2, 3].map(function (n) {
       var c = rankList(n).length;
@@ -5631,39 +5646,51 @@
     var list = rankList(rk);
     var got = list.length;
     var st = $('#pickStatus');
-    var cls = (need > 0 && got === need) ? 'ok' : (got > need ? 'over' : '');
-    var pct = need > 0 ? Math.min(100, Math.round(got / need * 100)) : 0;
-    var msg;
-    if (!need) msg = '2단계에서 접수 수량을 먼저 입력해 주세요.';
-    else if (got === need) {
-      msg = rk === 1
-        ? '<b>1순위 ' + need + '개소가 모두 선택되었습니다.</b>' + (dOnly ? ' 고객장소 지정 접수로, 1순위에서 떨어지면 낙첨 처리됩니다.' : ' 다음 단계로 넘어갈 수 있습니다.')
-        : '<b>' + rk + '순위 ' + need + '개소가 모두 선택되었습니다.</b> 2·3순위는 선택 사항입니다.';
-    } else if (got < need) {
-      msg = '<b>' + (need - got) + '개소</b>를 더 선택하면 ' + rk + '순위가 완성됩니다.' + (rk === 1 ? ' <b>1순위는 수량과 같은 ' + need + '개소</b>를 골라야 합니다.' : ' (2·3순위는 일부만 골라도 접수할 수 있습니다.)');
-    } else msg = '<b>' + (got - need) + '개소</b>를 초과했습니다. 선택을 해제해 수량에 맞춰 주세요.';
-    st.className = 'pick-status' + (cls ? ' ' + cls : '');
-    st.innerHTML = '<div class="ps-top"><b>' + (dOnly ? '고객장소 지정 · 1순위 선택 현황' : rk + '순위 선택 현황') + '</b><span class="ps-count">' + got + ' / ' + need + '개소</span></div>' +
-      '<div class="bar"><i class="' + (cls === 'over' ? 'full' : '') + '" style="width:' + pct + '%"></i></div>' +
-      '<div class="ps-msg">' + msg + '</div>';
+    if (ui.randomMode && ui.randomPool && ui.randomPool.length) {
+      st.className = 'pick-status ok';
+      st.innerHTML = '<div class="ps-top"><b>🎲 무작위 추첨 풀 선택됨 — ' + esc(ui.randomLabel || '전체 게시대') + '</b><span class="ps-count">' + ui.randomPool.length + '개소 후보 · ' + need + '매 추첨</span></div>' +
+        '<div class="bar"><i style="width:100%"></i></div>' +
+        '<div class="ps-msg"><b>게시대 전체 풀(' + ui.randomPool.length + '개소)</b>이 추첨 후보로 등록되었습니다. 추첨 시 1·2순위와 함께 경쟁해 신청 수량(<b>' + need + '매</b>)만큼 배정되며, <b>2·3순위를 따로 고를 필요가 없습니다.</b></div>';
+      $('#pickSlots').innerHTML = '<div class="slot filled"><span class="rank">무작위</span>' + esc(ui.randomLabel || ('전체 ' + ui.randomPool.length + '개소')) +
+        ' <span class="d">· 1·2순위와 동시 경쟁 · ' + need + '매 추첨 배정</span>' +
+        '<button type="button" id="btnClearRandom" aria-label="무작위 해제">×</button></div>';
+      if ($('#btnClearRandom')) onEl('#btnClearRandom', 'click', function () { clearRandomMode(); });
+      $('#pickSlotsInfo').textContent = '무작위 선택 (' + ui.randomPool.length + '개소 전체 후보) · 2·3순위 선택 불필요 · 개별 게시대를 누르면 직접 선택으로 전환됩니다.';
+    } else {
+      var cls = (need > 0 && got === need) ? 'ok' : (got > need ? 'over' : '');
+      var pct = need > 0 ? Math.min(100, Math.round(got / need * 100)) : 0;
+      var msg;
+      if (!need) msg = '2단계에서 접수 수량을 먼저 입력해 주세요.';
+      else if (got === need) {
+        msg = rk === 1
+          ? '<b>1순위 ' + need + '개소가 모두 선택되었습니다.</b>' + (dOnly ? ' 고객장소 지정 접수로, 1순위에서 떨어지면 낙첨 처리됩니다.' : ' 다음 단계로 넘어갈 수 있습니다.')
+          : '<b>' + rk + '순위 ' + need + '개소가 모두 선택되었습니다.</b> 2·3순위는 선택 사항입니다.';
+      } else if (got < need) {
+        msg = '<b>' + (need - got) + '개소</b>를 더 선택하면 ' + rk + '순위가 완성됩니다.' + (rk === 1 ? ' <b>1순위는 수량과 같은 ' + need + '개소</b>를 골라야 합니다.' : ' (2·3순위는 일부만 골라도 접수할 수 있습니다.)');
+      } else msg = '<b>' + (got - need) + '개소</b>를 초과했습니다. 선택을 해제해 수량에 맞춰 주세요.';
+      st.className = 'pick-status' + (cls ? ' ' + cls : '');
+      st.innerHTML = '<div class="ps-top"><b>' + (dOnly ? '고객장소 지정 · 1순위 선택 현황' : rk + '순위 선택 현황') + '</b><span class="ps-count">' + got + ' / ' + need + '개소</span></div>' +
+        '<div class="bar"><i class="' + (cls === 'over' ? 'full' : '') + '" style="width:' + pct + '%"></i></div>' +
+        '<div class="ps-msg">' + msg + '</div>';
 
-    var slots = list.map(function (id) {
-      var p = placementById(id);
-      if (!p) return '';
-      var code = (ui.slots && ui.slots[id]) || '';
-      return '<div class="slot filled"><span class="rank">' + rk + '</span>' + esc(p.name) +
-        ' <span class="d">' + esc(p.dong) + ' · ' + esc(p.day) + '요일</span>' +
-        (code ? ' <b class="slot-tag">' + esc(slotChipTxt(p, code)) + '</b>' : '') +
-        '<button type="button" data-unpick="' + id + '" aria-label="선택 해제">×</button>' +
-        slotPickerHTML(p, rk) + '</div>';
-    }).join('');
-    $('#pickSlots').innerHTML = slots || '<div class="slot">' + rk + '순위에 선택한 게시대가 없습니다. 아래 목록에서 눌러 선택하세요.</div>';
-    var slotN = 0;
-    [1, 2, 3].forEach(function (k) { rankList(k).forEach(function (pid) { if (ui.slots && ui.slots[pid]) slotN += 1; }); });
-    $('#pickSlotsInfo').textContent = (dOnly
-      ? '고객장소 지정 · 1순위 ' + rankList(1).length + '개소'
-      : '1순위 ' + rankList(1).length + '개소 · 2순위 ' + rankList(2).length + '개소 · 3순위 ' + rankList(3).length + '개소') +
-      (slotN ? ' · 세부 위치 지정 ' + slotN + '곳' : ' · 세부 위치 지정 없음(위치 무관)');
+      var slots = list.map(function (id) {
+        var p = placementById(id);
+        if (!p) return '';
+        var code = (ui.slots && ui.slots[id]) || '';
+        return '<div class="slot filled"><span class="rank">' + rk + '</span>' + esc(p.name) +
+          ' <span class="d">' + esc(p.dong) + ' · ' + esc(p.day) + '요일</span>' +
+          (code ? ' <b class="slot-tag">' + esc(slotChipTxt(p, code)) + '</b>' : '') +
+          '<button type="button" data-unpick="' + id + '" aria-label="선택 해제">×</button>' +
+          slotPickerHTML(p, rk) + '</div>';
+      }).join('');
+      $('#pickSlots').innerHTML = slots || '<div class="slot">' + rk + '순위에 선택한 게시대가 없습니다. 아래 목록에서 눌러 선택하세요.</div>';
+      var slotN = 0;
+      [1, 2, 3].forEach(function (k) { rankList(k).forEach(function (pid) { if (ui.slots && ui.slots[pid]) slotN += 1; }); });
+      $('#pickSlotsInfo').textContent = (dOnly
+        ? '고객장소 지정 · 1순위 ' + rankList(1).length + '개소'
+        : '1순위 ' + rankList(1).length + '개소 · 2순위 ' + rankList(2).length + '개소 · 3순위 ' + rankList(3).length + '개소') +
+        (slotN ? ' · 세부 위치 지정 ' + slotN + '곳' : ' · 세부 위치 지정 없음(위치 무관)');
+    }
 
     renderRankTabs();
     renderRankStatus();
@@ -5677,42 +5704,50 @@
     if ($('#pickPager')) $('#pickPager').innerHTML = pagerHTML(vis.length, ppg.size, ppg.page, 'p', ui.pickAll);
   }
 
-  /* ── 무작위 담기 (김재봉 님 지시 2026-11-21) ─────────────────────────────
-     · 전체 무작위: 모든 정상 게시대에서 남은 매수만큼
-     · 현재 카테고리: 지금 필터(읍면동·요일·테마·검색) 목록 안에서만
-     · 고장·설치불가·제작업체 금지·14개 인접 택1 제한은 자동으로 피하고,
-       이미 직접 고른 게시대는 그대로 두고 부족한 수량만 채웁니다. */
+  /* ── 무작위 선택 (김재봉 님 지시 2026-11-24 개편) ─────────────────────────
+     · 접수 단계에서 수량만큼만 미리 뽑는 것이 아니라, 게시대 전체(또는 현재 카테고리 전체)를
+       추첨 후보 풀로 선택하고, 추첨 단계에서 1·2순위와 함께 경쟁해 신청 수량만큼 배정합니다.
+     · 무작위 선택 시 2·3순위 별도 선택은 필요하지 않습니다. */
+  function clearRandomMode() {
+    ui.randomMode = '';
+    ui.randomPool = [];
+    ui.randomLabel = '';
+    renderPickUI();
+  }
+
   function pickRandom(scope) {
-    var need = rawQty(), rank = activeRank();
-    var left = Math.max(0, need - rankList(rank).length);
-    if (!left) { toast('이미 ' + need + '매를 골랐습니다 — 수량을 늘리거나 선택을 해제하세요.', true); return 0; }
+    var need = rawQty();
+    if (!need || need < QTY_MIN) { toast('2단계에서 접수 수량(1~50매)을 먼저 입력해 주세요.', true); return 0; }
     var pool = (scope === 'filter') ? pickVisible().slice() : db.placements.slice();
     var maker = currentMakerInfo();
     var cands = pool.filter(function (p) {
       if (placeBlocked(p)) return false;
-      if (pickedIn(p.id).length) return false;
       if (makerBlockOf(p.id, maker)) return false;
-      if (adjPickBlock(p.id)) return false;
       if (eventFormOn() && (isLowBoard(p))) return false;   /* 행사 우선접수 — 저단 제외 */
       return true;
     });
-    for (var i = cands.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1)), t = cands[i];
-      cands[i] = cands[j]; cands[j] = t;
+    if (!cands.length) {
+      toast((scope === 'filter' ? '현재 목록' : '전체') + '에서 선택할 수 있는 게시대가 없습니다 — 필터를 바꾸거나 수량을 확인해 주세요.', true);
+      return 0;
     }
-    var added = 0;
-    cands.forEach(function (p) {
-      if (added >= left) return;
-      if (pickedIn(p.id).length || adjPickBlock(p.id)) return;
-      ui.ranks[rank].push(p.id);
-      added += 1;
-    });
+    if (cands.length < need) {
+      toast((scope === 'filter' ? '현재 목록' : '전체') + '의 가용 게시대(' + cands.length + '곳)가 신청 수량(' + need + '매)보다 적습니다.', true);
+      return 0;
+    }
+    ui.randomMode = (scope === 'filter') ? 'filter' : 'all';
+    ui.randomPool = cands.map(function (p) { return p.id; });
+    ui.randomLabel = (scope === 'filter') ? ('현재 카테고리 (' + cands.length + '개소)') : ('전체 게시대 (' + cands.length + '개소)');
+    ui.ranks = { 1: [], 2: [], 3: [] };
+    ui.slots = {};
+    ui.rank = 1;
+    ui.designatedOnly = false;
     renderPickUI();
-    if (!added) toast((scope === 'filter' ? '현재 목록' : '전체') + '에서 담을 수 있는 게시대가 없습니다 — 필터를 바꾸거나 수량을 확인해 주세요.', true);
-    else if (added < left) toast((scope === 'filter' ? '현재 목록' : '전체') + '에서 ' + added + '곳만 담았습니다 — 담을 수 있는 게시대가 모자랍니다. (' + rankList(rank).length + '/' + need + '매)', true);
-    else toast((scope === 'filter' ? '현재 카테고리' : '전체') + ' 무작위 담기 — ' + added + '곳을 담았습니다. (' + rankList(rank).length + '/' + need + '매)');
-    if (added >= left) autoAdvancePick(true);
-    return added;
+    toast('🎲 ' + ui.randomLabel + ' 전체를 추첨 후보로 선택했습니다 — 추첨 시 1·2순위와 경쟁해 ' + need + '매를 배정합니다. (2·3순위 선택 불필요)');
+    if (!ui._noAutoPick && validateStep(3)) {
+      setStep(4);
+      scrollTopSmooth();
+    }
+    return cands.length;
   }
 
   /* 한 게시대에는 1매 — 같은 순위에서 다시 누르면 해제, 순위 간 중복은 차단 */
@@ -5737,6 +5772,11 @@
     return true;
   }
   function togglePick(id) {
+    if (ui.randomMode) {
+      ui.randomMode = '';
+      ui.randomPool = [];
+      ui.randomLabel = '';
+    }
     var p = placementById(id);
     if (p && placeBlocked(p)) {
       toast(p.broken ? '고장·수리 중인 게시대입니다. 복구 후 접수할 수 있습니다.'
@@ -6186,6 +6226,9 @@
       extractedRegNo: ui.licNo || '',
       eco: false,
       designated: !!ui.designatedOnly,
+      randomMode: ui.randomMode || '',
+      randomLabel: ui.randomLabel || '',
+      randomPool: (ui.randomMode && Array.isArray(ui.randomPool)) ? ui.randomPool.slice() : [],
       eventApp: eventFormOn(), polApp: false,
       autoRepeat: !!ui.repeatOn && repeatEndValid(ui.repeatEnd),
       repeatEnd: ui.repeatOn ? (ui.repeatEnd || '') : '',
@@ -6335,6 +6378,14 @@
         return false;
       }
       trimRanks();
+      if (ui.randomMode && ui.randomPool && ui.randomPool.length) {
+        if (ui.randomPool.length < need) {
+          toast('무작위 후보 게시대(' + ui.randomPool.length + '개소)가 신청 수량(' + need + '매)보다 적습니다.', true);
+          renderPickUI();
+          return false;
+        }
+        return true;
+      }
       var c1 = rankList(1).length, c2 = ui.designatedOnly ? 0 : rankList(2).length, c3 = ui.designatedOnly ? 0 : rankList(3).length;
       if (c1 !== need) {
         ui.rank = 1;
@@ -6444,14 +6495,16 @@
       ['현수막 문구', esc(v.text || '—')],
       ['시안', esc(ui.file ? ui.file.name : '미첨부 (문구로 검수)')],
       ['접수 수량', '<b>' + v.qty + '매</b> · 1개소당 1매'],
-      ['고객장소 지정', v.designated
-        ? '<b style="color:var(--purple)">지정</b> — 1순위 지정 장소만 추첨 · 1순위 낙첨 시 낙첨 처리 (2·3순위 미추첨)'
-        : '미지정 — 1순위 → 2순위 → 3순위 순차 배정'],
-      ['1순위 게시대', placeListHTML(v.priority1, v)],
-      ['2순위 게시대', v.designated ? '미적용 (고객장소 지정)' : (v.priority2.length ? placeListHTML(v.priority2, v) : '미선택 — 선택 사항')],
-      ['3순위 게시대', v.designated ? '미적용 (고객장소 지정)' : (v.priority3.length ? placeListHTML(v.priority3, v) : '미선택 — 선택 사항')],
+      ['고객장소 지정', v.randomMode
+        ? '무작위 선택 — 전체 풀 통합 추첨 (2·3순위 선택 불필요)'
+        : (v.designated
+          ? '<b style="color:var(--purple)">지정</b> — 1순위 지정 장소만 추첨 · 1순위 낙첨 시 낙첨 처리 (2·3순위 미추첨)'
+          : '미지정 — 1순위 → 2순위 → 3순위 순차 배정')],
+      ['1순위 게시대', v.randomMode ? ('🎲 <b>무작위 선택</b> — ' + esc(v.randomLabel || ('전체 ' + v.randomPool.length + '개소')) + ' (1·2순위와 동시 경쟁 · ' + v.qty + '매 추첨)') : placeListHTML(v.priority1, v)],
+      ['2순위 게시대', v.randomMode ? '미적용 (무작위 선택 — 전체 풀 통합 추첨)' : (v.designated ? '미적용 (고객장소 지정)' : (v.priority2.length ? placeListHTML(v.priority2, v) : '미선택 — 선택 사항'))],
+      ['3순위 게시대', v.randomMode ? '미적용 (무작위 선택 — 전체 풀 통합 추첨)' : (v.designated ? '미적용 (고객장소 지정)' : (v.priority3.length ? placeListHTML(v.priority3, v) : '미선택 — 선택 사항'))],
       ['세부 위치', slotAssignTxt(v) || '위치 무관 — 게시대 안 빈 칸(동·단)에 자동 배정'],
-      ['순위별 접수', '1순위 ' + c[1] + '개소' + (v.designated ? '' : ' · 2순위 ' + c[2] + '개소 · 3순위 ' + c[3] + '개소')],
+      ['순위별 접수', v.randomMode ? ('🎲 무작위 전체 풀 ' + v.randomPool.length + '개소 (' + v.qty + '매 추첨)') : ('1순위 ' + c[1] + '개소' + (v.designated ? '' : ' · 2순위 ' + c[2] + '개소 · 3순위 ' + c[3] + '개소'))],
       ['게시 기간', esc(start + ' ~ ' + addDays(start, days - 1) + ' (' + days + '일)')],
       ['현수막 입고', esc(dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 협회 입고 (미입고 시 자동 취소·반려)')]
     ];
@@ -6481,6 +6534,7 @@
 
   function resetApply() {
     ui.ranks = { 1: [], 2: [], 3: [] }; ui.slots = {}; ui.rank = 1; ui.designatedOnly = false;
+    ui.randomMode = ''; ui.randomPool = []; ui.randomLabel = '';
     ui.step = 1; ui.file = null; ui.filePreview = null; ui.appType = 'direct'; ui.appTypeTouched = false;
     ui.pDay = ''; ui.pDong = ''; ui.pq = '';
     $('#applyCompany').value = '';
@@ -6524,10 +6578,10 @@
     if (!validateStep(3)) { setStep(3); return; }
     var v = readApply();
     if (!validateStep(1) && ui.step === 1) { focusFirstInvalid(); return null; }
-    var pr1 = ui.ranks[1].slice();
-    var pr2 = ui.designatedOnly ? [] : ui.ranks[2].slice();
-    var pr3 = ui.designatedOnly ? [] : ui.ranks[3].slice();
-    var places = pr1.concat(pr2, pr3);
+    var pr1 = v.randomMode ? [] : ui.ranks[1].slice();
+    var pr2 = (v.randomMode || ui.designatedOnly) ? [] : ui.ranks[2].slice();
+    var pr3 = (v.randomMode || ui.designatedOnly) ? [] : ui.ranks[3].slice();
+    var places = v.randomMode ? v.randomPool.slice() : pr1.concat(pr2, pr3);
     var id = nextAppId(weekRoundId(v.start) + '-A-');
     db.seq += 1;
     /* 그 접수의 게첨 주 기준으로 명절·연휴·휴가 정책(달력 지정 기간)을 판정한다 */
@@ -6541,7 +6595,8 @@
       biz: v.biz, email: v.email, oade: v.oade,
       qty: v.qty, awardedQty: null,
       placements: places, assignedPlaces: [],
-      priority1: pr1, priority2: pr2, priority3: pr3, designatedOnly: !!ui.designatedOnly,
+      priority1: pr1, priority2: pr2, priority3: pr3, designatedOnly: v.randomMode ? false : !!ui.designatedOnly,
+      randomMode: v.randomMode || '', randomLabel: v.randomLabel || '', randomPool: v.randomMode ? v.randomPool.slice() : [],
       priority1Slots: v.priority1Slots.slice(), priority2Slots: v.priority2Slots.slice(), priority3Slots: v.priority3Slots.slice(),
       p1: pr1[0] || '', p2: pr2[0] || '', p3: pr3[0] || '',
       eco: v.eco, status: '시안심사중',
@@ -6569,7 +6624,8 @@
     db.apps.push(app);
     var f = feeFor(app.qty, app.days);
     audit('접수', id + ' ' + app.company + ' → 광고주 ' + app.advertiser + ' · ' + app.qty + '매(1개소 1매) · ' +
-      (app.designatedOnly ? '고객장소 지정(1순위 ' + pr1.length + '개소)' : '1순위 ' + pr1.length + ' · 2순위 ' + pr2.length + ' · 3순위 ' + pr3.length + '개소') +
+      (app.randomMode ? ('🎲 무작위 선택(' + (app.randomLabel || (app.randomPool.length + '개소')) + ' · 1·2순위 경쟁)')
+        : (app.designatedOnly ? '고객장소 지정(1순위 ' + pr1.length + '개소)' : '1순위 ' + pr1.length + ' · 2순위 ' + pr2.length + ' · 3순위 ' + pr3.length + '개소')) +
       (slotAssignTxt(app) ? ' · 세부 위치 지정 ' + slotAssignTxt(app) : ' · 세부 위치 위치 무관') +
       (urgentStateOf(app).urgent ? ' · 임박 행사 감지(' + urgentStateOf(app).date + ', 가산 기본 0% — 직책자 부여 시 부여자별 몫 합산)' : '') +
       (app.eventApp ? ' · 행사 심사 신청(' + app.eventName + ' · ' + app.eventPeriod + ') — 권한자 5명 중 3명 이상 찬성 시 우선 배정, 미승인 시 일반 추첨 전환' : '') +
@@ -6606,6 +6662,7 @@
     ui.slots = {};
     ui.coverOk = {};
     ui.designatedOnly = false;
+    ui.randomMode = ''; ui.randomPool = []; ui.randomLabel = '';
     ui.file = null; ui.filePreview = null;
     ['#applyAdvertiser', '#applyAdvBiz', '#applyAdvPhone', '#applyText', '#applyQty', '#applyCompany', '#applyOwner', '#applyPhone', '#applyBiz', '#applyEmail'].forEach(function (sel) {
       if ($(sel)) $(sel).value = '';
@@ -6671,13 +6728,17 @@
       (a.oade ? '<dt>옥외광고업 등록번호</dt><dd>' + esc(a.oade) + '</dd>' : '') +
       (a.license ? '<dt>옥외광고업 등록증</dt><dd>' + esc(a.license) + ' <span class="sm">(사본 첨부)</span></dd>' : '') +
       '<dt>신청 수량</dt><dd>' + qty + '매 (1순위 ' + prioOf(a, 1).length + '개소 · 1개소당 1매)' + (a.assignedTo ? ' → <b>배정 ' + awQty + '매</b>' : ' (추첨 후 배정 확정)') + '</dd>' +
-      '<dt>접수 방식</dt><dd>' + (a.designatedOnly
-        ? '<b style="color:var(--purple)">고객장소 지정</b> — 1순위 지정 장소만 추첨 (1순위 낙첨 시 낙첨 처리)'
-        : '순위 접수 — 1순위 → 2순위 → 3순위 순차 배정') + '</dd>' +
-      '<dt>1순위 게시대</dt><dd>' + placeListHTML(prioOf(a, 1), a) + '</dd>' +
-      (a.designatedOnly ? '' :
-        '<dt>2순위 게시대</dt><dd>' + (prioOf(a, 2).length ? placeListHTML(prioOf(a, 2), a) : '미선택') + '</dd>' +
-        '<dt>3순위 게시대</dt><dd>' + (prioOf(a, 3).length ? placeListHTML(prioOf(a, 3), a) : '미선택') + '</dd>') +
+      '<dt>접수 방식</dt><dd>' + (a.randomMode
+        ? ('🎲 <b>무작위 선택</b> — ' + esc(a.randomLabel || ('전체 ' + (a.randomPool ? a.randomPool.length : prioOf(a, 1).length) + '개소')) + ' (1·2순위와 동시 경쟁 · ' + qty + '매 추첨)')
+        : (a.designatedOnly
+          ? '<b style="color:var(--purple)">고객장소 지정</b> — 1순위 지정 장소만 추첨 (1순위 낙첨 시 낙첨 처리)'
+          : '순위 접수 — 1순위 → 2순위 → 3순위 순차 배정')) + '</dd>' +
+      (a.randomMode
+        ? '<dt>추첨 대상 풀</dt><dd>' + esc(a.randomLabel || ('전체 ' + (a.randomPool ? a.randomPool.length : 0) + '개소')) + ' · 2·3순위 선택 불필요</dd>'
+        : ('<dt>1순위 게시대</dt><dd>' + placeListHTML(prioOf(a, 1), a) + '</dd>' +
+          (a.designatedOnly ? '' :
+            '<dt>2순위 게시대</dt><dd>' + (prioOf(a, 2).length ? placeListHTML(prioOf(a, 2), a) : '미선택') + '</dd>' +
+            '<dt>3순위 게시대</dt><dd>' + (prioOf(a, 3).length ? placeListHTML(prioOf(a, 3), a) : '미선택') + '</dd>'))) +
       '<dt>세부 위치</dt><dd>' + (slotAssignTxt(a) ? esc(slotAssignTxt(a)) + ' — 지정한 자리에만 추첨' : '위치 무관 — 게시대 안 빈 칸(동·단)에 자동 배정') + '</dd>' +
       '<dt>배정 게시대</dt><dd>' + (aw.length ? awardListHTML(a) : '추첨 후 확정 — 선택한 게시대마다 1매씩 추첨') + '</dd>' +
       '<dt>게시 기간</dt><dd>' + (a.start || ROUND.periodStart) + ' ~ ' + end + '</dd>' +
@@ -9940,7 +10001,7 @@
     db.placements.forEach(function (p) { if (p.broken) { stat.broken += 1; stat.brokenSeats += p.cap; } });
     [{ k: 'event', ev: true }, { k: 'general', ev: false }].forEach(function (tier) {
     [1, 2, 3].forEach(function (stage) {
-      db.placements.slice().sort(function (x, y) { return x.id < y.id ? -1 : 1; }).forEach(function (p) {
+      shuffle(db.placements).forEach(function (p) {
         var pid = p.id;
         if (p.broken || capLeft[pid] <= 0) return;
         var list = pool.filter(function (a) {
