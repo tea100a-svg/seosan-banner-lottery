@@ -167,6 +167,8 @@ a{color:var(--blue)}
 }
 .search input:focus{border-color:#8fb4ef;box-shadow:0 0 0 3px rgba(29,95,214,.13)}
 .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted)}
+/* 대형 검색창은 flex — 아이콘이 입력 글자 위에 겹치지 않게 static 으로 둔다 (2026-11-23) */
+.search.search-lg svg{position:static;left:auto;top:auto;transform:none}
 
 /* ---------- placement grid ---------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
@@ -1006,7 +1008,7 @@ details.faq p{font-size:13px;color:var(--body);margin-top:9px;line-height:1.65}
 .wo-cell.blank{background:#fcfdff}
 /* 게시동이 바뀌는 줄 — 굵은 가로 구분선 (작업지시서 화면·인쇄) */
 #woTable tbody tr.wo-dong-end > td{border-bottom:2.5px solid #24364f !important}
-#woTable tbody tr.wo-dong-end > td.wo-slot{font-weight:900}
+#woTable tbody tr.wo-dong-end > td.wo-slot{font-weight:inherit}   /* 동 단위 마지막 행 굵은 글씨 제거 (2026-11-23 김재봉 님 지시) */
 .wo-sheet table{min-width:760px}
 .wo-sign{display:flex;gap:26px;flex-wrap:wrap;margin-top:16px;font-size:12.5px;color:#42506a;font-weight:500}
 .wo-sign span{flex:1 1 180px;border-top:1px dashed #dfe7f2;padding-top:9px}
@@ -1786,9 +1788,9 @@ html[data-device-view="mobile"] #eventList .evbtn{flex:1 1 30%;min-height:40px}
 .search-lg{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #c7d8f2;border-radius:16px;
   padding:6px 16px;box-shadow:0 4px 14px rgba(28,58,110,.08)}
 .search-lg:focus-within{border-color:#2f6bd8;box-shadow:0 0 0 4px rgba(47,107,216,.12)}
-.search-lg svg{width:24px;height:24px;flex:0 0 auto;color:#5b7291}
+.search-lg svg{width:24px;height:24px;flex:0 0 auto;color:#5b7291;position:static;left:auto;transform:none}
 .search-lg input{flex:1;border:0;outline:none;background:transparent;font-size:17px;font-weight:700;color:var(--ink);
-  padding:14px 0;min-height:52px}
+  padding:14px 0 14px 4px;min-height:52px}
 .search-lg input::placeholder{font-weight:600;color:#93a4bb}
 @media (max-width:760px){ .search-lg input{font-size:15.5px;padding:12px 0;min-height:46px} }
 
@@ -1808,3 +1810,77 @@ html[data-device-view="mobile"] #eventList .evbtn{flex:1 1 30%;min-height:40px}
 .field.invalid,.lic-extract.fail{animation:fieldShake .42s ease-in-out 1}
 .field.invalid{border-color:#e23c3c!important}
 .field.invalid input,.field.invalid select,.field.invalid textarea,.field.invalid .input{border-color:#e23c3c!important;background:#fff6f6}
+
+/* ── 미배정 선착순(first.html) 4단계 — 담은 게시대 행 강조 (2026-11-23) ── */
+.fc-item.picked{border-color:#bcd3f5;background:#f7faff;box-shadow:0 0 0 2px rgba(29,95,214,.10)}
+.fc-item .btn.sm{min-width:78px}
+.pick-slots .slot .btn.sm{min-height:0;padding:0 6px;margin-left:2px}
+@media (max-width:600px){ .fc-item .btn.sm{min-width:0} }
+
+/* 비로그인 접수폼 잠금 — 로그인/회원가입/비회원 선택 전 (2026-11-23) */
+.guest-locked{opacity:.5;filter:grayscale(.25);pointer-events:none;user-select:none}
+
+/* ── 공문 자동 배정 · 만석 제외 · 인접 추천 카드 (2026-11-23) ── */
+#offRecBox{margin:10px 0 4px;padding:12px 14px;border:1px solid #cbdcf5;border-radius:14px;background:#f7faff}
+.off-rec-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}
+.off-rec-head b{font-size:14px;color:var(--navy)}
+.off-rec-head span{font-size:12.5px;color:var(--muted)}
+.off-rec-full{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.off-rec-chip{font-size:12px;font-weight:700;border-radius:999px;padding:5px 11px;border:1px solid}
+.off-rec-chip.full{background:#fff2f2;border-color:#f0c8c8;color:#a12a2a}
+.off-rec-chip.blocked{background:#fffaf0;border-color:#f4e0b6;color:#7a5410}
+.off-rec-list{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.off-rec-card{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);
+  border-radius:12px;padding:9px 12px;box-shadow:var(--sh-sm)}
+.off-rec-card b{font-size:13.5px;color:var(--ink)}
+.off-rec-card .sm{font-size:11.5px;color:var(--muted)}
+.off-rec-card .btn{margin-left:auto}
+.off-rec-badge{font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px;border:1px solid}
+.off-rec-badge.r1{background:#eef4ff;border-color:#c9d8f2;color:#22407a}
+.off-rec-badge.r2{background:#eefaf3;border-color:#bfe8d7;color:#0a6b4a}
+.off-rec-badge.r3{background:#f7f2ff;border-color:#ded0f5;color:#5b3a9e}
+
+/* 주간 흐름 카드 — 오늘 요일만 색상 강조, 나머지는 무채색 (2026-11-23) */
+.wk{background:#fbfcfe;border-color:#e3e9f2;box-shadow:none}
+.wk:before{background:#dde5f0!important}
+.wk .d{color:#7b8a9e}
+.wk.today{background:linear-gradient(180deg,#1e3f7a,#173464);border-color:#173464;box-shadow:0 6px 18px rgba(23,52,100,.22)}
+.wk.today:before{background:#8fb8ff!important}
+.wk.today .d{color:#c9dcff}
+.wk.today b{color:#fff}
+.wk.today small{color:#d7e3f7}
+.wk.today em{color:#ffd9a6}
+.wk-badge{position:absolute;right:10px;top:9px;font-style:normal;font-size:10.5px;font-weight:900;
+  background:#ffd166;color:#5a3c00;border-radius:999px;padding:2px 8px;letter-spacing:-.02em}
+
+/* 의료광고 키워드 감지 시에만 뜨는 플로팅 안내 (2026-11-23 김재봉 님 지시) */
+.med-float{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:85;
+  max-width:min(680px,94vw);margin:0;box-shadow:0 12px 30px rgba(20,40,80,.24);
+  background:#fff8e8;border-color:#f0c96a;color:#7a4d05;animation:fade .18s ease}
+.med-float b{color:#7a4d05}
+.med-float .sm{color:#8a6420}
+@media (max-width:600px){ .med-float{bottom:calc(86px + env(safe-area-inset-bottom,0px));font-size:12px} }
+
+/* 마이페이지 — 추첨 전 접수 취소(페널티 없음) 버튼 (2026-11-23) */
+.mp-row-wrap{display:block}
+.mp-row-wrap .mp-row{border-radius:12px 12px 0 0}
+.mp-row-actions{display:flex;justify-content:flex-end;gap:8px;padding:8px 12px;border:1px solid var(--line);
+  border-top:0;border-radius:0 0 12px 12px;background:#fff}
+.mp-row-actions .btn{min-height:34px}
+
+/* 시연 기준일 선택기 (상단 시연 바) */
+.demo-now{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:10px;padding:2px 8px;border-radius:999px;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22)}
+.demo-now b{font-size:11px;color:#cfe0ff}
+.demo-now input[type=date]{font:inherit;font-size:11.5px;padding:2px 4px;border-radius:6px;border:1px solid rgba(255,255,255,.35);
+  background:#0e1b2e;color:#e8f0ff}
+.demo-now .dn-btns{display:inline-flex;gap:3px}
+.demo-now .dn-btn{font:inherit;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8f0ff}
+.demo-now .dn-btn:hover{background:rgba(255,255,255,.22)}
+.demo-now .dn-now{font-size:11px;color:#a9c4ea}
+@media (max-width:760px){ .demo-now{margin-left:0;width:100%;justify-content:center} }
+
+/* 게시 지정서 일괄 출력 — 상단 고정 툴바 (2026-11-23) */
+.desig-topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:56px;z-index:20;
+  background:rgba(255,255,255,.96);padding:8px 10px;border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-sm)}

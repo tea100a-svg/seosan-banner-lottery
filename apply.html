@@ -66,8 +66,11 @@
     <a class="tab active" href="apply.html" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
       주간 추첨 접수
     </a>
+    <a class="tab" href="remain.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      미배정 상시접수
+    </a>
     <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
-      미배정 선착순
+      취소분 선착순
     </a>
     <a class="tab" href="guide-rules.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
       규격·안내
@@ -168,6 +171,21 @@
 
       <!-- step 2 · 수량·게시 기간 -->
       <div class="step-body" id="step2">
+        <!-- 게첨 희망 주 — 1단계에서는 숨기고 2단계에서 확인·변경 (2026-11-23 김재봉 님 지시) -->
+        <div class="week-select-panel" id="weekSelectPanel" style="border:1px solid #cbdcf5;border-radius:14px;padding:14px;margin-bottom:16px;background:#fff">
+          <div class="panel-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+            <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">🗓️ 게첨 희망 주 <span class="sub" style="font-size:11px;color:var(--muted)">추첨 다음 주부터 · 사전 접수</span></h3>
+            <span class="spacer" style="flex:1"></span>
+            <span class="week-now" id="applyWeekNow">📅 2026.11.30 ~ 12.06 게첨 주</span>
+            <button class="btn ghost sm" id="btnApplyWeekCal" type="button" data-caltoggle="apply" aria-expanded="false" aria-controls="applyWeekCal">📅 달력보기</button>
+          </div>
+          <div class="rule-strip-wrap">
+            <div class="rule-strip" id="applyRuleStrip"></div>
+          </div>
+          <div class="hint-txt" id="applyWeekHint" style="margin:0 0 4px">주를 바꾸려면 <b>📅 달력보기</b>를 눌러 <b>게첨을 시작할 월요일이 포함된 주</b>를 고르세요. (월~일 7일 단위 · 이번 회차 게첨 주 이후만 선택)</div>
+          <div id="applyWeekCal" class="cal-collapsed"></div>
+        </div>
+
         <div class="field" id="fQty">
           <label for="applyQty">접수 수량 (매)<span class="req">*</span></label>
           <div class="qty-ctl">
@@ -266,22 +284,12 @@
             <button class="btn sm ghost" type="button" id="btnDesignSample" style="margin-left:6px">시연용 샘플 시안 첨부</button>
           </div>
         </div>
+        <div class="callout warn med-float hidden" id="medicalAdNote" role="status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+          <div><b>🏥 의료광고 안내</b> — 의료광고 심의필 번호가 없는 경우 <b>게첨 중이라도 조기 철거</b>될 수 있습니다.<span class="sm" style="display:block;margin-top:4px">의료 광고는 사전 심의를 받은 뒤 심의필 번호(예: 제2026-123호)를 현수막에 표기해 주세요.</span></div>
+        </div>
 
-      <!-- 게첨 희망 주 선택 — 달력에서 주(월~일)를 골라 사전 접수 (2026-11-22) -->
-      <div class="week-select-panel" id="weekSelectPanel" style="border:1px solid #cbdcf5;border-radius:14px;padding:14px;margin-bottom:16px;background:#fff">
-        <div class="panel-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">🗓️ 게첨 희망 주 선택 <span class="sub" style="font-size:11px;color:var(--muted)">추첨 다음 주부터 · 사전 접수</span></h3>
-          <span class="spacer" style="flex:1"></span>
-          <span class="week-now" id="applyWeekNow">📅 2026.11.30 ~ 12.06 게첨 주</span>
-          <button class="btn ghost sm" id="btnApplyWeekCal" type="button" data-caltoggle="apply" aria-expanded="false" aria-controls="applyWeekCal">📅 달력보기</button>
-        </div>
-        <div class="rule-strip-wrap">
-          <div class="rule-strip" id="applyRuleStrip"></div>
-        </div>
-        <div class="hint-txt" id="applyWeekHint" style="margin:0 0 4px">주를 바꾸려면 <b>📅 달력보기</b>를 눌러 <b>게첨을 시작할 월요일이 포함된 주</b>를 고르세요. (월~일 7일 단위 · 이번 회차 게첨 주 이후만 선택)</div>
-        <div class="hint-txt cal-off-note" style="margin:0;display:none">선택한 게첨 주는 위 <b>한 줄 요약</b>에서 확인할 수 있습니다. 주를 바꾸려면 <b>1단계</b>로 돌아가 주세요.</div>
-        <div id="applyWeekCal" class="cal-collapsed"></div>
-      </div>
+
         <div class="divider"></div>
         <div class="sect-label">신청인 정보 <span>로그인하면 자동 작성 · 구분은 로그인 상태로 자동 판별</span></div>
         <div class="hint-txt" id="applicantHint">로그인 회원은 업체 정보가 <b>자동 작성</b>됩니다. <b>광고대행사/일반업체 구분도 로그인 상태로 자동 판별</b>되며, 비회원은 일반업체(직접 신청)로 접수됩니다. 광고대행사는 실제 광고주를 대신 접수합니다.</div>
@@ -395,6 +403,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
             <div>먼저 <b>실제 광고주</b>와 <b>현수막 문구·시안</b>을 등록한 뒤, 아래에서 <b>신청인 정보</b>를 확인합니다. 중복 접수와 페널티는 <b>실제 광고주 기준</b>으로 이 단계에서 바로 확인합니다.</div>
           </div>
+          </div>
           <div class="callout info">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
             <div>중복 접수와 페널티는 <b>신청 업체가 아니라 실제 광고주</b> 기준입니다. 광고대행사는 여러 광고주 건을 접수할 수 있지만, <b>같은 실제 광고주</b>로 이번 회차에 이미 접수된 건이 있으면 차단됩니다.</div>
@@ -414,7 +423,7 @@
           <span class="badge b-amber" style="align-self:center">추첨 후 납부</span>
         </div>
         <div class="hint-txt" style="margin-top:12px">수수료는 <b>1매 단가(탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000 = 10,700원) × 접수 수량</b>으로 계산합니다. 예) 10매 107,000원 · 50매 535,000원. 실제 납부는 <b>추첨 배정 매수</b> 기준으로 접수증의 가상계좌에 입금합니다.</div>
-        <div class="hint-txt" style="margin-top:12px">당첨자에 한해 접수증에 안내되는 가상계좌로 입금하시면 됩니다. <b>수요일 18:00까지 현수막 실물을 협회로 입고</b>하지 않으면 자동 취소(반려)되고, 해당 매는 <b>목요일 선착순</b> 또는 차순위로 즉시 전환됩니다.</div>
+        <div class="hint-txt" style="margin-top:12px">당첨자에 한해 접수증에 안내되는 가상계좌로 입금하시면 됩니다. <b>수요일 18:00까지 접수비 입금과 현수막 실물 입고</b>를 모두 마쳐야 하며, 미입금·미입고 시 자동 취소(반려)되고 해당 매는 <b>목요일 선착순</b> 또는 차순위로 즉시 전환됩니다.</div>
         <div class="step-notes" id="stepNotes4">
         <div class="callout ok">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
@@ -465,7 +474,7 @@
 <nav class="mtabbar" id="mobileTabbar" aria-label="모바일 빠른 탭바">
   <a href="index.html" data-mtab="status"><i>🏠</i>현황</a>
   <a href="apply.html" data-mtab="apply"><i>📝</i>접수</a>
-  <a href="first.html" data-mtab="first"><i>⏱</i>선착순</a>
+  <a href="remain.html" data-mtab="remain"><i>⚡</i>상시</a>
   <a href="mypage.html" data-mtab="mypage"><i>👤</i>마이</a>
   <a href="admin-draw.html" data-mtab="admin"><i>🛡</i>관리자</a>
 </nav>

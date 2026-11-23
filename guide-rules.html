@@ -66,8 +66,11 @@
     <a class="tab" href="apply.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
       주간 추첨 접수
     </a>
+    <a class="tab" href="remain.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      미배정 상시접수
+    </a>
     <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
-      미배정 선착순
+      취소분 선착순
     </a>
     <a class="tab active" href="guide-rules.html" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
       규격·안내
@@ -180,7 +183,9 @@
           <div class="panel-head"><h3>주간 운영 일정</h3><span class="sub">매주 반복</span></div>
           <div class="proc">
             <div class="proc-item"><span class="n wide">월</span><div><b>10:00 정기 전산 추첨 · 당첨자 가상계좌 발급</b><span>그 주 접수분(시안 승인 완료)을 게시대별로 무작위 배정 · 시드·결과 해시 기록 · 당첨자별 가상계좌 즉시 발급</span></div></div>
-            <div class="proc-item"><span class="n wide">수</span><div><b>18:00 현수막 실물 입고 마감</b><span>협회 사무국에 실물 입고 · <b>미입고 시 자동 취소(반려)</b> → 목요일 선착순·차순위로 즉시 전환</span></div></div>
+            <div class="proc-item"><span class="n wide">수</span><div><b>18:00 접수비 입금 · 현수막 실물 입고 마감</b><span>가상계좌 입금과 협회 사무국 실물 입고를 <b>수요일 18:00까지</b> 모두 마칩니다 · <b>미입금·미입고 시 자동 취소(반려)</b> → 목요일 선착순·차순위로 즉시 전환</span></div></div>
+            <div class="callout warn" style="margin:14px 0 0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+            <div><b>🏥 의료광고 심의 안내</b> — 의료기관(병원·의원·치과·한의원 등) 현수막에 <b>의료광고 심의필 번호</b>가 표기되지 않은 경우, 관련 법령에 따라 <b>게첨 중이라도 조기 철거</b>될 수 있습니다. 의료 광고는 사전 심의를 받은 뒤 심의필 번호(예: 제2026-123호)를 현수막에 표기해 주세요.</div></div>
             <div class="proc-item"><span class="n wide">취</span><div><b>추첨 전 취소는 페널티 없음</b><span>접수중·시안심사중·행사심사중·추첨대기에서 마이페이지 <b>[접수 취소(페널티 없음)]</b>로 자유 취소 · 같은 회차 재접수 가능. 페널티는 <b>당첨 후</b> 취소·미입금·미입고에만 적용됩니다.</span></div></div>
             <div class="proc-item"><span class="n wide">목</span><div><b>미입고 잔여석 실시간 선착순 접수</b><span>일과시간 <b>09:00 ~ 18:00</b>에만 운영 · 누르는 즉시 확정 · 당첨분은 <b>금요일 10:00까지 입고</b>(미입고 자동 취소)</span></div></div>
             <div class="proc-item"><span class="n wide">금</span><div><b>잔여석 접수 제한</b><span>현수막 분류·현장 게첨 작업 준비일 · 접수 제한(남은 면은 다음 주 회차로 이월)</span></div></div>
@@ -325,7 +330,7 @@
 <nav class="mtabbar" id="mobileTabbar" aria-label="모바일 빠른 탭바">
   <a href="index.html" data-mtab="status"><i>🏠</i>현황</a>
   <a href="apply.html" data-mtab="apply"><i>📝</i>접수</a>
-  <a href="first.html" data-mtab="first"><i>⏱</i>선착순</a>
+  <a href="remain.html" data-mtab="remain"><i>⚡</i>상시</a>
   <a href="mypage.html" data-mtab="mypage"><i>👤</i>마이</a>
   <a href="admin-draw.html" data-mtab="admin"><i>🛡</i>관리자</a>
 </nav>
