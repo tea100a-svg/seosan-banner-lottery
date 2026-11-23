@@ -1529,13 +1529,8 @@
   }
   /* 지금 접속 권한으로 가산점을 부여할 수 있는가 — 승인 완료된 직책자 또는 총괄 관리자
      + 권한 매트릭스의 **가산점부여** 행에서 권한해제된 직책은 부여할 수 없다 (2026-11-23 김재봉 님 지시) */
-  function canGrantBonus(role) {
-    var r = role || currentAccessRole();
-    if (r === 'super') return true;
-    if (grantLimitOf(r) <= 0) return false;
-    if (!accessOfficer()) return false;
-    var pk = (r === 'staff') ? 'staff1' : (r === 'field' ? 'field1' : r);
-    return permOf(pk, 'grant');
+  function canGrantBonus() {
+    return false;
   }
   function myGrantLimit() { return canGrantBonus() ? grantLimitOf(currentAccessRole()) : 0; }
   function myGrantLimitLabel() { return canGrantBonus() ? accessRoleLabel() + ' 최대 +' + myGrantLimit() + '%' : '없음 (부여 권한 없음)'; }
@@ -1725,79 +1720,95 @@
   }
 
   /* ── 협회 등록 회원사 가산점 — 직책자가 회원사에 각자 부여 → 최종 합산 ────── */
+  /* ── 회원 추천 가산점 고정 설정 (총괄관리자 전용 · 2026-11-24 김재봉 님 지시) ── */
+  var ASSOC_FIXED_DEFAULT = 5;
+  function assocFixedPct() {
+    var v = Number(db && db.assocBonusPct);
+    if (db && db.assocBonusPct !== undefined && db.assocBonusPct !== null && String(db.assocBonusPct) !== '' && isFinite(v)) {
+      return Math.max(0, Math.min(20, Math.round(v)));
+    }
+    return ASSOC_FIXED_DEFAULT;
+  }
+  function setAssocFixedPct(pct) {
+    if (!isTotalManager()) { toast('회원 추천 고정 가산점은 총괄관리자만 변경할 수 있습니다.', true); return null; }
+    var raw = String(pct == null ? '' : pct).replace('%', '').trim();
+    var v = Math.round(Number(raw));
+    if (raw === '' || !isFinite(v) || v < 0 || v > 20) { toast('0~20% 사이 숫자를 입력해 주세요.', true); return null; }
+    var before = assocFixedPct();
+    db.assocBonusPct = v;
+    audit('가산점', '회원 추천 가산점 고정 설정 변경 — +' + before + '% → +' + v + '% (총괄관리자)');
+    save();
+    renderAssocFixedPanel();
+    renderAssocPanel();
+    toast('회원 추천 고정 가산점을 +' + v + '%로 저장했습니다. 협회 회원사 전체에 자동 적용됩니다.');
+    return v;
+  }
+  function renderAssocFixedPanel() {
+    var box = $('#assocFixedBox');
+    if (!box) return;
+    var cur = assocFixedPct();
+    var canEdit = isTotalManager();
+    var cnt = assocMemberList().length;
+    if ($('#assocFixedInfo')) {
+      $('#assocFixedInfo').textContent = '현재 고정 +' + cur + '% · 협회 회원사 ' + cnt + '곳 일괄 적용 · ' + (canEdit ? '총괄관리자 수정 가능' : '읽기 전용');
+    }
+    box.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid #d9e4f5;border-radius:12px;background:#f8fbff">' +
+        '<label for="assocFixedInput" style="font-weight:700">회원 추천 고정 가산점</label>' +
+        '<input class="input sm" type="number" id="assocFixedInput" min="0" max="20" value="' + cur + '"' + (canEdit ? '' : ' disabled') + ' style="width:84px;text-align:center"> <b>%</b>' +
+        '<button class="btn primary sm" id="btnAssocFixedSave" type="button"' + (canEdit ? '' : ' disabled') + '>💾 고정 가산점 저장</button>' +
+        '<button class="btn ghost sm" id="btnAssocFixedReset" type="button"' + (canEdit ? '' : ' disabled') + '>↺ 기본 ' + ASSOC_FIXED_DEFAULT + '% 복원</button>' +
+        '<span class="sm" style="color:var(--muted)">' + (canEdit ? '저장하면 협회 등록 회원사 전체에 +' + cur + '%가 자동 적용됩니다.' : '🔒 총괄관리자만 변경할 수 있습니다.') + '</span>' +
+      '</div>';
+  }
+
   function assocRawGrantsOf(m) {
     if (!m) return [];
     return grantListOf(Array.isArray(m.assocGrants) ? m.assocGrants : m.assocGrant);
   }
   function assocGrantsOf(m) { return (m && m.assocMember) ? assocRawGrantsOf(m) : []; }
-  function assocGrantOf(m) { return grantSummaryOf(assocGrantsOf(m)); }
-  function assocGrantPctOfMember(m) { return grantSumPct(assocGrantsOf(m)) / 100; }
+  function assocGrantOf(m) { return (m && m.assocMember) ? { pct: assocFixedPct(), role: 'super', label: '총괄관리자 고정', name: '', at: '' } : null; }
+  function assocGrantPctOfMember(m) { return (m && m.assocMember) ? (assocFixedPct() / 100) : 0; }
   function assocRateOfMember(m) { return assocGrantPctOfMember(m); }
   function assocRateOfApp(a) { return assocRateOfMember(memberOfApp(a)); }
   function assocMemberList() { return memberList().filter(function (m) { return !!m.assocMember; }); }
-  function setAssocMember(id, on, pct) {
+  function setAssocMember(id, on) {
     var m = memberById(id);
     if (!m) return null;
-    var chk = checkGrantPct(pct);
-    if (!chk.ok) return null;
-    var who = myGrantWho();
-    var list = assocRawGrantsOf(m);
-    var idx = grantIndexOf(list, who.role);
-    var before = grantSumPct(list);
     m.assocMember = !!on;
-    if (!m.assocMember) {
-      list = [];                                   /* 등록 해제 — 부여 내역도 모두 비움 */
-    } else if (chk.pct <= 0) {
-      if (idx >= 0) list.splice(idx, 1);           /* 내 몫만 해제 — 다른 부여자 몫은 유지 */
-    } else {
-      var rec = { pct: chk.pct, role: who.role, label: who.label, name: who.name, at: nowStamp() };
-      if (idx >= 0) list[idx] = rec; else list.push(rec);
-    }
-    m.assocGrants = list; delete m.assocGrant;
-    var sum = grantSumPct(list);
-    audit('가산점', '협회 등록 회원사 ' + m.company + ' — ' + (m.assocMember
-      ? (chk.pct > 0
-        ? who.label + ' ' + who.name + ' +' + chk.pct + '% 부여 (한도 ' + chk.limit + '%) · 합산 +' + sum + '%'
-        : who.label + ' ' + who.name + ' 몫 해제(내 몫 0%) · 합산 +' + before + '% → +' + sum + '%')
-      : '등록 해제 (가산 0%)') + grantWhoTxt(list));
+    var pct = m.assocMember ? assocFixedPct() : 0;
+    audit('가산점', '협회 등록 회원사 ' + m.company + ' — ' + (m.assocMember ? ('등록 (+' + pct + '% 고정 적용)') : '등록 해제 (가산 0%)'));
     save();
-    return { id: m.id, company: m.company, assocMember: !!m.assocMember, rate: assocRateOfMember(m),
-      pct: m.assocMember ? chk.pct : 0, total: sum, grants: list.slice(), grant: assocGrantOf(m), limit: chk.limit };
+    return { id: m.id, company: m.company, assocMember: !!m.assocMember, rate: assocRateOfMember(m), pct: pct, total: pct };
   }
   function renderAssocPanel() {
     if (!has('assocTable')) return;
     var list = memberList();
-    var lim = myGrantLimit();
-    var giverN = {};
-    list.forEach(function (m) { assocGrantsOf(m).forEach(function (g) { giverN[g.role] = 1; }); });
-    if ($('#assocInfo')) $('#assocInfo').textContent = assocMemberList().length + '곳 협회 등록 · 가산점 기본 0% · 부여자 ' +
-      Object.keys(giverN).length + '명(부여자별 몫을 최종 합산) · 현재 부여 한도 ' +
-      (canGrantBonus() ? accessRoleLabel() + ' 최대 ' + lim + '%' : '없음 (부여 권한 없음)');
+    var fixed = assocFixedPct();
+    if ($('#assocInfo')) $('#assocInfo').textContent = assocMemberList().length + '곳 협회 등록 · 고정 가산점 +' + fixed + '% (총괄관리자 설정)';
     $('#assocTable').innerHTML = '<table><thead><tr><th>업체·단체</th><th>대표·구분</th><th>협회 등록</th>' +
-      '<th>부여자별 부여 내역 → 최종 합산</th><th>내 몫 (직책 한도)</th><th>처리</th></tr></thead><tbody>' +
+      '<th>추천 가산점 (고정)</th><th>추첨 가중치</th><th>처리</th></tr></thead><tbody>' +
       list.map(function (m, i) {
-        var gs = assocGrantsOf(m), pct = grantSumPct(gs);
-        var mine = grantIndexOf(gs, currentAccessRole());
-        var myPct = mine >= 0 ? gs[mine].pct : 0;
+        var on = !!m.assocMember;
+        var pct = on ? fixed : 0;
+        var w = (1 + pct / 100).toFixed(2);
         return '<tr><td><span class="co">' + esc(m.company) + '</span><span class="sm">' + esc(m.loginId || m.id) + '</span></td>' +
           '<td class="sm">' + esc(m.owner || '') + ' · ' + esc(memberTypeLabel(m)) + '</td>' +
-          '<td><label class="check" style="margin:0"><input type="checkbox" id="assocOn' + i + '"' + (m.assocMember ? ' checked' : '') + ' aria-label="협회 등록 회원사"> <span>등록</span></label></td>' +
-          '<td style="max-width:290px"><div>' + (m.assocMember ? grantSumChipHTML(gs, '부여 내역 없음') : '<span class="sm">미등록</span>') + '</div>' +
-            '<div style="margin-top:5px">' + (m.assocMember ? grantSumHTML(gs) + ' <span class="sm">가산 ' + pct + '%</span>' : '<span class="sm">가산 0%</span>') + '</div></td>' +
-          '<td>' + (canGrantBonus() && lim ? '<select class="input sm" id="assocRate' + i + '" aria-label="내 회원사 가산점 퍼센트">' + grantOptionsHTML(myPct, Math.max(lim, myPct)) + '</select>'
-            : '<span class="sm">' + myPct + '% (권한 없음)</span>') + '</td>' +
-          '<td><button class="btn sm" type="button" data-assocsave="' + esc(m.id) + '" data-associdx="' + i + '">내 몫 저장</button></td></tr>';
+          '<td><label class="check" style="margin:0"><input type="checkbox" id="assocOn' + i + '"' + (on ? ' checked' : '') + ' aria-label="협회 등록 회원사"> <span>등록</span></label></td>' +
+          '<td>' + (on ? '<span class="badge b-green"><i></i>고정 +' + fixed + '%</span>' : '<span class="sm">미등록 (0%)</span>') + '</td>' +
+          '<td class="sm"><b>' + w + '배</b></td>' +
+          '<td><button class="btn sm" type="button" data-assocsave="' + esc(m.id) + '" data-associdx="' + i + '">저장</button></td></tr>';
       }).join('') + '</tbody></table>';
   }
   function saveAssocRow(id, idx) {
     var on = $('#assocOn' + idx) ? !!$('#assocOn' + idx).checked : false;
-    var pct = $('#assocRate' + idx) ? String($('#assocRate' + idx).value) : '0';
-    var r = setAssocMember(id, on, pct);
+    var r = setAssocMember(id, on);
     if (!r) return null;
     renderAssocPanel();
+    renderAssocFixedPanel();
     renderDesigBatch();
     renderReportPanel(); renderAdmin();
-    toast(r.company + ' — 협회 등록 ' + (r.assocMember ? '지정' : '해제') + ' · 가산 합산 ' + Math.round(r.rate * 100) + '%');
+    toast(r.company + ' — 협회 등록 ' + (r.assocMember ? '지정 (+' + assocFixedPct() + '% 고정)' : '해제'));
     return r;
   }
 
@@ -11407,6 +11418,7 @@
     renderAssocPanel();
     renderDesigBatch();
     renderPhotoPanel();
+    renderAssocFixedPanel();
     renderBonusCapPanel();
     renderReportPanel();
     renderOffPanel();
@@ -13912,44 +13924,14 @@
     { k: 'board', page: 'admin-board', label: '게시대관리' },
     { k: 'course', page: 'admin-course', label: '테마코스·금지' },
     { k: 'members', page: 'admin-members', label: '회원·가산점' },
-    { k: 'grant', page: '', label: '가산점부여' },
     { k: 'system', page: 'admin-system', label: '공지·로그' }
   ];
-  /* 가산점부여 권한 — 기본은 기존 부여자(지부장·수석·사무실무원1/2·현장실무원1/2)에게 부여
-     (2026-11-23 김재봉 님 지시 "매트릭스에 가산점부여도 넣어줘") */
-  var GRANT_DEFAULT_ROLES = ['chief', 'senior', 'staff1', 'staff2', 'field1', 'field2'];
   function permDefaultOn(roleKey, key) {
-    if (key === 'grant') return GRANT_DEFAULT_ROLES.indexOf(roleKey) >= 0;
     return true;
   }
-  /* 가산점 부여/수정 버튼 잠금 — 매트릭스에서 권한해제되면 실제 버튼도 막힌다 */
+  /* 가산점 부여 권한 폐지 — 회원 추천 가산점은 총괄관리자가 N%로 고정 설정 */
   function applyGrantPermLock() {
-    var can = canGrantBonus();
-    $$('[data-urgentgrant],[data-assocsave],#btnUrgentGrant,#btnAssocSave').forEach(function (b) {
-      if (!b) return;
-      if (!can) {
-        b.setAttribute('disabled', 'disabled');
-        b.setAttribute('title', '가산점부여 권한이 없습니다 — 총괄관리자가 권한 매트릭스에서 부여할 수 있습니다.');
-      } else if (b.getAttribute('title') && b.getAttribute('title').indexOf('가산점부여 권한이 없습니다') >= 0) {
-        b.removeAttribute('disabled');
-        b.removeAttribute('title');
-      }
-    });
-    var note = document.getElementById('grantPermLockNote');
-    if (!can && !note) {
-      var host = document.querySelector('#grantPanel .grant-body') || document.querySelector('#grantPanel') || document.querySelector('#urgentGrantPanel');
-      if (host) {
-        var d = document.createElement('div');
-        d.id = 'grantPermLockNote';
-        d.className = 'callout warn';
-        d.style.marginTop = '8px';
-        d.innerHTML = '<div>🔒 <b>가산점부여 권한이 없습니다.</b> 지부장·총괄 관리자가 <a href="admin-roles.html">🛡️ 관리자 권한</a>의 <b>가산점부여</b> 행에서 권한을 부여하면 부여·수정 버튼이 활성화됩니다.</div>';
-        host.insertBefore(d, host.firstChild);
-      }
-    } else if (can && note && note.parentNode) {
-      note.parentNode.removeChild(note);
-    }
-    return can;
+    return false;
   }
   function permRoleKey() {
     var r = currentAccessRole();
@@ -13960,14 +13942,9 @@
     if (r === 'field') return 'field1';
     return r;
   }
-  /* 최고권한 = **총괄관리자(super)** 또는 회원/직책자에 최고권한(`isSuper`) 부여된 계정 */
+  /* 총괄관리자(super)만 최고 권한을 가집니다 (리스트 내 최고권한 별도 부여 기능 삭제) */
   function isTotalManager() {
-    if (currentAccessRole() === 'super') return true;
-    var m = currentMember();
-    if (m && m.isSuper) return true;
-    var off = accessOfficer();
-    if (off && off.isSuper) return true;
-    return false;
+    return currentAccessRole() === 'super';
   }
   /* 임명권자 = 최고권한자 또는 임명권자(`canAppoint`)로 지정된 회원/직책자 */
   function canAppointNow() {
@@ -14268,21 +14245,8 @@
     return m;
   }
   function toggleMemberSuper(memberId) {
-    if (!isTotalManager()) { toast('최고권한 부여/해제는 최고권한(총괄관리자)만 할 수 있습니다.', true); return null; }
-    var m = memberById(memberId);
-    if (!m) return null;
-    if (m.isSuper && currentAccessRole() !== 'super' && superMemberCount() <= 1) {
-      toast('최소 1명의 최고권한은 유지해야 합니다.', true);
-      return null;
-    }
-    m.isSuper = !m.isSuper;
-    if (m.isSuper) m.canAppoint = true;
-    officerList().forEach(function (o) { if (o.memberId === m.id) { o.isSuper = !!m.isSuper; if (m.isSuper) o.canAppoint = true; } });
-    audit('권한', '최고권한 ' + (m.isSuper ? '부여' : '해제') + ' — ' + (m.owner || m.company) + ' (' + m.company + ')');
-    save();
-    renderMemberAppointPanel(); renderAdminRoleBar(); applySubtabPerms();
-    toast((m.owner || m.company) + ' 님에게 최고권한을 ' + (m.isSuper ? '부여' : '해제') + '했습니다.');
-    return m;
+    toast('최고권한 별도 부여 기능은 삭제되었습니다 — 총괄관리자만 최고 권한을 가집니다.', true);
+    return null;
   }
   function renderMemberAppointPanel() {
     var box = $('#memberAppointBox');
@@ -14292,15 +14256,14 @@
     var flt = ui.maFilter || 'all';
     var roles = permRoles();
     var canApp = canAppointNow(), canSuper = isTotalManager();
-    var nComp = 0, nStaff = 0, nAppointed = 0, nAppointer = 0, nSuper = 0;
+    var nComp = 0, nStaff = 0, nAppointed = 0, nAppointer = 0;
     all.forEach(function (m) {
       if (m.type === 'staff' || m.isStaff) nStaff += 1; else nComp += 1;
       if (memberPermRoleOf(m)) nAppointed += 1;
       if (m.canAppoint) nAppointer += 1;
-      if (m.isSuper) nSuper += 1;
     });
     if ($('#memberAppointInfo')) {
-      $('#memberAppointInfo').textContent = '회원사 ' + nComp + '곳 · 직원 ' + nStaff + '명 · 임명 ' + nAppointed + '명 · 임명권자 ' + nAppointer + '명 · 최고권한 ' + nSuper + '명';
+      $('#memberAppointInfo').textContent = '회원사 ' + nComp + '곳 · 직원 ' + nStaff + '명 · 임명 ' + nAppointed + '명 · 임명권자 ' + nAppointer + '명';
     }
     var filtered = all.filter(function (m) {
       var pr = memberPermRoleOf(m);
@@ -14309,7 +14272,6 @@
       if (flt === 'staff' && !isSt) return false;
       if (flt === 'appointed' && !pr) return false;
       if (flt === 'appointer' && !m.canAppoint) return false;
-      if (flt === 'super' && !m.isSuper) return false;
       if (q) {
         var hay = [m.company, m.owner, m.loginId, m.id, pr ? permRoleLabelOf(pr) : ''].join(' ').toLowerCase();
         if (hay.indexOf(q) < 0) return false;
@@ -14321,8 +14283,7 @@
       ['company', '회원사 (' + nComp + ')'],
       ['staff', '직원 (' + nStaff + ')'],
       ['appointed', '임명됨 (' + nAppointed + ')'],
-      ['appointer', '임명권자 (' + nAppointer + ')'],
-      ['super', '최고권한 (' + nSuper + ')']
+      ['appointer', '임명권자 (' + nAppointer + ')']
     ];
     var bar = '<div class="ma-toolbar">' +
       '<div class="chips">' + tabs.map(function (t) {
@@ -14350,14 +14311,12 @@
         '</div></td>' +
         '<td style="text-align:center"><button type="button" class="btn sm ' + (m.canAppoint ? 'ok' : 'ghost') + '" data-ma-appointer="' + esc(m.id) + '"' + (canSuper ? '' : ' disabled') + '>' +
           (m.canAppoint ? '✓ 임명권자' : '지정') + '</button></td>' +
-        '<td style="text-align:center"><button type="button" class="btn sm ' + (m.isSuper ? 'primary' : 'ghost') + '" data-ma-super="' + esc(m.id) + '"' + (canSuper ? '' : ' disabled') + '>' +
-          (m.isSuper ? '★ 최고권한' : '부여') + '</button></td>' +
         '</tr>';
     }).join('');
-    if (!rows) rows = '<tr><td colspan="5" class="sm" style="text-align:center;padding:18px">조건에 맞는 회원사·직원이 없습니다.</td></tr>';
+    if (!rows) rows = '<tr><td colspan="4" class="sm" style="text-align:center;padding:18px">조건에 맞는 회원사·직원이 없습니다.</td></tr>';
     box.innerHTML = bar +
       '<div class="table-wrap ma-table-wrap"><table><thead><tr>' +
-      '<th>구분</th><th>성명 · 업체 · 아이디</th><th>직책 임명 / 해제</th><th style="text-align:center">임명권자</th><th style="text-align:center">최고권한</th>' +
+      '<th>구분</th><th>성명 · 업체 · 아이디</th><th>직책 임명 / 해제</th><th style="text-align:center">임명권자</th>' +
       '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
   /* 서브탭 — 권한 없는 탭은 아예 렌더하지 않는다 */
@@ -14841,7 +14800,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,[data-ma-filter],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-ma-super],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -15161,8 +15120,9 @@
       return;
     }
     if (el.hasAttribute('data-ma-unappoint')) { unappointMemberRole(el.getAttribute('data-ma-unappoint')); return; }
+    if (el.id === 'btnAssocFixedSave') { var afEl = $('#assocFixedInput'); setAssocFixedPct(afEl ? afEl.value : 5); return; }
+    if (el.id === 'btnAssocFixedReset') { setAssocFixedPct(ASSOC_FIXED_DEFAULT); return; }
     if (el.hasAttribute('data-ma-appointer')) { toggleMemberAppointer(el.getAttribute('data-ma-appointer')); return; }
-    if (el.hasAttribute('data-ma-super')) { toggleMemberSuper(el.getAttribute('data-ma-super')); return; }
     if (el.hasAttribute('data-officerapprove')) {
       var ofId = el.getAttribute('data-officerapprove');
       var selEl = document.getElementById('ofRoleSel_' + ofId);
