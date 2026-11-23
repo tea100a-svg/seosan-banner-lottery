@@ -2166,15 +2166,17 @@
   function openPhoneProxyModal(kind, id, who) {
     var targetLabel = (['감사1', '감사2', 'audit'].indexOf(who) >= 0) ? '감사' : '지부장';
     var kindLabel = (kind === 'pol') ? '정치행정 심사' : '2주 공문 심사';
-    openModal('📞 유선 통화 후 대리 결재 (' + kindLabel + ')',
-      targetLabel + ' 부재 시 사무실무원이 유선 통화로 승인 의사를 확인한 뒤 대리 결재합니다.',
-      '<div class="field"><label for="phoneProxyTarget">부재 결재권자 (유선 통화 대상)</label>' +
-      '<input class="input" id="phoneProxyTarget" value="' + esc(targetLabel) + '" readonly></div>' +
-      '<div class="field"><label for="phoneProxyNote">유선 통화 확인 메모*</label>' +
-      '<input class="input ko-ime" id="phoneProxyNote" lang="ko" value="' + esc(targetLabel + ' 부재로 유선 통화 후 대리 결재 동의 확인') + '" placeholder="예: 지부장님 출장 부재로 09:40 유선 통화 승인 확인"></div>' +
-      '<div class="callout warn" style="margin-top:8px"><div>확정 시 감사 로그에 <b>사무실무원 유선 대리 결재</b>와 통화 메모가 함께 기록됩니다.</div></div>',
-      '<button class="btn ghost" type="button" data-close>취소</button>' +
-      '<button class="btn primary" type="button" id="btnPhoneProxyConfirm" data-pxkind="' + esc(kind) + '" data-pxid="' + esc(id) + '" data-pxwho="' + esc(who) + '">📞 유선 결재 처리</button>');
+    openModal({
+      title: '📞 유선 통화 후 대리 결재 (' + kindLabel + ')',
+      sub: targetLabel + ' 부재 시 사무실무원이 유선 통화로 승인 의사를 확인한 뒤 대리 결재합니다.',
+      body: '<div class="field"><label for="phoneProxyTarget">부재 결재권자 (유선 통화 대상)</label>' +
+        '<input class="input" id="phoneProxyTarget" value="' + esc(targetLabel) + '" readonly></div>' +
+        '<div class="field"><label for="phoneProxyNote">유선 통화 확인 메모*</label>' +
+        '<input class="input ko-ime" id="phoneProxyNote" lang="ko" value="' + esc(targetLabel + ' 부재로 유선 통화 후 대리 결재 동의 확인') + '" placeholder="예: 지부장님 출장 부재로 09:40 유선 통화 승인 확인"></div>' +
+        '<div class="callout warn" style="margin-top:8px"><div>확정 시 감사 로그에 <b>사무실무원 유선 대리 결재</b>와 통화 메모가 함께 기록됩니다.</div></div>',
+      foot: '<button class="btn ghost" type="button" data-close>취소</button>' +
+        '<button class="btn primary" type="button" id="btnPhoneProxyConfirm" data-pxkind="' + esc(kind) + '" data-pxid="' + esc(id) + '" data-pxwho="' + esc(who) + '">📞 유선 결재 처리</button>'
+    });
   }
   /* ── 📋 2주 공문 심사 (2026-11-23 김재봉 님 지시 — 전용 페이지 분리) ─────────
      2주(14일) 이상 공문 + 40% 상한 초과 예외만 모아 결재한다. 1주 공문은 대상 아님. */
