@@ -4558,6 +4558,26 @@
       db.seedVersion = 8;
       save();
     }
+    /* 시연 데이터 v9 (2026-11-24) — 행사 심사 대기열(행사심사중) 최소 2건 이상 보장 */
+    if (Number(db.seedVersion || 8) < 9) {
+      db.apps = db.apps || [];
+      if (db.apps.filter(function (a) { return a.eventApp && a.status === '행사심사중'; }).length < 2) {
+        var extraEv = {
+          id: '2026-W47-E-0206', round: ROUND.id, week: ROUND.postStart, at: '2026-11-24 07:50',
+          company: '서산문화재단', owner: '김문화', phone: '010-3222-1078', license: '충남-서산-2022-011',
+          memberId: 'M-1006', memberType: 'agency', advertiserName: '서산문화예술회관', advertiserBiz: '318-82-00555',
+          text: '2026 서산 겨울 음악회 시민 초청 행사', maker: '대산커뮤니케이션', qty: 2, days: 7,
+          p1: ['P07', 'P18'], p2: ['P02'], p3: [], status: '행사심사중',
+          eventApp: true, eventName: '2026 서산 겨울 음악회', eventDate: '2026-12-13 ~ 2026-12-14',
+          eventReason: '시립예술단 정기연주회 시민 홍보 — 문화예술과 협조 공문 첨부',
+          eventStatus: '심사중', eventVotes: [],
+          review: { status: '승인', by: '시안심사', at: '2026-11-24 08:00' }, awards: [], paid: false, delivered: false
+        };
+        if (!db.apps.some(function (a) { return a.id === extraEv.id; })) db.apps.unshift(extraEv);
+      }
+      db.seedVersion = 9;
+      save();
+    }
   }
 
   function hydrate() {
