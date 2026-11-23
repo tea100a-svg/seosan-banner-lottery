@@ -144,12 +144,34 @@
           <span class="nsw-txt">🎊 명절·연휴·휴가 — 추첨 없애기 <b id="policyHolidayNoDrawTxt">OFF</b></span>
         </label>
         <div class="hint-txt" id="policyHolidayNoDrawInfo" style="margin-top:10px"></div>
+        <div class="pol-cal" id="policyCalBox_noDraw">
+          <div class="pol-cal-head"><b>📅 추첨 없애기 — 적용 날짜·주차</b><span class="sm">지정한 기간에 걸린 게첨 주에만 자동 적용</span></div>
+          <div class="pol-cal-row">
+            <input type="date" class="input sm" id="policyNoDrawFrom" aria-label="추첨 없애기 적용 시작일">
+            <span class="sm">~</span>
+            <input type="date" class="input sm" id="policyNoDrawTo" aria-label="추첨 없애기 적용 종료일">
+            <button class="btn sm" type="button" data-polrange-add="noDraw">＋ 기간 추가</button>
+            <button class="btn sm ghost" type="button" data-polrange-week="noDraw">이번 주 추가</button>
+          </div>
+          <div class="pol-cal-list" id="policyCal_noDraw"></div>
+        </div>
         <label class="notice-switch" for="policyHolidayDirectInstall" style="margin-top:16px">
           <input type="checkbox" id="policyHolidayDirectInstall">
           <span class="nsw-track"><span class="nsw-knob"></span></span>
           <span class="nsw-txt">🛠️ 명절·연휴·휴가 — 접수자 직접설치 전환 <b id="policyHolidayDirectInstallTxt">OFF</b></span>
         </label>
         <div class="hint-txt" id="policyHolidayDirectInstallInfo" style="margin-top:10px"></div>
+        <div class="pol-cal" id="policyCalBox_direct">
+          <div class="pol-cal-head"><b>📅 접수자 직접설치 — 적용 날짜·주차</b><span class="sm">지정한 기간에 걸린 게첨 주의 접수만 직접설치 모드</span></div>
+          <div class="pol-cal-row">
+            <input type="date" class="input sm" id="policyDirectFrom" aria-label="직접설치 적용 시작일">
+            <span class="sm">~</span>
+            <input type="date" class="input sm" id="policyDirectTo" aria-label="직접설치 적용 종료일">
+            <button class="btn sm" type="button" data-polrange-add="direct">＋ 기간 추가</button>
+            <button class="btn sm ghost" type="button" data-polrange-week="direct">이번 주 추가</button>
+          </div>
+          <div class="pol-cal-list" id="policyCal_direct"></div>
+        </div>
       </div>
     </div>
 <div class="panel" id="noticePanel">

@@ -127,12 +127,15 @@
         <h3>🗓️ 주차별 접수대장 <span class="sub">게첨 주를 골라 접수·배정 현황을 봅니다</span></h3>
         <span class="sub" id="drawWeekNow"></span>
         <span class="spacer"></span>
+        <button class="btn primary sm" id="btnDrawPrint" type="button" title="현재 게첨 주차 접수대장을 A4로 인쇄·파일링합니다">🖨️ 접수대장 A4 출력</button>
         <button class="btn ghost sm" id="btnDrawWeekCal" type="button" data-caltoggle="draw" aria-expanded="false" aria-controls="drawWeekCal">📅 달력보기</button>
       </div>
       <div id="drawWeekCal" class="cal-collapsed"></div>
       <div class="rule-strip-wrap"><div id="drawRuleStrip"></div></div>
       <div class="hint-txt" id="drawWeekInfo" style="margin:8px 0 0"></div>
       <div class="table-wrap" id="drawWeekTable" style="margin-top:10px"></div>
+      <div class="hint-txt" id="drawPrintHint" style="margin-top:8px">🖨️ <b>접수대장 A4 출력</b> — 선택한 게첨 주차의 접수대장을 파일링용 A4 한 장(여러 장)으로 인쇄합니다.</div>
+      <div id="ledgerSheet" class="ledger-sheet" aria-hidden="true"></div>
       <div id="drawWeekResult"></div>
     </div>
 <div class="kpi" id="adminKpi"></div>
@@ -143,6 +146,8 @@
           주간 전산 추첨 — <span id="drawRoundLabel">2026년 12월 1주차</span>
         </h3>
         <span class="sub" id="drawPoolInfo"></span>
+        <span class="spacer"></span>
+        <button class="btn primary sm" id="btnDrawResultPrint" type="button" title="현재 게첨 주차의 전산 추첨 결과를 A4로 인쇄·파일링합니다">🖨️ 추첨결과 A4 출력</button>
       </div>
       <div class="draw-stage">
         <div class="draw-box">
