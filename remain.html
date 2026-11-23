@@ -108,6 +108,12 @@
 
       <!-- 1단계 · 실제 광고주 · 현수막 문구 · 시안 (로그인 정보 박스 없이 최상단) -->
       <div class="step-body active" id="fcStep1">
+        <div class="callout info" id="fcWeekPickBox" style="margin-bottom:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+          <div><b>📅 게시 희망 날짜(게철 주차) 선택</b> — 먼저 어느 주의 미배정 잔여석을 접수할지 고르세요.<br>
+            <span class="sm">이번 주 진행 중 주간은 요일·시간 제한 없이 바로 접수되며, 다음 주 이후 잔여석은 사전 접수로 받습니다.</span>
+            <div class="chips" id="fcWeekPick" style="margin-top:8px"></div></div>
+        </div>
         <div class="sect-label">실제 광고주 · 현수막 문구 · 시안 <span>중복 접수·페널티는 실제 광고주 기준</span></div>
         <div class="field-row">
           <div class="field" id="fcFAdv">
@@ -144,7 +150,7 @@
           <div id="fcFilePreview"></div>
           <div class="err-txt">현수막 시안 파일을 첨부해 주세요. (JPG·PNG / 5MB 이하)</div>
           <div class="hint-txt">시안 파일 첨부는 <b>필수</b>입니다 — 사무국이 규격·실명제 박스를 시안으로 확인합니다.
-            <button class="btn sm ghost" type="button" id="btnFcDesignSample" style="margin-left:6px">시연용 샘플 시안 첨부</button>
+            <button class="btn sm ghost" type="button" id="btnFcDesignSample" style="margin-left:6px">시연용 샘플 시안 첨부</button><button class="btn sm ghost" type="button" id="btnFcDesignSampleBlack" style="margin-left:4px">⬛ 검정 바탕 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnFcDesignSampleRed" style="margin-left:4px">🟥 빨간 바탕 시안(샘플)</button>
           </div>
         </div>
         <div class="callout danger hidden" id="fcAbuseNote" role="alert"></div>

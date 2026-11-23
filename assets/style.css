@@ -1887,3 +1887,28 @@ html[data-device-view="mobile"] #eventList .evbtn{flex:1 1 30%;min-height:40px}
 
 /* 모바일 하단 탭 터치 타겟 44px 보장 (2026-11-23) */
 @media (max-width:768px){ #mobileTabbar a, .mtabbar a{min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center} }
+
+/* ── 목요일 공휴일 · 시연 기준일 달력 (2026-11-23 김재봉 님 지시) ───────────── */
+a.wk{display:block;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s,transform .15s}
+a.wk:hover{border-color:#c9b6ea;box-shadow:0 4px 14px rgba(90,60,150,.12);transform:translateY(-1px)}
+.wk .wk-go{display:inline-block;margin-top:7px;font-size:11.5px;font-weight:800;color:#6a4bb0;background:#f3eefc;border:1px solid #dfd2f6;border-radius:8px;padding:3px 8px;text-decoration:none}
+a.wk:hover .wk-go{background:#e9dffb}
+.dn-btn.on{background:#7a3fd0;border-color:#7a3fd0;color:#fff;font-weight:800}
+.demo-cal{border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;background:#fff}
+.dc-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.dc-head b{font-size:15px;font-weight:800;color:var(--ink)}
+.dc-nav{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:16px;line-height:1;cursor:pointer;color:var(--ink)}
+.dc-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.dc-dow span{text-align:center;font-size:11px;font-weight:800;color:var(--muted)}
+.dc-dow .sun,.dc-cell.sun .dc-num{color:#d33}
+.dc-dow .sat,.dc-cell.sat .dc-num{color:#2467c9}
+.dc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dc-cell{position:relative;height:44px;border:1px solid transparent;border-radius:9px;background:#f7f9fc;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:inherit}
+.dc-cell:hover{background:#eef3fb;border-color:#cfdcf0}
+.dc-cell.on{background:#1f4e8c;border-color:#1f4e8c}
+.dc-cell.on .dc-num{color:#fff;font-weight:800}
+.dc-cell.holiday{background:#fff3f3}
+.dc-cell.holiday .dc-hol{font-size:9px;font-style:normal;color:#c22;font-weight:800}
+.dc-cell.dc-empty{background:transparent;cursor:default}
+.dc-num{font-size:13px;font-weight:700;color:var(--ink)}
+.dc-note{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.5}

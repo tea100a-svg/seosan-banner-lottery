@@ -2225,6 +2225,11 @@
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
   }
   function weekStartOf(iso) { return mondayOf(iso); }
+  /* 게첨 기간 — 날짜·요일까지 또렷하게 (2026-11-23 김재봉 님 지시) */
+  function periodTxt(s) {
+    var wk = weekStartOf(s), e = addDays(wk, 6);
+    return '게첨 기간: ' + wk + '(' + wd(wk) + ') ~ ' + e + '(' + wd(e) + ')';
+  }
   function weekRangeTxt(s) { return dstr(s) + ' ~ ' + dstr(addDays(s, 6)); }
   function weekInfoOf(start) {
     var s = weekStartOf(start);
@@ -2334,6 +2339,39 @@
     for (var s = start; s <= last && out.length < 7; s = addDays(s, 7)) out.push(s);
     return out;
   }
+  /* ── 목요일 공휴일 예외 (2026-11-23 김재봉 님 지시) ──────────────────────
+     "목요일이 공휴일일 경우 취소접수는 금요일로 변경하고 현수막 입고는 금요일 14시로"
+     · 이번 회차 목요일(ROUND.firstComeDate, 선착순 접수일)이 법정공휴일이면
+       취소분 선착순 → **금요일 09:00~18:00**, 선착순분 현수막 입고 마감 → **금요일 14:00**
+     · 실제 법정공휴일 목록 + 상단 시연 바의 '목요일 공휴일' 토글로 시연 즉시 전환 */
+  var THU_HOLIDAY_KEY = 'seosan-thu-holiday';
+  var KR_HOLIDAYS = {
+    '2026-01-01': '신정',
+    '2026-02-16': '설 연휴', '2026-02-17': '설날', '2026-02-18': '설 연휴',
+    '2026-03-01': '삼일절', '2026-03-02': '삼일절 대체공휴일',
+    '2026-05-05': '어린이날',
+    '2026-05-24': '부처님오신날', '2026-05-25': '부처님오신날 대체공휴일',
+    '2026-06-03': '전국동시지방선거일',
+    '2026-06-06': '현충일',
+    '2026-08-15': '광복절',
+    '2026-09-24': '추석 연휴', '2026-09-25': '추석', '2026-09-26': '추석 연휴',
+    '2026-10-03': '개천절', '2026-10-09': '한글날',
+    '2026-12-25': '기독탄신일'
+  };
+  function holidayNameOf(iso) { return (iso && KR_HOLIDAYS[iso]) ? KR_HOLIDAYS[iso] : ''; }
+  function thuHolidayToggle() {
+    try { return localStorage.getItem(THU_HOLIDAY_KEY) === '1'; } catch (e) { return false; }
+  }
+  /* 이번 회차 목요일이 공휴일인가 — 실제 공휴일 또는 시연 토글 ON */
+  function isThuHoliday() { return thuHolidayToggle() || !!holidayNameOf(ROUND.firstComeDate); }
+  function isThuHolidayWeek() { return isThuHoliday(); }
+  function thuHolidayLabel() { return holidayNameOf(ROUND.firstComeDate) || '공휴일(시연)'; }
+  /* 취소분 선착순이 열리는 요일 — 평시 목요일(4) · 목요일 공휴일이면 금요일(5) */
+  function fcOpenDow() { return isThuHoliday() ? 5 : 4; }
+  function fcOpenDayName() { return isThuHoliday() ? '금요일' : '목요일'; }
+  function fcIsOpenDay(now) { return (now || getNow()).getDay() === fcOpenDow(); }
+  function fcOpenDateText() { return dfmt(isThuHoliday() ? addDays(ROUND.firstComeDate, 1) : ROUND.firstComeDate); }
+
   /* ── 시연용 현재 날짜/시각 변경기 (2026-11-23 김재봉 님 지시) ─────────────
      · 상단 시연 바에서 기준일을 고르면 저장(localStorage)되고,
        요일 판별(주간 타임라인 강조·목요일 선착순 노출·입고/접수 제한)이 모두 이 날짜를 따른다. */
@@ -2362,6 +2400,19 @@
     try { renderFirst(); } catch (e) { }
     return getNowISO();
   }
+  /* 🗓️ 이번 주 목요일 공휴일 토글 — 시연 즉시 일정(금요일 이동·14:00 입고)이 바뀐다 */
+  function setThuHoliday(on) {
+    try {
+      if (on) localStorage.setItem(THU_HOLIDAY_KEY, '1');
+      else localStorage.removeItem(THU_HOLIDAY_KEY);
+    } catch (e) { }
+    renderDemoNowBar();
+    applyFirstNavVisibility();
+    try { renderStatus(); } catch (e) { }
+    try { renderFirst(); } catch (e) { }
+    if (on) { try { showHolidayNotice(true); } catch (e) { } }
+    return isThuHoliday();
+  }
   /* 요일 버튼 — 이번 회차 게첨 주의 월~금 중 하루로 이동 */
   function demoNowWeekday(dow) {
     if (!dow) return setDemoNow('');
@@ -2380,11 +2431,15 @@
       box.className = 'demo-now';
       box.innerHTML = '<b>📅 시연 기준일</b>' +
         '<input type="date" id="demoNowDate" aria-label="시연 기준일">' +
+        '<button type="button" class="dn-btn" data-democal="1" title="달력에서 시연 기준일 선택">📆 달력</button>' +
         '<span class="dn-btns">' +
         [['1', '월'], ['2', '화'], ['3', '수'], ['4', '목'], ['5', '금']].map(function (x) {
           return '<button type="button" class="dn-btn" data-demodow="' + x[0] + '">' + x[1] + '</button>';
         }).join('') +
         '<button type="button" class="dn-btn" data-demodow="" title="실제 오늘로">오늘</button></span>' +
+        '<button type="button" class="dn-btn dn-holy' + (isThuHoliday() ? ' on' : '') + '" data-thuholy="1" ' +
+        'title="이번 주 목요일을 공휴일로 보고 취소분 선착순(금요일)·입고 마감(금요일 14:00) 변경을 시연합니다">' +
+        '🗓️ 목요일 공휴일 ' + (isThuHoliday() ? 'ON' : 'OFF') + '</button>' +
         '<span class="dn-now" id="demoNowTxt"></span>';
       bar.appendChild(box);
       var inp = document.getElementById('demoNowDate');
@@ -2393,18 +2448,110 @@
     var iso = getNowISO(), d = getNow();
     if (document.getElementById('demoNowDate')) document.getElementById('demoNowDate').value = iso;
     if (document.getElementById('demoNowTxt')) {
-      document.getElementById('demoNowTxt').textContent = ' = ' + WEEK_DAYS[d.getDay()] + '요일' + (demoNowISO() ? '' : ' (실제 오늘)');
+      document.getElementById('demoNowTxt').textContent = ' = ' + WEEK_DAYS[d.getDay()] + '요일' + (demoNowISO() ? '' : ' (실제 오늘)') +
+        (isThuHoliday() ? ' · 🗓️ 목요일 공휴일 → 취소분 ' + fcOpenDayName() + ' · 입고 ' + FC_DELIVER.time : '');
     }
   }
-  /* 🔥 취소분 선착순은 목요일에만 상단 메뉴에 노출 (2026-11-23 김재봉 님 지시) */
-  function firstNavAllowed() { return getNow().getDay() === 4; }
+  /* 📅 시연 기준일 달력 팝업 (2026-11-23 김재봉 님 지시 "시연 기준일도 달력 클릭하게 만들어줘") */
+  function demoCalMonthShift(ym, delta) {
+    var d = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1 + delta, 1);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
+  }
+  function demoCalHTML(ym) {
+    var y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7));
+    var pad = new Date(y, m - 1, 1).getDay();
+    var last = new Date(y, m, 0).getDate();
+    var sel = getNowISO(), cells = [];
+    for (var i = 0; i < pad; i++) cells.push('<span class="dc-cell dc-empty"></span>');
+    for (var d = 1; d <= last; d++) {
+      var iso = ym + '-' + pad2(d), dow = new Date(iso + 'T10:00:00').getDay(), hol = holidayNameOf(iso);
+      cells.push('<button type="button" class="dc-cell' + (dow === 0 ? ' sun' : '') + (dow === 6 ? ' sat' : '') +
+        (iso === sel ? ' on' : '') + (hol ? ' holiday' : '') + '" data-democalday="' + iso + '" ' +
+        'title="' + esc(iso + ' (' + WEEK_DAYS[dow] + ')' + (hol ? ' · ' + hol : '')) + '">' +
+        '<span class="dc-num">' + d + '</span>' + (hol ? '<i class="dc-hol">공휴일</i>' : '') + '</button>');
+    }
+    return '<div class="demo-cal" id="demoCal">' +
+      '<div class="dc-head"><button type="button" class="dc-nav" data-democalnav="-1" aria-label="이전 달">‹</button>' +
+        '<b>' + monthTxt(ym) + '</b>' +
+        '<button type="button" class="dc-nav" data-democalnav="1" aria-label="다음 달">›</button></div>' +
+      '<div class="dc-dow">' + ['일', '월', '화', '수', '목', '금', '토'].map(function (x, i) {
+        return '<span class="' + (i === 0 ? 'sun' : (i === 6 ? 'sat' : '')) + '">' + x + '</span>';
+      }).join('') + '</div>' +
+      '<div class="dc-grid">' + cells.join('') + '</div>' +
+      '<div class="dc-note">날짜를 누르면 그 날짜로 <b>시연 기준일</b>이 바뀝니다 — 요일 판별·취소분 선착순·입고 마감이 함께 바뀝니다.</div>' +
+      '</div>';
+  }
+  function openDemoCal(ym) {
+    ui.demoCalMonth = ym || ui.demoCalMonth || getNowISO().slice(0, 7);
+    openModal({
+      title: '📅 시연 기준일 선택',
+      sub: '달력에서 날짜를 누르면 바로 그 날짜 기준으로 화면이 바뀝니다.',
+      body: demoCalHTML(ui.demoCalMonth),
+      foot: '<button class="btn" type="button" data-demodow="">오늘로</button>' +
+        '<button class="btn ghost" type="button" data-close>닫기</button>'
+    });
+    return ui.demoCalMonth;
+  }
+  /* ── 목요일 공휴일 주간 자동 공지 팝업 (2026-11-23 김재봉 님 지시 "그 주차에는 팝업공지 자동으로 띄워주고") ── */
+  function holidayNoticeActive() {
+    if (!isThuHoliday()) return false;
+    if ($('#adminToggle') && $('#adminToggle').checked) return false;
+    return db.holidayNoticeHiddenOn !== todayISO();
+  }
+  function showHolidayNotice(force) {
+    if (!isThuHoliday()) return false;
+    if (!force && !holidayNoticeActive()) return false;
+    openModal({
+      title: '📢 [공휴일 일정 안내]',
+      sub: '이번 주 목요일이 공휴일입니다 — 일정 변경 안내',
+      body: '<div class="notice-body"><p>📢 <b>[공휴일 일정 안내]</b> 이번 주 목요일이 공휴일인 관계로 <b>취소분 선착순 접수는 금요일(09:00~18:00)</b>로, <b>현수막 입고 마감은 금요일 14:00까지</b>로 변경됩니다.</p>' +
+        '<p>대상 주차 — ' + esc(ROUND.label) + ' · 공휴일 사유 — ' + esc(thuHolidayLabel()) + ' (' + esc(dfmt(ROUND.firstComeDate)) + ')</p></div>',
+      foot: '<label class="notice-hide" for="holidayNoticeHide"><input type="checkbox" id="holidayNoticeHide"><span>오늘 하루 보지 않기</span></label>' +
+        '<button class="btn primary" id="btnHolidayOk" type="button">확인</button>',
+      after: function () {
+        if ($('#btnHolidayOk')) onEl('#btnHolidayOk', 'click', function () {
+          var chk = $('#holidayNoticeHide');
+          if (chk && chk.checked) { db.holidayNoticeHiddenOn = todayISO(); save(); }
+          closeModal();
+        });
+      }
+    });
+    return true;
+  }
+  /* 🔥 취소분 선착순은 접수일(평시 목요일 · 목요일 공휴일이면 금요일)에만 상단 메뉴에 노출 */
+  function firstNavAllowed() { return fcIsOpenDay(); }
   function applyFirstNavVisibility() {
     var on = firstNavAllowed();
     $$('nav.site-nav a[href="first.html"], #mobileTabbar a[href="first.html"]').forEach(function (a) {
       a.classList.toggle('hidden', !on);
       a.setAttribute('aria-hidden', on ? 'false' : 'true');
     });
-    if (has('firstDayNotice')) $('#firstDayNotice').classList.toggle('hidden', on);
+    /* first.html — 오늘 접수 창구가 닫혔을 때의 안내문도 요일·공휴일에 맞춰 다시 쓴다 */
+    var nd = $('#firstDayNotice');
+    if (nd) {
+      nd.classList.toggle('hidden', on);
+      nd.innerHTML = IC.alert + '<div><b>' + (isThuHoliday()
+        ? '📢 이번 주 목요일은 공휴일(' + esc(thuHolidayLabel()) + ')입니다 — 취소분 선착순 접수는 금요일(09:00~18:00)에 진행합니다.'
+        : '🔥 취소분 선착순 접수는 매주 목요일 09:00~18:00에만 열립니다.') + '</b><br>' +
+        '수요일 18:00까지 입금·입고되지 않은 <b>취소분(회수 면)만</b> 접수합니다. 오늘은 ' + fcOpenDayName() + '이 아니어서 접수 창구가 닫혀 있습니다.<br>' +
+        (isThuHoliday() ? '선착순 당첨분 현수막 입고 마감은 <b>금요일 14:00</b>입니다.<br>' : '') +
+        '<span class="sm">상단 <b>📅 시연 기준일</b>을 ' + fcOpenDayName() + '(으)로 바꾸면 바로 체험할 수 있습니다.</span>' +
+        '<div style="margin-top:8px"><button class="btn sm primary" type="button" data-demodow="' + fcOpenDow() + '">' + fcOpenDayName() + '로 전환</button>' +
+        ' <a class="btn sm ghost" href="remain.html">⚡ 미배정 상시접수로 이동</a></div></div>';
+    }
+    var line = $('#firstRoundLine');
+    if (line) {
+      line.innerHTML = esc(ROUND.label) + '(' + esc(dstr(ROUND.postStart)) + '~' + esc(dstr(ROUND.postEnd)) + ') 게시분 · 미입고 회수 면을 <b>' +
+        fcOpenDayName() + ' 일과시간(09:00~18:00)</b>에만 선착순으로 접수합니다.' +
+        (isThuHoliday() ? ' — 이번 주 목요일은 <b>공휴일(' + esc(thuHolidayLabel()) + ')</b>이라 <b>금요일</b>로 변경되었습니다. 입고 마감 <b>금요일 14:00</b>.' : '');
+    }
+    /* guide-rules — 목요일 공휴일 주간에는 주간 일정표도 금요일로 바뀐다 */
+    var gp = $('#guideFirstProc');
+    if (gp) {
+      gp.innerHTML = isThuHoliday()
+        ? '<span class="n wide">금</span><div><b>미입고 잔여석 실시간 선착순 접수 (목요일 공휴일 → 금요일)</b><span>일과시간 <b>09:00 ~ 18:00</b>에만 운영 · 누르는 즉시 확정 · 당첨분은 <b>금요일 14:00까지 입고</b>(미입고 자동 취소)</span></div>'
+        : '<span class="n wide">목</span><div><b>미입고 잔여석 실시간 선착순 접수</b><span>일과시간 <b>09:00 ~ 18:00</b>에만 운영 · 누르는 즉시 확정 · 당첨분은 <b>금요일 10:00까지 입고</b>(미입고 자동 취소)</span></div>';
+    }
     return on;
   }
 
@@ -2463,7 +2610,7 @@
     var items = [
       { k: 'draw', d: '월요일 ' + w.drawTime, b: '전산 추첨', s: dstr(w.drawDate) },
       { k: 'due', d: '수요일 ' + w.deliverTime, b: '입고 마감', s: dstr(w.deliverBy) },
-      { k: 'first', d: '목요일 09:00~18:00', b: '잔여 선착순', s: dstr(w.firstCome) + ' · 입고 금 ' + dstr(FC_DELIVER.date) + ' 10:00' },
+      { k: 'first', d: fcOpenDayName() + ' 09:00~18:00', b: '잔여 선착순', s: dstr(isThuHoliday() ? addDays(w.firstCome, 1) : w.firstCome) + ' · 입고 금 ' + dstr(FC_DELIVER.date) + ' ' + FC_DELIVER.time },
       { k: 'off', d: '금요일', b: '접수 제한', s: dstr(w.cutoff) },
       { k: 'post', d: '월요일', b: '게첨 시작', s: dstr(w.start) }
     ];
@@ -4462,6 +4609,8 @@
         '<div style="font-size:11.5px;color:var(--muted);margin-top:2px">' + esc(s.sub) + '</div></div>';
     }).join('');
     renderWeekStrip(wk);
+    /* 주간 규칙 스트립 — 달력을 접어 둬도 항상 보이게 (2026-11-23) */
+    if ($('#weekRuleStrip')) $('#weekRuleStrip').innerHTML = ruleStripHTML(wk, { thisRound: wk === currentPostingWeek() });
     /* 첫 화면 최상단 — 다음 게첨 주차 한 개만 크게 안내 (2026-11-23 김재봉 님 지시) */
     if ($('#ctaApplyNext')) {
       var ctaEl = $('#ctaApplyNext');
@@ -4473,16 +4622,39 @@
     }
     /* 이번 주(11.23~11.29) 게첨 주간을 보고 있으면 — 진행 주간 잔여석 접수 안내 */
     if ($('#statusLiveNotice')) {
+      var noticeParts = [];
+      if (holidayNoDrawOn()) {
+        noticeParts.push('<div class="callout warn" id="noDrawNotice">' + IC.alert +
+          '<div><b>🎊 명절·연휴·휴가 주간 — 이번 주는 전산 추첨을 하지 않습니다.</b><br>' +
+          '배정·입금·현수막 입고 일정은 사무국 안내를 따릅니다. 남은 잔여 면은 <b>⚡ 미배정 상시접수</b>에서 요일·시간 제한 없이 접수할 수 있습니다.' +
+          '<div style="margin-top:8px"><a class="btn sm primary" href="remain.html">⚡ 미배정 상시접수 열기</a></div></div></div>');
+      }
+      /* 오늘 = 취소분 선착순 접수일(평시 목요일 · 목요일 공휴일이면 금요일) — 바로가기 배너 */
+      var dowN = getNow().getDay();
+      if (isThuHoliday() && dowN === 4) {
+        noticeParts.push('<div class="callout warn" id="holidayFcNotice">' + IC.alert +
+          '<div><b>🗓️ 오늘은 목요일 공휴일(' + esc(thuHolidayLabel()) + ')입니다.</b><br>' +
+          '취소분 선착순 접수는 <b>금요일 09:00~18:00</b>에 진행하며, 선착순 당첨분 현수막 입고 마감은 <b>금요일 14:00</b>입니다. ' +
+          '남은 잔여 면은 <b>⚡ 미배정 상시접수</b>에서 요일·시간 제한 없이 접수할 수 있습니다.' +
+          '<div style="margin-top:8px"><a class="btn sm primary" href="remain.html">⚡ 미배정 상시접수 열기</a> ' +
+          '<a class="btn sm ghost" href="first.html">금요일 취소분 안내 보기</a></div></div></div>');
+      } else if (fcIsOpenDay()) {
+        noticeParts.push('<div class="callout warn" id="fcOpenNotice">' + IC.alert +
+          '<div><b>🔥 오늘은 ' + fcOpenDayName() + ' — 취소분 선착순 접수일입니다 (09:00~18:00).</b><br>' +
+          (isThuHoliday() ? '이번 주 목요일은 공휴일(' + esc(thuHolidayLabel()) + ')이라 <b>금요일</b>로 변경되었습니다. ' : '') +
+          '수요일 18:00까지 입금·입고되지 않은 <b>취소분(회수 면)만</b> 선착순으로 접수합니다. 입고 마감 <b>' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '</b>.' +
+          '<div style="margin-top:8px"><a class="btn sm primary" href="first.html">🔥 취소분 선착순 접수 열기</a> ' +
+          '<a class="btn sm ghost" href="remain.html">⚡ 미배정 상시접수</a></div></div></div>');
+      }
       if (wk === weekStartOf(CUR.start)) {
         var lv = liveWeekState();
-        $('#statusLiveNotice').innerHTML = '<div class="callout warn" id="liveNoticeBox">' + IC.alert +
+        noticeParts.push('<div class="callout warn" id="liveNoticeBox">' + IC.alert +
           '<div><b>지금은 ' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + ' 게첨이 진행 중인 주간입니다.</b><br>' +
           '협회 일괄 게첨(추첨 → 입고 → 게첨)이 끝난 주간이라 남은 잔여 면 <b>' + lv.left + '면</b>은 <b>요일·일과시간 제한 없이</b> 지금 바로 접수할 수 있습니다. ' +
           '설치 안내 — <b>광고사(광고대행사)는 직접 현장에 설치(게첨)</b>, <b>일반인은 규정상 직접 설치가 금지되어 반드시 광고사에 의뢰</b>하셔야 합니다.' +
-          '<div style="margin-top:8px"><button class="btn sm primary" type="button" data-fclive="">⚡ 미배정 상시접수 열기</button></div></div></div>';
-      } else {
-        $('#statusLiveNotice').innerHTML = '';
+          '<div style="margin-top:8px"><button class="btn sm primary" type="button" data-fclive="">⚡ 미배정 상시접수 열기</button></div></div></div>');
       }
+      $('#statusLiveNotice').innerHTML = noticeParts.join('');
     }
     if ($('#statusReqInfo')) $('#statusReqInfo').innerHTML = '<b>' + weekRangeTxt(wk) + '</b> 게첨 주 — 접수 <b>' + appsR.length + '건</b> · 신청 <b>' + qtyR + '매</b> · 배정 <b>' + ws.awarded + '매</b> · 잔여 <b>' + ws.left + '면</b>. 카드의 <b>N/M건 접수중</b>은 그 게시대를 1·2·3순위로 신청한 건수입니다.';
 
@@ -4521,22 +4693,35 @@
     if (!has('weekStrip')) return;
     var st = firstComeState();
     var wk = weekStartOf(week || activeWeekStart()), w = weekInfoOf(wk);
+    var hol = isThuHoliday(), openDow = fcOpenDow(), dayName = fcOpenDayName();
+    /* 목요일 공휴일 주간에는 목요일 카드가 '금요일 09:00~18:00'이 되고 입고 마감도 금요일 14:00 */
+    var fcDate = hol ? addDays(w.firstCome, 1) : w.firstCome;
     var items = [
       { k: 'draw', d: '월요일 ' + w.drawTime, b: '전산 추첨', s: dfmt(w.drawDate) + ' · 당첨자 가상계좌 발급' },
       { k: 'due', d: '수요일 ' + w.deliverTime, b: '입금 · 현수막 입고 마감', s: dfmt(w.deliverBy) + ' · <em>미입금·미입고 자동 취소·반려</em>' },
-      { k: 'first', d: '목요일 09:00~18:00', b: '잔여석 선착순', s: dfmt(w.firstCome) + ' 일과시간만 · 입고 <em>' + dstr(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '</em>' },
-      { k: 'off', d: '금요일', b: '잔여석 접수 제한', s: dfmt(w.cutoff) + ' · 분류·게첨 준비일' },
+      { k: 'first', d: dayName + ' 09:00~18:00', b: hol ? '취소분 선착순 (공휴일→금)' : '잔여석 선착순',
+        s: dfmt(fcDate) + ' 일과시간만 · 입고 <em>' + dstr(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '</em>' },
+      { k: 'off', d: '금요일', b: hol ? '접수 제한 (공휴일 대체일 제외)' : '잔여석 접수 제한', s: dfmt(w.cutoff) + ' · 분류·게첨 준비일' },
       { k: 'post', d: '월요일', b: '현장 게첨 · 게시 시작', s: dfmt(w.start) + ' 게시 시작 · 월~일 7일' }
     ];
     /* 오늘 요일 카드 한 장만 색상 강조 · 나머지는 무채색 (2026-11-23 김재봉 님 지시) */
     var dowToday = getNow().getDay();
     var todayKey = { 1: 'draw', 3: 'due', 4: 'first', 5: 'off' }[dowToday] || '';
+    if (hol && dowToday === 5) todayKey = 'first';   /* 공휴일 주 금요일 = 취소분 선착순 접수일 */
+    if (hol && dowToday === 4) todayKey = '';        /* 목요일은 공휴일 — 접수 없음 */
+    /* 목요일(공휴일이면 금요일)에는 주간 타임라인의 선착순 카드가 취소분 페이지로 바로 연결된다 (2026-11-23 김재봉 님 지시) */
+    var fcHref = fcIsOpenDay() ? 'first.html' : 'remain.html';
     $('#weekStrip').innerHTML = items.map(function (it) {
       var isToday = (it.k === todayKey);
-      return '<div class="wk ' + it.k + (isToday ? ' today' : '') + '">' +
-        (isToday ? '<i class="wk-badge">오늘</i>' : '') +
+      var inner = (isToday ? '<i class="wk-badge">오늘</i>' : '') +
         '<span class="d">' + esc(it.d) + '</span><b>' + esc(it.b) + '</b>' +
-        '<small>' + it.s + '</small></div>';
+        '<small>' + it.s + '</small>';
+      if (it.k === 'first') {
+        inner += '<a class="wk-go" href="' + fcHref + '">' + (fcIsOpenDay() ? '🔥 취소분 선착순 접수 →' : '⚡ 미배정 상시접수 →') + '</a>';
+        return '<a class="wk ' + it.k + (isToday ? ' today' : '') + '" href="' + fcHref + '" ' +
+          'title="' + esc(dayName + ' 09:00~18:00 선착순 접수 — ' + (fcIsOpenDay() ? '취소분 선착순' : '미배정 상시접수') + ' 페이지로 이동') + '">' + inner + '</a>';
+      }
+      return '<div class="wk ' + it.k + (isToday ? ' today' : '') + '">' + inner + '</div>';
     }).join('');
   }
 
@@ -4632,6 +4817,24 @@
     syncEventBox();
     renderRepeatBox();
     setStep(ui.step);
+    renderApplyPolicyNote();
+  }
+  /* 명절·연휴·휴가 주간 — 추첨 없음 · 접수자 직접설치 전환 안내 (접수 1페이지 상단) */
+  function renderApplyPolicyNote() {
+    var box = $('#applyPolicyNote');
+    if (!box) return;
+    var parts = [];
+    if (holidayNoDrawOn()) {
+      parts.push('<div class="callout warn" id="applyNoDrawNote">' + IC.alert +
+        '<div><b>🎊 명절·연휴·휴가 주간 — 이번 주는 전산 추첨을 하지 않습니다.</b><br>' +
+        '추첨 없이 접수·시안 심사만 진행하며, <b>당첨·배정·입금·현수막 입고 일정은 사무국 안내</b>를 따릅니다. ' +
+        '남은 잔여 면은 <a href="remain.html">⚡ 미배정 상시접수</a>에서 확인해 주세요.</div></div>');
+    }
+    if (holidayDirectInstallOn()) {
+      var hk = applicantKind();
+      parts.push('<div class="callout warn" id="applyDirectInstallNote">' + IC.alert + '<div>' + directInstallHTMLOf(hk) + '</div></div>');
+    }
+    box.innerHTML = parts.join('');
   }
   /* 행사 우선접수 입력부 —  체크했을 때만 행사명·기간·사유 칸을 연다 */
   function eventFormOn() { return !!($('#chkEventApp') && $('#chkEventApp').checked); }
@@ -5453,7 +5656,8 @@
   }
   function syncApplyMedicalNote() {
     var v = readApply();
-    return syncMedicalAdNote('#medicalAdNote', [v.advertiser, v.company, v.text].join(' '));
+    /* 의료광고 판단은 실제 광고주·문구 기준 — 접수 업체명(대행사)은 제외 */
+    return syncMedicalAdNote('#medicalAdNote', [v.advertiser, v.text].join(' '));
   }
   function syncFcMedicalNote() {
     var v = readFc();
@@ -5844,6 +6048,11 @@
       priority1Slots: v.priority1Slots.slice(), priority2Slots: v.priority2Slots.slice(), priority3Slots: v.priority3Slots.slice(),
       p1: pr1[0] || '', p2: pr2[0] || '', p3: pr3[0] || '',
       eco: v.eco, status: '시안심사중',
+      designTone: ui.designTone || null,
+      /* 명절·연휴·휴가 주간 — 접수자 직접설치 전환 (진행 주간과 같은 안내 멘트) */
+      directInstall: holidayDirectInstallOn() || false,
+      installType: holidayDirectInstallOn() ? (v.appType === 'agency' ? 'agency' : 'general') : '',
+      directInstallMsg: holidayDirectInstallOn() ? holidayInstallMsg(v.appType === 'agency' ? 'agency' : 'general') : '',
       eventApp: !!v.eventApp, eventName: v.eventApp ? v.eventName : '', polApp: !!v.polApp,
       eventPeriod: v.eventApp ? v.eventPeriod : '', eventReason: v.eventApp ? v.eventReason : '',
       eventStatus: v.eventApp ? '심사중' : 'none', eventVotes: [], eventDecidedAt: '',
@@ -6637,10 +6846,18 @@
     if (!ph) return;
     var p = boardById(ph.pid);
     openModal({
-      title: '게첨사진 미리보기', sub: (p ? p.name : '게시대') + ' ' + photoDongLabel(ph.pid, ph.dong) + ' · ' + weekRangeTxt(ph.week), wide: true,
-      body: '<div style="text-align:center"><img src="' + photoDataOf(ph) + '" alt="게첨사진" style="max-width:100%;height:auto;border:1px solid #ccd6e2;border-radius:8px"></div>' +
-        '<div class="hint-txt" style="margin-top:8px">' + esc(ph.at || '') + ' · ' + esc(ph.by || '') + ' · ' + esc(ph.name || '') + '</div>',
-      foot: '<button class="btn ghost" data-close type="button">닫기</button>'
+      title: '📸 게첨사진 확대 보기', sub: (p ? p.name : '게시대') + ' ' + photoDongLabel(ph.pid, ph.dong), wide: true,
+      body: '<div style="text-align:center;background:#0e1726;border-radius:10px;padding:8px"><img id="photoZoomImg" src="' + photoDataOf(ph) + '" alt="게첨사진" style="max-width:100%;max-height:66vh;height:auto;border-radius:6px"></div>' +
+        '<div class="summary" style="margin-top:12px"><dl>' +
+          '<dt>게시대</dt><dd>' + esc((p ? p.name : '게시대') + ' ' + photoDongLabel(ph.pid, ph.dong)) + '</dd>' +
+          '<dt>게첨 기간</dt><dd><b>' + esc(periodTxt(ph.week)) + '</b></dd>' +
+          '<dt>등록일</dt><dd>' + esc(ph.at || '—') + ' · ' + esc(ph.by || '') + '</dd>' +
+          '<dt>사진 제목</dt><dd>' + esc(ph.name || '게첨사진') + '</dd>' +
+          '<dt>보관 만료</dt><dd>' + esc(photoExpireISO(ph) || '—') + ' (등록일로부터 3개월)</dd>' +
+        '</dl></div>' +
+        '<div class="hint-txt" style="margin-top:8px">사진을 클릭하면 원본 크기로 내려받아 확인할 수 있습니다. (보관 기간 내 다운로드·인쇄 권장)</div>',
+      foot: '<button class="btn" type="button" data-photodl="' + esc(ph.id) + '">📥 원본 다운로드</button>' +
+        '<button class="btn primary" data-close type="button">닫기</button>'
     });
   }
   function photoPngOf(ph, cb) {
@@ -6788,12 +7005,13 @@
       : '<button class="btn sm primary" type="button" data-photodl="' + esc(ph.id) + '" data-photofor="' + esc(a ? a.id : '') + '">📥 사진 다운로드</button>' +
         '<button class="btn sm" type="button" data-photoproof="' + esc(a ? a.id : '') + '" data-phid="' + esc(ph.id) + '">🖨️ 인쇄</button>';
     return '<div class="photo-card' + (ph.sample ? ' sample' : '') + '">' +
-      '<div class="pc-img"><img src="' + photoDataOf(ph) + '" alt="' + esc(cell) + ' 게첨사진" loading="lazy"></div>' +
+      '<div class="pc-img" data-photoview="' + esc(ph.id) + '" role="button" tabindex="0" title="클릭하면 확대 보기"><img src="' + photoDataOf(ph) + '" alt="' + esc(cell) + ' 게첨사진" loading="lazy"></div>' +
       '<div class="pc-meta"><b>' + esc(cell) + '</b>' +
         '<span>' + esc(ph.at || '') + ' · ' + esc(ph.by || '') + '</span>' +
+        '<span style="font-weight:700;color:var(--navy3)">' + esc(periodTxt(ph.week)) + '</span>' +
         '<span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + photoRetainBadgeHTML(ph) +
           '<span class="sm">보관 만료 ' + esc(photoExpireISO(ph) || '—') + ' (등록일로부터 3개월)</span></span>' +
-        '<span>접수 ' + apps.length + '건 연결 · ' + esc(weekRangeTxt(ph.week)) + '</span></div>' +
+        '<span>접수 ' + apps.length + '건 연결</span></div>' +
       '<div class="pc-btns">' + btns + '</div></div>';
   }
   /* 접수자 마이페이지 — 접수번호 기준으로 배정 게시대·동 사진 자동 표시 */
@@ -6909,7 +7127,10 @@
      · 목요일 선착순 당첨분 입고 마감: **금요일 10:00** — 미입고 시 자동 취소(반려)
      · 시연을 위해 '목요일'·'일과시간/18시 이후'를 화면에서 바꿔 볼 수 있다. */
   var FC_OPEN_FROM = 9, FC_OPEN_TO = 18;
-  var FC_DELIVER = { date: ROUND.cutoffDate, time: '10:00' };
+  /* 선착순(취소분) 당첨분 입고 마감 — 금요일 10:00 / 목요일이 공휴일인 주는 금요일 14:00 */
+  var FC_DELIVER = {};
+  Object.defineProperty(FC_DELIVER, 'date', { enumerable: true, get: function () { return ROUND.cutoffDate; } });
+  Object.defineProperty(FC_DELIVER, 'time', { enumerable: true, get: function () { return isThuHoliday() ? '14:00' : '10:00'; } });
 
   /* ── 진행 중 주간(이번 주 게첨) 잔여석 접수 — 김재봉 님 지시 2026-11-23 ─────────
      "현재 진행 중인 주간에 잔여석 접수 열어주고 / 광고사에겐 직접설치 해야된다 메세지 /
@@ -6927,6 +7148,21 @@
     agency: '⚠️ 진행 중 주간 잔여석 접수입니다. 접수 후 <b>반드시 협회에서 검인 도장을 찍은 뒤</b>, <b>광고사에서 직접 현장에 설치(게첨)</b>하셔야 합니다.',
     general: '⚠️ 진행 중 주간 잔여석 접수입니다. 관련 규정에 따라 <b>일반인은 직접 설치가 금지</b>되어 있으므로, 접수 후 <b>반드시 협회에서 검인 도장을 찍은 뒤 옥외광고업 등록 광고사에 설치를 의뢰</b>하셔야 합니다.'
   };
+  /* 명절·연휴·휴가 주간 직접설치 — 진행 주간 접수와 100% 같은 분기 (2026-11-23 김재봉 님 지시) */
+  var HOLIDAY_MSG = {
+    agency: '⚠️ 명절·연휴·휴가 주간 직접설치 안내: 접수 후 반드시 협회에서 검인 도장을 찍은 뒤, 광고사에서 직접 현장에 설치(게첨)하셔야 합니다.',
+    general: '⚠️ 명절·연휴·휴가 주간 직접설치 안내: 관련 규정에 따라 일반인은 직접 설치가 금지되어 있으므로, 접수 후 반드시 협회에서 검인 도장을 찍은 뒤 옥외광고업 등록 광고사에 설치를 의뢰하셔야 합니다.'
+  };
+  var HOLIDAY_MSG_HTML = {
+    agency: '⚠️ <b>명절·연휴·휴가 주간 직접설치 안내</b>: 접수 후 <b>반드시 협회에서 검인 도장을 찍은 뒤, 광고사에서 직접 현장에 설치(게첨)</b>하셔야 합니다.',
+    general: '⚠️ <b>명절·연휴·휴가 주간 직접설치 안내</b>: 관련 규정에 따라 <b>일반인은 직접 설치가 금지</b>되어 있으므로, 접수 후 <b>반드시 협회에서 검인 도장을 찍은 뒤 옥외광고업 등록 광고사에 설치를 의뢰</b>하셔야 합니다.'
+  };
+  function holidayInstallMsg(kind) { return HOLIDAY_MSG[kind === 'agency' ? 'agency' : 'general']; }
+  function holidayInstallHTML(kind) { return HOLIDAY_MSG_HTML[kind === 'agency' ? 'agency' : 'general']; }
+  /* 직접설치 안내 멘트 — 명절·연휴·휴가 주간 정책이 켜져 있으면 그 문구를 쓴다 */
+  function directInstallMsgOf(kind) { return holidayDirectInstallOn() ? holidayInstallMsg(kind) : liveMsgOf(kind); }
+  function directInstallHTMLOf(kind) { return holidayDirectInstallOn() ? holidayInstallHTML(kind) : liveMsgHTMLOf(kind); }
+  function directInstallKindLabel() { return holidayDirectInstallOn() ? '명절·연휴·휴가 주간 직접설치' : '진행 중 주간 잔여석 접수'; }
   /* 접수증·마이페이지에서 쓰는 검인 안내 한 줄 */
   function liveSealNote(kind) {
     return kind === 'agency'
@@ -6984,25 +7220,32 @@
   function firstComeState() {
     var today = getNow().getDay();
     var d = ui.daySim === 'thu' ? 4 : (ui.daySim === 'fri' ? 5 : today);
+    var hol = isThuHoliday(), openDow = fcOpenDow(), dayName = fcOpenDayName();
+    var fcDayTxt = dfmt(isThuHoliday() ? addDays(ROUND.firstComeDate, 1) : ROUND.firstComeDate);
+    if (hol && d === 4) return { open: false, kind: 'holiday', badge: '목요일 공휴일 · 금요일로 변경',
+      title: '목요일 공휴일 — 취소분 선착순은 금요일로 변경',
+      msg: '이번 주 목요일은 공휴일(' + thuHolidayLabel() + ')입니다. 취소분 선착순 접수는 금요일(09:00~18:00)에 진행하며, 선착순 당첨분 현수막 입고 마감은 금요일 14:00입니다.' };
     if (d === 3) return { open: false, kind: 'wait', badge: '수 18:00 반려 후 공개',
       title: '수요일 · 18:00 미입고 반려 후 공개',
-      msg: '오늘 18:00에 미입고분을 일괄 반려하고, ' + dfmt(ROUND.firstComeDate) + ' 09:00(일과시간 시작)부터 선착순 접수를 시작합니다.' };
-    if (d === 4) {
-      /* 시연에서 '목요일'을 고르면 기본은 일과시간(접수 가능) — '18시 이후'를 고르면 닫힘 */
-      var open = (ui.daySim === 'thu' && ui.fcTimeSim !== 'after') || (ui.daySim !== 'thu' && firstComeOpenNow());
-      if (open) return { open: true, kind: 'open', badge: '목요일 선착순 접수 중 (09:00~18:00)',
-        title: '목요일 · 잔여석 선착순 접수 중 (일과시간 09:00~18:00)',
-        msg: '목요일 일과시간(09:00~18:00)에만 접수합니다. 누르는 즉시 확정되며, 수수료 입금과 현수막 실물은 ' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '까지 입고해야 합니다. (미입고 시 자동 취소)' };
-      return { open: false, kind: 'offhours', badge: '목요일 · 일과시간 아님 (09:00~18:00)',
-        title: '목요일 · 일과시간(09:00~18:00)에만 접수합니다',
-        msg: '잔여석 선착순 접수는 목요일 일과시간 09:00~18:00에만 가능합니다. 지금은 접수 시간이 아닙니다. (시연용으로 아래 [일과시간]을 눌러 접수 화면을 확인할 수 있습니다.)' };
+      msg: '오늘 18:00에 미입고분을 일괄 반려하고, ' + fcDayTxt + ' 09:00(일과시간 시작)부터 선착순 접수를 시작합니다.' };
+    if (d === openDow) {
+      /* 시연에서 접수일(목요일 · 공휴일이면 금요일)을 고르면 기본은 일과시간(접수 가능) — '18시 이후'를 고르면 닫힘 */
+      var simKey = (openDow === 4 ? 'thu' : 'fri');
+      var open = (ui.daySim === simKey && ui.fcTimeSim !== 'after') || (!ui.daySim && firstComeOpenNow());
+      if (open) return { open: true, kind: 'open', badge: dayName + ' 선착순 접수 중 (09:00~18:00)',
+        title: dayName + ' · ' + (hol ? '취소분 선착순 접수 중 (목요일 공휴일 → 금요일)' : '잔여석 선착순 접수 중') + ' (일과시간 09:00~18:00)',
+        msg: dayName + ' 일과시간(09:00~18:00)에만 접수합니다. 누르는 즉시 확정되며, 수수료 입금과 현수막 실물은 ' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '까지 입고해야 합니다. (미입고 시 자동 취소)' };
+      return { open: false, kind: 'offhours', badge: dayName + ' · 일과시간 아님 (09:00~18:00)',
+        title: dayName + ' · 일과시간(09:00~18:00)에만 접수합니다',
+        msg: '잔여석 선착순 접수는 ' + dayName + ' 일과시간 09:00~18:00에만 가능합니다. 지금은 접수 시간이 아닙니다. (시연용으로 아래 [일과시간]을 눌러 접수 화면을 확인할 수 있습니다.)' };
     }
     if (d === 5) return { open: false, kind: 'closed', badge: '금요일 · 접수 제한',
       title: '금요일 · 잔여석 접수 제한',
       msg: '현장 게첨 작업 준비로 인해 금요일은 잔여석 접수가 제한됩니다. 목요일 선착순 당첨분은 ' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time + '까지 입고해야 하며, 미입고 시 자동 취소(반려)됩니다.' };
     return { open: false, kind: 'wait', badge: WEEK_DAYS[d] + '요일 · 접수 시간 아님',
       title: WEEK_DAYS[d] + '요일 · 접수 시간이 아닙니다',
-      msg: '선착순 접수는 ' + dfmt(ROUND.firstComeDate) + ' 일과시간 <b>09:00 ~ 18:00</b>에만 운영합니다.' };
+      msg: '선착순 접수는 ' + fcDayTxt + ' 일과시간 <b>09:00 ~ 18:00</b>에만 운영합니다.' +
+        (hol ? ' (이번 주 목요일은 공휴일이라 금요일로 변경되었습니다.)' : '') };
   }
 
   /* ═════════════════════════════════════════════════════════════════════════
@@ -7023,14 +7266,58 @@
      · remain.html = ⚡ 미배정 상시접수 — 추첨 미배정 잔여 자리, 요일·시간 제한 없음
      · first.html  = 🔥 취소분 선착순 — 수요일 18:00 미입금·미입고 취소분만, 목요일 09:00~18:00 */
   function fcPageRemain() { return PAGE === 'remain'; }
-  function fcIsLive() { return fcPageRemain() ? true : false; }
+  function fcIsLive() { return fcPageRemain() || ui.fcMode === 'live'; }
   /* 정치행정(공문 전용 저단) 게시대는 미배정 선착순 목록에서 제외한다 */
   function fcBoardOk(p) { return !!p && !p.low && !p.officialOnly; }
   /* 지금 창구(진행 중 주간 / 목요일 선착순)에서 이 게시대에 남은 면 */
   function fcLeftOf(p) {
     if (!p || p.broken || slotAllDown(p) || !fcBoardOk(p)) return 0;
-    if (fcPageRemain()) return liveAvailOf(p);                 /* 미배정 잔여 면 */
+    if (fcPageRemain()) return slotPlan(p.id, fcWeek()).free.length;   /* 선택한 게철 주의 미배정 잔여 면 */
     return Math.min(fcCancelSeatsOf(p), fcAvailOf(p));         /* 취소분(회수·취소 배정)만 */
+  }
+  /* ── remain.html — 1단계 게철 희망 날짜(주차) 선택 (2026-11-23 김재봉 님 지시) ──
+     "미배정 접수는 날짜선택이 첫 페이지에 만들어줘." — 이번 주 진행 중 주간 / 다음 주 이후 잔여석 */
+  function fcWeekChoices() {
+    var cur = weekStartOf(CUR.start), out = [];
+    out.push({ wk: cur, cur: true, label: '이번 주 진행 중', range: dstr(CUR.start) + '~' + dstr(CUR.end) });
+    [ROUND.postStart, addDays(ROUND.postStart, 7)].forEach(function (s, i) {
+      var wk = weekStartOf(s), meta = weekMeta(weekRoundId(wk)) || {};
+      out.push({ wk: wk, cur: false, label: meta.label || (i === 0 ? '다음 주' : '그다음 주'), range: dstr(wk) + '~' + dstr(addDays(wk, 6)) });
+    });
+    return out;
+  }
+  function fcWeek() {
+    var list = fcWeekChoices();
+    if (!fcIsLive()) return weekStartOf(CUR.start);
+    var hit = null;
+    if (!fcPageRemain()) { ui.fcWeek = weekStartOf(CUR.start); return ui.fcWeek; }
+    for (var i = 0; i < list.length; i++) { if (list[i].wk === ui.fcWeek) hit = list[i]; }
+    if (!hit) { ui.fcWeek = list[0].wk; hit = list[0]; }
+    return hit.wk;
+  }
+  function fcWeekMeta() {
+    var list = fcWeekChoices(), wk = fcIsLive() ? fcWeek() : weekStartOf(CUR.start);
+    for (var i = 0; i < list.length; i++) { if (list[i].wk === wk) return list[i]; }
+    return list[0];
+  }
+  function fcWeekPickHTML() {
+    if (!fcPageRemain() || !has('fcWeekPick')) return '';
+    var cur = fcWeek();
+    $('#fcWeekPick').innerHTML = fcWeekChoices().map(function (x) {
+      var on = x.wk === cur;
+      return '<button class="chip' + (on ? ' active' : '') + '" type="button" data-fcweek="' + x.wk + '" ' +
+        'title="' + esc(x.label + ' ' + x.range + ' 게철 주') + '">' + esc(x.label) + ' <em style="font-style:normal;font-weight:600;color:var(--muted)">(' + esc(x.range) + ')</em></button>';
+    }).join('') +
+      '<span class="hint-txt" style="margin:0 0 0 6px">선택한 주차: <b>' + esc(fcWeekMeta().label + ' ' + fcWeekMeta().range) + '</b></span>';
+    return cur;
+  }
+  function setFcWeek(wk) {
+    if (!fcPageRemain()) return fcWeek();
+    ui.fcWeek = weekStartOf(wk || CUR.start);
+    ui.fcPicks = [];
+    ui.fcQty = QTY_MIN;
+    renderFirst();
+    return ui.fcWeek;
   }
   /* 취소분 — 수요일 18:00 미입금·미입고·본인취소로 회수된 자리 (목요일 선착순 대상) */
   function fcCancelSeatsOf(p) {
@@ -7058,10 +7345,13 @@
     return isNaN(n) ? 0 : n;
   }
   function fcSessionState() {
-    if (fcPageRemain()) {
+    if (fcIsLive()) {
+      var wm0 = fcWeekMeta();
       return { open: true, kind: 'open', badge: '상시접수 가능 (요일·시간 제한 없음)',
-        title: '미배정 잔여 자리 상시접수', id: CUR.id, label: CUR.label,
-        msg: '추첨에서 배정되지 않은 잔여 자리를 요일·일과시간 제한 없이 지금 바로 접수할 수 있습니다.' };
+        title: '미배정 잔여 자리 상시접수 — ' + wm0.label + ' (' + wm0.range + ')', id: wm0.cur ? CUR.id : weekRoundId(wm0.wk), label: wm0.label,
+        msg: wm0.cur
+          ? '추첨에서 배정되지 않은 이번 주 잔여 자리를 요일·일과시간 제한 없이 지금 바로 접수할 수 있습니다.'
+          : wm0.label + '(' + wm0.range + ') 게철 주의 미배정 잔여 자리를 사전 접수합니다 — 추첨 없이 잔여 면부터 선착순으로 확정됩니다.' };
     }
     return firstComeState();
   }
@@ -7081,11 +7371,12 @@
   function fcModeChipsHTML() {
     var lab = '<span style="font-size:12px;color:var(--muted);font-weight:700;align-self:center;margin-right:2px">접수 창구</span>';
     if (fcPageRemain()) {
-      return lab + '<button class="chip active" type="button" title="추첨에서 배정되지 않은 잔여 자리 — 요일·시간 제한 없이 상시 접수">' +
-        '⚡ 미배정 상시접수 (' + dstr(CUR.start) + '~' + dstr(CUR.end) + ' · 제한 없음)</button>';
+      var wm = fcWeekMeta();
+      return lab + '<button class="chip active" type="button" title="미배정 잔여 자리 — 요일·시간 제한 없이 상시 접수">' +
+        '⚡ 미배정 상시접수 (' + esc(wm.label) + ' ' + esc(wm.range) + ' · ' + (wm.cur ? '제한 없음' : '사전 접수') + ')</button>';
     }
-    return lab + '<button class="chip active" type="button" title="수요일 18:00 미입금·미입고로 취소된 자리 — 목요일 일과시간 선착순">' +
-      '🔥 취소분 선착순 (' + esc(ROUND.label) + ' · 목요일 09:00~18:00)</button>';
+    return lab + '<button class="chip active" type="button" title="수요일 18:00 미입금·미입고로 취소된 자리 — ' + fcOpenDayName() + ' 일과시간 선착순">' +
+      '🔥 취소분 선착순 (' + esc(ROUND.label) + ' · ' + fcOpenDayName() + ' 09:00~18:00' + (isThuHoliday() ? ' · 목요일 공휴일' : '') + ')</button>';
   }
   /* 시연 기준일·시간 칩 — 목요일 선착순 창구에서만 노출 */
   function fcDayChipsHTML() {
@@ -7106,6 +7397,18 @@
     var icon = st.open ? IC.check : (st.kind === 'closed' ? IC.x : IC.clock);
     var html = '<div class="fc-window ' + st.kind + '">' + icon +
       '<div><b>' + esc(st.title) + '</b><span>' + esc(st.msg) + '</span></div></div>';
+    /* 명절·연휴·휴가 주간 직접설치 전환 — 진행 중 주간 접수와 같은 안내 멘트 */
+    if (holidayDirectInstallOn()) {
+      var hk = ui.liveKind || applicantKind();
+      html += '<div class="callout warn" id="fcLiveMsg">' + IC.alert +
+        '<div>' + directInstallHTMLOf(fcIsLive() ? hk : hk) +
+        '<span class="sm" style="display:block;margin-top:4px">' +
+          (hk === 'agency'
+            ? '광고대행사(광고사) 접수 — 협회가 게첨하지 않으므로 직접 현장에 설치해 주세요.'
+            : '일반업체·비회원 접수 — 관련 규정상 직접 설치가 금지되어 있으므로 반드시 광고사에 의뢰해 주세요.') +
+        '</span></div></div>';
+      return html;
+    }
     if (fcIsLive()) {
       var kind = ui.liveKind || applicantKind();
       html += '<div class="callout warn" id="fcLiveMsg">' + IC.alert +
@@ -7181,6 +7484,8 @@
     var m = currentMember(), el = $('#fcAdvertiser');
     if (m && el && kind !== 'agency' && !String(el.value || '').trim()) el.value = m.company || '';
     if ($('#fcTextCount')) $('#fcTextCount').textContent = String(String(($('#fcText') ? $('#fcText').value : '') || '').length);
+    /* remain.html — 1단계 상단 게철 희망 날짜(주차) 선택 */
+    try { fcWeekPickHTML(); } catch (e) { }
     syncFcMedicalNote();
     syncFcAbuseNote();
     try { syncYouthNote('#fcYouthNote', String(($('#fcAdvertiser') ? $('#fcAdvertiser').value : '') || '') + ' ' + String(($('#fcText') ? $('#fcText').value : '') || '')); } catch (e) { }
@@ -7327,8 +7632,8 @@
     }
     if ($('#fcInstallInfo')) {
       var kind = applicantKind();
-      $('#fcInstallInfo').innerHTML = fcIsLive()
-        ? '<div class="callout warn">' + IC.alert + '<div>' + liveMsgHTMLOf(kind) + '</div></div>'
+      $('#fcInstallInfo').innerHTML = (fcIsLive() || holidayDirectInstallOn())
+        ? '<div class="callout warn">' + IC.alert + '<div>' + directInstallHTMLOf(kind) + '</div></div>'
         : '<div class="callout info">' + IC.info + '<div>목요일 선착순으로 확정된 매는 <b>' + dfmt(FC_DELIVER.date) + ' ' + FC_DELIVER.time +
           '까지 협회에 입고</b>해야 하며, 미입고 시 자동 취소(반려)되고 <b>차기 1개 주 회차 접수 제한</b>이 적용됩니다.</div></div>';
     }
@@ -7408,7 +7713,7 @@
     if (!okType) { toast('시안 파일은 이미지(JPG·PNG)만 첨부할 수 있습니다.', true); return false; }
     if (file.size && file.size > 5 * 1024 * 1024) { toast('시안 파일은 5MB 이하만 첨부할 수 있습니다.', true); return false; }
     ui.fcFile = { name: file.name, size: file.size || 0 };
-    ui.fcFilePreview = null;
+    ui.fcFilePreview = null; ui.fcDesignTone = null;
     if ($('#fcFilePreview')) {
       $('#fcFilePreview').innerHTML = '<div class="drop-preview"><div class="fi"><b>' + esc(file.name) + '</b><span>' +
         Math.max(1, Math.round((file.size || 0) / 1024)) + 'KB · 시안 파일</span></div></div>';
@@ -7416,7 +7721,10 @@
     if ($('#fcFDesign')) $('#fcFDesign').classList.remove('invalid');
     try {
       var rd = new FileReader();
-      rd.onload = function () { ui.fcFilePreview = String(rd.result || ''); };
+      rd.onload = function () {
+        ui.fcFilePreview = String(rd.result || '');
+        analyzeDesignTone(ui.fcFilePreview, function (tone) { ui.fcDesignTone = tone; renderFcFilePreview(); });
+      };
       rd.readAsDataURL(file);
     } catch (e) { }
     toast('시안 파일을 첨부했습니다 — ' + file.name);
@@ -7559,17 +7867,18 @@
     if (!validateFcStep(3)) { fcSetStep(3); focusFirstInvalid(); return null; }
     var v = readFc(), picks = fcPicks().slice();
     if (!picks.length) { toast('3단계에서 게시대를 담아 주세요.', true); return null; }
-    var live = fcPageRemain(), m = currentMember();
-    var wkStart = live ? CUR.start : ROUND.postStart;
+    var live = fcIsLive(), m = currentMember();
+    var wkStart = live ? (fcIsLive() ? fcWeek() : CUR.start) : ROUND.postStart;
     var assigned = picks.map(function (pid) {
       var p = placementById(pid);
-      var slot = live ? (slotPlan(p.id, CUR.start).free[0] || '') : fcSlotOf(p);
+      var slot = live ? (slotPlan(p.id, wkStart).free[0] || '') : fcSlotOf(p);
       return { pid: pid, qty: 1, slot: slot };
     });
-    var id = nextAppId((live ? CUR.id : ROUND.id) + (live ? '-L-' : '-C-'));
+    var isCurWeek = live && weekStartOf(wkStart) === weekStartOf(CUR.start);
+    var id = nextAppId((live ? (isCurWeek ? CUR.id : weekRoundId(wkStart)) : ROUND.id) + (live ? '-L-' : '-C-'));
     db.seq += 1;
     var app = {
-      id: id, round: live ? CUR.id : ROUND.id, week: wkStart,
+      id: id, round: live ? (isCurWeek ? CUR.id : weekRoundId(wkStart)) : ROUND.id, week: wkStart,
       company: v.company, owner: v.owner, phone: v.phone,
       memberId: m ? m.id : null,
       appType: v.kind === 'agency' ? 'agency' : 'direct',
@@ -7578,15 +7887,16 @@
       placements: picks.slice(), assignedPlaces: assigned,
       priority1: picks.slice(), priority2: [], priority3: [], designatedOnly: false,
       p1: picks[0] || '', p2: '', p3: '',
-      eco: true, status: live ? '게시중' : '선착순확정',
+      eco: true, status: live ? (isCurWeek ? '게시중' : '선착순확정') : '선착순확정',
       text: v.text, appliedAt: nowStamp(), start: wkStart, days: 7,
       file: v.file ? v.file.name : null, preview: ui.fcFilePreview || null,
       license: v.license || '', licenseNo: v.licenseNo || '',
       mine: true, paid: false, firstCome: !live,
-      liveWeek: live, directInstall: live, installType: v.kind,
-      directInstallMsg: live ? liveMsgOf(v.kind) : '',
+      designTone: ui.fcDesignTone || null,
+      liveWeek: isCurWeek, directInstall: live || holidayDirectInstallOn(), installType: v.kind,
+      directInstallMsg: live ? liveMsgOf(v.kind) : (holidayDirectInstallOn() ? holidayInstallMsg(v.kind) : ''),
       delivered: false,
-      deliveryDue: live ? (CUR.end + ' 18:00') : (FC_DELIVER.date + ' ' + FC_DELIVER.time),
+      deliveryDue: isCurWeek ? (CUR.end + ' 18:00') : (FC_DELIVER.date + ' ' + FC_DELIVER.time),
       assignedTo: picks[0] || null, rank: null, reject: null, drawId: null
     };
     db.apps.push(app);
@@ -8893,7 +9203,9 @@
   }
   /* 공문에 지정할 수 있는 위치 옵션 — 위치 무관 · 동 전체 · 동·단 */
   function officialSlotOptions(p) {
-    var opts = [{ v: '', t: '위치 무관 (본게시대 먼저 · 담장은 나중)' }], seen = {}, codes = slotCodeListOf(p), wall = officialFullBoardsOf(p) || [];
+    var wall0 = officialFullBoardsOf(p) || [];
+    /* '본게시대(5단) 먼저 · 담장은 나중' 안내는 담장(비선호 동)이 있는 의료원사거리에만 표시 (2026-11-23 김재봉 님 지시) */
+    var opts = [{ v: '', t: wall0.length ? '위치 무관 (본게시대 먼저 · 담장은 나중)' : '위치 무관' }], seen = {}, codes = slotCodeListOf(p), wall = wall0;
     var boards = Number(p.boards) || 1;
     if (boards > 1) {
       codes.forEach(function (c) {
@@ -9506,8 +9818,8 @@
       out.hits.push('게첨 주 · ' + weekRangeTxt(monR));
       out.found += 1;
     } else {
-      if (/2\s*주|14\s*일|이주/.test(all)) { out.days = 14; out.hits.push('기간 · 2주(14일, 결재 대상)'); out.found += 1; }
-      else if (/1\s*주|7\s*일|일주/.test(all)) { out.days = 7; out.hits.push('기간 · 1주(7일)'); out.found += 1; }
+      if (/2\s*주|14\s*일|이주/.test(all)) { out.days = 14; out.hits.push('게첨 기간 · 2주(14일, 결재 대상)'); out.found += 1; }
+      else if (/1\s*주|7\s*일|일주/.test(all)) { out.days = 7; out.hits.push('게첨 기간 · 1주(7일)'); out.found += 1; }
     }
     /* 게첨 위치 — 게시대 이름(없으면 읍면동)을 그대로 찾아 자동 배정 후보로 남긴다 */
     var placeIds = officialPlaceHits(all);
@@ -9626,7 +9938,7 @@
     var placeIds = s.placeIds || officialPlaceHits(txt);
     var demo = s.fullDemo ? officialDemoFull() : null;
     var hits = ['기관명 · ' + s.org, '공문번호 · ' + s.docNo, '문구 · ' + s.title, '매수 · ' + s.qty + '매',
-      '기간 · ' + (s.days === 14 ? '2주(14일, 결재 대상)' : '1주(7일)'), '게첨 주 · ' + weekRangeTxt(week)];
+      '게첨 기간 · ' + (s.days === 14 ? '2주(14일, 결재 대상)' : '1주(7일)'), '게첨 주 · ' + weekRangeTxt(week)];
     if (placeIds.length) {
       var nm = officialPlaceNames(placeIds);
       hits.push('게첨 위치 · ' + nm.slice(0, 3).join(', ') + (nm.length > 3 ? ' 외 ' + (nm.length - 3) + '곳' : ''));
@@ -9660,12 +9972,19 @@
       var on = (ui.offDay || '') === x[0];
       return '<button class="chip' + (on ? ' active' : '') + '" data-offday="' + x[0] + '" type="button">' + x[1] + '</button>';
     }).join('');
+    /* 저단(공문전용 32개소) 필터 — 전체 · 일반 게시대 · 저단 2026-11-23 김재봉 님 지시 */
+    var lowN = LOW_BOARDS.length;
+    if ($('#offLowChips')) $('#offLowChips').innerHTML = [['', '전체', db.placements.length + lowN], ['normal', '일반 게시대', db.placements.length], ['low', '저단(공문전용) ' + lowN + '개소', lowN]].map(function (x) {
+      var on = (ui.offLow || '') === x[0];
+      return '<button class="chip' + (on ? ' active' : '') + '" data-offlow="' + x[0] + '" type="button">' + x[1] + ' <span class="tc">' + x[2] + '</span></button>';
+    }).join('');
     var sel = ui.offSel || {};
-    var ps = db.placements.filter(function (p) {
+    var lowOnly = ui.offLow === 'low', normalOnly = ui.offLow === 'normal';
+    var ps = (lowOnly ? [] : db.placements.filter(function (p) {
       if (p.broken) return false;
       if (ui.offDay && p.day !== ui.offDay) return false;
       return true;
-    }).concat(LOW_BOARDS.filter(function (p) { return !ui.offDay || p.day === ui.offDay; }));
+    })).concat(normalOnly ? [] : LOW_BOARDS.filter(function (p) { return !ui.offDay || p.day === ui.offDay; }));
     $('#offPlaces').innerHTML = ps.length ? ps.map(function (p) {
       var on = !!sel[p.id];
       var off = officialSeatsOf(p.id, owk), capOff = officialCapOf(p), full = off >= capOff;
@@ -9986,9 +10305,13 @@
 
     var btn = $('#btnDraw');
     if (btn) {
-      if (draw) { btn.disabled = true; btn.textContent = '추첨 완료 (재실행 불가)'; }
+      if (holidayNoDrawOn()) { btn.disabled = true; btn.textContent = '🎊 명절·연휴·휴가 — 이번 주 추첨 없음'; }
+      else if (draw) { btn.disabled = true; btn.textContent = '추첨 완료 (재실행 불가)'; }
       else if (!pool.length) { btn.disabled = true; btn.textContent = '추첨 대상 접수 없음'; }
       else { btn.disabled = false; btn.textContent = '전산 추첨 시작'; }
+    }
+    if ($('#drawPoolInfo') && holidayNoDrawOn()) {
+      $('#drawPoolInfo').innerHTML = '🎊 <b>명절·연휴·휴가 주간 — 이번 주는 전산 추첨을 하지 않습니다.</b> 접수·시안 심사만 진행하고, 배정·입금·입고 일정은 사무국 안내를 따릅니다. (관리자 > 공지·로그 > 운영 정책에서 해제)';
     }
 
     renderDrawResult(draw);
@@ -10659,12 +10982,13 @@
             '<span class="sm">비교 대상: ' + esc(dup.advertiser || dup.company) + ' · ' + esc(dup.id) + ' (' + esc(dup.kind) + ')</span></div>'
           : '';
         var urgCell = urg.urgent
-          ? '<div class="urgent-row"><span class="urgent-badge' + (urg.applied ? '' : ' off') + '">📅 ' + esc(urg.date.slice(5).replace('-', '/')) +
+          ? '<div class="urgent-row"><span class="urgent-badge' + (urg.applied ? '' : ' off') + '">⏰ 임박 ' + esc(urg.date.slice(5).replace('-', '/')) +
             (urg.applied ? ' · 가산 합산 +' + urg.pct + '%' + (urg.grants.length > 1 ? ' (' + urg.grants.length + '명)' : '')
               : (urg.within ? ' · 가산 0% (미부여)' : ' · 차차주 이후 (대상 아님)')) + '</span></div>'
           : '';
         return '<tr><td>' + thumb + '<button class="btn sm ghost" data-zoom="' + esc(a.id) + '" type="button" style="margin-top:6px;width:100%">시안 확대</button></td>' +
           '<td><span class="co">' + esc(a.company) + '</span><span class="sm">' + esc(advOfApp(a).name) + (a.appType === 'agency' ? ' · 대행' : '') + ' · ' + esc(a.phone) + '</span>' + dupBadge +
+          (designToneLabel(a.designTone) ? '<div style="margin-top:4px"><span class="badge b-red" data-tonetag="1"><i></i>' + esc(designToneLabel(a.designTone)) + '</span><span class="sm"> 시안 바탕색 과다 — 게첨 제한·조기 철거 주의</span></div>' : '') +
           (a.eventApp ? '<div style="margin-top:4px">' + eventBadgeHTML(a) + '</div><div class="sm">' + esc(a.eventName || '') + ' · ' + esc(a.eventPeriod || '') + '</div>' : '') + '</td>' +
           '<td class="mono" style="text-align:right"><b>' + qtyOf(a) + '매</b></td>' +
           '<td style="max-width:210px">' + esc(a.text) + urgCell + '</td>' +
@@ -11679,7 +12003,7 @@
 
     $('#woDate').textContent = mdKor(days[0]) + ' / ' + mdKor(days[1]) + ' / ' + mdKor(days[2]) + '  작업지시서';
     /* 선택한 게첨 주 — 2026-11-23 김재봉 님 지시("작업지시서도 달력이 필요해") */
-    if ($('#woWeekLabel')) $('#woWeekLabel').textContent = '게첨 주 ' + weekRangeTxt(wkS) + ' (' + weekKpiLabel(wkS) + ')';
+    if ($('#woWeekLabel')) $('#woWeekLabel').textContent = periodTxt(wkS) + ' (' + weekKpiLabel(wkS) + ')';
     if ($('#woDatePick')) $('#woDatePick').value = wkS;
     if ($('#woWeekChips')) {
       var wOpts = [{ v: ROUND.postStart, t: weekKpiLabel(ROUND.postStart) },
@@ -11918,28 +12242,94 @@
     if (!f) return;
     if (!/^image\//.test(f.type)) { toast('이미지 파일(JPG·PNG)만 첨부할 수 있습니다.', true); return; }
     if (f.size > 5 * 1024 * 1024) { toast('5MB 이하 파일만 첨부할 수 있습니다.', true); return; }
-    ui.file = f;
+    ui.file = f; ui.designTone = null;
     var reader = new FileReader();
-    reader.onload = function (ev) { ui.filePreview = ev.target.result; renderFilePreview(); };
+    reader.onload = function (ev) {
+      ui.filePreview = ev.target.result;
+      renderFilePreview();
+      analyzeDesignTone(ui.filePreview, function (tone) { ui.designTone = tone; renderFilePreview(); });
+    };
     reader.readAsDataURL(f);
   }
 
-  /* 시연용 샘플 시안 — 실제 파일 없이 필수 첨부를 체험할 수 있게 한다 */
-  function designSampleSvg() {
+  /* 시연용 샘플 시안 — 정상 / 검정 바탕 / 빨간 바탕 (2026-11-23 김재봉 님 지시) */
+  function designSampleSvg(tone) {
+    var t = tone === 'black' || tone === 'red' ? tone : 'normal';
+    var bg = t === 'black' ? '#000000' : (t === 'red' ? '#d0021b' : '#eef3ff');
+    var inner = t === 'black' ? '#111111' : (t === 'red' ? '#c00218' : '#ffffff');
+    var fg = t === 'normal' ? '#0b2b52' : '#ffffff';
+    var sub = t === 'normal' ? '#4a5a74' : '#ffe9e9';
+    var line = t === 'normal' ? '#1d5fd6' : (t === 'red' ? '#ffd0d0' : '#ffffff');
+    var lab = t === 'black' ? '검정 바탕 시연용 샘플 시안' : (t === 'red' ? '빨간 바탕 시연용 샘플 시안' : '시연용 샘플 시안');
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1420 180" width="1420" height="180">' +
-      '<rect width="1420" height="180" fill="#eef3ff"/>' +
-      '<rect x="18" y="14" width="1384" height="152" fill="#fff" stroke="#1d5fd6" stroke-width="4"/>' +
-      '<text x="710" y="86" font-size="46" text-anchor="middle" fill="#0b2b52" font-family="sans-serif">시연용 샘플 시안 · 7,100×900mm</text>' +
-      '<text x="710" y="132" font-size="26" text-anchor="middle" fill="#4a5a74" font-family="sans-serif">실명제 박스(200×125mm) 확인용 도안</text>' +
-      '<rect x="40" y="126" width="200" height="125" fill="none" stroke="#006b35" stroke-width="4"/></svg>';
+      '<rect width="1420" height="180" fill="' + bg + '"/>' +
+      '<rect x="18" y="14" width="1384" height="152" fill="' + inner + '" stroke="' + line + '" stroke-width="4"/>' +
+      '<text x="710" y="86" font-size="46" text-anchor="middle" fill="' + fg + '" font-family="sans-serif">' + lab + ' · 7,100×900mm</text>' +
+      '<text x="710" y="132" font-size="26" text-anchor="middle" fill="' + sub + '" font-family="sans-serif">' + (t === 'normal' ? '실명제 박스(200×125mm) 확인용 도안' : '바탕색 과다 — 게첨 제한·조기 철거 주의') + '</text>' +
+      '<rect x="40" y="126" width="200" height="125" fill="none" stroke="' + (t === 'normal' ? '#006b35' : fg) + '" stroke-width="4"/></svg>';
   }
-  function useDesignSample(opts) {
-    ui.file = { name: '시연용_샘플시안.svg', size: 184320, type: 'image/svg+xml' };
-    ui.filePreview = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(designSampleSvg());
+  var TONE_LIMIT = 40;   /* 검정/빨간 바탕 비율 경고 기준(%) */
+  function designToneLabel(tone) {
+    if (!tone) return '';
+    if (tone.black >= TONE_LIMIT && tone.black >= tone.red) return '⬛ 검정바탕 주의';
+    if (tone.red >= TONE_LIMIT) return '🟥 빨간바탕 주의 (조기철거 대상)';
+    return '';
+  }
+  function designToneNoteHTML(tone, id) {
+    if (!tone || !designToneLabel(tone)) return '';
+    var pct = (tone.black >= TONE_LIMIT ? tone.black : tone.red);
+    var kind = (tone.black >= TONE_LIMIT && tone.black >= tone.red) ? '검정' : '빨간';
+    return '<div class="callout warn" id="' + (id || 'designToneNote') + '">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>' +
+      '<div><b>⚠️ 시안 바탕색 주의:</b> 검정색 또는 빨간색 바탕이 과다한 현수막은 관련 규정에 따라 <b>게첨이 제한되거나 조기 철거</b>될 수 있습니다. (검출: ' + kind + ' 바탕 ' + pct + '%)</div></div>';
+  }
+  /* 업로드/샘플 시안의 검정·빨간 바탕 비율 분석 (Canvas getImageData) */
+  function analyzeDesignTone(url, cb) {
+    try {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var cv = document.createElement('canvas'), w = 96, h = Math.max(12, Math.round(96 * (img.height || 180) / (img.width || 1420)));
+          cv.width = w; cv.height = h;
+          var cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, w, h);
+          var d = cx.getImageData(0, 0, w, h).data, n = 0, bk = 0, rd = 0;
+          for (var i = 0; i < d.length; i += 4) {
+            if (d[i + 3] < 40) continue;
+            n++;
+            var r = d[i], g = d[i + 1], b = d[i + 2];
+            if (r < 62 && g < 62 && b < 62) bk++;
+            else if (r > 140 && g < 90 && b < 90) rd++;
+          }
+          var tone = n ? { black: Math.round(bk * 100 / n), red: Math.round(rd * 100 / n) } : { black: 0, red: 0 };
+          if (cb) cb(tone);
+        } catch (e) { if (cb) cb(null); }
+      };
+      img.onerror = function () { if (cb) cb(null); };
+      img.src = url;
+    } catch (e) { if (cb) cb(null); }
+  }
+  function useDesignSample(opts, tone, scope) {
+    var t = (tone === 'black' || tone === 'red') ? tone : 'normal';
+    var name = t === 'black' ? '시연용_검정바탕_샘플시안.svg' : (t === 'red' ? '시연용_빨간바탕_샘플시안.svg' : '시연용_샘플시안.svg');
+    var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(designSampleSvg(t));
+    if (scope === 'fc') {
+      ui.fcFile = { name: name, size: 184320, type: 'image/svg+xml' };
+      ui.fcFilePreview = url;
+    } else {
+      ui.file = { name: name, size: 184320, type: 'image/svg+xml' };
+      ui.filePreview = url;
+    }
     if ($('#fDesign')) $('#fDesign').classList.remove('invalid');
-    renderFilePreview();
-    if (!(opts && opts.silent)) toast('시연용 샘플 시안을 첨부했습니다.');
-    return ui.file.name;
+    analyzeDesignTone(url, function (res) {
+      var toneRes = res || { black: 0, red: 0 };
+      if (t === 'black') toneRes = { black: 96, red: 0 };
+      if (t === 'red') toneRes = { black: 0, red: 96 };
+      if (scope === 'fc') { ui.fcDesignTone = toneRes; renderFcFilePreview(); }
+      else { ui.designTone = toneRes; renderFilePreview(); }
+    });
+    if (scope === 'fc') { if (!(opts && opts.silent)) toast('시연용 ' + (t === 'black' ? '검정 바탕 ' : (t === 'red' ? '빨간 바탕 ' : '')) + '샘플 시안을 첨부했습니다.'); }
+    else if (!(opts && opts.silent)) toast('시연용 ' + (t === 'black' ? '검정 바탕 ' : (t === 'red' ? '빨간 바탕 ' : '')) + '샘플 시안을 첨부했습니다.');
+    return name;
   }
 
   /* ── 옥외광고업 등록증 사본 첨부 + 등록번호 자동 추출 ─────────────────────
@@ -12172,11 +12562,28 @@
     var img = ui.filePreview ? '<img src="' + ui.filePreview + '" alt="시안 미리보기">' : '<img alt="">';
     $('#filePreview').innerHTML = '<div class="drop-preview">' + img +
       '<div class="fi"><b>' + esc(ui.file.name) + '</b><span>' + bytesTxt(ui.file.size) + ' · 검수 대기</span></div>' +
-      '<button type="button" id="btnFileDel" aria-label="첨부 삭제">×</button></div>';
+      '<button type="button" id="btnFileDel" aria-label="첨부 삭제">×</button></div>' +
+      designToneNoteHTML(ui.designTone, 'designToneNote');
     onEl('#btnFileDel', 'click', function () {
-      ui.file = null; ui.filePreview = null;
+      ui.file = null; ui.filePreview = null; ui.designTone = null;
       $('#applyFile').value = '';
       renderFilePreview();
+    });
+  }
+  /* fc(remain·first) 시안 미리보기 — 검정·빨간 바탕 경고 포함 */
+  function renderFcFilePreview() {
+    var box = $('#fcFilePreview');
+    if (!box) return;
+    if (!ui.fcFile) { box.innerHTML = ''; return; }
+    var img = ui.fcFilePreview ? '<img src="' + ui.fcFilePreview + '" alt="시안 미리보기">' : '<img alt="">';
+    box.innerHTML = '<div class="drop-preview">' + img +
+      '<div class="fi"><b>' + esc(ui.fcFile.name) + '</b><span>' + bytesTxt(ui.fcFile.size) + ' · 검수 대기</span></div>' +
+      '<button type="button" id="btnFcFileDel" aria-label="첨부 삭제">×</button></div>' +
+      designToneNoteHTML(ui.fcDesignTone, 'fcDesignToneNote');
+    onEl('#btnFcFileDel', 'click', function () {
+      ui.fcFile = null; ui.fcFilePreview = null; ui.fcDesignTone = null;
+      if ($('#fcDesign')) $('#fcDesign').value = '';
+      renderFcFilePreview();
     });
   }
 
@@ -12211,6 +12618,31 @@
   }
   /* 한 주 쉬어가기 정책 — 켜져 있으면 '매주' 반복 대신 격주(2주 간격)만 허용 */
   function skipWeekOn() { return !!(db.policy && db.policy.skipWeekRule); }
+  /* ── 명절·연휴·휴가 주간 정책 (2026-11-23 김재봉 님 지시) ────────────────────
+     "명절 연휴 휴가 발생시 추첨없애기, 접수자 직접설치 관리자페이지에 추가하고 /
+      직접설치경우 안내멘트는 진행주간 접수랑 똑같이"
+     · holidayNoDraw        — 그 주간 전산 추첨을 없애고 휴무 안내
+     · holidayDirectInstall — 그 주간 모든 접수를 직접설치 모드로 전환 (안내 멘트는 진행 주간과 동일) */
+  function holidayNoDrawOn() { return !!(db.policy && db.policy.holidayNoDraw); }
+  function holidayDirectInstallOn() { return !!(db.policy && db.policy.holidayDirectInstall); }
+  function setHolidayPolicy(key, on) {
+    if (!canEditPolicy()) {
+      toast('권한 필요 — 명절·연휴·휴가 정책은 지부장·총괄 관리자만 바꿀 수 있습니다. 현재 접속 권한: ' + accessRoleLabel(), true);
+      return false;
+    }
+    if (!db.policy || typeof db.policy !== 'object') db.policy = {};
+    db.policy[key] = !!on;
+    audit('정책', (key === 'holidayNoDraw' ? '명절·연휴·휴가 추첨 없애기 ' : '명절·연휴·휴가 접수자 직접설치 전환 ') + (on ? 'ON' : 'OFF') +
+      ' — ' + accessRoleLabel());
+    save();
+    renderPolicyPanel();
+    try { renderAdmin(); } catch (e) { }
+    try { renderStatus(); } catch (e) { }
+    try { renderApply(); } catch (e) { }
+    try { renderFirst(); } catch (e) { }
+    toast((key === 'holidayNoDraw' ? '🎊 추첨 없애기' : '🛠️ 접수자 직접설치 전환') + ' 정책을 ' + (on ? '켰습니다.' : '껐습니다.'));
+    return !!on;
+  }
   /* 정책 스위치 — 최고권한(지부장·총괄 관리자)만 변경 (2026-11-23 김재봉 님 지시) */
   function canEditPolicy() { var r = currentAccessRole(); return r === 'super' || r === 'chief'; }
   function setSkipWeekRule(on) {
@@ -12271,6 +12703,22 @@
     if ($('#policySkipWeekHint')) $('#policySkipWeekHint').textContent = canEditPolicy()
       ? '최고권한(지부장·총괄 관리자)으로 변경할 수 있습니다. 변경은 감사 로그에 기록됩니다.'
       : '🔒 최고권한(지부장·총괄 관리자)만 변경할 수 있습니다. 시연용 직책 전환에서 지부장을 선택해 주세요.';
+    /* 명절·연휴·휴가 — 추첨 없애기 · 접수자 직접설치 전환 */
+    var nd = $('#policyHolidayNoDraw'), di = $('#policyHolidayDirectInstall');
+    if (nd) { nd.checked = holidayNoDrawOn(); nd.disabled = !canEditPolicy(); }
+    if (di) { di.checked = holidayDirectInstallOn(); di.disabled = !canEditPolicy(); }
+    if ($('#policyHolidayNoDrawTxt')) $('#policyHolidayNoDrawTxt').textContent = holidayNoDrawOn() ? 'ON' : 'OFF';
+    if ($('#policyHolidayDirectInstallTxt')) $('#policyHolidayDirectInstallTxt').textContent = holidayDirectInstallOn() ? 'ON' : 'OFF';
+    if ($('#policyHolidayNoDrawInfo')) {
+      $('#policyHolidayNoDrawInfo').innerHTML = holidayNoDrawOn()
+        ? '<span class="badge b-amber"><i></i>ON</span> 이번 주간은 <b>전산 추첨을 하지 않습니다</b> — 추첨 화면이 잠기고 첫 화면·접수 화면에 <b>추첨 없음(명절·연휴·휴가)</b> 안내가 표시됩니다.'
+        : '<span class="badge b-green"><i></i>OFF</span> 정상 운영 — 매주 월요일 10:00 전산 추첨을 실행합니다.';
+    }
+    if ($('#policyHolidayDirectInstallInfo')) {
+      $('#policyHolidayDirectInstallInfo').innerHTML = holidayDirectInstallOn()
+        ? '<span class="badge b-amber"><i></i>ON</span> 이번 주간 접수는 <b>모두 직접설치 모드</b> — 진행 중 주간 접수와 <b>같은 안내 멘트</b>(광고사 직접 설치 / 일반인은 광고사 의뢰)를 씁니다.'
+        : '<span class="badge b-green"><i></i>OFF</span> 정상 운영 — 협회 일괄 게첨입니다.';
+    }
   }
   function repeatIntervalWeeks() { return skipWeekOn() ? 2 : 1; }
   /* 직전 게첨 주에 접수·당첨 이력이 있는 광고주인가 (한 주 쉬어가기 판정) */
@@ -12518,7 +12966,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle],[data-woweek],[data-demodow],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-caltoggle],[data-woweek],[data-offlow],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -12583,6 +13031,7 @@
       showDesigBatch(sel); return;
     }
     if (el.hasAttribute('data-desig')) { showDesignation(el.getAttribute('data-desig')); return; }
+    if (el.hasAttribute('data-offlow')) { ui.offLow = el.getAttribute('data-offlow') || ''; renderOffPanel(); return; }
     if (el.hasAttribute('data-offday')) { ui.offDay = el.getAttribute('data-offday') || ''; renderOffPanel(); return; }
     if (el.hasAttribute('data-offpick')) { toggleOffPick(el.getAttribute('data-offpick')); return; }
     if (el.hasAttribute('data-offrec')) {
@@ -12600,10 +13049,26 @@
     if (el.hasAttribute('data-offcancel')) { cancelOfficial(el.getAttribute('data-offcancel')); return; }
     if (el.hasAttribute('data-theme')) { ui.theme = el.getAttribute('data-theme') || ''; ui.statusPage = 0; renderStatus(); return; }
     if (el.hasAttribute('data-woday')) { ui.woDay = el.getAttribute('data-woday') || ''; renderWorkOrder(); return; }
+    if (el.hasAttribute('data-fcweek')) { setFcWeek(el.getAttribute('data-fcweek') || ''); return; }
     if (el.hasAttribute('data-demodow')) {
       var dv = el.getAttribute('data-demodow');
       demoNowWeekday(dv);
       toast(dv ? '시연 기준일을 ' + WEEK_DAYS[Number(dv)] + '요일로 바꿨습니다.' : '시연 기준일을 실제 오늘로 되돌렸습니다.');
+      return;
+    }
+    if (el.hasAttribute('data-thuholy')) {
+      var nextOn = !isThuHoliday();
+      setThuHoliday(nextOn);
+      toast(nextOn ? '이번 주 목요일을 공휴일로 설정했습니다. 취소분 선착순은 금요일, 입고 마감은 금요일 14:00입니다.' : '목요일 공휴일 설정을 해제했습니다.');
+      return;
+    }
+    if (el.hasAttribute('data-democal')) { openDemoCal(); return; }
+    if (el.hasAttribute('data-democalnav')) { openDemoCal(demoCalMonthShift(ui.demoCalMonth || getNowISO().slice(0, 7), Number(el.getAttribute('data-democalnav')) || 0)); return; }
+    if (el.hasAttribute('data-democalday')) {
+      var dIso = el.getAttribute('data-democalday');
+      setDemoNow(dIso);
+      closeModal();
+      toast('시연 기준일을 ' + dIso + '(' + WEEK_DAYS[new Date(dIso + 'T10:00:00').getDay()] + ')로 바꿨습니다.');
       return;
     }
     if (el.hasAttribute('data-woweek')) { ui.woWeek = weekStartOf(el.getAttribute('data-woweek') || ROUND.postStart); renderWorkOrder(); return; }
@@ -12846,7 +13311,9 @@
       bookLive(el.getAttribute('data-livebook')); return;
     }
     if (el.hasAttribute('data-fclive')) {
-      goPage('remain.html?place=' + encodeURIComponent(el.getAttribute('data-fclive') || ''));
+      var fcpId = el.getAttribute('data-fclive') || '';
+      /* 취소분 선착순 접수일(목요일 · 공휴일이면 금요일)에는 취소분 페이지로 바로 연결 */
+      goPage((fcIsOpenDay() ? 'first.html' : 'remain.html') + '?place=' + encodeURIComponent(fcpId));
       return;
     }
   }
@@ -12919,6 +13386,8 @@
     }
     if ($('#policySkipWeek')) {      onEl('#policySkipWeek', 'change', function () { setSkipWeekRule(!!this.checked); });
     }
+    if ($('#policyHolidayNoDraw')) { onEl('#policyHolidayNoDraw', 'change', function () { setHolidayPolicy('holidayNoDraw', !!this.checked); }); }
+    if ($('#policyHolidayDirectInstall')) { onEl('#policyHolidayDirectInstall', 'change', function () { setHolidayPolicy('holidayDirectInstall', !!this.checked); }); }
     /* 작업지시서 게첨 주 날짜 선택 (2026-11-23 김재봉 님 지시) */
     onEl('#woDatePick', 'change', function () {
       if (!this.value) return;
@@ -13012,7 +13481,9 @@
     if ($('#suLic')) onEl('#suLic', 'change', function (e) { handleSuLic(e.target.files && e.target.files[0]); });
     /* 회원가입 모달은 열 때마다 새로 그려지므로 샘플 버튼은 document 위임으로 처리한다 */
     if ($('#licDrop')) onEl('#licDrop', 'click', function (e) { if (e.target && e.target.id === 'applyLic') return; if ($('#applyLic')) $('#applyLic').click(); });
-    if ($('#btnDesignSample')) onEl('#btnDesignSample', 'click', function () { useDesignSample(); });
+    if ($('#btnDesignSample')) onEl('#btnDesignSample', 'click', function () { useDesignSample({}, 'normal', 'apply'); });
+    if ($('#btnDesignSampleBlack')) onEl('#btnDesignSampleBlack', 'click', function () { useDesignSample({}, 'black', 'apply'); });
+    if ($('#btnDesignSampleRed')) onEl('#btnDesignSampleRed', 'click', function () { useDesignSample({}, 'red', 'apply'); });
     if ($('#btnLicSample')) onEl('#btnLicSample', 'click', function () {
       licAttach('옥외광고업등록증_샘플.pdf', '', 'application/pdf', '충남서산-제2024-0012호', '시연용 샘플 등록증');
       toast('샘플 등록증 사본을 첨부했습니다 (시연용) — 등록번호 충남서산-제2024-0012호 자동 추출.');
@@ -13061,13 +13532,9 @@
     });
     onEl('#fcQty', 'change', function () { fcSetQty(fcQtyVal() || QTY_MIN); });
     onEl('#fcDesign', 'change', function (e) { fcHandleFile(e.target.files && e.target.files[0]); });
-    if ($('#btnFcDesignSample')) onEl('#btnFcDesignSample', 'click', function () {
-      ui.fcFile = { name: '시연용_시안_샘플.png', size: 24680 };
-      ui.fcFilePreview = null;
-      if ($('#fcFilePreview')) $('#fcFilePreview').innerHTML = '<div class="drop-preview"><div class="fi"><b>시연용_시안_샘플.png</b><span>JPG·PNG 5MB 이하 · 시연용 샘플 시안</span></div></div>';
-      if ($('#fcFDesign')) $('#fcFDesign').classList.remove('invalid');
-      toast('시연용 샘플 시안을 첨부했습니다.');
-    });
+    if ($('#btnFcDesignSample')) onEl('#btnFcDesignSample', 'click', function () { useDesignSample({}, 'normal', 'fc'); });
+    if ($('#btnFcDesignSampleBlack')) onEl('#btnFcDesignSampleBlack', 'click', function () { useDesignSample({}, 'black', 'fc'); });
+    if ($('#btnFcDesignSampleRed')) onEl('#btnFcDesignSampleRed', 'click', function () { useDesignSample({}, 'red', 'fc'); });
     var fcdz = $('#fcDropZone');
     if (fcdz) {
       fcdz.addEventListener('click', function (e) {
@@ -13358,7 +13825,7 @@
     renderDemoNowBar(); applyFirstNavVisibility();
     /* 공지 팝업은 '첫 화면'(게시대 현황 = index.html)에서만 자동 노출
        — 다른 페이지는 📢 공지 다시 보기 링크만 둔다 */
-    if (PAGE === 'status') showNoticeIfDue(); else updateNoticeLink();
+    if (PAGE === 'status') { if (!showHolidayNotice()) showNoticeIfDue(); } else updateNoticeLink();
     /* 주 선택 달력은 **모든 화면에서 기본 접힘** — '📅 달력보기'를 눌러야 펼쳐진다 (김재봉 님 지시 2026-11-22) */
     setCalPanelOpen('status', false);
     setCalPanelOpen('apply', false);
@@ -13382,7 +13849,7 @@
       ui.fcStep = 1;
       renderFirst();
       var livePlaceParam = paramOf('place');
-      if (livePlaceParam && PAGE === 'remain' && placementById(livePlaceParam)) {
+      if (livePlaceParam && (PAGE === 'remain' || PAGE === 'first') && placementById(livePlaceParam)) {
         var lp = placementById(livePlaceParam);
         if (fcLeftOf(lp) > 0) {
           ui.fcQty = QTY_MIN;
@@ -13595,7 +14062,13 @@
         wrapWidth: Math.round((document.querySelector('.wrap') || document.body).getBoundingClientRect().width),
         bodyWidth: Math.round(document.body.getBoundingClientRect().width),
         smallTargets: Array.prototype.slice.call(document.querySelectorAll('nav.site-nav a.tab, #mobileTabbar a'))
-          .filter(function (el) { return el.getBoundingClientRect().height < 42; }).length };
+          .filter(function (el) {
+            /* 숨김 메뉴(비노출 요일의 취소분 선착순 등)는 터치 타겟 집계에서 제외 */
+            if (el.classList.contains('hidden') || el.getAttribute('aria-hidden') === 'true') return false;
+            var r = el.getBoundingClientRect();
+            if (!r.width || !r.height) return false;
+            return r.height < 42;
+          }).length };
     },
     bonusCaps: function () { return bonusCaps(); },
     bonusCapTotal: bonusCapTotal,
@@ -14141,6 +14614,12 @@
     setNow: function (iso) { return setDemoNow(iso || ''); },
     setNowDay: function (d) { return demoNowWeekday(d); },
     firstNav: function () { return { allowed: firstNavAllowed(), hidden: !!document.querySelector('nav.site-nav a[href="first.html"].hidden') }; },
+    holiday: function () { return { on: isThuHoliday(), label: thuHolidayLabel(), openDow: fcOpenDow(),
+      openDay: fcOpenDayName(), deliverDate: FC_DELIVER.date, deliverTime: FC_DELIVER.time, popup: holidayNoticeActive() }; },
+    setHoliday: function (on) { return setThuHoliday(!!on); },
+    policy: function () { return { noDraw: holidayNoDrawOn(), directInstall: holidayDirectInstallOn() }; },
+    setPolicy: function (key, on) { return setHolidayPolicy(key, on); },
+    fcWeek: function (wk) { return wk ? setFcWeek(wk) : fcWeek(); },
     checkText: function (t) { return checkAbusiveText(t); },
     abuseNote: function (sel) { var e = $(sel || '#abuseNote'); return e ? { hidden: e.classList.contains('hidden'), text: e.textContent.trim() } : null; },
     setApplyText2: function (adv, txt) {
