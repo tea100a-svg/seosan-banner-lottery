@@ -2446,6 +2446,13 @@
       if (inp) inp.addEventListener('change', function () { setDemoNow(this.value); toast('시연 기준일을 ' + (this.value || '실제 오늘') + '로 바꿨습니다.'); });
     }
     var iso = getNowISO(), d = getNow();
+    /* 공휴일 토글 상태 라벨을 매 렌더마다 갱신 */
+    var thb = document.querySelector('[data-thuholy]');
+    if (thb) {
+      thb.textContent = '🗓️ 목요일 공휴일 ' + (isThuHoliday() ? 'ON' : 'OFF');
+      thb.classList.toggle('on', isThuHoliday());
+      thb.setAttribute('aria-pressed', isThuHoliday() ? 'true' : 'false');
+    }
     if (document.getElementById('demoNowDate')) document.getElementById('demoNowDate').value = iso;
     if (document.getElementById('demoNowTxt')) {
       document.getElementById('demoNowTxt').textContent = ' = ' + WEEK_DAYS[d.getDay()] + '요일' + (demoNowISO() ? '' : ' (실제 오늘)') +
