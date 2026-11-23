@@ -89,22 +89,24 @@
 
 <section class="view active" id="view-admin">
 <div class="subtabs" id="adminSub">
-  <a class="subtab" href="admin-review.html" data-adminsub="review">🔍 시안 심사</a>
-  <a class="subtab on" href="admin-event.html" data-adminsub="event">🎪 행사 심사</a>
-  <a class="subtab" href="admin-draw.html" data-adminsub="draw">🎯 추첨 · 접수대장</a>
-  <a class="subtab" href="admin-official.html" data-adminsub="official">📄 공문 우선접수</a>
-  <a class="subtab" href="admin-pay.html" data-adminsub="pay">💰 입금 확인</a>
-  <a class="subtab" href="admin-deliver.html" data-adminsub="deliver">📦 현수막 입고</a>
-  <a class="subtab" href="admin-report.html" data-adminsub="report">🏛️ 시청 신고 표지</a>
-  <a class="subtab" href="admin-desig.html" data-adminsub="desig">🖨️ 게시 지정서</a>
-  <a class="subtab" href="admin-photos.html" data-adminsub="photos">📸 게첨사진</a>
-  <a class="subtab" href="admin-docs.html" data-adminsub="docs">📋 작업지시서</a>
-  <a class="subtab" href="admin-board.html" data-adminsub="board">🛠️ 게시대 관리</a>
-  <a class="subtab" href="admin-course.html" data-adminsub="course">🗺️ 테마코스 · 금지</a>
-
-  <a class="subtab" href="admin-roles.html" data-adminsub="roles">🛡️ 관리자 권한</a>
-  <a class="subtab" href="admin-members.html" data-adminsub="members">👥 회원 · 가산점</a>
-  <a class="subtab" href="admin-system.html" data-adminsub="system">📢 공지 · 로그</a>
+  <a class="subtab" href="admin-review.html" data-adminsub="review" data-perm="review">🔍 시안 심사</a>
+  <a class="subtab" href="admin-official.html" data-adminsub="official" data-perm="official">📄 공문 접수</a>
+  <a class="subtab" href="admin-official-review.html" data-adminsub="officialreview" data-perm="officialreview">📋 2주 공문 심사</a>
+  <a class="subtab" href="admin-political.html" data-adminsub="political" data-perm="political">⚖️ 정치행정 심사</a>
+  <a class="subtab on" href="admin-event.html" data-adminsub="event" data-perm="event">🎪 행사 심사</a>
+  <a class="subtab" href="admin-draw.html" data-adminsub="draw" data-perm="draw">🎯 추첨 · 접수대장</a>
+  <a class="subtab" href="admin-pay.html" data-adminsub="pay" data-perm="pay">💰 입금 확인</a>
+  <a class="subtab" href="admin-deliver.html" data-adminsub="deliver" data-perm="deliver">📦 현수막 입고</a>
+  <a class="subtab" href="admin-report.html" data-adminsub="report" data-perm="report">🏛️ 시청 신고 표지</a>
+  <a class="subtab" href="admin-desig.html" data-adminsub="desig" data-perm="desig">🖨️ 게시 지정서</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs" data-perm="docs">📋 작업지시서</a>
+  <a class="subtab" href="admin-loc.html" data-adminsub="loc" data-perm="loc">📍 게시위치</a>
+  <a class="subtab" href="admin-photos.html" data-adminsub="photos" data-perm="photos">📸 게첨사진</a>
+  <a class="subtab" href="admin-board.html" data-adminsub="board" data-perm="board">🛠️ 게시대 관리</a>
+  <a class="subtab" href="admin-course.html" data-adminsub="course" data-perm="course">🗺️ 테마코스 · 금지</a>
+  <a class="subtab" href="admin-roles.html" data-adminsub="roles" data-perm="roles">🛡️ 관리자 권한</a>
+  <a class="subtab" href="admin-members.html" data-adminsub="members" data-perm="members">👥 회원 · 가산점</a>
+  <a class="subtab" href="admin-system.html" data-adminsub="system" data-perm="system">📢 공지 · 로그</a>
 </div>
 <div class="view-head">
       <div>
@@ -133,16 +135,7 @@
         <div><b>접수는 회원이 직접</b> 합니다 — 회원이 <b>주간 추첨 접수(apply.html)</b> 1단계에서 <b>🎪 행사 심사 신청</b>을 고르고 행사명·행사일·사유(증빙)를 적어 접수하면, 이 화면에 그 건이 올라와 <b>관리자(행사승인권한자 5명)가 심사</b>합니다. 관리자가 대신 접수하지 않습니다(시연용 보조 등록도 회원 접수와 같은 절차를 따릅니다). 배정 순서는 <b>① 시청 공문 우선접수 → ② 행사 우선접수(승인 완료) → ③ 일반 추첨</b>입니다. 시안 심사를 <b>승인</b>하면 이 패널로 넘어와 행사승인권한자 <b>5명 중 3명 이상 찬성</b>이면 <b>행사 우선 승인</b>으로 확정되고, <b>반대·기권 3명 이상</b> 또는 5명 투표에서 찬성이 3명에 못 미치면 <b>미승인 → 일반 추첨 자동 전환</b>(신청한 1·2·3순위 그대로 적용)됩니다. 수수료는 일반 접수와 같습니다.</div>
       </div>
       <div id="eventList"></div>
-    </div>
-<div class="panel" id="polPanel">
-      <div class="admin-head">
-        <h3>🏛️ 정치행정 현수막 승인 (지부장 ∥ 감사, 순서 무관)</h3>
-        <span class="sub" id="polInfo"></span>
-      </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <div>정치행정 현수막은 <b>3단(3열)</b>에 배정되고, <b>지부장 1인</b>과 <b>감사 2인 중 1인</b>이 모두 승인하면(2/2) 확정됩니다. 감사가 먼저 승인해도 됩니다.</div>
-      </div>
-      <div id="polList"></div>
+      <div class="callout info" style="margin-top:12px"><div>🏛️ 정치행정 현수막 심사는 <a href="admin-political.html"><b>⚖️ 정치행정 심사</b></a> 페이지에서 합니다.</div></div>
     </div>
 </section>
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>

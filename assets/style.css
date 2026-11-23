@@ -1912,3 +1912,12 @@ a.wk:hover .wk-go{background:#e9dffb}
 .dc-cell.dc-empty{background:transparent;cursor:default}
 .dc-num{font-size:13px;font-weight:700;color:var(--ink)}
 .dc-note{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.5}
+
+/* 총괄관리자 권한 매트릭스 (2026-11-23) */
+.perm-table{min-width:980px}
+.perm-table th,.perm-table td{padding:6px 7px;border-bottom:1px solid var(--line);font-size:12px}
+.perm-cell{font:inherit;font-size:11px;font-weight:800;padding:4px 6px;border-radius:7px;border:1px solid #cfd8e4;background:#f2f5f9;color:#526078;cursor:pointer;white-space:nowrap}
+.perm-cell.on{background:#e7f6ee;border-color:#9fd6b6;color:#1d6b42}
+.perm-cell:disabled{opacity:.75;cursor:default}
+.subtab.hidden{display:none !important}
+.wk.pay:before{background:#2f9e6f}
