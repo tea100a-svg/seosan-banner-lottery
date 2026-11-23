@@ -4386,8 +4386,17 @@
       }, {
         id: 'G-2026-W47-02', round: ROUND.id, week: '2026-12-07', org: '서산시청 문화관광과', docNo: '서산시청 문화관광과 · 공문',
         maker: '서산애드컴(공문)', text: '서산 겨울 문화축제 안내 · 공문(2주 예시)', pids: ['P24', 'P25'], slots: [],
-        at: '2026-11-21 14:10', status: 'pending', days: 14, draftedBy: '이현장 (현장실무원)', approvals: [],
-        receivedBy: '이현장 (현장실무원)', receivedByRole: '현장실무원',
+        at: '2026-11-21 14:10', status: 'pending', days: 14, approvals: [],
+        fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
+      }, {
+        id: 'G-2026-W47-03', round: ROUND.id, week: '2026-12-07', org: '서산시 평생학습과', docNo: '서산시 평생학습과-1124',
+        maker: '부춘기획(공문)', text: '2026 겨울방학 시민 평생학습 수강생 모집(2주)', pids: ['P12', 'P15'], slots: [],
+        at: '2026-11-23 10:20', status: 'pending', days: 14, approvals: [],
+        fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
+      }, {
+        id: 'G-2026-W47-04', round: ROUND.id, week: '2026-12-07', org: '서산시 체육진흥과', docNo: '서산시 체육진흥과-0891',
+        maker: '해미애드(공문)', text: '서산시 생활체육 한마당 개최 안내(2주)', pids: ['P33', 'P35'], slots: [],
+        at: '2026-11-24 08:00', status: 'pending', days: 14, approvals: [],
         fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
       }].concat(pastWeekOfficialSeed()),
       seedVersion: 6,
@@ -4486,6 +4495,67 @@
         ui.adminRole = 'super';
       }
       db.seedVersion = 7;
+      save();
+    }
+    /* 시연 데이터 v8 (2026-11-24) — 행사심사 · 2주공문심사 · 정치행정심사 모두 대기열 2건 이상 보장 */
+    if (Number(db.seedVersion || 7) < 8) {
+      db.official = db.official || [];
+      var extraOff = [
+        {
+          id: 'G-2026-W47-02', round: ROUND.id, week: '2026-12-07', org: '서산시청 문화관광과', docNo: '서산시청 문화관광과 · 공문',
+          maker: '서산애드컴(공문)', text: '서산 겨울 문화축제 안내 · 공문(2주 예시)', pids: ['P24', 'P25'], slots: [],
+          at: '2026-11-21 14:10', status: 'pending', days: 14, approvals: [],
+          fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
+        },
+        {
+          id: 'G-2026-W47-03', round: ROUND.id, week: '2026-12-07', org: '서산시 평생학습과', docNo: '서산시 평생학습과-1124',
+          maker: '부춘기획(공문)', text: '2026 겨울방학 시민 평생학습 수강생 모집(2주)', pids: ['P12', 'P15'], slots: [],
+          at: '2026-11-23 10:20', status: 'pending', days: 14, approvals: [],
+          fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
+        },
+        {
+          id: 'G-2026-W47-04', round: ROUND.id, week: '2026-12-07', org: '서산시 체육진흥과', docNo: '서산시 체육진흥과-0891',
+          maker: '해미애드(공문)', text: '서산시 생활체육 한마당 개최 안내(2주)', pids: ['P33', 'P35'], slots: [],
+          at: '2026-11-24 08:00', status: 'pending', days: 14, approvals: [],
+          fee: '공문(인지대 면제)', feeTotal: 7700, cityFee: 0, official: true
+        }
+      ];
+      var offPendCnt = db.official.filter(function (o) { return o.status === 'pending'; }).length;
+      if (offPendCnt < 2) {
+        extraOff.forEach(function (eo) {
+          var hit = null;
+          db.official.forEach(function (x) { if (x.id === eo.id) hit = x; });
+          if (!hit) { db.official.unshift(eo); }
+          else if (hit.status !== 'pending' && db.official.filter(function (o) { return o.status === 'pending'; }).length < 2) {
+            hit.status = 'pending'; hit.approvals = [];
+          }
+        });
+      }
+      db.apps = db.apps || [];
+      var extraPol = [
+        {
+          id: '2026-W47-POL-01', round: ROUND.id, week: ROUND.postStart, at: '2026-11-23 15:10',
+          company: '서산애드컴', owner: '김도현', phone: '010-3074-1026', license: '충남-서산-2021-002',
+          memberId: 'M-1002', memberType: 'agency', advertiserName: '더불어시민연대 서산지회', advertiserBiz: '318-82-00412',
+          text: '서산시민과 함께하는 2026 겨울 민생 간담회', maker: '서산애드컴', qty: 2, days: 7,
+          p1: ['P04', 'P19'], p2: ['P08'], p3: [], status: '정치심사중', polApp: true, polStatus: '심사중', polApprovals: [],
+          review: { status: '승인', by: '시안심사', at: '2026-11-23 16:00' }, awards: [], paid: false, delivered: false
+        },
+        {
+          id: '2026-W47-POL-02', round: ROUND.id, week: ROUND.postStart, at: '2026-11-24 07:45',
+          company: '부춘기획', owner: '이부춘', phone: '010-3148-1052', license: '충남-서산-2021-004',
+          memberId: 'M-1004', memberType: 'agency', advertiserName: '서산시 소상공인정책포럼', advertiserBiz: '318-82-00789',
+          text: '지역상권 활성화 정책 토론회 안내 (3단 게시대)', maker: '부춘기획', qty: 2, days: 7,
+          p1: ['P06', 'P22'], p2: ['P10'], p3: [], status: '정치심사중', polApp: true, polStatus: '심사중', polApprovals: [],
+          review: { status: '승인', by: '시안심사', at: '2026-11-24 07:55' }, awards: [], paid: false, delivered: false
+        }
+      ];
+      if (db.apps.filter(function (a) { return a.polApp && a.status === '정치심사중'; }).length < 2) {
+        extraPol.forEach(function (ep) {
+          if (!db.apps.some(function (a) { return a.id === ep.id; })) db.apps.unshift(ep);
+        });
+      }
+      db.seedVersion = 8;
       save();
     }
   }
