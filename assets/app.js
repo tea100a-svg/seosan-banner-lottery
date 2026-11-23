@@ -1847,7 +1847,8 @@
       toast('이미 ' + EVENT_STATUS_LABEL[a.eventStatus] + '으로 확정된 건입니다.', true);
       return null;
     }
-    var who = eventApproverById(approverId);
+    var whoId = approverId || isEventApproverNow();
+    var who = eventApproverById(whoId);
     if (!who) { toast('행사승인권한자 5명 중 한 사람만 투표할 수 있습니다.', true); return null; }
     var v = normEventVote(vote);
     if (!Array.isArray(a.eventVotes)) a.eventVotes = [];
@@ -1875,14 +1876,14 @@
      · 심사중 건은 이 작업 칸에서 **5인 권한자 선택 + ✅ 승인(찬성) · ❌ 반려 · ⚪ 기권**
        큰 버튼을 눌러 바로 투표한다 (PC·모바일 모두 가로 스크롤 없이 한눈에). */
   function eventVoteCellHTML(a) {
-    var e = eventStateOf(a), list = eventApprovers();
+    var e = eventStateOf(a);
     var tally = '<div class="ev-tally"><b>찬성 ' + e.yes + '</b> <span class="sep">·</span> 반려 ' + e.no +
       ' <span class="sep">·</span> 기권 ' + e.abs +
       ' <span class="sm">(' + e.cast + '/' + e.voters + ' 투표 · 확정 ' + e.need + '명)</span></div>';
     var voting = (a.status === '행사심사중') && e.status === '심사중';
     if (!voting) {
       var why = (a.status !== '행사심사중')
-        ? '시안 심사를 승인하면 행사 투표를 시작할 수 있습니다.'
+        ? '시안 심사를 승인하면 행사 투표를 시작할 수 있습니다. <a class="btn xs ghost" href="admin.html" style="margin-left:6px">🎨 시안 심사</a>'
         : (e.status === '승인' ? '확정 — 일반 추첨보다 먼저 배정됩니다.' : '확정 — 일반 추첨으로 자동 전환되었습니다.');
       return '<div class="ev-act done"><span class="badge ' + (e.status === '승인' ? 'b-green' : 'b-gray') +
         '"><i></i>' + (e.status === '승인' ? '승인 확정' : '심사 종료') + '</span>' + tally +
@@ -1890,24 +1891,26 @@
     }
     var votedIds = {};
     e.votes.forEach(function (v) { votedIds[v.id] = normEventVote(v.vote); });
-    var mineName = '';
-    try { mineName = (accessDisplay() || {}).name || ''; } catch (err) { mineName = ''; }
-    var def = '';
-    list.forEach(function (x) { if (!def && mineName && x.name === mineName) def = x.id; });
-    list.forEach(function (x) { if (!def && !votedIds[x.id]) def = x.id; });
-    if (!def) def = list[0].id;
-    var sel = '<label class="ev-who-wrap"><span class="ev-who-lb">투표자</span>' +
-      '<select class="input sm ev-who" id="evwho_' + esc(a.id) + '" aria-label="투표할 행사승인권한자 5인 선택">' +
-      list.map(function (x) {
-        return '<option value="' + esc(x.id) + '"' + (x.id === def ? ' selected' : '') + '>' +
-          esc(x.name + ' ' + x.role) + (votedIds[x.id] ? ' ✓' + esc(votedIds[x.id]) : ' · 미투표') + '</option>';
-      }).join('') + '</select></label>';
+    var myEvId = isEventApproverNow();
+    if (!myEvId) {
+      var ar = accessDisplay();
+      return '<div class="ev-act">' + tally +
+        '<div class="ev-note"><b>행사승인권한자 5인</b>만 투표할 수 있습니다.<br><span class="sm">현재: ' +
+        esc((ar && ar.name) ? (ar.name + ' · ' + (ar.roleLabel || ar.role || '')) : '권한 없음') +
+        ' — 상단 <b>시연용 직책 전환</b>에서 권한자로 바꿔 주세요.</span></div></div>';
+    }
+    var mine = eventApproverById(myEvId);
+    var myVote = votedIds[myEvId] || '';
+    var meLine = '<div class="ev-me">내 투표: <b>' + esc((mine ? mine.name : '') + (mine && mine.role ? ' · ' + mine.role : '')) + '</b>' +
+      (myVote ? ' <span class="badge b-blue"><i></i>' + esc(myVote) + ' 완료</span>' : ' <span class="sm">· 미투표</span>') + '</div>';
     var btns = [['찬성', '✅ 승인(찬성)', 'ok'], ['반려', '❌ 반려', 'no'], ['기권', '⚪ 기권', 'ghost']].map(function (b) {
-      return '<button class="btn ' + b[2] + ' evbtn ev-big" type="button" data-evvote="' + esc(a.id) + '" data-evval="' + b[0] +
-        '" title="선택한 권한자로 ' + b[0] + ' 투표">' + b[1] + '</button>';
+      var active = (myVote === b[0]) ? ' is-picked' : '';
+      return '<button class="btn ' + b[2] + ' evbtn ev-big' + active + '" type="button" data-evvote="' + esc(a.id) +
+        '" data-evwho="' + esc(myEvId) + '" data-evval="' + b[0] +
+        '" title="' + esc(mine ? mine.name : '본인') + ' 이름으로 ' + b[0] + ' 투표">' + b[1] + '</button>';
     }).join('');
-    return '<div class="ev-act">' + tally + sel + '<div class="ev-act-btns">' + btns + '</div>' +
-      '<div class="ev-hint">위 5인 중 한 사람을 고르고 눌러 주세요 — 찬성 ' + e.need + '명이면 확정</div></div>';
+    return '<div class="ev-act">' + tally + meLine + '<div class="ev-act-btns">' + btns + '</div>' +
+      '<div class="ev-hint">현재 로그인한 본인 권한으로 바로 투표됩니다 · 찬성 ' + e.need + '명이면 확정</div></div>';
   }
   function renderEventPanel() {
     if (!has('eventList')) return;
@@ -15185,6 +15188,14 @@
       if (a.urgentAck !== undefined) delete a.urgentAck;
       if (a.urgentEvent !== undefined) delete a.urgentEvent;
     });
+    /* 이전 저장 데이터 호환 — 행사 심사 시드 5건(심사중 3건 포함) 보장 */
+    (function () {
+      var hasMap = {};
+      (db.apps || []).forEach(function (a) { hasMap[a.id] = a; });
+      eventAppsSeed().forEach(function (sa) {
+        if (!hasMap[sa.id]) db.apps.push(sa);
+      });
+    })();
     /* 이전 저장 데이터 호환 — 직책자 명단(테스트 임원) */
     if (!Array.isArray(db.officers) || !db.officers.length) db.officers = seedOfficers();
     try { ui.adminRole = localStorage.getItem(OFFICER_KEY) || 'super'; } catch (e) { ui.adminRole = 'super'; }
