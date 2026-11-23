@@ -103,46 +103,35 @@
         <span class="cta-sub" id="ctaNextSub">추첨 11.23(월) 10:00 · 입고 마감 11.25(수) 18:00 · 게첨 11.30(월)~12.06(일)</span>
       </span>
     </a>
-    <div class="cal-toggle-row">
-      <button class="btn ghost sm" id="btnWeekCal" type="button" aria-expanded="false" aria-controls="weekCalPanel">📅 달력보기</button>
-      <span class="sm" id="weekCalHint">게첨 주(월~일)별 접수·배정을 달력으로 봅니다</span>
-    </div>
-    <div class="panel week-cal-panel collapsed" id="weekCalPanel">
-      <div class="panel-head">
-        <h3>🗓️ 주별 현황 달력 <span class="sub">게첨 주(월~일) 단위</span></h3>
-        <span class="sub" id="weekCalSub"></span>
-        <span class="spacer"></span>
-        <button class="btn ghost sm" id="btnWeekCalClose" type="button">닫기</button>
-      </div>
-      <div id="weekCal"></div>
-    </div>
     <div class="rule-strip-wrap" id="weekRuleStrip"></div>
     <div id="statusLiveNotice"></div>
     <div class="week-strip" id="weekStrip"></div>
     <div class="stats" id="statusStats"></div>
     <div class="hint-txt" id="statusReqInfo" style="margin:-10px 0 16px"></div>
-    <div class="toolbar" style="margin-bottom:10px">
-      <div class="chips" id="statusThemeChips"></div>
-      <span class="hint-txt" style="margin:0" id="statusThemeInfo"></span>
-    </div>
-    <div class="toolbar">
-      <div class="pick-filters" style="margin:0">
-        <div class="chips sort-chips" id="statusSortChips" aria-label="게시대 정렬"></div>
-        <div class="chips" id="statusDayChips"></div>
-        <select class="input" id="statusDong" aria-label="읍면동 선택"></select>
-      </div>
-      <div class="search">
+    <div class="status-search-row">
+      <div class="search search-lg">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-        <input type="search" id="statusSearch" class="ko-ime" lang="ko" placeholder="게시대 · 읍면동 검색" aria-label="게시대 검색">
+        <input type="search" id="statusSearch" class="ko-ime" lang="ko" placeholder="🔍 게시대 · 읍면동을 입력하세요 (예: 해미, 의료원)" aria-label="게시대 검색">
       </div>
     </div>
     <div class="pl-foldbar">
       <button class="btn primary" id="btnPlaceToggle" type="button" aria-expanded="false" aria-controls="placementFold">
         📋 게시대 현황 펼쳐보기 (<b id="btnPlaceCount">77</b>개소)
       </button>
-      <span class="sm" id="placeFoldHint">필요할 때만 펼쳐 보세요 — 접수는 위 <b>접수하러 가기</b>에서 바로 할 수 있습니다.</span>
+      <span class="sm" id="placeFoldHint">필터(테마·정렬·요일·읍면동)와 77개소 목록은 이 버튼을 누르면 함께 펼쳐집니다. 접수는 위 <b>접수하러 가기</b>에서 바로 할 수 있습니다.</span>
     </div>
     <div class="pl-fold" id="placementFold" hidden>
+      <div class="toolbar" style="margin-bottom:10px">
+        <div class="chips" id="statusThemeChips"></div>
+        <span class="hint-txt" style="margin:0" id="statusThemeInfo"></span>
+      </div>
+      <div class="toolbar">
+        <div class="pick-filters" style="margin:0">
+          <div class="chips sort-chips" id="statusSortChips" aria-label="게시대 정렬"></div>
+          <div class="chips" id="statusDayChips"></div>
+          <select class="input" id="statusDong" aria-label="읍면동 선택"></select>
+        </div>
+      </div>
       <div class="pl-sum" id="statusListInfo"></div>
       <div class="plrows" id="placementGrid"></div>
     </div>

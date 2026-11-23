@@ -1780,3 +1780,31 @@ html[data-device-view="mobile"] #eventList .evbtn{flex:1 1 30%;min-height:40px}
   box-shadow:0 10px 24px rgba(10,20,40,.28);white-space:normal}
 .grant-chip:hover .gtip,.grant-chip:focus .gtip,.grant-chip.open .gtip{display:block}
 @media (max-width:760px){ .grant-chip .gtip{left:auto;right:0} }
+
+/* 첫 화면 — 대형 검색창 상시 노출 (2026-11-23) */
+.status-search-row{margin:0 0 14px}
+.search-lg{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #c7d8f2;border-radius:16px;
+  padding:6px 16px;box-shadow:0 4px 14px rgba(28,58,110,.08)}
+.search-lg:focus-within{border-color:#2f6bd8;box-shadow:0 0 0 4px rgba(47,107,216,.12)}
+.search-lg svg{width:24px;height:24px;flex:0 0 auto;color:#5b7291}
+.search-lg input{flex:1;border:0;outline:none;background:transparent;font-size:17px;font-weight:700;color:var(--ink);
+  padding:14px 0;min-height:52px}
+.search-lg input::placeholder{font-weight:600;color:#93a4bb}
+@media (max-width:760px){ .search-lg input{font-size:15.5px;padding:12px 0;min-height:46px} }
+
+/* 접수 단계 버튼 — 화면 하단 상시 플로팅 (2026-11-23) */
+.apply-foot{position:sticky;bottom:0;z-index:40;background:rgba(255,255,255,.97);
+  backdrop-filter:blur(6px);border-top:1px solid var(--line);border-radius:14px 14px 0 0;
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom, 0px));margin:18px -2px 0;
+  box-shadow:0 -8px 22px rgba(20,40,80,.12)}
+.apply-foot .btn{min-height:46px}
+@media (max-width:600px){
+  .apply-foot{padding:10px 10px calc(10px + env(safe-area-inset-bottom, 0px))}
+  .apply-foot .btn{flex:1 1 auto;font-size:14px}
+  .apply-foot .spacer{display:none}
+}
+/* 필수 미입력 — 해당 칸 강조 + 흔들림 */
+@keyframes fieldShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.field.invalid,.lic-extract.fail{animation:fieldShake .42s ease-in-out 1}
+.field.invalid{border-color:#e23c3c!important}
+.field.invalid input,.field.invalid select,.field.invalid textarea,.field.invalid .input{border-color:#e23c3c!important;background:#fff6f6}

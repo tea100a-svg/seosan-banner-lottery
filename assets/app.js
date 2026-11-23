@@ -5166,6 +5166,23 @@
     return !bad;
   }
 
+  /* 필수 미입력 → 첫 번째 누락 칸으로 스크롤 + 포커스 + 강조 (2026-11-23 지시) */
+  function focusFirstInvalid() {
+    var el = document.querySelector('.field.invalid') || document.querySelector('.invalid');
+    if (!el) return false;
+    var target = el.querySelector('input:not([type=hidden]), select, textarea, .btn, button') || el;
+    try {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) { try { el.scrollIntoView(); } catch (e2) { } }
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    setTimeout(function () {
+      try { target.focus({ preventScroll: true }); } catch (e3) { }
+      el.classList.remove('invalid');
+      void el.offsetWidth;
+      el.classList.add('invalid');
+    }, 220);
+    return true;
+  }
   function scrollTopSmooth() {
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
     catch (e) { try { window.scrollTo(0, 0); } catch (e2) { } }
@@ -5511,7 +5528,7 @@
       if (maybeAskGuest()) { toast('로그인·회원가입 또는 비회원으로 계속을 골라 주세요.', true); return false; }
     }
     if (ui.step === 4) { submitApply(); return true; }
-    if (!validateStep(ui.step)) return false;
+    if (!validateStep(ui.step)) { focusFirstInvalid(); return false; }
     setStep(ui.step + 1);
     return true;
   }
@@ -5601,10 +5618,13 @@
   }
 
   function submitApply() {
+    /* 제출 직전 검증 실패 시 첫 누락 칸으로 이동 */
+    var _orig = null;
     if (!validateStep(1)) { setStep(1); return; }
     if (!validateStep(2)) { setStep(2); return; }
     if (!validateStep(3)) { setStep(3); return; }
     var v = readApply();
+    if (!validateStep(1) && ui.step === 1) { focusFirstInvalid(); return null; }
     var pr1 = ui.ranks[1].slice();
     var pr2 = ui.designatedOnly ? [] : ui.ranks[2].slice();
     var pr3 = ui.designatedOnly ? [] : ui.ranks[3].slice();
