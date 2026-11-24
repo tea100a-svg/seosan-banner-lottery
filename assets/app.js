@@ -1529,11 +1529,22 @@
   }
   /* 지금 접속 권한으로 가산점을 부여할 수 있는가 — 승인 완료된 직책자 또는 마스터
      + 권한 매트릭스의 **가산점부여** 행에서 권한해제된 직책은 부여할 수 없다 (2026-11-23 김재봉 님 지시) */
-  function canGrantBonus() {
-    return false;
+  function isBonusManagerNow() {
+    var r = currentAccessRole();
+    return r === 'bonus' || r === 'super';
   }
-  function myGrantLimit() { return canGrantBonus() ? grantLimitOf(currentAccessRole()) : 0; }
-  function myGrantLimitLabel() { return canGrantBonus() ? accessRoleLabel() + ' 최대 +' + myGrantLimit() + '%' : '없음 (부여 권한 없음)'; }
+  function isProxyStaffNow() {
+    var r = currentAccessRole();
+    return r === 'proxy_office' || r === 'proxy_field';
+  }
+  function proxyStaffLabel() {
+    return currentAccessRole() === 'proxy_field' ? '현장실무원' : '사무실무원';
+  }
+  function canGrantBonus() {
+    return currentAccessRole() === 'bonus' && !!accessOfficer();
+  }
+  function myGrantLimit() { return canGrantBonus() ? 5 : 0; }
+  function myGrantLimitLabel() { return canGrantBonus() ? accessRoleLabel() + ' 최대 +' + myGrantLimit() + '%' : '없음 (가산점관리팀 전용)'; }
   function myGrantWho() {
     var who = accessDisplay();
     return { role: who.role, label: who.label, name: who.name };
@@ -1541,10 +1552,10 @@
   /* 부여 요청 % 검증 — 권한 없음·한도 초과는 거부합니다(초과분을 잘라 주지 않음). */
   function checkGrantPct(pct) {
     if (!canGrantBonus()) {
-      toast('가산점 부여 권한이 없습니다 — 지부장·수석부지부장·현장실무원·사무실무원(승인 완료)만 부여할 수 있습니다. 현재 접속 권한: ' + accessRoleLabel(), true);
+      toast('가산점 부여 권한이 없습니다 — 가산점관리팀만 기한임박 가산점을 부여할 수 있습니다. 현재 접속 권한: ' + accessRoleLabel(), true);
       return { ok: false, reason: 'no-authority', limit: 0 };
     }
-    var lim = grantLimitOf(currentAccessRole());
+    var lim = myGrantLimit();
     var p = Math.round(Number(String(pct == null ? 0 : pct).replace('%', '').trim()));
     if (!isFinite(p) || p < 0) p = 0;
     if (p > lim) {
@@ -1730,27 +1741,27 @@
     return ASSOC_FIXED_DEFAULT;
   }
   function setAssocFixedPct(pct) {
-    if (!isTotalManager()) { toast('회원 추천 고정 가산점은 마스터만 변경할 수 있습니다.', true); return null; }
+    if (!isBonusManagerNow()) { toast('회원 추천 고정 가산점은 가산점관리팀·마스터만 변경할 수 있습니다.', true); return null; }
     var raw = String(pct == null ? '' : pct).replace('%', '').trim();
     var v = Math.round(Number(raw));
     if (raw === '' || !isFinite(v) || v < 0 || v > 20) { toast('0~20% 사이 숫자를 입력해 주세요.', true); return null; }
     var before = assocFixedPct();
     db.assocBonusPct = v;
-    audit('가산점', '회원 추천 가산점 고정 설정 변경 — +' + before + '% → +' + v + '% (마스터)');
+    audit('가산점', '회원 추천 가산점 고정 설정 변경 — +' + before + '% → +' + v + '% (' + accessRoleLabel() + ')');
     save();
     renderAssocFixedPanel();
     renderAssocPanel();
-    toast('회원 추천 고정 가산점을 +' + v + '%로 저장했습니다. 협회 회원사 전체에 자동 적용됩니다.');
+    toast('회원 추천 고정 가산점을 +' + v + '%로 저장했습니다. 협회회원 전체에 자동 적용됩니다.');
     return v;
   }
   function renderAssocFixedPanel() {
     var box = $('#assocFixedBox');
     if (!box) return;
     var cur = assocFixedPct();
-    var canEdit = isTotalManager();
+    var canEdit = isBonusManagerNow();
     var cnt = assocMemberList().length;
     if ($('#assocFixedInfo')) {
-      $('#assocFixedInfo').textContent = '현재 고정 +' + cur + '% · 협회 회원사 ' + cnt + '곳 일괄 적용 · ' + (canEdit ? '마스터 수정 가능' : '읽기 전용');
+      $('#assocFixedInfo').textContent = '현재 고정 +' + cur + '% · 협회회원 ' + cnt + '곳 일괄 적용 · ' + (canEdit ? accessRoleLabel() + ' 수정 가능' : '읽기 전용');
     }
     box.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid #d9e4f5;border-radius:12px;background:#f8fbff">' +
@@ -1773,11 +1784,14 @@
   function assocRateOfApp(a) { return assocRateOfMember(memberOfApp(a)); }
   function assocMemberList() { return memberList().filter(function (m) { return !!m.assocMember; }); }
   function setAssocMember(id, on) {
+    if (!isBonusManagerNow()) { toast('회원사 가산점 관리는 가산점관리팀(또는 마스터)만 수정할 수 있습니다.', true); return null; }
     var m = memberById(id);
     if (!m) return null;
     m.assocMember = !!on;
+    if (m.assocMember && !m.isStaff && m.type !== 'staff') m.type = 'assoc';
+    else if (!m.assocMember && m.type === 'assoc') m.type = 'agency';
     var pct = m.assocMember ? assocFixedPct() : 0;
-    audit('가산점', '협회 등록 회원사 ' + m.company + ' — ' + (m.assocMember ? ('등록 (+' + pct + '% 고정 적용)') : '등록 해제 (가산 0%)'));
+    audit('가산점', '협회회원 지정 ' + m.company + ' — ' + (m.assocMember ? ('등록 (+' + pct + '% 고정 적용)') : '해제 (가산 0%)') + ' [' + accessRoleLabel() + ']');
     save();
     return { id: m.id, company: m.company, assocMember: !!m.assocMember, rate: assocRateOfMember(m), pct: pct, total: pct };
   }
@@ -1827,7 +1841,8 @@
   var APPROVAL_TEAMS = [
     { k: 'event',     label: '행사승인팀',     icon: '🎪', defQuota: 5, defNeed: 3, minQuota: 1, maxQuota: 20, step: 'event',     page: 'admin-event.html' },
     { k: 'official',  label: '2주공문승인팀', icon: '📋', defQuota: 3, defNeed: 1, minQuota: 1, maxQuota: 20, step: 'official',  page: 'admin-official-review.html' },
-    { k: 'political', label: '정치행정승인팀', icon: '⚖️', defQuota: 3, defNeed: 1, minQuota: 1, maxQuota: 20, step: 'political', page: 'admin-political.html' }
+    { k: 'political', label: '정치행정승인팀', icon: '⚖️', defQuota: 3, defNeed: 1, minQuota: 1, maxQuota: 20, step: 'political', page: 'admin-political.html' },
+    { k: 'bonus',     label: '가산점관리팀',   icon: '🎖', defQuota: 3, defNeed: 1, minQuota: 1, maxQuota: 20, step: '',          page: 'admin-members.html' }
   ];
   function teamMeta(k) {
     for (var i = 0; i < APPROVAL_TEAMS.length; i++) { if (APPROVAL_TEAMS[i].k === k) return APPROVAL_TEAMS[i]; }
@@ -2006,11 +2021,11 @@
     save();
     return e;
   }
-  /* 행사승인권한자 1명의 투표 — 3명 이상 찬성/반려·기권이 모이면 그 자리에서 확정한다 */
-  function eventVote(id, approverId, vote) {
+  /* 행사승인권한자 1명의 투표 또는 사무실무원·현장실무원 대리 결재 */
+  function eventVote(id, approverId, vote, phoneNote) {
     var a = findApp(id);
     if (!a || !a.eventApp) { toast('행사 심사 신청 건이 아닙니다.', true); return null; }
-    if (currentAccessRole() === 'super') { toast('마스터는 행사 심사 투표 권한이 없습니다(열람만 가능). 행사승인팀 팀원으로 전환해 주세요.', true); return null; }
+    if (currentAccessRole() === 'super') { toast('마스터는 행사 심사 투표 권한이 없습니다(열람만 가능). 행사승인팀 팀원 또는 실무원으로 전환해 주세요.', true); return null; }
     if (a.status !== '행사심사중') {
       toast('행사 심사 단계(시안 승인 후)의 접수만 투표할 수 있습니다. 먼저 시안을 승인해 주세요.', true);
       return null;
@@ -2019,26 +2034,40 @@
       toast('이미 ' + EVENT_STATUS_LABEL[a.eventStatus] + '으로 확정된 건입니다.', true);
       return null;
     }
-    var whoId = approverId || isEventApproverNow();
-    var who = eventApproverById(whoId);
-    if (!who) { toast('행사승인팀 소속 팀원만 투표할 수 있습니다.', true); return null; }
+    var isProxy = isProxyStaffNow() || !!phoneNote;
+    var who = null;
+    if (isProxy) {
+      var stLabel = proxyStaffLabel();
+      who = { id: 'proxy_' + currentAccessRole() + '_' + Date.now(), name: stLabel + '(대리)', role: stLabel + ' 대리결재' };
+    } else {
+      var whoId = approverId || isEventApproverNow();
+      who = eventApproverById(whoId);
+    }
+    if (!who) { toast('행사승인팀 소속 팀원 또는 사무실무원·현장실무원만 결재할 수 있습니다.', true); return null; }
     var v = normEventVote(vote);
     if (!Array.isArray(a.eventVotes)) a.eventVotes = [];
-    var hit = null;
-    a.eventVotes.forEach(function (x) { if (x.id === who.id) hit = x; });
-    if (hit) { hit.vote = v; hit.at = nowStamp(); }
-    else a.eventVotes.push({ id: who.id, name: who.name, role: who.role, vote: v, at: nowStamp() });
+    if (isProxy) {
+      a.eventVotes.push({ id: who.id, name: who.name, role: who.role, vote: v, at: nowStamp(), phoneProxy: true, phoneNote: String(phoneNote || '') });
+    } else {
+      var hit = null;
+      a.eventVotes.forEach(function (x) { if (x.id === who.id) hit = x; });
+      if (hit) { hit.vote = v; hit.at = nowStamp(); }
+      else a.eventVotes.push({ id: who.id, name: who.name, role: who.role, vote: v, at: nowStamp() });
+    }
     var e = eventStateOf(a), decided = '', votersN = Math.max(eventVotersCount(), eventApprovers().length), quorumN = eventQuorumCount();
     var failLimit = Math.max(1, votersN - quorumN + 1);
     if (e.yes >= quorumN) decided = '승인';
     else if (e.no + e.abs >= failLimit) decided = '미승인';
     else if (e.cast >= votersN) decided = '미승인';
-    if (decided) { decideEvent(a, decided); }
-    else {
+    var viaTxt = isProxy && phoneNote ? ' [대리결재: ' + phoneNote + ']' : '';
+    if (decided) {
+      decideEvent(a, decided);
+      if (viaTxt) audit('행사심사', a.id + ' ' + who.name + ' 대리 ' + v + viaTxt);
+    } else {
       audit('행사심사', a.id + ' ' + (a.eventName || '행사 우선접수') + ' — ' + who.name + ' ' + v +
-        ' (찬성 ' + e.yes + ' · 반려 ' + e.no + ' · 기권 ' + e.abs + ' · ' + e.cast + '/' + votersN + ')');
+        ' (찬성 ' + e.yes + ' · 반려 ' + e.no + ' · 기권 ' + e.abs + ' · ' + e.cast + '/' + votersN + ')' + viaTxt);
       save();
-      toast('행사 심사 투표 — ' + who.name + ' ' + v + ' · 찬성 ' + e.yes + '/' + quorumN + ' 필요');
+      toast('행사 심사 ' + (isProxy ? '대리 ' : '') + '결재 — ' + who.name + ' ' + v + ' · 찬성 ' + e.yes + '/' + quorumN + ' 필요');
     }
     renderAdmin(); renderMypage();
     return eventStateOf(a);
@@ -2065,12 +2094,20 @@
     var votedIds = {};
     e.votes.forEach(function (v) { votedIds[v.id] = normEventVote(v.vote); });
     var myEvId = isEventApproverNow();
+    if (!myEvId && isProxyStaffNow()) {
+      return '<div class="ev-act">' + tally +
+        '<div class="ev-me">대리 결재: <b>' + esc(proxyStaffLabel()) + '</b> (승인·반려 가능)</div>' +
+        '<div class="ev-act-btns">' +
+        '<button class="btn ok evbtn ev-big" type="button" data-evproxy="' + esc(a.id) + '" data-pxdec="approve">📞 대리 승인</button>' +
+        '<button class="btn no evbtn ev-big" type="button" data-evproxy="' + esc(a.id) + '" data-pxdec="reject">📞 대리 반려</button>' +
+        '</div></div>';
+    }
     if (!myEvId) {
       var ar = accessDisplay();
       return '<div class="ev-act">' + tally +
-        '<div class="ev-note"><b>행사승인팀</b> 소속 팀원만 투표할 수 있습니다.<br><span class="sm">현재: ' +
+        '<div class="ev-note"><b>행사승인팀</b> 또는 <b>사무실무원·현장실무원(대리결재)</b>만 결재할 수 있습니다.<br><span class="sm">현재: ' +
         esc((ar && ar.name) ? (ar.name + ' · ' + (ar.label || '')) : '권한 없음') +
-        ' — 상단 <b>시연용 팀 전환</b>에서 행사승인팀 팀원으로 바꿔 주세요.</span></div></div>';
+        ' — 상단 <b>시연용 팀 전환</b>에서 행사승인팀 또는 실무원으로 바꿔 주세요.</span></div></div>';
     }
     var mine = eventApproverById(myEvId);
     var myVote = votedIds[myEvId] || '';
@@ -2144,13 +2181,14 @@
     var a = findApp(id);
     if (!a || !a.polApp) return null;
     var roleNow = currentAccessRole();
-    if (roleNow === 'super') { toast('마스터는 결재·심사 권한이 없습니다(열람만 가능). 정치행정승인팀 팀원으로 전환해 주세요.', true); return null; }
-    if (roleNow !== 'political') { toast('정치행정승인팀 소속 팀원만 승인할 수 있습니다.', true); return null; }
+    if (roleNow === 'super') { toast('마스터는 결재·심사 권한이 없습니다(열람만 가능). 정치행정승인팀 또는 실무원으로 전환해 주세요.', true); return null; }
+    var isProxyRole = isProxyStaffNow();
+    if (roleNow !== 'political' && !isProxyRole) { toast('정치행정승인팀 또는 사무실무원·현장실무원만 승인할 수 있습니다.', true); return null; }
     if (a.status !== '정치심사중') { toast('시안 승인 후 정치행정 심사 단계에서만 승인할 수 있습니다.', true); return null; }
     var actor = accessDisplay();
-    var acc = accessOfficer();
+    var acc = isProxyRole ? { memberId: roleNow, name: proxyStaffLabel() } : accessOfficer();
     if (!acc || !acc.memberId) { toast('임명된 정치행정승인팀 팀원으로 전환해 주세요.', true); return null; }
-    var isPhoneProxy = !!phoneNote;
+    var isPhoneProxy = isProxyRole || !!phoneNote;
     a.polApprovals = a.polApprovals || [];
     var actorKey = isPhoneProxy ? ('proxy_' + acc.memberId + '_' + (a.polApprovals.length + 1)) : acc.memberId;
     var dup = a.polApprovals.some(function (x) { return (x.memberId || x.k) === actorKey; });
@@ -2175,18 +2213,56 @@
     save(); renderAdmin(); renderMypage();
     return a;
   }
-  function openPhoneProxyModal(kind, id, who) {
-    var kindLabel = (kind === 'pol') ? '정치행정 심사' : '2주 공문 심사';
+  function polReject(id, who, phoneNote) {
+    var a = findApp(id);
+    if (!a || !a.polApp || a.status !== '정치심사중') { toast('정치행정 심사 대기 중인 건이 아닙니다.', true); return null; }
+    var isProxy = isProxyStaffNow() || !!phoneNote;
+    var recName = isProxy ? (proxyStaffLabel() + '·대리반려') : (accessDisplay().name || '정치행정승인팀');
+    a.polApprovals = a.polApprovals || [];
+    a.polApprovals.push({ k: 'political_reject', label: '대리 반려', by: recName, byName: recName, at: nowStamp(), phoneProxy: isProxy, phoneNote: String(phoneNote || '') });
+    a.polStatus = '반려';
+    a.status = '반려';
+    a.rejectReason = phoneNote ? ('대리 결재 반려: ' + phoneNote) : '정치행정 심사 반려';
+    audit('정치행정', a.id + ' ' + a.company + ' — ' + recName + ' 반려' + (phoneNote ? ' [' + phoneNote + ']' : ''));
+    save(); renderAdmin(); renderMypage();
+    toast(a.company + ' 정치행정 심사를 ' + (isProxy ? '대리 ' : '') + '반려 처리했습니다.');
+    return a;
+  }
+  function rejectOfficial(id, who, phoneNote) {
+    var o = null;
+    (db.official || []).forEach(function (x) { if (x.id === id) o = x; });
+    if (!o || o.status !== 'pending') { toast('결재 대기 중인 공문이 아닙니다.', true); return null; }
+    var isProxy = isProxyStaffNow() || !!phoneNote;
+    var byName = isProxy ? (proxyStaffLabel() + '·대리반려') : (accessDisplay().name || '2주공문승인팀');
+    o.approvals = o.approvals || [];
+    o.approvals.push({ k: 'official_reject', label: '대리 반려', by: byName, byName: byName, at: nowStamp(), phoneProxy: isProxy, phoneNote: String(phoneNote || '') });
+    o.status = 'rejected';
+    o.rejectedAt = nowStamp();
+    audit('공문 결재', o.id + ' ' + o.org + ' — ' + byName + ' 반려' + (phoneNote ? ' [' + phoneNote + ']' : ''));
+    save(); renderOfficialAll(); renderAdmin();
+    toast(o.org + ' 2주 공문을 ' + (isProxy ? '대리 ' : '') + '반려 처리했습니다.');
+    return o;
+  }
+  function openPhoneProxyModal(kind, id, who, defDecision) {
+    var kindMap = { review: '시안 심사', off: '2주 공문 심사', pol: '정치행정 심사', event: '행사 심사' };
+    var kindLabel = kindMap[kind] || '결재 심사';
+    var actorLabel = isProxyStaffNow() ? proxyStaffLabel() : '사무실무원';
+    var dec = (defDecision === 'reject') ? 'reject' : 'approve';
     openModal({
-      title: '📞 유선 통화 후 대리 결재 (' + kindLabel + ')',
-      sub: '부재 팀원과 유선 통화로 승인 의사를 확인한 뒤 대리 결재합니다.',
-      body: '<div class="field"><label for="phoneProxyTarget">유선 확인 구분</label>' +
-        '<input class="input" id="phoneProxyTarget" value="' + esc(kindLabel + ' · 부재 팀원 유선 확인') + '" readonly></div>' +
-        '<div class="field"><label for="phoneProxyNote">유선 통화 확인 메모*</label>' +
-        '<input class="input ko-ime" id="phoneProxyNote" lang="ko" value="부재 팀원 유선 통화 후 대리 결재 동의 확인" placeholder="예: 김서산 팀원 출장 부재로 09:40 유선 통화 승인 확인"></div>' +
-        '<div class="callout warn" style="margin-top:8px"><div>확정 시 감사 로그에 <b>유선 대리 결재</b>와 통화 메모가 함께 기록됩니다.</div></div>',
+      title: '📞 ' + actorLabel + ' 대리 결재 (' + kindLabel + ')',
+      sub: '부재 결재권자의 위임·유선 확인 후 승인 또는 반려를 대리 결재합니다.',
+      body: '<div class="field"><label for="phoneProxyTarget">대리 결재 구분</label>' +
+        '<input class="input" id="phoneProxyTarget" value="' + esc(kindLabel + ' · ' + actorLabel + ' 대리 결재') + '" readonly></div>' +
+        '<div class="field"><label>결재 처리 선택*</label>' +
+        '<div style="display:flex;gap:12px;margin-top:4px">' +
+        '<label class="check" style="margin:0"><input type="radio" name="pxDecision" value="approve"' + (dec === 'approve' ? ' checked' : '') + '> <span>✅ 대리 승인</span></label>' +
+        '<label class="check" style="margin:0"><input type="radio" name="pxDecision" value="reject"' + (dec === 'reject' ? ' checked' : '') + '> <span>❌ 대리 반려</span></label>' +
+        '</div></div>' +
+        '<div class="field"><label for="phoneProxyNote">유선 통화 · 대리 결재 사유*</label>' +
+        '<input class="input ko-ime" id="phoneProxyNote" lang="ko" value="' + esc(actorLabel + ' 유선 확인 후 대리 결재 처리') + '" placeholder="예: 담당 팀원 부재로 유선 통화 후 대리 결재 확인"></div>' +
+        '<div class="callout warn" style="margin-top:8px"><div>확정 시 감사 로그에 <b>' + esc(actorLabel) + ' 대리 결재(승인/반려)</b>와 사유가 함께 기록됩니다.</div></div>',
       foot: '<button class="btn ghost" type="button" data-close>취소</button>' +
-        '<button class="btn primary" type="button" id="btnPhoneProxyConfirm" data-pxkind="' + esc(kind) + '" data-pxid="' + esc(id) + '" data-pxwho="' + esc(who || '') + '">📞 유선 결재 처리</button>'
+        '<button class="btn primary" type="button" id="btnPhoneProxyConfirm" data-pxkind="' + esc(kind) + '" data-pxid="' + esc(id) + '" data-pxwho="' + esc(who || '') + '">📞 대리 결재 확정</button>'
     });
   }
   /* ── 📋 2주 공문 심사 ─────────────────────────────────────────────────────── */
@@ -2289,9 +2365,12 @@
         var btns;
         if (ar === 'official') {
           btns = '<button class="btn sm primary" data-offapprove="' + o.id + '" type="button"' + (alreadyMe ? ' disabled' : '') + '>' + (alreadyMe ? '승인 완료 ✓' : '✅ 팀원 승인') + '</button> ' +
-                 '<button class="btn sm ok" data-offphone="' + o.id + '" type="button">📞 유선 대리</button>';
+                 '<button class="btn sm ok" data-offphone="' + o.id + '" type="button">📞 대리 결재</button>';
+        } else if (isProxyStaffNow()) {
+          btns = '<button class="btn sm ok" data-offphone="' + o.id + '" data-pxdec="approve" type="button">📞 대리 승인</button> ' +
+                 '<button class="btn sm danger" data-offphone="' + o.id + '" data-pxdec="reject" type="button">📞 대리 반려</button>';
         } else {
-          btns = '<span class="sm">2주공문승인팀 전용</span>';
+          btns = '<span class="sm">2주공문승인팀 · 실무원 대리결재 전용</span>';
         }
         return '<tr data-reviewrow="' + esc(o.id) + '"><td><span class="co">' + esc(o.org) + '</span><span class="sm">' + esc(o.docNo || '공문') + ' · ' + esc(o.at) + '</span></td>' +
           '<td class="sm">' + esc(o.text) + '</td>' +
@@ -2322,9 +2401,12 @@
         if (!locked) {
           if (ar === 'political') {
             btns = '<button class="btn sm ' + (alreadyMe ? 'ghost' : 'ok') + ' polbtn" type="button" data-polapprove="' + esc(a.id) + '"' + (alreadyMe ? ' disabled' : '') + '>' + (alreadyMe ? '승인 완료 ✓' : '✅ 팀원 승인') + '</button> ' +
-              '<button class="btn sm ok polbtn" type="button" data-polphone="' + esc(a.id) + '">📞 유선 대리</button>';
+              '<button class="btn sm ok polbtn" type="button" data-polphone="' + esc(a.id) + '">📞 대리 결재</button>';
+          } else if (isProxyStaffNow()) {
+            btns = '<button class="btn sm ok polbtn" type="button" data-polphone="' + esc(a.id) + '" data-pxdec="approve">📞 대리 승인</button> ' +
+              '<button class="btn sm danger polbtn" type="button" data-polphone="' + esc(a.id) + '" data-pxdec="reject">📞 대리 반려</button>';
           } else {
-            btns = '<span class="sm">정치행정승인팀 전용</span>';
+            btns = '<span class="sm">정치행정승인팀 · 실무원 대리결재 전용</span>';
           }
         }
         return '<tr><td class="mono">' + esc(a.id) + '</td>' +
@@ -2342,8 +2424,12 @@
      · 행사승인팀 / 2주공문승인팀 / 정치행정승인팀
      · 임명은 마스터가 회원사·직원 목록에서 중복 임명
      =============================================================== */
+  var PROXY_ROLES = [
+    { k: 'proxy_office', label: '사무실무원', icon: '🛠️', step: 'proxy' },
+    { k: 'proxy_field',  label: '현장실무원', icon: '🛠️', step: 'proxy' }
+  ];
   var OFFICER_ROLES = APPROVAL_TEAMS;
-  var ACCESS_ROLES = [{ k: 'super', label: '마스터', step: '' }].concat(APPROVAL_TEAMS);
+  var ACCESS_ROLES = [{ k: 'super', label: '마스터', step: '' }].concat(APPROVAL_TEAMS).concat(PROXY_ROLES);
   var OFFICER_STATUS = { pending: '승인 대기', approved: '승인 완료', revoked: '해제' };
   var OFFICER_APPROVE_ROLES = APPROVAL_TEAMS.map(function (t) { return { k: t.k, label: t.label, officerRole: t.k }; });
   function officerRoleKeyOf(permKey) { return teamMeta(permKey) ? permKey : 'event'; }
@@ -2387,6 +2473,8 @@
   function accessDisplay() {
     var k = currentAccessRole();
     if (k === 'super') return { role: 'super', label: '마스터', name: '마스터', company: '협회 관리자' };
+    if (k === 'proxy_office') return { role: k, label: '사무실무원', name: '한은지', company: '서산시지부 사무국(대리결재)' };
+    if (k === 'proxy_field') return { role: k, label: '현장실무원', name: '최수석', company: '서산시지부 현장팀(대리결재)' };
     var o = accessOfficer();
     if (!o) return { role: k, label: officerRoleMeta(k).label, name: '미임명', company: '임명된 팀원 없음' };
     return { role: k, label: officerRoleMeta(k).label, name: o.name, company: o.company || '' };
@@ -2394,6 +2482,7 @@
   function canApproveStep(step) {
     var role = currentAccessRole();
     if (role === 'super') return false;
+    if (isProxyStaffNow()) return true;
     return role === step && !!accessOfficer();
   }
   function setAdminRole(k) {
@@ -2436,6 +2525,9 @@
             opts.push('<option value="' + esc(ov) + '"' + (curVal === ov ? ' selected' : '') + '>' + t.icon + ' ' + t.label + ' · ' + esc(m.name) + '</option>');
           });
         }
+      });
+      PROXY_ROLES.forEach(function (pr) {
+        opts.push('<option value="' + pr.k + '"' + (curVal === pr.k ? ' selected' : '') + '>' + pr.icon + ' ' + pr.label + ' (전 단계 대리결재)</option>');
       });
       sel.innerHTML = opts.join('');
     }
@@ -4576,6 +4668,23 @@
         if (!db.apps.some(function (a) { return a.id === extraEv.id; })) db.apps.unshift(extraEv);
       }
       db.seedVersion = 9;
+      save();
+    }
+    /* 시연 데이터 v10 (2026-11-25) — 회원 4등급, 가산점관리팀, 전 단계 실무원 대리결재 */
+    if (Number(db.seedVersion || 9) < 10) {
+      db.teamQuotas = db.teamQuotas || {};
+      db.teamNeeds = db.teamNeeds || {};
+      if (!db.teamQuotas.bonus) db.teamQuotas.bonus = 3;
+      if (!db.teamNeeds.bonus) db.teamNeeds.bonus = 1;
+      (db.members || []).forEach(function (m) {
+        if (m.assocMember && !m.isStaff && m.type !== 'staff') m.type = 'assoc';
+        if ((m.id === 'M-1001' || m.id === 'M-2008' || m.id === 'M-2011') && Array.isArray(m.teams) && m.teams.indexOf('bonus') < 0) {
+          m.teams.push('bonus');
+        } else if ((m.id === 'M-1001' || m.id === 'M-2008' || m.id === 'M-2011') && !Array.isArray(m.teams)) {
+          m.teams = ['bonus'];
+        }
+      });
+      db.seedVersion = 10;
       save();
     }
   }
@@ -9362,7 +9471,14 @@
      · 시연용 간편 로그인 프리셋 3개 (원클릭) + 아이디·비밀번호 로그인 + 간편 회원가입
      · 로그인하면 1단계 입력칸(구분·업체명·대표자·연락처·사업자번호·이메일·옥외광고업 등록번호)이 자동 작성됩니다.
      · 로그아웃하면 자동 작성한 값이 지워지고, 비회원 직접 입력도 그대로 쓸 수 있습니다. */
-  var TYPE_LABEL = { direct: '일반업체', agency: '옥외광고대행사', staff: '직원' };
+  var TYPE_LABEL = { direct: '일반광고주', agency: '광고대행사', assoc: '협회회원', staff: '협회직원' };
+  function memberTypeOf(m) {
+    if (!m) return 'direct';
+    if (m.type === 'staff' || m.isStaff) return 'staff';
+    if (m.type === 'assoc' || m.assocMember) return 'assoc';
+    if (m.type === 'agency') return 'agency';
+    return 'direct';
+  }
   function memberList() { if (!db.members) db.members = []; return db.members; }
   function agencyAppCount(memberId) {
     if (!memberId) return 0;
@@ -9381,7 +9497,7 @@
     return out;
   }
   function currentMember() { return (db && db.session) ? memberById(db.session) : null; }
-  function memberTypeLabel(m) { return TYPE_LABEL[(m && m.type) || 'direct'] || '일반업체'; }
+  function memberTypeLabel(m) { return TYPE_LABEL[memberTypeOf(m)] || '일반광고주'; }
   /* 접수 건의 회원 — 접수 때 저장한 memberId, 없으면 같은 업체명 회원 */
   function memberOfApp(a) {
     if (!a) return null;
@@ -10376,20 +10492,21 @@
     if (!o || o.status !== 'pending') { toast('이미 확정되었거나 결재 중인 공문이 아닙니다.', true); return null; }
     var roleNow = currentAccessRole();
     if (roleNow === 'super') {
-      toast('마스터는 결재·심사 권한이 없습니다(열람만 가능). 2주공문승인팀 팀원으로 전환해 주세요.', true);
+      toast('마스터는 결재·심사 권한이 없습니다(열람만 가능). 2주공문승인팀 또는 실무원으로 전환해 주세요.', true);
       return null;
     }
-    if (roleNow !== 'official') {
-      toast('2주공문승인팀 소속 팀원만 승인할 수 있습니다.', true);
+    var isProxyRole = isProxyStaffNow();
+    if (roleNow !== 'official' && !isProxyRole) {
+      toast('2주공문승인팀 또는 사무실무원·현장실무원만 승인할 수 있습니다.', true);
       return null;
     }
     var actor = accessDisplay();
-    var officer = accessOfficer();
+    var officer = isProxyRole ? { memberId: roleNow, name: proxyStaffLabel() } : accessOfficer();
     if (!officer || !officer.memberId) {
       toast('임명된 2주공문승인팀 팀원으로 전환해 주세요.', true);
       return null;
     }
-    var isPhoneProxy = !!phoneNote;
+    var isPhoneProxy = isProxyRole || !!phoneNote;
     o.approvals = o.approvals || [];
     var actorKey = isPhoneProxy ? ('proxy_' + officer.memberId + '_' + (o.approvals.length + 1)) : officer.memberId;
     var dup = o.approvals.some(function (x) { return (x.memberId || x.k) === actorKey; });
@@ -11475,6 +11592,7 @@
     renderOfficialReview();
     renderEventApprovers();
     renderAssocPanel();
+    renderUrgentGrantPanel();
     renderDesigBatch();
     renderPhotoPanel();
     renderAssocFixedPanel();
@@ -12180,17 +12298,22 @@
           '<td class="sm">' + esc(a.appliedAt) + (a.license ? '<br><span class="sm">등록증: ' + esc(a.license) + '</span>' +
             (a.licenseData ? ' <a href="#" data-licopen="' + esc(a.id) + '">보기</a>' : '') : '') + '</td>' +
           '<td style="text-align:right;white-space:nowrap">' +
-          '<button class="btn ok sm" data-approve="' + a.id + '" type="button">승인</button> ' +
-          '<button class="btn danger sm" data-reject="' + a.id + '" type="button">반려</button></td></tr>';
+          (isProxyStaffNow()
+            ? '<button class="btn ok sm" data-revproxy="' + a.id + '" data-pxdec="approve" type="button">📞 대리 승인</button> ' +
+              '<button class="btn danger sm" data-revproxy="' + a.id + '" data-pxdec="reject" type="button">📞 대리 반려</button>'
+            : '<button class="btn ok sm" data-approve="' + a.id + '" type="button">승인</button> ' +
+              '<button class="btn danger sm" data-reject="' + a.id + '" type="button">반려</button>') +
+          '</td></tr>';
       }).join('') + '</tbody></table></div>';
   }
 
-  /* 시한임박 가산점 인정/해제는 아래 [시한임박 현수막 가산점] 패널에서 합니다(직책자 권한 한도). */
+  /* 시한임박 가산점 인정/해제는 [기한임박 현수막 가산점 관리] 패널에서 합니다(가산점관리팀). */
 
-  /* 시안 심사(승인·반려) 가능 여부 — 마스터는 열람만, 나머지는 '시안심사' 페이지 권한을 따른다 */
+  /* 시안 심사(승인·반려) 가능 여부 — 마스터는 열람만, 실무원(대리결재) 및 권한 팀 가능 */
   function canDoReviewWork() {
     var r = currentAccessRole();
     if (r === 'super') return false;
+    if (isProxyStaffNow()) return true;
     return canSeePage('review');
   }
   function approveApp(id) {
@@ -14173,36 +14296,45 @@
     var q = String(ui.maSearch || '').trim().toLowerCase();
     var flt = ui.maFilter || 'all';
     var canApp = isTotalManager();
-    var nComp = 0, nStaff = 0, nAppointed = 0;
+    var nDirect = 0, nAgency = 0, nAssoc = 0, nStaff = 0, nAppointed = 0;
     all.forEach(function (m) {
-      if (m.type === 'staff' || m.isStaff) nStaff += 1; else nComp += 1;
+      var mt = memberTypeOf(m);
+      if (mt === 'staff') nStaff += 1;
+      else if (mt === 'assoc') nAssoc += 1;
+      else if (mt === 'agency') nAgency += 1;
+      else nDirect += 1;
       if (memberTeamsOf(m).length) nAppointed += 1;
     });
     if ($('#memberAppointInfo')) {
-      $('#memberAppointInfo').textContent = '회원사 ' + nComp + '곳 · 직원 ' + nStaff + '명 · 팀 소속 ' + nAppointed + '명 (중복 임명 가능)';
+      $('#memberAppointInfo').textContent = '일반광고주 ' + nDirect + ' · 광고대행사 ' + nAgency + ' · 협회회원 ' + nAssoc + ' · 협회직원 ' + nStaff + ' · 팀 소속 ' + nAppointed + '명';
     }
     var filtered = all.filter(function (m) {
       var tms = memberTeamsOf(m);
-      var isSt = (m.type === 'staff' || m.isStaff);
-      if (flt === 'company' && isSt) return false;
-      if (flt === 'staff' && !isSt) return false;
+      var mt = memberTypeOf(m);
+      if (flt === 'direct' && mt !== 'direct') return false;
+      if (flt === 'agency' && mt !== 'agency') return false;
+      if (flt === 'assoc' && mt !== 'assoc') return false;
+      if (flt === 'staff' && mt !== 'staff') return false;
       if (flt === 'appointed' && !tms.length) return false;
       if (teamMeta(flt) && tms.indexOf(flt) < 0) return false;
       if (q) {
         var tNames = tms.map(function (tk) { var tm = teamMeta(tk); return tm ? tm.label : tk; }).join(' ');
-        var hay = [m.company, m.owner, m.loginId, m.id, tNames].join(' ').toLowerCase();
+        var hay = [m.company, m.owner, m.loginId, m.id, memberTypeLabel(m), tNames].join(' ').toLowerCase();
         if (hay.indexOf(q) < 0) return false;
       }
       return true;
     });
     var tabs = [
       ['all', '전체 (' + all.length + ')'],
-      ['company', '회원사 (' + nComp + ')'],
-      ['staff', '직원 (' + nStaff + ')'],
+      ['direct', '일반광고주 (' + nDirect + ')'],
+      ['agency', '광고대행사 (' + nAgency + ')'],
+      ['assoc', '협회회원 (' + nAssoc + ')'],
+      ['staff', '협회직원 (' + nStaff + ')'],
       ['appointed', '팀 소속 (' + nAppointed + ')'],
       ['event', '🎪 행사승인팀 (' + teamMembersOf('event').length + ')'],
       ['official', '📋 2주공문팀 (' + teamMembersOf('official').length + ')'],
-      ['political', '⚖️ 정치행정팀 (' + teamMembersOf('political').length + ')']
+      ['political', '⚖️ 정치행정팀 (' + teamMembersOf('political').length + ')'],
+      ['bonus', '🎖 가산점관리팀 (' + teamMembersOf('bonus').length + ')']
     ];
     var bar = '<div class="ma-toolbar">' +
       '<div class="chips">' + tabs.map(function (t) {
@@ -14212,10 +14344,9 @@
       '</div>';
     var rows = filtered.map(function (m) {
       var tms = memberTeamsOf(m);
-      var isSt = (m.type === 'staff' || m.isStaff);
-      var typeBadge = isSt
-        ? '<span class="badge b-blue"><i></i>직원</span>'
-        : (m.type === 'agency' ? '<span class="badge b-purple"><i></i>대행사</span>' : '<span class="badge b-gray"><i></i>일반업체</span>');
+      var mt = memberTypeOf(m);
+      var badgeCls = mt === 'staff' ? 'b-blue' : (mt === 'assoc' ? 'b-green' : (mt === 'agency' ? 'b-purple' : 'b-gray'));
+      var typeBadge = '<span class="badge ' + badgeCls + '"><i></i>' + esc(TYPE_LABEL[mt] || '일반광고주') + '</span>';
       var teamBtns = APPROVAL_TEAMS.map(function (t) {
         var on = tms.indexOf(t.k) >= 0;
         return '<button type="button" class="btn sm ' + (on ? 'primary' : 'ghost') + '" data-ma-team="' + esc(t.k) + '" data-ma-mid="' + esc(m.id) + '"' + (canApp ? '' : ' disabled') + '>' +
@@ -14715,7 +14846,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -14736,16 +14867,40 @@
     /* 행사 우선접수 — 5명 권한자 투표·권한자 변경 (2026-11-22) */
     if (el.hasAttribute('data-fccover')) { askFcCover(el.getAttribute('data-fccover')); return; }
     if (el.hasAttribute('data-polapprove')) { polApprove(el.getAttribute('data-polapprove'), el.getAttribute('data-polwho')); return; }
-    if (el.hasAttribute('data-polphone')) { openPhoneProxyModal('pol', el.getAttribute('data-polphone'), el.getAttribute('data-polwho')); return; }
-    if (el.hasAttribute('data-offphone')) { openPhoneProxyModal('off', el.getAttribute('data-offphone'), el.getAttribute('data-offwho')); return; }
+    if (el.hasAttribute('data-polphone')) { openPhoneProxyModal('pol', el.getAttribute('data-polphone'), el.getAttribute('data-polwho'), el.getAttribute('data-pxdec')); return; }
+    if (el.hasAttribute('data-offphone')) { openPhoneProxyModal('off', el.getAttribute('data-offphone'), el.getAttribute('data-offwho'), el.getAttribute('data-pxdec')); return; }
+    if (el.hasAttribute('data-evproxy')) { openPhoneProxyModal('event', el.getAttribute('data-evproxy'), '', el.getAttribute('data-pxdec')); return; }
+    if (el.hasAttribute('data-revproxy')) { openPhoneProxyModal('review', el.getAttribute('data-revproxy'), '', el.getAttribute('data-pxdec')); return; }
     if (el.id === 'btnPhoneProxyConfirm') {
       var pxKind = el.getAttribute('data-pxkind');
       var pxId = el.getAttribute('data-pxid');
       var pxWho = el.getAttribute('data-pxwho');
-      var pxNote = ($('#phoneProxyNote') ? $('#phoneProxyNote').value : '').trim() || '결재권자 부재로 유선 통화 후 대리 결재 동의 확인';
+      var pxDecEl = document.querySelector('input[name="pxDecision"]:checked');
+      var pxDec = pxDecEl ? pxDecEl.value : 'approve';
+      var pxNote = ($('#phoneProxyNote') ? $('#phoneProxyNote').value : '').trim() || '결재권자 부재로 실무원 대리 결재 처리';
       closeModal();
-      if (pxKind === 'pol') polApprove(pxId, pxWho, pxNote);
-      else approveOfficial(pxId, pxWho, pxNote);
+      if (pxKind === 'pol') {
+        if (pxDec === 'reject') polReject(pxId, pxWho, pxNote);
+        else polApprove(pxId, pxWho, pxNote);
+      } else if (pxKind === 'off') {
+        if (pxDec === 'reject') rejectOfficial(pxId, pxWho, pxNote);
+        else approveOfficial(pxId, pxWho, pxNote);
+      } else if (pxKind === 'event') {
+        eventVote(pxId, '', pxDec === 'reject' ? '반려' : '찬성', pxNote);
+      } else if (pxKind === 'review') {
+        if (pxDec === 'reject') {
+          var appR = findApp(pxId);
+          if (appR) {
+            appR.status = '반려';
+            appR.rejectReason = proxyStaffLabel() + ' 대리 반려: ' + pxNote;
+            audit('시안심사', appR.id + ' ' + appR.company + ' — ' + proxyStaffLabel() + ' 대리 반려 [' + pxNote + ']');
+            save(); renderAdmin(); renderMypage();
+            toast(appR.company + ' 시안을 대리 반려 처리했습니다.');
+          }
+        } else {
+          approveApp(pxId);
+        }
+      }
       return;
     }
     if (el.classList && el.classList.contains('grant-chip')) {

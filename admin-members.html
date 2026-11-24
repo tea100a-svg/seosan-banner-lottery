@@ -132,9 +132,23 @@
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회에 등록된 회원사에는 <b>마스터가 정한 고정 회원 추천 가산점(N%)</b>이 일괄 자동 적용됩니다. 직책자별 가산점 부여 권한은 폐지되었으며, 추첨 가중치는 <b>1.00 + 고정 가산점(%) / 100</b>으로 계산됩니다.</div>
+        <div>회원 등급은 <b>일반광고주 · 광고대행사 · 협회회원 · 협회직원</b> 4단계로 나뉩니다. <b>가산점관리팀</b>(마스터 임명)이 <b>협회회원(회원사) 가산점</b>과 아래 <b>기한임박 현수막 가산점</b>을 함께 관리합니다.</div>
       </div>
       <div class="table-wrap" id="assocTable"></div>
+    </div>
+<div class="panel" id="urgentGrantPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          ⏰ 기한임박 현수막 가산점 관리 (가산점관리팀)
+        </h3>
+        <span class="sub" id="urgentGrantInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>문구에 행사일이 있고 차차주 이내에 게첨이 필요한 <b>기한임박 현수막</b>에 대해 <b>가산점관리팀</b>이 가산점(0~5%)을 부여·해제합니다.</div>
+      </div>
+      <div class="table-wrap" id="urgentGrantTable"></div>
     </div>
 <div class="panel">
       <div class="admin-head">
@@ -200,6 +214,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261125r1"></script>
+<script src="assets/app.js?v=20261125r2"></script>
 </body>
 </html>

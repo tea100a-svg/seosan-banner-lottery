@@ -110,8 +110,8 @@
 </div>
 <div class="view-head">
       <div>
-        <h2>🛡️ 관리자 권한 — 승인팀 · 정원/승인수치 · 회원 추천 가산점</h2>
-        <p><b>마스터</b> 전용 — 기존 직책을 폐지하고 <b>행사승인팀 · 2주공문승인팀 · 정치행정승인팀</b> 3개 팀의 정원·승인 필요 인원, 목록 중복 임명, 메뉴 권한, 회원 추천 가산점을 관리합니다.</p>
+        <h2>🛡️ 관리자 권한 — 4개 팀 임명 · 정원/승인수치 · 회원 추천 가산점</h2>
+        <p><b>마스터</b> 전용 — <b>행사승인팀 · 2주공문승인팀 · 정치행정승인팀 · 가산점관리팀</b> 4개 팀의 정원·승인 필요 인원, 목록 중복 임명, 메뉴 권한을 관리합니다.</p>
       </div>
     </div>
 <div class="role-bar" id="adminRoleBar">
@@ -124,7 +124,7 @@
     </div>
 <div class="callout info" id="rolesIntro">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-  <div><b>마스터 전용 화면</b>입니다 — ① <b>팀별 정원 · 승인 필요 인원</b> 수치 설정 → ② <b>회원사·직원 목록</b>에서 3개 팀 중복 임명/해제 → ③ 팀별 메뉴 권한 매트릭스 → ④ <b>회원 추천 가산점(N% 고정)</b> 순서로 관리합니다.</div>
+  <div><b>마스터 전용 화면</b>입니다 — ① <b>팀별 정원 · 승인 필요 인원</b> 수치 설정 → ② <b>회원사·직원 목록</b>에서 4개 팀 중복 임명/해제 → ③ 팀별 메뉴 권한 매트릭스 → ④ <b>회원 추천 가산점(가산점관리팀 · 마스터)</b> 순서로 관리합니다.</div>
 </div>
 <div class="callout warn hidden" id="rolesLock"></div>
 <div class="panel" id="roleQuotaPanel">
@@ -133,7 +133,7 @@
     <span class="sub" id="roleQuotaInfo">마스터가 각 팀의 정원과 승인 확정 인원 수치를 자유롭게 정합니다</span>
   </div>
   <div class="callout info" style="margin-bottom:10px">
-    <div><b>행사승인팀 · 2주공문승인팀 · 정치행정승인팀</b> 각각의 <b>팀 정원</b>과 <b>승인 필요 인원(찬성·결재 수)</b>을 마스터가 원하는 수치로 설정할 수 있습니다.</div>
+    <div><b>행사승인팀 · 2주공문승인팀 · 정치행정승인팀 · 가산점관리팀</b> 각각의 <b>팀 정원</b>과 <b>승인 필요 인원(찬성·결재 수)</b>을 마스터가 원하는 수치로 설정할 수 있습니다.</div>
   </div>
   <div id="roleQuotaBox"></div>
 </div>
@@ -143,7 +143,7 @@
     <span class="sub" id="memberAppointInfo"></span>
   </div>
   <div class="callout info" style="margin-bottom:10px">
-    <div>마스터가 회원사·직원 목록에서 <b>행사승인팀 · 2주공문승인팀 · 정치행정승인팀</b> 버튼을 눌러 바로 임명·해제합니다. 한 사람에게 <b>여러 팀 중복 임명</b>이 가능합니다.</div>
+    <div>마스터가 회원사·직원 목록(<b>일반광고주 · 광고대행사 · 협회회원 · 협회직원</b>)에서 <b>행사승인팀 · 2주공문승인팀 · 정치행정승인팀 · 가산점관리팀</b> 버튼을 눌러 바로 임명·해제합니다. 한 사람에게 <b>여러 팀 중복 임명</b>이 가능합니다.</div>
   </div>
   <div id="memberAppointBox"></div>
 </div>
@@ -162,13 +162,13 @@
       <div class="admin-head">
         <h3>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9Z"/></svg>
-          🎖 회원 추천 가산점 고정 설정 (마스터 전용)
+          🎖 회원 추천 가산점 고정 설정 (가산점관리팀 · 마스터)
         </h3>
         <span class="sub" id="assocFixedInfo"></span>
       </div>
       <div class="callout info" style="margin-bottom:10px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>협회 등록 회원사(<b>회원 추천</b>)에 적용되는 추첨 가산점을 <b>마스터가 하나의 고정 비율(N%)</b>로 정합니다. 직책자별 가산점 부여 한도·개별 부여 권한은 폐지되어, 협회 회원사 전체에 이 고정 %가 일괄 적용됩니다.</div>
+        <div>협회 등록 회원사(<b>협회회원</b>)에 적용되는 추첨 가산점 비율(N%)을 <b>가산점관리팀</b>(및 마스터)이 관리합니다.</div>
       </div>
       <div id="assocFixedBox"></div>
     </div>
@@ -222,6 +222,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261125r1"></script>
+<script src="assets/app.js?v=20261125r2"></script>
 </body>
 </html>
