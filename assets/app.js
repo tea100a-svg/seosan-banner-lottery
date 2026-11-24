@@ -2330,7 +2330,12 @@
       /* 자동 팝업은 결재·심사권자에게만—— 마스터(super)는 직책바의 '결재·심사 대기 N건' 버튼으로 직접 연다 */
       if (role === 'super' && !force) return false;
       /* 이미 해당 결재·심사 페이지로 이동한 상태에서는 자동 팝업을 띄우지 않는다 */
-      if (!force && (PAGE === 'officialreview' || PAGE === 'political' || PAGE === 'event' || list.some(function (x) { return x.key === PAGE; }))) return false;
+      var curPath = (typeof location !== 'undefined' && location.pathname) ? location.pathname : '';
+      if (!force && (
+        PAGE === 'admin-official-review' || PAGE === 'admin-political' || PAGE === 'admin-event' || PAGE === 'admin-review' ||
+        PAGE === 'officialreview' || PAGE === 'political' || PAGE === 'event' ||
+        list.some(function (x) { return x.key === PAGE || (x.page && curPath.indexOf(x.page) !== -1); })
+      )) return false;
       /* 관리자 화면에서는 공문·정치행정 결재만 자동 팝업(행사 심사는 탭으로 확인),
          첫 화면·접수 화면 등에서는 행사 심사 포함 모두 팝업 */
       if (!force && isAdminPage() && !list.some(function (x) { return x.key !== 'event'; })) return false;
