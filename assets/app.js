@@ -2329,11 +2329,21 @@
       if (!list.length) return false;
       /* 자동 팝업은 결재·심사권자에게만—— 마스터(super)는 직책바의 '결재·심사 대기 N건' 버튼으로 직접 연다 */
       if (role === 'super' && !force) return false;
+      /* 이미 해당 결재·심사 페이지로 이동한 상태에서는 자동 팝업을 띄우지 않는다 */
+      if (!force && (PAGE === 'officialreview' || PAGE === 'political' || PAGE === 'event' || list.some(function (x) { return x.key === PAGE; }))) return false;
       /* 관리자 화면에서는 공문·정치행정 결재만 자동 팝업(행사 심사는 탭으로 확인),
          첫 화면·접수 화면 등에서는 행사 심사 포함 모두 팝업 */
       if (!force && isAdminPage() && !list.some(function (x) { return x.key !== 'event'; })) return false;
-      if (ui.approvalPopupShownFor === role) return false;
+      var ackKey = '';
+      try { ackKey = effectiveAdminRoleStr() + ':' + list.map(function (x) { return x.key; }).join(','); } catch (e) { ackKey = role; }
+      if (!force) {
+        if (ui.approvalPopupShownFor === role) return false;
+        try { if (sessionStorage.getItem('seosan.approvalPopAck') === ackKey) return false; } catch (e) { }
+      }
       ui.approvalPopupShownFor = role;
+      if (!force) {
+        try { sessionStorage.setItem('seosan.approvalPopAck', ackKey); } catch (e) { }
+      }
       var total = list.reduce(function (s2, x) { return s2 + x.n; }, 0);
       var summary = list.map(function (x) { return '<b>' + esc(x.label) + '</b> ' + x.n + '건'; }).join(' · ');
       openModal({
@@ -2570,6 +2580,7 @@
     var meta = officerRoleMeta(p.role);
     ui.adminRole = (p.role === 'super') ? 'super' : (p.memberId ? ('team:' + p.role + ':' + p.memberId) : p.role);
     try { localStorage.setItem(OFFICER_KEY, ui.adminRole); } catch (e) { }
+    try { sessionStorage.removeItem('seosan.approvalPopAck'); } catch (e) { }
     var who = accessDisplay();
     audit('권한', '접속 권한 → ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : ''));
     save();
@@ -9733,6 +9744,7 @@
     try {
       if (m.roleKey || ui.roleLoginPriority) { refreshRoleDependentViews(); applySubtabs('admin'); }
       ui.approvalPopupShownFor = '';
+      try { sessionStorage.removeItem('seosan.approvalPopAck'); } catch (e) { }
       setTimeout(maybeShowApprovalPopup, 400);
     } catch (e) { }
     /* 로그인 팝업에서 로그인한 경우 — 대기 중이던 진행을 그대로 이어서 */
