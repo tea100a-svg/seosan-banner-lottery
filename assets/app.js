@@ -5266,7 +5266,7 @@
     });
     return out;
   }
-  var SORT_OPTS = [{ k: 'default', t: '기본순' }, { k: 'comp-desc', t: '경쟁률 높은 순' }, { k: 'comp-asc', t: '경쟁률 낮은 순' }];
+  var SORT_OPTS = [{ k: 'comp-desc', t: '경쟁률 높은 순' }, { k: 'comp-asc', t: '경쟁률 낮은 순' }, { k: 'default', t: '기본순' }];
   function sortChipsHTML(cur, attr) {
     return SORT_OPTS.map(function (o) {
       return '<button class="chip' + (o.k === cur ? ' active' : '') + '" data-' + attr + '="' + o.k + '" type="button">' + o.t + '</button>';
