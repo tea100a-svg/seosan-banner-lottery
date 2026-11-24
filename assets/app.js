@@ -2502,6 +2502,12 @@
     renderAssocPanel();
     renderGrantPanel();
     renderBonusCapPanel();
+    renderRoleQuotaPanel();
+    renderMemberAppointPanel();
+    renderAssocFixedPanel();
+    renderEventPanel();
+    renderPolPanel();
+    try { renderReview((db.apps || []).filter(function (a) { return a.status === '심사중'; })); } catch (e) { }
     try { applySubtabPerms(); renderPermMatrix(); enforcePagePermission(); } catch (e) { }
     try { ui.approvalPopupShownFor = ''; } catch (e) { }
     toast('접속 권한을 ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : '') + '(으)로 전환했습니다.');
