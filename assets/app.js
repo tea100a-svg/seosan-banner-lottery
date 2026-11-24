@@ -1530,6 +1530,10 @@
   /* 지금 접속 권한으로 가산점을 부여할 수 있는가 — 승인 완료된 직책자 또는 마스터
      + 권한 매트릭스의 **가산점부여** 행에서 권한해제된 직책은 부여할 수 없다 (2026-11-23 김재봉 님 지시) */
   function isBonusManagerNow() {
+    if (ui.roleLoginPriority && currentMember()) {
+      var m = currentMember();
+      if (m.admin || memberTeamsOf(m).indexOf('bonus') >= 0) return true;
+    }
     var r = currentAccessRole();
     return r === 'bonus' || r === 'super';
   }
@@ -1541,6 +1545,9 @@
     return currentAccessRole() === 'proxy_field' ? '현장실무원' : '사무실무원';
   }
   function canGrantBonus() {
+    if (ui.roleLoginPriority && currentMember()) {
+      return memberTeamsOf(currentMember()).indexOf('bonus') >= 0;
+    }
     return currentAccessRole() === 'bonus' && !!accessOfficer();
   }
   function myGrantLimit() { return canGrantBonus() ? 5 : 0; }
@@ -1899,6 +1906,10 @@
     return hit;
   }
   function isEventApproverNow() {
+    if (ui.roleLoginPriority && currentMember()) {
+      var mem = currentMember();
+      if (memberTeamsOf(mem).indexOf('event') >= 0) return mem.id;
+    }
     var role = currentAccessRole();
     if (role !== 'event') return '';
     var acc = accessOfficer();
@@ -2434,10 +2445,14 @@
   var OFFICER_APPROVE_ROLES = APPROVAL_TEAMS.map(function (t) { return { k: t.k, label: t.label, officerRole: t.k }; });
   function officerRoleKeyOf(permKey) { return teamMeta(permKey) ? permKey : 'event'; }
   var OFFICER_KEY = 'seosan.officerRole';
+  var OFFICER_PRI_KEY = 'seosan.roleLoginPriority';
 
   function officerRoleMeta(k) {
     var s = String(k || '');
     if (s.indexOf('team:') === 0) s = s.split(':')[1] || '';
+    if (s === 'member') return { k: 'member', label: '일반회원', step: '' };
+    if (s === 'staff' || s === 'proxy_office') return { k: 'proxy_office', label: '사무실무원', step: '' };
+    if (s === 'field' || s === 'proxy_field') return { k: 'proxy_field', label: '현장실무원', step: '' };
     for (var i = 0; i < ACCESS_ROLES.length; i++) { if (ACCESS_ROLES[i].k === s) return ACCESS_ROLES[i]; }
     return ACCESS_ROLES[0];
   }
@@ -2448,8 +2463,25 @@
       return { id: m.id, role: k, permRole: k, memberId: m.id, name: m.owner || m.company, company: m.company || '', status: 'approved' };
     });
   }
+  function roleFromMember(m) {
+    if (!m) return '';
+    var rk = String(m.roleKey || '').trim();
+    if (rk === 'staff' || rk === 'proxy_office') return 'proxy_office';
+    if (rk === 'field' || rk === 'proxy_field') return 'proxy_field';
+    var teams = memberTeamsOf(m);
+    if (teams.length) return 'team:' + teams[0] + ':' + m.id;
+    if (m.admin || rk === 'chief' || rk === 'senior' || rk === 'office' || rk === 'audit1' || rk === 'audit2') return 'super';
+    return 'member';
+  }
+  function effectiveAdminRoleStr() {
+    if (ui.roleLoginPriority) {
+      var m = currentMember();
+      if (m) return roleFromMember(m);
+    }
+    return String(ui.adminRole || 'super');
+  }
   function parseAccessSel(val) {
-    var s = String(val || ui.adminRole || 'super');
+    var s = String(val != null ? val : effectiveAdminRoleStr());
     if (s.indexOf('team:') === 0) {
       var parts = s.split(':');
       return { role: officerRoleMeta(parts[1]).k, memberId: parts[2] || '' };
@@ -2457,12 +2489,12 @@
     return { role: officerRoleMeta(s).k, memberId: '' };
   }
   function currentAccessRole() {
-    return parseAccessSel(ui.adminRole || 'super').role;
+    return parseAccessSel(effectiveAdminRoleStr()).role;
   }
   function accessRoleLabel() { return officerRoleMeta(currentAccessRole()).label; }
   function accessOfficer() {
-    var p = parseAccessSel(ui.adminRole || 'super');
-    if (p.role === 'super') return null;
+    var p = parseAccessSel(effectiveAdminRoleStr());
+    if (p.role === 'super' || p.role === 'member') return null;
     var list = officersOfRole(p.role);
     if (!list.length) return null;
     if (p.memberId) {
@@ -2472,6 +2504,10 @@
   }
   function accessDisplay() {
     var k = currentAccessRole();
+    if (k === 'member') {
+      var mm = currentMember();
+      return { role: 'member', label: '일반회원', name: mm ? (mm.owner || mm.company) : '회원', company: mm ? (mm.company || '') : '' };
+    }
     if (k === 'super') return { role: 'super', label: '마스터', name: '마스터', company: '협회 관리자' };
     if (k === 'proxy_office') return { role: k, label: '사무실무원', name: '한은지', company: '서산시지부 사무국(대리결재)' };
     if (k === 'proxy_field') return { role: k, label: '현장실무원', name: '최수석', company: '서산시지부 현장팀(대리결재)' };
@@ -2480,19 +2516,18 @@
     return { role: k, label: officerRoleMeta(k).label, name: o.name, company: o.company || '' };
   }
   function canApproveStep(step) {
+    if (ui.roleLoginPriority && currentMember()) {
+      var m = currentMember();
+      if (m.roleKey === 'staff' || m.roleKey === 'proxy_office' || m.roleKey === 'field' || m.roleKey === 'proxy_field') return true;
+      if (memberTeamsOf(m).indexOf(step) >= 0) return true;
+      return false;
+    }
     var role = currentAccessRole();
-    if (role === 'super') return false;
+    if (role === 'super' || role === 'member') return false;
     if (isProxyStaffNow()) return true;
     return role === step && !!accessOfficer();
   }
-  function setAdminRole(k) {
-    var p = parseAccessSel(k);
-    var meta = officerRoleMeta(p.role);
-    ui.adminRole = (p.role === 'super') ? 'super' : (p.memberId ? ('team:' + p.role + ':' + p.memberId) : p.role);
-    try { localStorage.setItem(OFFICER_KEY, ui.adminRole); } catch (e) { }
-    var who = accessDisplay();
-    audit('권한', '접속 권한 → ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : ''));
-    save();
+  function refreshRoleDependentViews() {
     renderAdminRoleBar();
     renderOfficialAll();
     applyOffAccess();
@@ -2510,17 +2545,83 @@
     try { renderReview((db.apps || []).filter(function (a) { return a.status === '심사중'; })); } catch (e) { }
     try { applySubtabPerms(); renderPermMatrix(); enforcePagePermission(); } catch (e) { }
     try { ui.approvalPopupShownFor = ''; } catch (e) { }
+  }
+  function setRoleLoginPriority(on, opts) {
+    ui.roleLoginPriority = !!on;
+    try { localStorage.setItem(OFFICER_PRI_KEY, ui.roleLoginPriority ? '1' : '0'); } catch (e) { }
+    if (!(opts && opts.silent)) {
+      var who = accessDisplay();
+      audit('권한', '로그인값 우선 ' + (ui.roleLoginPriority ? 'ON' : 'OFF') + ' → ' + who.label);
+      save();
+      refreshRoleDependentViews();
+      toast(ui.roleLoginPriority
+        ? ('로그인값 우선 ON — 현재 ' + (currentMember() ? (who.name + ' (' + who.label + ')') : ('비로그인 · ' + who.label)) + ' 권한 적용')
+        : ('로그인값 우선 OFF — 시연용 직책(' + who.label + ')으로 전환'));
+    }
+    return ui.roleLoginPriority;
+  }
+  function setAdminRole(k) {
+    if (String(k) === 'login_priority') {
+      setRoleLoginPriority(true);
+      return currentAccessRole();
+    }
+    if (ui.roleLoginPriority) setRoleLoginPriority(false, { silent: true });
+    var p = parseAccessSel(k);
+    var meta = officerRoleMeta(p.role);
+    ui.adminRole = (p.role === 'super') ? 'super' : (p.memberId ? ('team:' + p.role + ':' + p.memberId) : p.role);
+    try { localStorage.setItem(OFFICER_KEY, ui.adminRole); } catch (e) { }
+    var who = accessDisplay();
+    audit('권한', '접속 권한 → ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : ''));
+    save();
+    refreshRoleDependentViews();
     toast('접속 권한을 ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : '') + '(으)로 전환했습니다.');
     return meta.k;
   }
+  function ensureTopRoleBar() {
+    /* 관리자 본문 안에 있던 기존 바는 제거해 중복 ID를 막고, 상단 헤더 아래에 상시 노출 바를 둔다 */
+    var oldBars = $$('#adminRoleBar');
+    oldBars.forEach(function (el) {
+      if (!el.classList.contains('top-role-bar') && el.parentNode) el.parentNode.removeChild(el);
+    });
+    var bar = document.querySelector('#adminRoleBar.top-role-bar');
+    if (bar) return bar;
+    var hdr = document.querySelector('header.site-header');
+    if (!hdr) return null;
+    bar = document.createElement('div');
+    bar.id = 'adminRoleBar';
+    bar.className = 'top-role-bar';
+    bar.innerHTML =
+      '<div class="wrap top-role-bar-inner">' +
+        '<span class="role-badge">🔐 권한: <b id="adminRoleNow">마스터</b></span>' +
+        '<span class="role-who" id="adminRoleWho"></span>' +
+        '<span class="spacer"></span>' +
+        '<label class="role-login-pri" id="adminRolePriWrap" title="켜면 로그인한 계정의 직책·소속팀 권한을 우선 적용합니다">' +
+          '<input type="checkbox" id="adminRoleLoginPri"> <span>로그인값 우선</span>' +
+        '</label>' +
+        '<label class="sm" for="adminRoleSel" style="font-weight:700;color:#22407a;white-space:nowrap">시연용 직책 전환</label>' +
+        '<select class="input sm" id="adminRoleSel" aria-label="시연용 직책 전환"></select>' +
+        '<span class="sm role-note" id="adminRoleNote"></span>' +
+      '</div>';
+    hdr.appendChild(bar);
+    return bar;
+  }
   function renderAdminRoleBar() {
+    ensureTopRoleBar();
     if (!has('adminRoleSel')) return;
+    var priChk = $('#adminRoleLoginPri'), priWrap = $('#adminRolePriWrap');
+    if (priChk) priChk.checked = !!ui.roleLoginPriority;
+    if (priWrap) priWrap.classList.toggle('on', !!ui.roleLoginPriority);
     var sel = $('#adminRoleSel');
     if (sel) {
-      var curP = parseAccessSel(ui.adminRole || 'super');
+      var curEff = effectiveAdminRoleStr();
+      var curP = parseAccessSel(curEff);
       var curAcc = accessOfficer();
-      var curVal = (curP.role === 'super') ? 'super' : (curAcc ? ('team:' + curP.role + ':' + curAcc.memberId) : curP.role);
-      var opts = ['<option value="super"' + (curVal === 'super' ? ' selected' : '') + '>★ 마스터</option>'];
+      var curVal = ui.roleLoginPriority ? 'login_priority'
+        : ((curP.role === 'super') ? 'super' : (curAcc ? ('team:' + curP.role + ':' + curAcc.memberId) : curP.role));
+      var opts = [
+        '<option value="login_priority"' + (ui.roleLoginPriority ? ' selected' : '') + '>🔑 로그인값 우선 (로그인 계정 기준)</option>',
+        '<option value="super"' + (curVal === 'super' ? ' selected' : '') + '>★ 마스터</option>'
+      ];
       APPROVAL_TEAMS.forEach(function (t) {
         var mems = officersOfRole(t.k);
         if (!mems.length) {
@@ -2540,31 +2641,41 @@
     var who = accessDisplay();
     if ($('#adminRoleNow')) $('#adminRoleNow').textContent = who.label;
     if ($('#adminRoleWho')) {
-      $('#adminRoleWho').textContent = who.role === 'super'
-        ? '팀 정원/수치 설정 · 목록 중복 임명 · 전체 관리'
-        : (who.name === '미임명' ? '⚠ 임명된 팀원이 없어 승인할 수 없습니다' : who.name + (who.company ? ' · ' + who.company : ''));
+      if (ui.roleLoginPriority) {
+        var cm = currentMember();
+        if (!cm) {
+          $('#adminRoleWho').textContent = '로그인값 우선(비로그인 · 시연 직책 적용중)';
+        } else if (who.role === 'member') {
+          $('#adminRoleWho').textContent = who.name + (who.company ? ' · ' + who.company : '') + ' (일반회원 · 심사권한 없음)';
+        } else {
+          var tNames = memberTeamsOf(cm).map(function (tk) { var tm = teamMeta(tk); return tm ? tm.label : tk; });
+          $('#adminRoleWho').textContent = who.name + (tNames.length ? ' · ' + tNames.join('·') : (who.company ? ' · ' + who.company : ''));
+        }
+      } else {
+        $('#adminRoleWho').textContent = who.role === 'super'
+          ? '팀 정원/수치 설정 · 목록 중복 임명 · 전체 관리'
+          : (who.name === '미임명' ? '⚠ 임명된 팀원이 없어 승인할 수 없습니다' : who.name + (who.company ? ' · ' + who.company : ''));
+      }
     }
     if ($('#adminRoleNote')) {
-      $('#adminRoleNote').textContent = who.role === 'super'
-        ? ''
-        : '해당 팀 심사·결재 전용';
+      $('#adminRoleNote').textContent = ui.roleLoginPriority ? '로그인 계정 기준' : (who.role === 'super' ? '' : '시연용 전환');
     }
     var pend = [];
     try { pend = pendingApprovalsFor(); } catch (e) { pend = []; }
     var pn = pend.reduce(function (s2, x) { return s2 + x.n; }, 0);
-    var bar = document.querySelector('#adminRoleBar');
+    var inner = document.querySelector('#adminRoleBar .top-role-bar-inner') || document.querySelector('#adminRoleBar');
     var chip = document.getElementById('btnAdminPending');
-    if (bar) {
+    if (inner) {
       if (!chip) {
         chip = document.createElement('button');
         chip.id = 'btnAdminPending';
         chip.type = 'button';
         chip.className = 'btn sm';
-        chip.style.cssText = 'margin-left:6px;white-space:nowrap';
-        bar.insertBefore(chip, bar.querySelector('.spacer') || null);
+        chip.style.cssText = 'margin-left:4px;white-space:nowrap;height:27px;padding:2px 8px;font-size:11.5px';
+        inner.insertBefore(chip, inner.querySelector('.spacer') || null);
       }
-      chip.innerHTML = pn ? ('🔔 결재·심사 대기 <b>' + pn + '건</b>')
-        : (currentAccessRole() === 'super' ? '👁️ 마스터 — 열람 전용(결재·심사 관여 없음)' : '✅ 결재할 건 없음');
+      chip.innerHTML = pn ? ('🔔 대기 <b>' + pn + '건</b>')
+        : (currentAccessRole() === 'super' ? '👁️ 마스터 열람' : (currentAccessRole() === 'member' ? '👤 일반회원' : '✅ 대기 없음'));
       chip.disabled = !pn;
       chip.setAttribute('data-openapproval', '1');
       chip.setAttribute('title', pend.map(function (x) { return x.label + ' ' + x.n + '건'; }).join(' · ') || '대기 없음');
@@ -9620,7 +9731,7 @@
     makerBlockNotice();
     /* 로그인 직후 — 내가 결재·심사할 대기 건이 있으면 어느 화면이든 바로 팝업 (2026-11-23 김재봉 님 제보) */
     try {
-      if (m.roleKey) { renderAdminRoleBar(); applyOffAccess(); applySubtabs('admin'); }
+      if (m.roleKey || ui.roleLoginPriority) { refreshRoleDependentViews(); applySubtabs('admin'); }
       ui.approvalPopupShownFor = '';
       setTimeout(maybeShowApprovalPopup, 400);
     } catch (e) { }
@@ -9734,6 +9845,7 @@
     ui.guestPromptOpen = false;
     closeModal();
     renderAuth();
+    if (ui.roleLoginPriority) { try { refreshRoleDependentViews(); applySubtabs('admin'); } catch (e) { } }
     if (PAGE === 'apply') { try { renderApply(); } catch (e) { } }
     if (PAGE === 'first' || PAGE === 'remain') { try { renderFirst(); } catch (e) { } }
     try { renderMypage(); } catch (e) { }
@@ -13338,20 +13450,18 @@
     if ($('#woWeekLabel')) $('#woWeekLabel').textContent = periodTxt(wkS) + ' (' + weekKpiLabel(wkS) + ')';
     if ($('#woDatePick')) $('#woDatePick').value = wkS;
     if ($('#woWeekChips')) {
-      var wOpts = [{ v: ROUND.postStart, t: weekKpiLabel(ROUND.postStart) },
-        { v: addDays(ROUND.postStart, 7), t: weekKpiLabel(addDays(ROUND.postStart, 7)) },
-        { v: addDays(ROUND.postStart, 14), t: weekKpiLabel(addDays(ROUND.postStart, 14)) }];
-      $('#woWeekChips').innerHTML = wOpts.map(function (o, i) {
+      var wOpts = [
+        { v: addDays(ROUND.postStart, -7), t: weekKpiLabel(addDays(ROUND.postStart, -7)), tag: '지난 주 · ' },
+        { v: ROUND.postStart, t: weekKpiLabel(ROUND.postStart), tag: '이번 주 · ' },
+        { v: addDays(ROUND.postStart, 7), t: weekKpiLabel(addDays(ROUND.postStart, 7)), tag: '' },
+        { v: addDays(ROUND.postStart, 14), t: weekKpiLabel(addDays(ROUND.postStart, 14)), tag: '' }
+      ];
+      $('#woWeekChips').innerHTML = wOpts.map(function (o) {
         return '<button class="chip' + (o.v === wkS ? ' active' : '') + '" data-woweek="' + o.v + '" type="button">' +
-          (i === 0 ? '이번 주 · ' : '') + esc(o.t) + ' <span class="tc">' + weekRangeTxt(o.v) + '</span></button>';
+          o.tag + esc(o.t) + ' <span class="tc">' + weekRangeTxt(o.v) + '</span></button>';
       }).join('');
     }
-    $('#woLines').innerHTML =
-      '<div>· 철거(회수) : 총 <b>' + rc.total + '매</b> ( 월 ' + rc.byDay['월'] + '매, 화 ' + rc.byDay['화'] + '매, 수 ' + rc.byDay['수'] + '매 )</div>' +
-      '<div>· 설치(게시) : 총 <b>' + pc.total + '매</b> ( 월 ' + pc.byDay['월'] + '매, 화 ' + pc.byDay['화'] + '매, 수 ' + pc.byDay['수'] + '매 )' +
-      (d.brokenPlaces ? ' · <span style="color:var(--bad);font-weight:800">고장·제외 ' + d.brokenPlaces + '개소(' + d.brokenItems + '매)</span>' : '') +
-      (emptySkipped ? ' · <span style="color:var(--muted);font-weight:700">빈 자리(철거·설치 모두 없음) ' + emptySkipped + '면 자동 제외</span>' : '') +
-      '</div>';
+    var emptySkipped = 0;
 
     var dayPlaces = { '월': 0, '화': 0, '수': 0 };
     db.placements.forEach(function (p) { dayPlaces[p.day] = (dayPlaces[p.day] || 0) + 1; });
@@ -13395,16 +13505,21 @@
     });
 
     if (!plist.length) {
+      $('#woLines').innerHTML =
+        '<div>· 철거(회수) : 총 <b>' + rc.total + '매</b> ( 월 ' + rc.byDay['월'] + '매, 화 ' + rc.byDay['화'] + '매, 수 ' + rc.byDay['수'] + '매 )</div>' +
+        '<div>· 설치(게시) : 총 <b>' + pc.total + '매</b> ( 월 ' + pc.byDay['월'] + '매, 화 ' + pc.byDay['화'] + '매, 수 ' + pc.byDay['수'] + '매 )' +
+        (d.brokenPlaces ? ' · <span style="color:var(--bad);font-weight:800">고장·제외 ' + d.brokenPlaces + '개소(' + d.brokenItems + '매)</span>' : '') +
+        '</div>';
       $('#woTable').innerHTML = '<div class="empty">' + IC.doc +
         '<div>이번 회차 배정·입고분이 없습니다.<br>전산 추첨을 실행하고 입고를 확인하면 작업지시서가 자동으로 채워집니다.</div></div>';
       return;
     }
 
-    var body = '', emptySkipped = 0, rows = [];
+    var body = '', rows = [];
     plist.forEach(function (p) {
       /* 작업지시서 한 줄 = 게시대 한 칸(게시동+단). 세부 위치(A2 등)를 지정한 건은 그 줄에 바로 놓습니다.
          · 회수(지난 회차)와 게시(이번 회차)는 같은 칸에서 짝을 이룹니다. */
-      var plan = slotPlan(p.id);
+      var plan = slotPlan(p.id, wkS);
       var folderLabelled = false;
       /* 단(줄) 순서 — **실제 현장 사진 폴더에 찍힌 동 순서**를 따른다 (2026-11-23 김재봉 님 지시)
          예) 석지제사거리는 폴더가 D,E → C,A → A,B 순서라 표도 그 순서로 줄을 놓는다. */
@@ -13445,6 +13560,12 @@
       body += lastOfDong ? r.html.replace('<tr>', '<tr class="wo-dong-end" data-dong-end="1">') : r.html;
     });
 
+    $('#woLines').innerHTML =
+      '<div>· 철거(회수) : 총 <b>' + rc.total + '매</b> ( 월 ' + rc.byDay['월'] + '매, 화 ' + rc.byDay['화'] + '매, 수 ' + rc.byDay['수'] + '매 )</div>' +
+      '<div>· 설치(게시) : 총 <b>' + pc.total + '매</b> ( 월 ' + pc.byDay['월'] + '매, 화 ' + pc.byDay['화'] + '매, 수 ' + pc.byDay['수'] + '매 )' +
+      (d.brokenPlaces ? ' · <span style="color:var(--bad);font-weight:800">고장·제외 ' + d.brokenPlaces + '개소(' + d.brokenItems + '매)</span>' : '') +
+      (emptySkipped ? ' · <span style="color:var(--muted);font-weight:700">빈 자리(철거·설치 모두 없음) ' + emptySkipped + '면 자동 제외</span>' : '') +
+      '</div>';
     $('#woTable').innerHTML = '<table><thead>' +
       '<tr><th rowspan="2" style="width:132px;text-align:center">게시대 · 단</th>' +
       '<th colspan="2" class="wo-h-rm">회수 할 현수막</th><th colspan="2" class="wo-h-ps">게시 할 현수막</th></tr>' +
@@ -15357,6 +15478,7 @@
     });
     onEl('#adminToggle', 'change', onAdminToggle);
     if ($('#adminRoleSel')) onEl('#adminRoleSel', 'change', function () { setAdminRole(this.value); });
+    if ($('#adminRoleLoginPri')) onEl('#adminRoleLoginPri', 'change', function () { setRoleLoginPriority(!!this.checked); });
     /* 현장 게첨사진 — 주차·게시대·동 선택, 사진 파일 첨부 (2026-11-23) */
     if ($('#photoWeek')) onEl('#photoWeek', 'change', function () { ui.photoWeek = this.value; ui.photoPid = ''; ui.photoDong = ''; renderPhotoPanel(); });
     if ($('#photoPid')) onEl('#photoPid', 'change', function () { ui.photoPid = this.value; ui.photoDong = ''; renderPhotoPanel(); });
@@ -15832,6 +15954,7 @@
     /* 이전 저장 데이터 호환 — 직책자 명단(테스트 임원) */
     if (!Array.isArray(db.officers) || !db.officers.length) db.officers = seedOfficers();
     try { ui.adminRole = localStorage.getItem(OFFICER_KEY) || 'super'; } catch (e) { ui.adminRole = 'super'; }
+    try { ui.roleLoginPriority = localStorage.getItem(OFFICER_PRI_KEY) === '1'; } catch (e) { ui.roleLoginPriority = false; }
     /* 이전 저장 데이터 호환 — 테마 코스(기본 3종) 구성 */
     if (!Array.isArray(db.themeCourses) || !db.themeCourses.length) db.themeCourses = defaultThemeCourses();
     applyThemeCourses();
@@ -15869,7 +15992,9 @@
   }
 
     ensureEventDemoApp();
+    ensureTopRoleBar();
     bindEvents();
+    renderAdminRoleBar();
     renderTopButton(); bindTopButton();
     renderAuth();
     renderRoundChip();
