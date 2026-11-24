@@ -4851,8 +4851,25 @@
   function save() {
     try {
       var copy = JSON.parse(JSON.stringify(db));
-      copy.apps.forEach(function (a) { a.preview = null; a.file = null; });
-      localStorage.setItem(STORE_KEY, JSON.stringify(copy));
+      (copy.apps || []).forEach(function (a) {
+        a.preview = null; a.file = null;
+        if (a.licenseData && String(a.licenseData).length > 40000) a.licenseData = '';
+      });
+      (copy.members || []).forEach(function (m) {
+        if (m && m.licenseFile && m.licenseFile.data && String(m.licenseFile.data).length > 40000) {
+          m.licenseFile = { name: m.licenseFile.name || '', data: '', mime: m.licenseFile.mime || '' };
+        }
+      });
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(copy));
+      } catch (quotaErr) {
+        /* 용량 초과 시 대용량 첨부 데이터만 비우고 회원·접수 기본 정보는 반드시 보존 */
+        (copy.apps || []).forEach(function (a) { a.licenseData = ''; });
+        (copy.members || []).forEach(function (m) {
+          if (m && m.licenseFile) m.licenseFile = { name: m.licenseFile.name || '', data: '', mime: m.licenseFile.mime || '' };
+        });
+        localStorage.setItem(STORE_KEY, JSON.stringify(copy));
+      }
     } catch (e) { /* 저장 실패는 무시 (시연) */ }
   }
   function load() {
@@ -10248,18 +10265,25 @@
     if (pw.length < 4) { toast('비밀번호는 4자 이상이어야 합니다.', true); return null; }
     if (!/^01[016789][- ]?\d{3,4}[- ]?\d{4}$/.test(phone)) { toast('연락처를 정확히 입력해 주세요. (예: 010-1234-5678)', true); return null; }
     var role = STAFF_ROLES.indexOf(String(v.role)) >= 0 ? String(v.role) : 'staff';
-    memberList().forEach(function (m) { if (m && m.loginId === loginId) loginId = ''; });
+    memberList().forEach(function (m) { if (m && String(m.loginId || '').toLowerCase() === loginId.toLowerCase()) loginId = ''; });
     if (!loginId) { toast('이미 사용 중인 아이디입니다.', true); return null; }
     var rec = addOfficer({ name: name, role: role, company: String(v.company || '').trim() });
     if (!rec) return null;
     rec.loginId = loginId; rec.pw = pw; rec.phone = phone; rec.request = 'staff-signup';
     rec.status = 'pending';
     rec.by = '직원 가입 신청';
+    var newMem = {
+      id: nextMemberId(), loginId: loginId, pw: pw, type: 'staff',
+      company: String(v.company || '').trim() || '서산시옥외광고협회',
+      owner: name, phone: phone, biz: '', email: '', oade: '',
+      roleKey: role, joinedAt: nowStamp(), licenseFile: null
+    };
+    memberList().push(newMem);
     audit('권한', '직원 회원가입 신청 — ' + name + ' (' + officerRoleMeta(role).label + ') · 마스터 승인 대기');
     save();
     try { renderOfficerPanel(); } catch (e) { }
-    toast('직원 회원가입 신청이 접수되었습니다 — 마스터 승인 후 결재 권한이 생깁니다.');
-    return { id: rec.id, name: rec.name, role: rec.role, loginId: rec.loginId, status: rec.status };
+    toast('직원 회원가입이 완료되었습니다 — 가입한 아이디로 바로 로그인할 수 있습니다.');
+    return { id: rec.id, memberId: newMem.id, name: rec.name, role: rec.role, loginId: rec.loginId, status: rec.status };
   }
 
   /* ---------------------------------------------------------------
