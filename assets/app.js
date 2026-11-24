@@ -5454,7 +5454,12 @@
       }
       $('#statusLiveNotice').innerHTML = noticeParts.join('');
     }
-    if ($('#statusReqInfo')) $('#statusReqInfo').innerHTML = '<b>' + weekRangeTxt(wk) + '</b> 게첨 주 — 접수 <b>' + appsR.length + '건</b> · 신청 <b>' + qtyR + '매</b> · 배정 <b>' + ws.awarded + '매</b> · 잔여 <b>' + ws.left + '면</b>. 카드의 <b>N/M건 접수중</b>은 그 게시대를 1·2·3순위로 신청한 건수입니다.';
+    var reqPlacesMap = {};
+    appsR.forEach(function (a) {
+      (a.placements || a.priority1 || []).forEach(function (pid) { if (pid) reqPlacesMap[pid] = 1; });
+    });
+    var reqPlacesN = Object.keys(reqPlacesMap).length;
+    if ($('#statusReqInfo')) $('#statusReqInfo').innerHTML = '<b>' + weekRangeTxt(wk) + '</b> 게첨 주 — 접수 <b>' + appsR.length + '건</b> · 접수수량 <b>' + qtyR + '매 / ' + reqPlacesN + '개소</b> · 배정 <b>' + ws.awarded + '매</b> · 잔여 <b>' + ws.left + '면</b>. 카드의 <b>N/M건 접수중</b>은 그 게시대를 1·2·3순위로 신청한 건수입니다.';
 
     if ($('#statusSortChips')) $('#statusSortChips').innerHTML = sortChipsHTML(ui.sort, 'sort');
     $('#statusThemeChips').innerHTML = themeChipsHTML(ui.theme, 'theme');
@@ -6211,10 +6216,17 @@
     }
   }
 
-  /* 🔁 같은 값으로 매주 신청 — 종료일 달력 팝업 (3단계 하단) */
+  /* 🔁 같은 값으로 반복 신청 — 최대 1년(52주) · 매주 / 월 N회 (3단계 하단) */
+  function repeatFreqLabel(freq, mCnt) {
+    if (freq === 'monthly') return '월 ' + (Number(mCnt) || 2) + '회 반복';
+    return repeatIntervalWeeks() === 2 ? '격주 반복' : '매주 반복';
+  }
   function repeatState() {
+    var freq = ui.repeatFreq || 'weekly';
+    var mCnt = Number(ui.repeatMonthlyCount) || 2;
     return { on: !!ui.repeatOn, end: ui.repeatEnd || '', weeks: repeatWeeksLeft(ui.repeatEnd),
-      interval: repeatIntervalWeeks(), skip: skipWeekOn(), max: repeatEndMax() };
+      freq: freq, monthlyCount: mCnt, label: repeatFreqLabel(freq, mCnt),
+      interval: repeatIntervalWeeks({ repeatFreq: freq, repeatMonthlyCount: mCnt }), skip: skipWeekOn(), max: repeatEndMax() };
   }
   function renderRepeatBox() {
     var box = $('#repeatPanel');
@@ -6222,12 +6234,12 @@
     var st = repeatState();
     var info = $('#repeatInfo');
     box.classList.toggle('on', st.on);
-    if ($('#btnRepeatWeek')) $('#btnRepeatWeek').innerHTML = st.on ? '🔁 매주 신청 설정됨 · 변경' : '🔁 같은 값으로 매주 신청';
+    if ($('#btnRepeatWeek')) $('#btnRepeatWeek').innerHTML = st.on ? ('🔁 ' + esc(st.label) + ' 설정됨 · 변경') : '🔁 반복 신청 설정 (최대 1년 · 매주/월 몇 회)';
     if (info) {
       info.innerHTML = st.on
-        ? '<b>매주 자동반복접수</b> — 종료일 <b>' + esc(st.end) + '</b> (약 ' + st.weeks + '주 · ' + (st.interval === 2 ? '격주 간격' : '매주') + ') · <b>당첨 시 자동 해제</b> · 미당첨 시 다음 주 자동 재접수 · <b>후결제</b>(미당첨 시 비용 없음, 현수막도 당첨 후 제작)'
-        : '같은 광고주·문구·시안·수량·1·2·3순위 그대로 <b>당첨될 때까지 다음 주에 자동으로 다시 접수</b>합니다. 비용은 <b>당첨 확정 후 결제</b>이고, 현수막도 당첨 후 제작·입고합니다.'
-        + (skipWeekOn() ? ' <b style="color:#b42318">한 주 쉬어가기 정책 적용 중 — 매주 연속 불가(격주 간격)</b>' : '');
+        ? '<b>' + esc(st.label) + ' 자동반복접수</b> — 종료일 <b>' + esc(st.end) + '</b> (약 ' + st.weeks + '주) · <b>당첨 시 자동 해제</b> · 미당첨 시 다음 회차 자동 재접수 · <b>후결제</b>(미당첨 시 비용 없음, 현수막도 당첨 후 제작)'
+        : '같은 광고주·문구·시안·수량·1·2·3순위 그대로 <b>최대 1년(52주)</b>까지 <b>매주 또는 월 몇 회</b>로 자동 재접수합니다. 비용은 <b>당첨 확정 후 결제</b>이고, 현수막도 당첨 후 제작·입고합니다.'
+        + (skipWeekOn() ? ' <b style="color:#b42318">한 주 쉬어가기 정책 적용 중 — 매주 연속 불가(격주 이상 간격)</b>' : '');
     }
     if ($('#repeatCancelBtn')) $('#repeatCancelBtn').classList.toggle('hidden', !st.on);
   }
@@ -6235,40 +6247,76 @@
     var st = repeatState();
     var s0 = weekStartOf(ui.applyWeek || ROUND.postStart);
     var min = addDays(s0, 6), max = repeatEndMax();
-    var chips = [4, 8, 12].map(function (w) {
-      var d = addDays(s0, w * 7 - 1);
+    var curFreq = ui.repeatFreq || 'weekly';
+    var curMCnt = Number(ui.repeatMonthlyCount) || 2;
+    var chips = [
+      { w: 4, t: '4주 (1개월)' },
+      { w: 12, t: '12주 (3개월)' },
+      { w: 26, t: '26주 (6개월)' },
+      { w: 52, t: '52주 (1년)' }
+    ].map(function (it) {
+      var d = addDays(s0, it.w * 7 - 1);
       if (d > max) d = max;
-      return '<button class="chip' + (ui.repeatEnd === d ? ' active' : '') + '" type="button" data-repweek="' + w + '">' + w + '주 (' + d + ')</button>';
+      return '<button class="chip' + (ui.repeatEnd === d ? ' active' : '') + '" type="button" data-repweek="' + it.w + '">' + it.t + ' (' + d + ')</button>';
+    }).join('');
+    var mChips = [1, 2, 3, 4].map(function (n) {
+      return '<button class="chip' + (curMCnt === n ? ' active' : '') + '" type="button" data-repmcnt="' + n + '">월 ' + n + '회</button>';
     }).join('');
     openModal({
-      title: '🔁 같은 값으로 매주 신청 — 종료일 지정',
-      sub: '시작 ' + dfmt(s0) + ' 게첨 주 · 최대 ' + REPEAT_MAX_WEEKS + '주',
+      title: '🔁 자동반복접수 설정 (최대 1년 · 매주 / 월 몇 회)',
+      sub: '시작 ' + dfmt(s0) + ' 게첨 주 · 최대 ' + REPEAT_MAX_WEEKS + '주 (1년)',
       body: '<div class="callout info">' + IC.info +
-        '<div><b>종료일을 지정해 주세요.</b> 시작 주부터 종료일이 속한 주까지 같은 조건으로 자동 접수됩니다. ' +
-        '<b>당첨되면 그 즉시 자동 해제</b>되고, <b>미당첨이면 다음 주에 자동으로 다시 접수</b>됩니다. ' +
-        '비용은 <b>후결제</b> — 미당첨 시 비용이 발생하지 않으며, 당첨 확정 시 가상계좌로 결제합니다. <b>현수막도 당첨 후 제작·입고</b>합니다.</div></div>' +
-        (skipWeekOn() ? '<div class="callout warn">' + IC.alert + '<div><b>한 주 쉬어가기 정책 적용 중</b> — 매주 연속 반복접수는 불가하며 <b>격주(2주 간격)</b>으로 접수됩니다.</div></div>' : '') +
-        '<div class="field" style="margin-top:12px"><label for="repeatEnd">종료일 <span class="req">*</span></label>' +
-        '<input class="input" type="date" id="repeatEnd" min="' + min + '" max="' + max + '" value="' + esc(ui.repeatEnd || addDays(s0, 4 * 7 - 1)) + '">' +
-        '<div class="hint-txt">선택 가능: <b>' + min + ' ~ ' + max + '</b> (시작 주 이후 · 최대 ' + REPEAT_MAX_WEEKS + '주)</div></div>' +
+        '<div><b>반복 방식과 종료일(최대 1년)을 지정해 주세요.</b> 시작 주부터 종료일까지 같은 조건으로 자동 접수됩니다. ' +
+        '<b>당첨되면 그 즉시 자동 해제</b>되고, <b>미당첨이면 다음 회차에 자동으로 다시 접수</b>됩니다. ' +
+        '비용은 <b>후결제</b> — 미당첨 시 비용이 발생하지 않으며, 당첨 확정 시 가상계좌로 결제합니다.</div></div>' +
+        (skipWeekOn() ? '<div class="callout warn">' + IC.alert + '<div><b>한 주 쉬어가기 정책 적용 중</b> — 매주 연속 반복접수는 불가하며 <b>격주(2주 이상 간격)</b>로 접수됩니다.</div></div>' : '') +
+        '<div class="field" style="margin-top:12px"><label>반복 방식</label>' +
+        '<div class="chips" id="repeatFreqChips">' +
+        '<button class="chip' + (curFreq === 'weekly' ? ' active' : '') + '" type="button" data-repfreq="weekly">' + (skipWeekOn() ? '격주 반복' : '매주 반복') + '</button>' +
+        '<button class="chip' + (curFreq === 'monthly' ? ' active' : '') + '" type="button" data-repfreq="monthly">월 몇 회 반복</button>' +
+        '</div>' +
+        '<div id="repeatMonthlyWrap" class="' + (curFreq === 'monthly' ? '' : 'hidden') + '" style="margin-top:8px">' +
+        '<div class="hint-txt" style="margin-bottom:5px">한 달에 몇 회 반복 접수할지 골라 주세요.</div>' +
+        '<div class="chips" id="repeatMCntChips">' + mChips + '</div></div></div>' +
+        '<div class="field" style="margin-top:12px"><label for="repeatEnd">종료일 (최대 1년 · 52주) <span class="req">*</span></label>' +
+        '<input class="input" type="date" id="repeatEnd" min="' + min + '" max="' + max + '" value="' + esc(ui.repeatEnd || addDays(s0, 12 * 7 - 1)) + '">' +
+        '<div class="hint-txt">선택 가능: <b>' + min + ' ~ ' + max + '</b> (시작 주 이후 · 최대 ' + REPEAT_MAX_WEEKS + '주 / 1년)</div></div>' +
         '<div class="chips" id="repeatWeekChips" style="margin-top:6px">' + chips + '</div>' +
         '<div class="lic-extract" id="repeatPreview" style="margin-top:10px"></div>',
       foot: '<button class="btn ghost" data-close type="button">취소</button>' +
-        '<button class="btn primary" id="btnRepeatGo" type="button">이 종료일로 매주 신청</button>',
+        '<button class="btn primary" id="btnRepeatGo" type="button">이 조건으로 반복 신청</button>',
       after: function () {
+        var modalFreq = curFreq;
+        var modalMCnt = curMCnt;
         function refresh() {
           var v = $('#repeatEnd') ? $('#repeatEnd').value : '';
           var ok = repeatEndValid(v);
           var w = repeatWeeksLeft(v);
+          var lbl = repeatFreqLabel(modalFreq, modalMCnt);
           var pv = $('#repeatPreview');
           if (pv) {
             pv.className = 'lic-extract' + (ok ? '' : ' fail');
             pv.innerHTML = ok
-              ? '<span>🏷️ 반복 접수</span><b>' + esc(v) + '</b><span class="sm">' + dfmt(s0) + ' 주 ~ ' + esc(v) + ' · 약 ' + w + '주 · ' + (skipWeekOn() ? '격주' : '매주') + ' · 후결제</span>'
+              ? '<span>🏷️ ' + esc(lbl) + '</span><b>' + esc(v) + '</b><span class="sm">' + dfmt(s0) + ' 주 ~ ' + esc(v) + ' · 약 ' + w + '주 · ' + esc(lbl) + ' · 후결제</span>'
               : '<span>⚠️ 종료일 확인</span><b>' + (min + ' ~ ' + max) + ' 사이에서 골라 주세요</b>';
           }
           if ($('#btnRepeatGo')) $('#btnRepeatGo').disabled = !ok;
         }
+        $$('#repeatFreqChips .chip').forEach(function (b) {
+          b.addEventListener('click', function () {
+            modalFreq = b.getAttribute('data-repfreq') || 'weekly';
+            $$('#repeatFreqChips .chip').forEach(function (x) { x.classList.toggle('active', x === b); });
+            if ($('#repeatMonthlyWrap')) $('#repeatMonthlyWrap').classList.toggle('hidden', modalFreq !== 'monthly');
+            refresh();
+          });
+        });
+        $$('#repeatMCntChips .chip').forEach(function (b) {
+          b.addEventListener('click', function () {
+            modalMCnt = Number(b.getAttribute('data-repmcnt')) || 2;
+            $$('#repeatMCntChips .chip').forEach(function (x) { x.classList.toggle('active', x === b); });
+            refresh();
+          });
+        });
         if ($('#repeatEnd')) onEl('#repeatEnd', 'change', refresh);
         if ($('#repeatEnd')) onEl('#repeatEnd', 'input', refresh);
         $$('#repeatWeekChips .chip').forEach(function (b) {
@@ -6285,9 +6333,9 @@
         onEl('#btnRepeatGo', 'click', function () {
           var v = $('#repeatEnd') ? $('#repeatEnd').value : '';
           if (!repeatEndValid(v)) { toast('종료일을 ' + min + ' ~ ' + max + ' 사이에서 골라 주세요.', true); return; }
-          ui.repeatOn = true; ui.repeatEnd = v;
+          ui.repeatOn = true; ui.repeatEnd = v; ui.repeatFreq = modalFreq; ui.repeatMonthlyCount = modalMCnt;
           renderRepeatBox(); closeModal();
-          toast('🔁 매주 자동반복접수로 설정했습니다 — 종료일 ' + v + ' · 당첨 시 자동해제 · 미당첨 시 다음 주 자동 재접수 · 후결제');
+          toast('🔁 ' + repeatFreqLabel(modalFreq, modalMCnt) + ' 설정 완료 — 종료일 ' + v + ' · 당첨 시 자동해제 · 미당첨 시 자동 재접수 · 후결제');
         });
       }
     });
@@ -6568,8 +6616,10 @@
       eventApp: eventFormOn(), polApp: false,
       autoRepeat: !!ui.repeatOn && repeatEndValid(ui.repeatEnd),
       repeatEnd: ui.repeatOn ? (ui.repeatEnd || '') : '',
+      repeatFreq: ui.repeatOn ? (ui.repeatFreq || 'weekly') : 'weekly',
+      repeatMonthlyCount: ui.repeatOn ? (Number(ui.repeatMonthlyCount) || 2) : 0,
       paymentMode: (ui.repeatOn && repeatEndValid(ui.repeatEnd)) ? '후결제(당첨 시 결제)' : '일반(추첨 후 결제)',
-      repeatInterval: repeatIntervalWeeks(),   /* 정치행정 선택 UI 삭제 — 접수 화면에서는 신청하지 않습니다 */
+      repeatInterval: repeatIntervalWeeks({ repeatFreq: ui.repeatFreq || 'weekly', repeatMonthlyCount: ui.repeatMonthlyCount || 2 }),   /* 정치행정 선택 UI 삭제 — 접수 화면에서는 신청하지 않습니다 */
       eventName: $('#applyEventName') ? $('#applyEventName').value.trim() : '',
       eventPeriod: $('#applyEventPeriod') ? $('#applyEventPeriod').value.trim() : '',
       eventReason: $('#applyEventReason') ? $('#applyEventReason').value.trim() : '',
@@ -6830,7 +6880,7 @@
       ['실제 광고주', esc((v.advertiser || '—') + (v.advertiserBiz ? ' · 사업자 ' + v.advertiserBiz : ''))],
       ['현수막 문구', esc(v.text || '—')],
       ['시안', esc(ui.file ? ui.file.name : '미첨부 (문구로 검수)')],
-      ['접수 수량', '<b>' + v.qty + '매</b> · 1개소당 1매'],
+      ['접수 수량', '<b>' + v.qty + '매 / ' + (v.randomMode ? (v.randomPool.length + '개소 풀') : (c[1] + '개소')) + '</b> · 1개소당 1매'],
       ['고객장소 지정', v.randomMode
         ? '무작위 선택 — 전체 풀 통합 추첨 (2·3순위 선택 불필요)'
         : (v.designated
@@ -6945,6 +6995,7 @@
       eventPeriod: v.eventApp ? v.eventPeriod : '', eventReason: v.eventApp ? v.eventReason : '',
       eventStatus: v.eventApp ? '심사중' : 'none', eventVotes: [], eventDecidedAt: '',
       autoRepeat: !!v.autoRepeat, repeatEnd: v.repeatEnd || '', paymentMode: v.paymentMode || '',
+      repeatFreq: v.repeatFreq || 'weekly', repeatMonthlyCount: v.repeatMonthlyCount || 0,
       repeatStatus: v.autoRepeat ? '진행중' : '', repeatInterval: v.repeatInterval || 1,
       repeatGroupId: v.autoRepeat ? repeatGroupNew() : '', repeatWeek: v.autoRepeat ? 1 : 0,
       polStatus: v.polApp ? '심사중' : 'none', polApprovals: [],
@@ -14160,8 +14211,8 @@
      · 추첨에서 낙첨되고 선착순에서도 당첨되지 않으면 **다음 주 회차로 자동 재접수**.
      · 당첨(추첨·선착순)이 확정되면 그 자리에서 **자동 해제** — 다음 주 월요일 게첨·후결제로 이어집니다.
      · 사용자는 마이페이지에서 언제든 **반복접수 해제**할 수 있습니다(미래 주차 무페널티 취소).
-     · 종료일(repeatEnd)이 지나면 자동 종료됩니다. 최대 12주. */
-  var REPEAT_MAX_WEEKS = 12;
+     · 종료일(repeatEnd)이 지나면 자동 종료됩니다. 최대 52주(1년) · 매주 또는 월 N회 반복 지원. */
+  var REPEAT_MAX_WEEKS = 52;
   function repeatGroupNew() { db.seq = (db.seq || 200) + 1; return 'RG-' + pad4(db.seq); }
   function repeatWeeksLeft(endStr) {
     if (!endStr) return 0;
@@ -14744,7 +14795,14 @@
       (weekInPolicyRanges('', key) ? '<b style="color:#b45309">적용 대상</b>' : '적용 없음') +
       ' · 기간에 걸친 게첨 주(월~일)에만 적용됩니다.</div>';
   }
-  function repeatIntervalWeeks() { return skipWeekOn() ? 2 : 1; }
+  function repeatIntervalWeeks(appOrOpt) {
+    var base = skipWeekOn() ? 2 : 1;
+    if (!appOrOpt || appOrOpt.repeatFreq !== 'monthly') return base;
+    var mc = Number(appOrOpt.repeatMonthlyCount) || 2;
+    var iv = mc <= 1 ? 4 : (mc === 2 ? 2 : (mc === 3 ? 1 : 1));
+    if (mc === 3 && appOrOpt && (Number(appOrOpt.repeatWeek) || 1) % 3 === 0) iv = 2;
+    return Math.max(base, iv);
+  }
   /* 직전 게첨 주에 접수·당첨 이력이 있는 광고주인가 (한 주 쉬어가기 판정) */
   function prevWeekAdvertiserHit(advName, advBiz, phone, startIso) {
     advName = advName || ''; advBiz = advBiz || ''; phone = phone || '';
@@ -14768,12 +14826,13 @@
   /* 다음 주 회차 접수 건 자동 생성 — 낙첨 시 자동 재접수 */
   function createRepeatCarry(a) {
     if (!a || !a.autoRepeat || a.repeatStatus === '사용자 해제') return null;
-    var nextStart = addDays(weekStartOf(a.start || ROUND.postStart), 7 * repeatIntervalWeeks());
+    var stepW = repeatIntervalWeeks(a);
+    var nextStart = addDays(weekStartOf(a.start || ROUND.postStart), 7 * stepW);
     if (a.repeatEnd && nextStart > a.repeatEnd) {
       a.repeatStatus = '종료(기간 만료)';
       return null;
     }
-    var nextRound = ROUND.id.replace(/(\d+)$/, function (m) { return pad2(Number(m) + repeatIntervalWeeks()); });
+    var nextRound = ROUND.id.replace(/(\d+)$/, function (m) { return pad2(Number(m) + stepW); });
     var newId = nextRound + '-R-' + String(a.id).replace(/[^0-9]/g, '').slice(-4);
     if (findApp(newId)) return null;                     /* 이미 생성됨 */
     db.seq = (db.seq || 200) + 1;
@@ -14789,7 +14848,7 @@
     copy.eventApp = false; copy.eventStatus = 'none'; copy.eventVotes = [];
     copy.polApp = false; copy.polStatus = 'none'; copy.polApprovals = [];
     copy.repeatFrom = a.id;
-    copy.repeatWeek = (Number(a.repeatWeek) || 1) + repeatIntervalWeeks();
+    copy.repeatWeek = (Number(a.repeatWeek) || 1) + stepW;
     copy.repeatGroupId = a.repeatGroupId || repeatGroupNew();
     copy.autoRepeat = true;
     copy.repeatStatus = '자동 재접수';
