@@ -2833,7 +2833,7 @@
     theme: '', pTheme: '', fcTheme: '', woDay: '', woAll: false, offDay: '', offSel: {}, authTab: 'login', fcTimeSim: '', fcMode: 'live', liveKind: '',
     locAddrOpen: false, locAddrRows: {}, coverOk: {}, fcCover: {}, otherOk: {},
     suLicName: '', suLicData: '', suLicMime: '', licFromMember: false,
-    adminSub: 'draw', guideSub: 'file', sort: 'comp-desc', pSort: 'comp-desc', calOpen: false, statusPage: 0, pickPage: 0, statusAll: true, pickAll: false,
+    adminSub: 'draw', guideSub: 'file', sort: 'default', pSort: 'default', calOpen: false, statusPage: 0, pickPage: 0, statusAll: true, pickAll: false,
     statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, drawWeek: ROUND.postStart, calMonth: {}, offSlots: {},
     themeSel: {}, themeSearch: '', themeEditSel: {},
     /* 현장 게첨사진 — 게시대 동 단위 등록 화면의 선택값 (2026-11-23) */
@@ -5266,7 +5266,7 @@
     });
     return out;
   }
-  var SORT_OPTS = [{ k: 'comp-desc', t: '경쟁률 높은 순' }, { k: 'comp-asc', t: '경쟁률 낮은 순' }, { k: 'default', t: '기본순' }];
+  var SORT_OPTS = [{ k: 'default', t: '기본순' }, { k: 'comp-desc', t: '경쟁률 높은 순' }, { k: 'comp-asc', t: '경쟁률 낮은 순' }];
   function sortChipsHTML(cur, attr) {
     return SORT_OPTS.map(function (o) {
       return '<button class="chip' + (o.k === cur ? ' active' : '') + '" data-' + attr + '="' + o.k + '" type="button">' + o.t + '</button>';
