@@ -5838,7 +5838,8 @@
         '</tr></thead><tbody>' +
         codes.map(function (s) {
           var c = placeSchedCell(p, s, w0, p0, s0);
-          var posLabel = multi ? (s.col + '동 ' + s.row + '단 (' + s.code + ')') : (s.row + '단 (' + s.code + ')');
+          var colChar = s.colL || String(s.code || '').charAt(0);
+          var posLabel = multi ? (colChar + '동 ' + s.row + '단 (' + s.code + ')') : (s.row + '단 (' + s.code + ')');
           return '<tr>' +
             '<td class="pd-slot-col">' + esc(posLabel) + '</td>' +
             '<td><span class="pd-tag ' + c.cls + '">' + esc(c.tag) + '</span></td>' +
@@ -5860,7 +5861,8 @@
         }).join('') +
         '</tr></thead><tbody>' +
         codes.map(function (s) {
-          var posLabel = multi ? (s.col + '동 ' + s.row + '단') : (s.row + '단');
+          var colChar = s.colL || String(s.code || '').charAt(0);
+          var posLabel = multi ? (colChar + '동 ' + s.row + '단') : (s.row + '단');
           return '<tr><td class="pd-slot-col">' + esc(posLabel) + ' <span style="color:var(--muted);font-weight:600">' + esc(s.code) + '</span></td>' +
             weeks.map(function (w, idx) {
               var c = placeSchedCell(p, s, w, plans[idx], smaps[idx]);
