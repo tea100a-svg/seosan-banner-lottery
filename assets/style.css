@@ -2121,3 +2121,29 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .ma-role-cell{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
 .ma-role-cell select{min-width:118px;max-width:140px}
 
+/* 게시위치 → 동 선택 팝업 → 단수 선택 팝업 (2026-11-25) */
+.slotpick-bar{flex-basis:100%;width:100%;margin-top:6px;padding-top:6px;border-top:1px dashed #dbe4f0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.slotpick-bar .sp-status{font-size:11.5px;color:var(--muted);font-weight:700}
+.slotpick-bar .sp-status b{color:var(--purple)}
+.slotpick-bar .sp-btns{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.slotpick-btn{appearance:none;border:1px solid #c6d7f2;background:#f4f8ff;color:var(--blue-d);border-radius:8px;padding:4px 10px;font-size:11.5px;font-weight:800;cursor:pointer;line-height:1.3}
+.slotpick-btn:hover{background:#e7f0ff;border-color:#9bbcf0}
+.slotpick-btn.on{border-color:var(--purple);background:#f6f1ff;color:var(--purple)}
+.slotpick-clr{appearance:none;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer}
+.slotpick-clr:hover{background:#f7f9fc;color:var(--ink)}
+
+.sp-pop-top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sp-pop-top .btn{flex:1 1 auto;justify-content:center}
+.dong-pop-list,.tier-pop-list{display:flex;flex-direction:column;gap:8px}
+.dong-pop-btn,.tier-pop-btn{appearance:none;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:border-color .15s,background .15s,box-shadow .15s}
+.dong-pop-btn:hover:not(:disabled),.tier-pop-btn:hover:not(:disabled){border-color:#8fb4ee;background:#f7faff}
+.dong-pop-btn.on,.tier-pop-btn.on{border-color:var(--purple);background:#f7f2ff;box-shadow:0 0 0 2px rgba(91,62,200,.14)}
+.dong-pop-btn:disabled,.tier-pop-btn:disabled{opacity:.58;cursor:not-allowed;background:#f8fafc}
+.dong-pop-main,.tier-pop-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.dong-pop-title,.tier-pop-title{font-size:14.5px;font-weight:900;color:var(--ink);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dong-pop-sub,.tier-pop-sub{font-size:12px;color:var(--muted);font-weight:600}
+.dong-pop-meta,.tier-pop-meta{font-size:12px;font-weight:800;color:var(--blue-d);white-space:nowrap;text-align:right}
+.tier-pop-btn.off .tier-pop-meta{color:#b03a3a}
+.tier-pop-btn.rival .tier-pop-meta{color:#9a5b00}
+.tier-pop-btn.on .tier-pop-meta{color:var(--purple)}
+

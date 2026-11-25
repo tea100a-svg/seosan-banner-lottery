@@ -4066,44 +4066,169 @@
       '<span><i class="fault"></i>고장(단수)</span><span><i class="cover"></i>풀가림(단수·목요일 선착순)</span><span><i class="uninstall"></i>설치불가(단수)</span><span><i class="aged"></i>노후화 사용금지(단수)</span><span><i class="other"></i>기타사유(단수)</span>' +
       '<span><i class="broken"></i>고장·수리중</span></div></div>';
   }
-  /* 3단계 선택칩 안의 미니 슬롯 피커 */
+  /* 3단계 선택칩 안의 세부 위치 버튼 (누르면 동 선택 팝업 → 단수 선택 팝업) */
   function slotPickerHTML(p, n) {
     if (!p) return '';
     var cur = (ui.slots && ui.slots[p.id]) || '';
-    var smap = slotStateMap(p);
+    var statusTxt = cur
+      ? '<b>' + esc(slotChipTxt(p, cur)) + (slotBoardAll(cur) ? '' : ' (' + esc(slotName(p, cur)) + ')') + '</b>'
+      : '위치 무관 · 빈 칸 자동 배정';
+    return '<div class="slotpick-bar" data-slotof="' + esc(p.id) + '">' +
+      '<span class="sp-status">세부 위치: ' + statusTxt + '</span>' +
+      '<span class="sp-btns">' +
+        (cur ? '<button type="button" class="slotpick-clr" data-slotpick="' + esc(p.id) + '" data-slotrank="' + n + '" data-slot="" title="위치 무관으로 되돌리기">위치 무관으로</button>' : '') +
+        '<button type="button" class="slotpick-btn' + (cur ? ' on' : '') + '" data-slotmodal="' + esc(p.id) + '" data-slotrank="' + n + '">' +
+          (cur ? '📍 동·단수 변경' : '📍 동·단수 선택') +
+        '</button>' +
+      '</span>' +
+    '</div>';
+  }
+
+  /* 1단계 팝업: 동 선택 팝업 (1대짜리 게시대는 바로 단수 선택 팝업으로 이동) */
+  function openDongSelectModal(p, n, opts) {
+    if (!p) return;
+    opts = opts || {};
+    var codes = slotCodesOf(p);
     var boards = {};
-    slotCodesOf(p).forEach(function (s) { var k = s.letter; if (!boards[k]) boards[k] = []; boards[k].push(s); });
-    var html = '<details class="slotpick" data-slotof="' + esc(p.id) + '"' + ((cur || ui.designatedOnly) ? ' open' : '') + '><summary>세부 위치' +
-      (cur ? ' <span class="cur">' + esc(slotChipTxt(p, cur)) + (slotBoardAll(cur) ? '' : ' (' + esc(slotName(p, cur)) + ')') + '</span>' : ' <span class="any">위치 무관 · 빈 칸 자동 배정</span>') +
-      '</summary><div class="slot-picks">' +
-      '<button type="button" class="spick any' + (cur ? '' : ' on') + '" data-slotpick="' + p.id + '" data-slotrank="' + n + '" data-slot="" title="게시대 안 빈 칸에 자동 배정">위치 무관</button>';
-    Object.keys(boards).forEach(function (k) {
-      var dd = dongDescOf(p, k);
-      html += '<span class="sgrp"' + (dd ? ' title="' + esc(dd) + '"' : '') + '><b>' + (k ? esc(k) + '동' : '단') + (k ? dongPriorityTag(p, k) : '') + '</b>';
-      if (k) {
-        var allCode = k + '*', allSt = smap[k + '1'] ? slotStateOf(p, allCode) : { off: true, label: '' };
-        html += '<button type="button" class="spick' + (cur === allCode ? ' on' : '') + (allSt.off ? ' off' : '') + '" data-slotpick="' + p.id + '" data-slotrank="' + n + '" data-slot="' + allCode + '"' +
-          (allSt.off ? ' disabled' : '') + ' title="' + esc(slotName(p, allCode) + ' · ' + allSt.label) + '">' +
-          esc(k) + '동 전체</button>';
-      }
-      boards[k].forEach(function (s) {
-        var st = smap[s.code] || { k: 'inuse', label: '현재 게시 중', off: false };
-        var isCover = (st.k === 'cover');
-        var cls = 'spick' + (cur === s.code ? ' on' : '') + (st.off ? ' off' : (st.k === 'inuse' ? ' inuse' : '')) +
-          (st.k === 'fault' || st.k === 'cover' || st.k === 'broken' ? ' ' + st.k : '') + (!st.off && st.rivals ? ' rival' : '');
-        html += '<button type="button" class="' + cls + '" data-slotpick="' + p.id + '" data-slotrank="' + n + '" data-slot="' + s.code + '"' +
-          (isCover ? ' data-cover="1"' : '') +
-          (st.off ? ' disabled' : '') + ' title="' + esc(s.code + ' · ' + slotName(p, s.code) + ' · ' + st.label + (st.rivals && !st.off ? ' · 경합 ' + st.rivals + '건' : '')) + '">' +
-          esc(s.code) + '</button>';
-      });
-      html += '</span>';
+    var order = [];
+    codes.forEach(function (s) {
+      var k = s.letter || '';
+      if (!boards[k]) { boards[k] = []; order.push(k); }
+      boards[k].push(s);
     });
-    html += '<span class="hint-txt" style="margin:0;flex-basis:100%">' +
-      (cur ? (slotBoardAll(cur)
-        ? esc(slotName(p, cur)) + ' 안 빈 칸에만 추첨됩니다. 그 동의 자리가 다 차면 다른 동으로 밀지 않고 낙첨 처리됩니다.'
-        : '지정한 자리(' + esc(slotName(p, cur)) + ')에만 추첨됩니다. 그 자리가 차면 다른 자리로 밀지 않고 낙첨 처리됩니다.')
-        : '위치 무관 — 게시대 안 빈 칸(동·단)에 자동 배정됩니다. 특정 자리를 원하는 고객만 골라 주세요.') + '</span>';
-    return html + '</div></details>';
+    if (order.length <= 1) {
+      openTierSelectModal(p, order[0] || '', n, opts);
+      return;
+    }
+    var cur = (ui.slots && ui.slots[p.id]) || '';
+    var smap = slotStateMap(p);
+    var listHtml = order.map(function (k) {
+      var arr = boards[k];
+      var freeCnt = 0;
+      arr.forEach(function (s) {
+        var st = smap[s.code] || {};
+        if (!st.off && st.k !== 'cover') freeCnt += 1;
+      });
+      var dd = dongDescOf(p, k);
+      var isOn = cur && (cur === (k + '*') || cur.charAt(0) === k);
+      var allSt = smap[k + '1'] ? slotStateOf(p, k + '*') : { off: false };
+      return '<button type="button" class="dong-pop-btn' + (isOn ? ' on' : '') + '"' +
+        ' data-dongpick="' + esc(k) + '"' + (allSt.off ? ' disabled' : '') + '>' +
+        '<span class="dong-pop-main">' +
+          '<span class="dong-pop-title">' + esc(k) + '동 ' + dongPriorityTag(p, k) + (isOn ? ' <span class="badge b-purple">선택됨</span>' : '') + '</span>' +
+          '<span class="dong-pop-sub">' + esc(dd || ('총 ' + arr.length + '단 (' + k + '1 ~ ' + k + arr.length + ')')) + '</span>' +
+        '</span>' +
+        '<span class="dong-pop-meta">' + (allSt.off ? '접수 불가' : ('선택 가능 ' + freeCnt + '/' + arr.length + '단 →')) + '</span>' +
+      '</button>';
+    }).join('');
+
+    var done = function () {
+      closeModal();
+      if (typeof opts.afterClose === 'function') opts.afterClose();
+    };
+    openModal({
+      title: '📍 ' + p.name + ' — 동 선택',
+      sub: p.dong + ' · ' + placeSizeTxt(p) + ' · ' + n + '순위 세부 위치',
+      body: '<div class="sp-pop-top">' +
+        '<button type="button" class="btn' + (!cur ? ' primary' : ' ghost') + '" id="spDongAny">🎲 위치 무관 (빈 칸 자동 배정)</button>' +
+      '</div>' +
+      '<div class="dong-pop-list">' + listHtml + '</div>' +
+      '<div class="hint-txt" style="margin-top:10px">동을 선택하면 다음 화면에서 1~' + Math.max.apply(null, order.map(function (k) { return boards[k].length; })) + '단 중 원하는 단수를 고를 수 있습니다.</div>',
+      foot: '<button type="button" class="btn ghost" id="spDongCancel">닫기</button>',
+      after: function () {
+        onEl('#spDongAny', 'click', function () {
+          setSlot(p.id, '', n);
+          done();
+        });
+        onEl('#spDongCancel', 'click', function () { done(); });
+        $$('[data-dongpick]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            openTierSelectModal(p, btn.getAttribute('data-dongpick') || '', n, opts);
+          });
+        });
+      }
+    });
+  }
+
+  /* 2단계 팝업: 단수 선택 팝업 */
+  function openTierSelectModal(p, dongLetter, n, opts) {
+    if (!p) return;
+    opts = opts || {};
+    var codes = slotCodesOf(p);
+    var boards = {};
+    codes.forEach(function (s) {
+      var k = s.letter || '';
+      if (!boards[k]) boards[k] = [];
+      boards[k].push(s);
+    });
+    var multi = Object.keys(boards).length > 1;
+    var arr = boards[dongLetter || ''] || [];
+    var cur = (ui.slots && ui.slots[p.id]) || '';
+    var smap = slotStateMap(p);
+
+    var topBtns = '';
+    if (multi) {
+      topBtns += '<button type="button" class="btn ghost" id="spTierBack">← 동 다시 선택</button>';
+    } else {
+      topBtns += '<button type="button" class="btn' + (!cur ? ' primary' : ' ghost') + '" id="spTierAny">🎲 위치 무관 (빈 칸 자동 배정)</button>';
+    }
+    if (dongLetter) {
+      var allCode = dongLetter + '*';
+      var allSt = smap[dongLetter + '1'] ? slotStateOf(p, allCode) : { off: true, label: '' };
+      topBtns += '<button type="button" class="btn' + (cur === allCode ? ' primary' : ' ghost') + '" id="spTierAll"' +
+        (allSt.off ? ' disabled' : '') + '>✨ ' + esc(dongLetter) + '동 전체 (빈 칸 아무 자리)</button>';
+    }
+
+    var listHtml = arr.map(function (s) {
+      var st = smap[s.code] || { k: 'inuse', label: '현재 게시 중', off: false };
+      var isCover = (st.k === 'cover');
+      var disabled = st.off || isCover;
+      var isOn = (cur === s.code);
+      var meta = isOn ? '✓ 선택됨' : (isCover ? '풀가림 (목요일 선착순 전용)' : (st.off ? (st.label || '선택 불가') : (st.rivals ? '경합 ' + st.rivals + '건 · 선택 가능' : '선택 가능')));
+      var subTxt = st.label || (st.k === 'free' ? '빈 칸 · 자동/지정 가능' : '');
+      var cls = 'tier-pop-btn' + (isOn ? ' on' : '') + (disabled ? ' off' : '') + (!disabled && st.rivals ? ' rival' : '');
+      return '<button type="button" class="' + cls + '" data-tierpick="' + esc(s.code) + '"' + (disabled ? ' disabled' : '') + '>' +
+        '<span class="tier-pop-main">' +
+          '<span class="tier-pop-title">' + s.row + '단 <span style="font-size:12px;color:var(--muted);font-weight:700">(' + esc(s.code) + ')</span></span>' +
+          '<span class="tier-pop-sub">' + esc(subTxt) + '</span>' +
+        '</span>' +
+        '<span class="tier-pop-meta">' + esc(meta) + '</span>' +
+      '</button>';
+    }).join('');
+
+    var dd = dongDescOf(p, dongLetter);
+    var done = function () {
+      closeModal();
+      if (typeof opts.afterClose === 'function') opts.afterClose();
+    };
+    openModal({
+      title: '🪜 ' + p.name + ' · ' + (dongLetter ? esc(dongLetter) + '동' : '1대') + ' — 단수 선택',
+      sub: (dd ? dd + ' · ' : p.dong + ' · ') + n + '순위 단수를 골라 주세요',
+      body: '<div class="sp-pop-top">' + topBtns + '</div>' +
+        '<div class="tier-pop-list">' + listHtml + '</div>',
+      foot: '<button type="button" class="btn ghost" id="spTierCancel">닫기</button>',
+      after: function () {
+        onEl('#spTierBack', 'click', function () { openDongSelectModal(p, n, opts); });
+        onEl('#spTierAny', 'click', function () { setSlot(p.id, '', n); done(); });
+        onEl('#spTierAll', 'click', function () {
+          setSlot(p.id, dongLetter + '*', n);
+          done();
+        });
+        onEl('#spTierCancel', 'click', function () { done(); });
+        $$('[data-tierpick]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var code = btn.getAttribute('data-tierpick') || '';
+            var othPick = slotOtherOf(p, code);
+            if (othPick && othPick.mode === 'warn' && !(ui.otherOk || {})[p.id + '|' + code]) {
+              setSlot(p.id, code, n);
+              return;
+            }
+            setSlot(p.id, code, n);
+            done();
+          });
+        });
+      }
+    });
   }
   /* 순위별 선택 게시대 — priority1/2/3 (기존 데이터는 placements·p1~p3 호환) */
   function prioOf(a, n) {
@@ -6228,7 +6353,7 @@
     }
     list.push(id);
     renderPickUI();
-    autoAdvancePick(false);
+    openDongSelectModal(p, rank, { afterClose: function () { autoAdvancePick(false); } });
   }
 
   /* 신청 구분(일반/대행) — 직접 신청이면 실제 광고주 = 업체명 자동 */
@@ -15143,7 +15268,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -15233,6 +15358,10 @@
     if (el.hasAttribute('data-logout')) { logoutMember(); return; }
     if (el.hasAttribute('data-slotpick')) {
       setSlot(el.getAttribute('data-slotpick'), el.getAttribute('data-slot') || '', Number(el.getAttribute('data-slotrank')) || activeRank());
+      return;
+    }
+    if (el.hasAttribute('data-slotmodal')) {
+      openDongSelectModal(placementById(el.getAttribute('data-slotmodal')), Number(el.getAttribute('data-slotrank')) || activeRank());
       return;
     }
     if (el.hasAttribute('data-caltoggle')) { var ctp = el.getAttribute('data-caltoggle');
