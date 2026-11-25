@@ -4633,9 +4633,9 @@
       removedPlaces: [],
       notice: {
         on: true, kind: 'info',
-        title: '2026년 12월 1주차 주간 운영 안내 (게첨 11.30~12.06)',
-        body: '매주 월요일 10:00 전산 추첨 → 다음 주 월요일부터 게첨(월~일 1주일)입니다. 수요일 18:00 현수막 입고 마감 · 목요일 일과시간(09:00~18:00) 미배정 잔여석 선착순 · 금요일 접수 제한.\n\n이번 회차(12월 1주차)는 11.23(월) 10:00 추첨하고 11.30(월)~12.06(일)에 게첨합니다. 수요일 18:00까지 입고되지 않은 현수막은 자동 취소(반려)되고, 그 면은 목요일 선착순으로 공개됩니다.',
-        start: '', end: '', updatedAt: '2026-11-23 08:00'
+        title: '2026년 12월 1주차 주간 운영 · 현수막 입고 방식 안내',
+        body: '매주 월요일 10:00 전산 추첨 → 다음 주 월요일부터 게첨(월~일 1주일)입니다. 수요일 18:00 현수막 입고 마감 · 목요일 일과시간(09:00~18:00) 미배정 잔여석 선착순 · 금요일 접수 제한.\n\n이번 회차(12월 1주차)는 11.23(월) 10:00 추첨하고 11.30(월)~12.06(일)에 게첨합니다. 수요일 18:00까지 입고되지 않은 현수막은 자동 취소(반려)되고, 그 면은 목요일 선착순으로 공개됩니다.\n\n🚫 [현수막 입고 방식 제한 안내] 당첨 현수막은 본인(광고주·신청 대행사) 또는 대리인이 협회 사무국(서산시 덕지천로 1, 2층)에 직접 방문하여 입고해야 합니다. 택배 입고 및 광고도매상을 통한 일괄·대리 입고는 금지되며 수령 거부(미입고 처리)됩니다.\n· 사유: ① 택배·도매상 경유 시 분실·파손·배송 지연 책임 확인 불가 및 마감 분쟁 예방 ② 현장 실명제 표기·규격·접기 상태 대면 검수 필수 ③ 신청 업체와 입고 주체 불일치로 인한 접수처 혼선 방지',
+        start: '', end: '', updatedAt: '2026-11-25 09:55'
       },
       noticeHiddenOn: '',
       audit: (function () {
@@ -4820,6 +4820,17 @@
       db.seedVersion = 10;
       save();
     }
+    /* 시연 데이터 v11 (2026-11-25) — 택배·광고도매상 입고 금지 / 본인·대리인 직접 입고 공지 반영 */
+    if (Number(db.seedVersion || 10) < 11) {
+      if (db.notice && typeof db.notice.body === 'string' && db.notice.body.indexOf('택배 입고') < 0) {
+        db.notice.title = '2026년 12월 1주차 주간 운영 · 현수막 입고 방식 안내';
+        db.notice.body += '\n\n🚫 [현수막 입고 방식 제한 안내] 당첨 현수막은 본인(광고주·신청 대행사) 또는 대리인이 협회 사무국(서산시 덕지천로 1, 2층)에 직접 방문하여 입고해야 합니다. 택배 입고 및 광고도매상을 통한 일괄·대리 입고는 금지되며 수령 거부(미입고 처리)됩니다.\n· 사유: ① 택배·도매상 경유 시 분실·파손·배송 지연 책임 확인 불가 및 마감 분쟁 예방 ② 현장 실명제 표기·규격·접기 상태 대면 검수 필수 ③ 신청 업체와 입고 주체 불일치로 인한 접수처 혼선 방지';
+        db.notice.updatedAt = '2026-11-25 09:55';
+        db.noticeHiddenOn = '';
+      }
+      db.seedVersion = 11;
+      save();
+    }
   }
 
   function hydrate() {
@@ -4950,19 +4961,33 @@
      5. 라우팅
      --------------------------------------------------------------- */
   var APPLY_WARN_TEXT = '부정한 방법으로 접수 의도가 확인되는 경우 차주 접수가 제한됩니다.';
-  /* 접수 탭 진입 시 1회 경고 팝업 (김재봉 님 지시) */
+  /* 접수 탭 진입 시 1회 경고 팝업 (부정 접수 제한 + 택배·광고도매상 입고 금지) */
   function maybeShowApplyWarning(force) {
-    if (!force && ui.applyWarnShown) return false;
+    if (!force) {
+      if (ui.applyWarnShown) return false;
+      try { if (sessionStorage.getItem('seosan.applyWarnAck') === '1') return false; } catch (e) { }
+    }
     ui.applyWarnShown = true;
+    var subTxt = (PAGE === 'first' || PAGE === 'remain') ? '선착순 · 잔여석 접수' : '주간 추첨 접수';
     openModal({
-      title: '접수 전 안내 — 부정 접수 제한',
-      sub: '주간 추첨 접수',
-      body: '<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>' +
+      title: '접수 전 필수 안내 — 입고 방식 · 부정 접수 제한',
+      sub: subTxt,
+      body: '<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></svg>' +
+        '<div><b>🚫 택배 입고 및 광고도매상을 통한 입고 금지 (본인 또는 대리인 직접 입고 필수)</b><br>' +
+        '당첨 현수막은 <b>본인(광고주·신청 대행사) 또는 대리인이 협회 사무국(서산시 덕지천로 1, 2층)에 직접 방문</b>하여 입고해야 합니다. ' +
+        '<b>택배 발송 및 광고도매상을 통한 일괄·대리 입고는 금지</b>되며, 도착 시 수령 거부(미입고 처리)됩니다.<br>' +
+        '<span class="sm" style="display:block;margin-top:4px;color:var(--muted)"><b>사유</b> ① 분실·파손·지연 책임 소재 확인 및 마감 분쟁 예방 ② 현장 실명제·규격·접기 상태 대면 검수 필수 ③ 접수 주체와 입고 주체 불일치로 인한 혼선 방지</span></div></div>' +
+        '<div class="callout warn" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>' +
         '<div><b>' + APPLY_WARN_TEXT + '</b><br>' +
         '같은 광고주·같은 내용의 중복 접수, 허위 광고주 정보, 유사 문구로 다른 게시대를 선점하는 행위 등이 확인되면 이번 회차 접수가 취소되고 <b>차주 접수가 제한</b>될 수 있습니다. ' +
         '(충청남도 옥외광고물 조례 제12조 · 2회 연속 게시 불가)</div></div>' +
-        '<div class="hint-txt" style="margin-top:10px">접수 전 아래 내용을 확인해 주세요 — ① 같은 업소·같은 내용은 1개 게시대에 1건 ② 실제 광고주 기준 중복 차단 ③ 유사 광고주·문구 자동 점검</div>',
-      foot: '<button class="btn primary" id="btnApplyWarnOk" data-close="1" type="button">확인 후 접수 계속</button>'
+        '<div class="hint-txt" style="margin-top:10px">접수 전 확인 사항 — ① 본인·대리인 직접 입고만 가능(택배·도매상 불가) ② 같은 업소·같은 내용은 1개 게시대에 1건 ③ 실제 광고주 기준 중복 차단</div>',
+      foot: '<button class="btn primary" id="btnApplyWarnOk" data-close="1" type="button">확인 후 접수 계속</button>',
+      after: function () {
+        if ($('#btnApplyWarnOk')) onEl('#btnApplyWarnOk', 'click', function () {
+          try { sessionStorage.setItem('seosan.applyWarnAck', '1'); } catch (e) { }
+        });
+      }
     });
     return true;
   }
@@ -6936,7 +6961,7 @@
       ['세부 위치', slotAssignTxt(v) || '위치 무관 — 게시대 안 빈 칸(동·단)에 자동 배정'],
       ['순위별 접수', v.randomMode ? ('🎲 무작위 전체 풀 ' + v.randomPool.length + '개소 (' + v.qty + '매 추첨)') : ('1순위 ' + c[1] + '개소' + (v.designated ? '' : ' · 2순위 ' + c[2] + '개소 · 3순위 ' + c[3] + '개소'))],
       ['게시 기간', esc(start + ' ~ ' + addDays(start, days - 1) + ' (' + days + '일)')],
-      ['현수막 입고', esc(dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 협회 입고 (미입고 시 자동 취소·반려)')]
+      ['현수막 입고', esc(dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 본인 또는 대리인 직접 입고 (택배·광고도매상 입고 금지 / 미입고 시 자동 취소·반려)')]
     ];
     if (v.eventApp) {
       rows.splice(rows.length - 2, 0, ['행사 우선접수', '<b style="color:var(--purple)">신청</b> — ' + esc(v.eventName || '행사명 미입력') + ' · ' + esc(v.eventPeriod || '기간 미입력') +
@@ -7176,7 +7201,7 @@
       (a.directInstall
         ? '<dt>설치 방식</dt><dd><b>진행 중 주간 잔여석</b> — ' + liveInstallLabel(liveInstallKindOf(a)) +
           '<br>' + esc(a.directInstallMsg || liveMsgOf(liveInstallKindOf(a))) + ' (협회 일괄 게첨 없음)</dd>'
-        : '<dt>현수막 입고</dt><dd>당첨 시 ' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 협회 입고 (미입고 시 자동 취소·반려)</dd>') +
+        : '<dt>현수막 입고</dt><dd>당첨 시 ' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 <b>본인 또는 대리인 직접 입고</b> (택배·광고도매상 입고 금지 / 미입고 시 자동 취소·반려)</dd>') +
       '<dt>광고 문구</dt><dd>' + esc(a.text) + '</dd>' +
       '<dt>수수료</dt><dd>' + won(f.total) + ' (' + esc(feeText(f)) + ')' + (a.assignedTo && awQty !== qty ? ' · 납부는 배정 ' + awQty + '매 기준' : '') +
         '<span class="fee-sub">1매 단가 구성 — ' + esc(feeUnitText()) + '</span></dd>' +
@@ -7190,7 +7215,7 @@
     var body = receiptHTML(a);
     if (isNew) {
       body = '<div class="callout ok" style="margin-bottom:14px">' + IC.check +
-        '<div>접수가 완료되었습니다. 사무국 시안 심사 후 <b>' + dfmt(ROUND.drawDate) + ' ' + ROUND.drawTime + ' 전산 추첨</b> 대상이 됩니다. 당첨 시 현수막을 <b>' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지</b> 협회에 입고해 주세요.</div></div>' + body +
+        '<div>접수가 완료되었습니다. 사무국 시안 심사 후 <b>' + dfmt(ROUND.drawDate) + ' ' + ROUND.drawTime + ' 전산 추첨</b> 대상이 됩니다. 당첨 시 현수막은 <b>' + dfmt(ROUND.deliverBy) + ' ' + ROUND.deliverTime + '까지 본인 또는 대리인이 직접 입고</b>해 주세요. (택배·광고도매상 입고 금지)</div></div>' + body +
         '<div class="callout info" style="margin-top:14px">' + IC.money +
         '<div>입금은 <b>당첨 후</b>에 진행되며, 추첨(월 ' + ROUND.drawTime + ')과 동시에 당첨자별 가상계좌(농협 301-0123-4567-89 · 예금주 (사)충청남도옥외광고협회 서산시지부)가 발급됩니다.</div></div>';
     }
@@ -9422,7 +9447,7 @@
     if (ev.on && ev.status === '승인') extra += '<div class="callout ok" style="margin-top:10px;margin-bottom:0">' + IC.check + '<div><b>행사 우선 승인</b> — ' + esc(a.eventName || '행사') + ' · 이번 추첨에서 <b>공문 다음 · 일반 접수보다 먼저</b> 배정됩니다. (찬성 ' + ev.yes + '/5)</div></div>';
     if (ev.on && ev.status === '미승인') extra += '<div class="callout warn" style="margin-top:10px;margin-bottom:0">' + IC.alert + '<div><b>행사 우선접수 미승인 → 일반 추첨 전환</b> — 찬성이 3명에 미치지 못했습니다(찬성 ' + ev.yes + ' · 반려 ' + ev.no + ' · 기권 ' + ev.abs + '). 신청한 <b>1·2·3순위 그대로</b> 일반 추첨에 참여합니다.</div></div>';
     if (a.status === '입고대기' || a.status === '선착순확정') extra = '<div class="callout warn" style="margin-top:10px;margin-bottom:0">' + IC.alert +
-      '<div><b>현수막 입고 대기</b> — <b>' + esc(dueOf(a)) + '까지</b> 협회 사무국(서산시 덕지천로 1, 2층)으로 실물을 입고해 주세요.' +
+      '<div><b>현수막 입고 대기</b> — <b>' + esc(dueOf(a)) + '까지 본인 또는 대리인이</b> 협회 사무국(서산시 덕지천로 1, 2층)에 직접 실물을 입고해 주세요. (<b>택배·광고도매상 입고 금지</b>)' +
       (a.paid ? '' : ' 수수료 <b>' + won(feeFor(awardedOf(a) || qtyOf(a), a.days).total) + '</b>(' + (awardedOf(a) || qtyOf(a)) + '매)도 함께 입금해 주세요.') +
       ' 미입고 시 자동 취소(반려)됩니다.</div></div>';
     if (a.status === '입고완료') extra = '<div class="callout ok" style="margin-top:10px;margin-bottom:0">' + IC.check + '<div><b>입고 완료 · 게시 대기</b> — ' + dfmt(a.start || ROUND.postStart) + ' 현장 게첨 후 게시가 시작됩니다.</div></div>';
@@ -15418,6 +15443,7 @@
       if (pend === 'fcnext') { fcNextStep(); return; }
       if (pend && pend.indexOf('first:') === 0) { bookFirst(pend.slice(6)); return; }
       if (pend && pend.indexOf('live:') === 0) { bookLive(pend.slice(5)); return; }
+      if (PAGE === 'apply' || PAGE === 'first' || PAGE === 'remain') { maybeShowApplyWarning(false); }
       return;
     }
     if (el.hasAttribute('data-repeatoff')) {
@@ -16209,13 +16235,14 @@
     } else if (PAGE === 'apply') {
       applyPlaceFromUrl();
       renderApply();
-      maybeShowApplyWarning(false);
+      if (currentMember() || ui.guestAck) maybeShowApplyWarning(false);
     } else if (PAGE === 'first' || PAGE === 'remain') {
       /* 진행 중 주간 잔여석 접수 바로가기 — index.html 카드의 [잔여석 접수] → first.html?mode=live&place=P01
          · 4단계 흐름에서는 팝업을 띄우지 않고, 그 게시대를 **3단계에 미리 담아** 1단계부터 접수하게 한다 */
       ui.fcMode = (PAGE === 'remain') ? 'live' : 'next';      /* remain=상시 · first=취소분 선착순 */
       ui.fcStep = 1;
       renderFirst();
+      if (currentMember() || ui.guestAck) maybeShowApplyWarning(false);
       var livePlaceParam = paramOf('place');
       if (livePlaceParam && (PAGE === 'remain' || PAGE === 'first') && placementById(livePlaceParam)) {
         var lp = placementById(livePlaceParam);
