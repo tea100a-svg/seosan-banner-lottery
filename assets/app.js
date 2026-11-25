@@ -2834,7 +2834,7 @@
     locAddrOpen: false, locAddrRows: {}, coverOk: {}, fcCover: {}, otherOk: {},
     suLicName: '', suLicData: '', suLicMime: '', licFromMember: false,
     adminSub: 'draw', guideSub: 'file', sort: 'default', pSort: 'default', calOpen: false, statusPage: 0, pickPage: 0, statusAll: true, pickAll: false,
-    statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, drawWeek: ROUND.postStart, calMonth: {}, offSlots: {},
+    statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, drawWeek: ROUND.postStart, locWeek: ROUND.postStart, calMonth: {}, offSlots: {},
     themeSel: {}, themeSearch: '', themeEditSel: {},
     /* 현장 게첨사진 — 게시대 동 단위 등록 화면의 선택값 (2026-11-23) */
     photoWeek: '', photoPid: '', photoDong: '' };
@@ -5387,9 +5387,35 @@
     }
     return (d.getMonth() + 1) + '월 ' + Math.max(1, n) + '주차';
   }
+  function syncWeekSelect(selEl, badgeEl, nowBtnEl, curWk) {
+    if (!selEl) return;
+    var wk = weekStartOf(curWk || ROUND.postStart);
+    var list = (typeof WEEKS !== 'undefined' ? WEEKS : []).slice().reverse();
+    var hasWk = list.some(function (w) { return w.start === wk; });
+    if (!hasWk) {
+      var wi = weekInfoOf(wk);
+      list.unshift({ id: wi.id || wk, label: weekKpiLabel(wk), start: wk, end: addDays(wk, 6) });
+    }
+    selEl.innerHTML = list.map(function (w) {
+      var tag = (w.start === ROUND.postStart) ? ' · 이번 회차' : (w.start < ROUND.postStart ? ' · 지난 회차' : ' · 예정');
+      return '<option value="' + esc(w.start) + '"' + (w.start === wk ? ' selected' : '') + '>' +
+        esc(w.label) + ' (' + dstr(w.start) + '~' + dstr(w.end) + ')' + tag + '</option>';
+    }).join('');
+    if (nowBtnEl) nowBtnEl.style.display = (wk === ROUND.postStart) ? 'none' : '';
+    if (badgeEl) {
+      if (wk < ROUND.postStart) {
+        badgeEl.innerHTML = '<span class="badge b-amber" style="font-size:11px"><i></i>지난 회차 조회 중</span>';
+      } else if (wk > ROUND.postStart) {
+        badgeEl.innerHTML = '<span class="badge b-navy" style="font-size:11px"><i></i>예정 회차 조회 중</span>';
+      } else {
+        badgeEl.textContent = '현재 접수·진행 회차';
+      }
+    }
+  }
   function renderStatus() {
     if (!has('statusStats')) return;
     var wk = weekStartOf(ui.statusWeek || ROUND.postStart);
+    syncWeekSelect($('#statusWeekSelect'), $('#statusWeekBadge'), $('#btnStatusWeekNow'), wk);
     var ws = weekStatsOf(wk);
     var caps = 0, left = 0, capAvail = 0;
     db.placements.forEach(function (p) {
@@ -5545,9 +5571,10 @@
   function showPlacementDetail(id) {
     var p = placementById(id);
     if (!p) return;
-    var liveWk = (weekStartOf(ui.statusWeek || ROUND.postStart) === weekStartOf(CUR.start));
+    var curWk = weekStartOf(ui.statusWeek || ROUND.postStart);
+    var liveWk = (curWk === weekStartOf(CUR.start));
     var liveLeft = liveWk ? liveAvailOf(p) : 0;
-    var appsR = db.apps.filter(function (a) { return a.round === ROUND.id && requestedPlacesOf(a).indexOf(id) >= 0; });
+    var appsR = appsOfWeek(curWk).filter(function (a) { return requestedPlacesOf(a).indexOf(id) >= 0; });
     var qtyAppsR = appsR.reduce(function (s2, a) { return s2 + qtyOf(a); }, 0);
     var body = '<div class="summary" style="margin-bottom:14px"><dl>' +
       '<dt>위치</dt><dd>' + esc('서산시 ' + p.dong + (p.beopdong && p.beopdong !== p.dong ? ' · 법정동 ' + p.beopdong : '')) + '</dd>' +
@@ -12198,7 +12225,8 @@
       var allDong = slotBoardAll(slot);
       var letter = (slot && slot.length > 1) ? String(slot).charAt(0) : '';
       var rowNo = slot ? String(slot).replace(/[^0-9]/g, '') : '';
-      var pStart = boardPostStart(p);
+      var wmA = weekMeta(a.round);
+      var pStart = (wmA && wmA.start) || a.postStart || boardPostStart(p);
       out.push({
         pid: p.id, day: p.day, place: p.name + (slot ? slot : ''), name: p.name, slot: slot,
         letter: letter, rowNo: allDong ? '' : rowNo, allDong: allDong,
@@ -12215,10 +12243,22 @@
     });
     return out;
   }
+  function locWeekStart() { return weekStartOf(ui.locWeek || ROUND.postStart); }
+  function locRoundId() {
+    var wk = locWeekStart();
+    var wm = weekMeta(wk);
+    return wm ? wm.id : wk;
+  }
+  function locMatchesWeek(a, wk, rid) {
+    if (a.round && a.round === rid) return true;
+    if (a.postStart && weekStartOf(a.postStart) === wk) return true;
+    return false;
+  }
   function locApps() {
     var q = String(ui.locq || '').trim();
+    var wk = locWeekStart(), rid = locRoundId();
     return db.apps.filter(function (a) {
-      if (a.round !== ROUND.id) return false;
+      if (!locMatchesWeek(a, wk, rid)) return false;
       if (['반려', '낙첨', '미입고취소', '미입금취소', '본인취소', '접수취소'].indexOf(a.status) >= 0) return false;
       if (ui.locDay) {
         var rows = locRowsOf(a);
@@ -12229,14 +12269,19 @@
     });
   }
   function locMissedCount() {
-    return db.apps.filter(function (a) { return a.round === ROUND.id && awardedPlacesOf(a).length && SEAT_STATUS.indexOf(a.status) >= 0 && !a.delivered; }).length;
+    var wk = locWeekStart(), rid = locRoundId();
+    return db.apps.filter(function (a) { return locMatchesWeek(a, wk, rid) && awardedPlacesOf(a).length && SEAT_STATUS.indexOf(a.status) >= 0 && !a.delivered; }).length;
   }
   function renderLoc() {
     if (!has('locList')) return;
     if (!$('#locList')) return;
+    var wk = locWeekStart();
+    syncWeekSelect($('#locWeekSelect'), $('#locWeekBadge'), $('#btnLocWeekNow'), wk);
+    var wm = weekMeta(wk);
+    var wkLabel = wm ? wm.label : weekKpiLabel(wk);
     var list = locApps();
     var assignedN = list.filter(function (a) { return awardedPlacesOf(a).length; }).length;
-    $('#locInfo').textContent = '이번 회차 ' + list.length + '건 · 배정 완료 ' + assignedN + '건 · 미입고 ' + locMissedCount() + '건';
+    $('#locInfo').textContent = wkLabel + ' ' + list.length + '건 · 배정 완료 ' + assignedN + '건 · 미입고 ' + locMissedCount() + '건';
     if ($('#locDayChips')) {
       $('#locDayChips').innerHTML = [['', '전체'], ['월', '월요일'], ['화', '화요일'], ['수', '수요일']].map(function (x) {
         var on = (ui.locDay || '') === x[0];
@@ -15794,6 +15839,46 @@
     }
 
     onEl('#btnRefresh', 'click', function () { renderStatus(); toast('현황을 새로 불러왔습니다.'); });
+    onEl('#statusWeekSelect', 'change', function () {
+      ui.statusWeek = weekStartOf(this.value || ROUND.postStart);
+      ui.calMonth.status = ui.statusWeek.slice(0, 7);
+      renderStatus();
+    });
+    onEl('#btnStatusWeekPrev', 'click', function () {
+      ui.statusWeek = addDays(weekStartOf(ui.statusWeek || ROUND.postStart), -7);
+      ui.calMonth.status = ui.statusWeek.slice(0, 7);
+      renderStatus();
+    });
+    onEl('#btnStatusWeekNext', 'click', function () {
+      ui.statusWeek = addDays(weekStartOf(ui.statusWeek || ROUND.postStart), 7);
+      ui.calMonth.status = ui.statusWeek.slice(0, 7);
+      renderStatus();
+    });
+    onEl('#btnStatusWeekNow', 'click', function () {
+      ui.statusWeek = ROUND.postStart;
+      ui.calMonth.status = ui.statusWeek.slice(0, 7);
+      renderStatus();
+    });
+    onEl('#locWeekSelect', 'change', function () {
+      ui.locWeek = weekStartOf(this.value || ROUND.postStart);
+      ui.locSel = '';
+      renderLoc();
+    });
+    onEl('#btnLocWeekPrev', 'click', function () {
+      ui.locWeek = addDays(locWeekStart(), -7);
+      ui.locSel = '';
+      renderLoc();
+    });
+    onEl('#btnLocWeekNext', 'click', function () {
+      ui.locWeek = addDays(locWeekStart(), 7);
+      ui.locSel = '';
+      renderLoc();
+    });
+    onEl('#btnLocWeekNow', 'click', function () {
+      ui.locWeek = ROUND.postStart;
+      ui.locSel = '';
+      renderLoc();
+    });
     onEl('#btnPlaceToggle', 'click', function () {
       applyPlaceFold(!ui.placeFold);
       if (ui.placeFold) toast('게시대 현황 ' + db.placements.length + '개소를 펼쳤습니다.');

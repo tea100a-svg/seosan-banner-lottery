@@ -13,7 +13,7 @@
 }catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
 <title>게시대 현황 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261125r10">
+<link rel="stylesheet" href="assets/style.css?v=20261125r11">
 </head>
 <body data-page="status">
 <div class="demo-banner">
@@ -106,6 +106,14 @@
         <span class="cta-sub" id="ctaNextSub">추첨 11.23(월) 10:00 · 입고 마감 11.25(수) 18:00 · 게첨 11.30(월)~12.06(일)</span>
       </span>
     </a>
+    <div class="week-bar" id="statusWeekBar" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 12px;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px">
+      <b style="font-size:13px;color:var(--navy)">📅 회차 조회</b>
+      <button class="btn ghost sm" id="btnStatusWeekPrev" type="button" title="이전 회차">◀ 이전</button>
+      <select class="input sm" id="statusWeekSelect" aria-label="게시대 현황 회차 선택" style="min-width:240px;max-width:100%"></select>
+      <button class="btn ghost sm" id="btnStatusWeekNext" type="button" title="다음 회차">다음 ▶</button>
+      <button class="btn sm" id="btnStatusWeekNow" type="button" style="display:none">이번 회차로</button>
+      <span class="sm" id="statusWeekBadge" style="color:var(--muted)"></span>
+    </div>
     <div class="rule-strip-wrap" id="weekRuleStrip"></div>
     <div id="statusLiveNotice"></div>
     <div class="week-strip" id="weekStrip"></div>
@@ -189,6 +197,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261125r10"></script>
+<script src="assets/app.js?v=20261125r11"></script>
 </body>
 </html>

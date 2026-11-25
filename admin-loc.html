@@ -13,7 +13,7 @@
 }catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
 <title>협회 관리자 · 📍 게시위치 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261125r10">
+<link rel="stylesheet" href="assets/style.css?v=20261125r11">
 </head>
 <body data-page="admin-loc">
 <div class="demo-banner">
@@ -127,6 +127,14 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
         <div>게첨 사전작업용 화면입니다. 왼쪽 <b>이번 주 배정·접수 목록</b>에서 업체를 누르면 오른쪽에 <b>설치코스(설치요일 · 게시장소 · 관리번호 · 주소 · 위치설명)</b>가 바로 나옵니다. 현수막을 분류해 <b>게첨 사전준비 완료</b>를 체크하고 <b>인쇄(A4)</b>로 작업반에 넘기세요.</div>
       </div>
+      <div class="loc-weekbar" id="locWeekBar" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px">
+        <b style="font-size:13px;color:var(--navy)">📅 회차 조회</b>
+        <button class="btn ghost sm" id="btnLocWeekPrev" type="button" title="이전 회차">◀ 이전</button>
+        <select class="input sm" id="locWeekSelect" aria-label="게시위치 회차 선택" style="min-width:240px;max-width:100%"></select>
+        <button class="btn ghost sm" id="btnLocWeekNext" type="button" title="다음 회차">다음 ▶</button>
+        <button class="btn sm" id="btnLocWeekNow" type="button" style="display:none">이번 회차로</button>
+        <span class="sm" id="locWeekBadge" style="color:var(--muted)"></span>
+      </div>
       <div class="loc-wrap">
         <div class="loc-left">
           <div class="loc-tools">
@@ -189,6 +197,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261125r10"></script>
+<script src="assets/app.js?v=20261125r11"></script>
 </body>
 </html>
