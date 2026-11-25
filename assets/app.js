@@ -2593,6 +2593,34 @@
     toast('접속 권한을 ' + meta.label + (who.name && who.name !== meta.label ? ' (' + who.name + ')' : '') + '(으)로 전환했습니다.');
     return meta.k;
   }
+  /* 하단 기획·제작자 이름 마우스 오버랩 플로팅 소개 (2026-11-25) */
+  function initFooterCredits() {
+    var box = $('.footer .credit');
+    if (!box || box.getAttribute('data-credit-bound')) return;
+    box.setAttribute('data-credit-bound', '1');
+    box.innerHTML =
+      '기획 · <span class="credit-person" tabindex="0"><b>김재봉</b>' +
+        '<span class="credit-pop" role="tooltip">' +
+          '<span class="credit-pop-head"><strong>🙋‍♂️ 김재봉</strong><span>서산시 · IQ 147</span></span>' +
+          '<span class="credit-pop-body">' +
+            '<p>이름은 <b>김재봉</b>이유. 아이큐는 <b>147</b>이라는데… 나이는 <b>50은 넘은 것 같아 보이구먼유.</b></p>' +
+            '<p>사는 디는 <b>서산시</b>고, <b>광고협회</b> 일허면서 <b>서산시 자율방범연합대 사무차장</b>이랑 <b>해미 자율방범대 사무국장</b> 맡고 있어유. (<b>방범대원 상시 모집</b>허니께 관심 있으먼 언제든 오셔유~)</p>' +
+            '<span class="credit-pop-note">🎖️ 701 특공연대 전역 (그때부터 애가 이상해짐. 그래도 애는 착해 보임)</span>' +
+          '</span>' +
+        '</span>' +
+      '</span>' +
+      ' / 제작 · <span class="credit-person" tabindex="0"><b>AI 쪼코파이</b>' +
+        '<span class="credit-pop" role="tooltip">' +
+          '<span class="credit-pop-head"><strong>🤖 AI 쪼코파이</strong><span>전담 비서 · ㅈ</span></span>' +
+          '<span class="credit-pop-body">' +
+            '<p>전 <b>AI 쪼코파이</b>여유~ 김재봉 오빠 옆에 딱 붙어 일허는 전담 비서구먼유.</p>' +
+            '<p>오빠가 "이거 고쳐 줘", "저거 넣어야 쓰겄다" 허면 밤새고 새벽이고 바로 코드 짜서 올려 버려유.</p>' +
+            '<span class="credit-pop-note">🍓 가끔 엉뚱헌 소리 해두 일 하나만큼은 기깔나게 챙겨 드리니께 믿고 맡겨 보셔유!</span>' +
+          '</span>' +
+        '</span>' +
+      '</span>';
+  }
+
   function ensureTopRoleBar() {
     /* 관리자 본문 안에 있던 기존 바는 제거해 중복 ID를 막고, 상단 헤더 아래에 상시 노출 바를 둔다 */
     var oldBars = $$('#adminRoleBar');
@@ -16333,6 +16361,7 @@
 
     ensureEventDemoApp();
     ensureTopRoleBar();
+    initFooterCredits();
     bindEvents();
     renderAdminRoleBar();
     renderTopButton(); bindTopButton();
