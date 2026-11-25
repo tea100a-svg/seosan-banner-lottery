@@ -13,7 +13,7 @@
 }catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
 <title>주간 추첨 접수 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261126r3">
+<link rel="stylesheet" href="assets/style.css?v=20261126r4">
 </head>
 <body data-page="apply">
 <div class="demo-banner">
@@ -107,17 +107,17 @@
     </ol>
 
     <form class="panel" id="applyForm" autocomplete="off" novalidate>
-      <!-- step 3 · 게시대 선택 (1개소 1매 · 수량별 1·2·3순위 / 고객장소 지정) -->
+      <!-- step 3 · 게시대 선택 (1개소 1매 · 수량별 1·2·3순위 / 위치지정) -->
       <div class="step-body" id="step3">
         <div class="designate-box" id="designateBox">
           <label class="designate-row" for="chkDesignated">
             <input type="checkbox" id="chkDesignated">
             <span class="dt">
-              <b>고객장소 지정 (1순위 지정 장소만 추첨 · 2·3순위 미적용)</b>
-              <small>고객이 지정한 장소만 추첨합니다. 1순위에서 떨어지면 다른 게시대로 대체 추첨하지 않고 <b>낙첨</b> 처리됩니다. 체크하면 2·3순위 선택이 비활성화됩니다. 아래 <b>선택한 게시대</b>에서 <b>세부 위치(A·B·C동 / 1~5단)</b>까지 지정할 수 있습니다.</small>
+              <b>위치지정 (1순위 지정 장소만 추첨 · 2·3순위 미적용)</b>
+              <small>지정한 위치만 추첨합니다. 1순위에서 떨어지면 다른 게시대로 대체 추첨하지 않고 <b>낙첨</b> 처리됩니다. 체크하면 2·3순위 선택이 비활성화되며, 아래 <b>선택한 게시대</b>에서 <b>세부 위치(A·B·C동 / 1~5단)</b>까지 지정할 수 있습니다.</small>
             </span>
           </label>
-          <div class="hint-txt hidden" id="designateWarn" style="margin-top:9px;color:var(--purple);font-weight:700">고객장소 지정 시 2순위·3순위는 추첨·저장에 반영되지 않습니다. 선택한 게시대의 [세부 위치]에서 예: 의료원사거리 A2 처럼 동·단까지 지정할 수 있습니다.</div>
+          <div class="hint-txt hidden" id="designateWarn" style="margin-top:9px;color:var(--purple);font-weight:700">위치지정 적용 중 — 1순위만 추첨됩니다.</div>
         </div>
         <div class="rank-status" id="rankStatus"></div>
         <div class="rank-tabs" id="rankTabs"></div>
@@ -375,12 +375,7 @@
         <div class="step-notes" id="stepNotes1">
           <div class="callout info">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-            <div>먼저 <b>실제 광고주</b>와 <b>현수막 문구·시안</b>을 등록한 뒤, 아래에서 <b>신청인 정보</b>를 확인합니다. 중복 접수와 페널티는 <b>실제 광고주 기준</b>으로 이 단계에서 바로 확인합니다.</div>
-          </div>
-          </div>
-          <div class="callout info">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-            <div>중복 접수와 페널티는 <b>신청 업체가 아니라 실제 광고주</b> 기준입니다. 광고대행사는 여러 광고주 건을 접수할 수 있지만, <b>같은 실제 광고주</b>로 이번 회차에 이미 접수된 건이 있으면 차단됩니다.</div>
+            <div>중복 접수와 페널티는 <b>신청 업체가 아니라 실제 광고주</b> 기준입니다. 같은 실제 광고주로 이번 회차에 이미 접수된 건이 있으면 차단됩니다.</div>
           </div>
         </div>
       </div>
@@ -396,12 +391,11 @@
           </div>
           <span class="badge b-amber" style="align-self:center">추첨 후 납부</span>
         </div>
-        <div class="hint-txt" style="margin-top:12px">수수료는 <b>1매 단가(탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000 = 10,700원) × 접수 수량</b>으로 계산합니다. 예) 10매 107,000원 · 50매 535,000원. 실제 납부는 <b>추첨 배정 매수</b> 기준으로 접수증의 가상계좌에 입금합니다.</div>
-        <div class="hint-txt" style="margin-top:12px">당첨자에 한해 접수증에 안내되는 가상계좌로 입금하시면 됩니다. <b>수요일 18:00까지 접수비 입금과 현수막 실물 입고(본인 또는 대리인 직접 입고 · 택배·광고도매상 입고 금지)</b>를 모두 마쳐야 하며, 미입금·미입고 시 자동 취소(반려)되고 해당 매는 <b>목요일 선착순</b> 또는 차순위로 즉시 전환됩니다.</div>
+        <div class="hint-txt" style="margin-top:12px">수수료는 <b>1매 단가(10,700원) × 접수 수량</b>이며, 당첨자에 한해 배정 매수 기준으로 접수증 가상계좌에 입금합니다. <b>수요일 18:00까지 입금과 실물 입고(본인 또는 대리인 직접 입고 · 택배·광고도매상 입고 금지)</b>를 모두 마쳐야 하며, 미입금·미입고 시 자동 취소됩니다.</div>
         <div class="step-notes" id="stepNotes4">
         <div class="callout ok">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
-          <div>아래 내용으로 접수합니다. 접수 후에는 <b>사무국 시안 심사 → 매주 월요일 10:00 전산 추첨 → 수요일 18:00 현수막 입고</b> 순으로 진행됩니다. 추첨은 <b>선택한 게시대마다 1매씩</b> 배정됩니다.</div>
+          <div>접수 후 <b>사무국 시안 심사 → 매주 월요일 10:00 전산 추첨 → 수요일 18:00 현수막 입고</b> 순으로 진행됩니다.</div>
         </div>
         </div>
       </div>
@@ -470,6 +464,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261126r3"></script>
+<script src="assets/app.js?v=20261126r4"></script>
 </body>
 </html>

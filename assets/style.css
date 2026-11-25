@@ -393,7 +393,7 @@ details.slotpick summary .any{color:var(--muted);font-weight:700}
 .place-list span i{font-style:normal;color:var(--muted);font-weight:600}
 .pc-day{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--purple-bg);color:var(--purple);white-space:nowrap}
 
-/* ---------- 순위 선택 · 고객장소 지정 ---------- */
+/* ---------- 순위 선택 · 위치지정 ---------- */
 .designate-box{border:1px solid var(--line);border-radius:12px;background:#fff;padding:13px 15px;margin-bottom:12px;box-shadow:var(--sh-sm);transition:.15s}
 .designate-box.on{border-color:#b9a4ea;background:linear-gradient(180deg,#f6f1ff,#fff);box-shadow:0 0 0 3px rgba(91,62,200,.1)}
 .designate-row{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
@@ -1940,8 +1940,9 @@ html[data-device-view="mobile"] #eventList .evbtn{flex:1 1 30%;min-height:40px}
 }
 /* 필수 미입력 — 해당 칸 강조 + 흔들림 */
 @keyframes fieldShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
-.field.invalid,.lic-extract.fail{animation:fieldShake .42s ease-in-out 1}
-.field.invalid{border-color:#e23c3c!important}
+.field.invalid,.lic-extract.fail,.check.invalid{animation:fieldShake .42s ease-in-out 1}
+.field.invalid,.check.invalid{border-color:#e23c3c!important}
+.check.invalid{background:#fff6f6;border-radius:10px}
 .field.invalid input,.field.invalid select,.field.invalid textarea,.field.invalid .input{border-color:#e23c3c!important;background:#fff6f6}
 
 /* ── 미배정 선착순(first.html) 4단계 — 담은 게시대 행 강조 (2026-11-23) ── */
