@@ -9,7 +9,7 @@
      · 각 페이지는 body[data-page] 로 자기를 알고, 자기 섹션만 렌더한다.
      · 탭·서브탭은 실제 <a href> 이동이므로 location.pathname 이 바뀐다. */
   var PAGE = (document.body && document.body.getAttribute('data-page')) || 'status';
-  var PAGE_HREF = { status: 'index.html', apply: 'apply.html', first: 'first.html', remain: 'remain.html',
+  var PAGE_HREF = { status: 'index.html', apply: 'apply.html', 'apply-event': 'apply-event.html', first: 'first.html', remain: 'remain.html',
     guide: 'guide.html', mypage: 'mypage.html', admin: 'admin-draw.html' };
   var ADMIN_PAGES = ['admin-draw', 'admin-review', 'admin-event', 'admin-official', 'admin-official-review',
     'admin-political', 'admin-loc',
@@ -2853,7 +2853,7 @@
      3. 상태 저장소
      --------------------------------------------------------------- */
   var db = null;
-  var ui = { tab: (PAGE === 'status' ? 'status' : (PAGE === 'apply' ? 'apply' : (PAGE === 'first' ? 'first' : (PAGE === 'mypage' || PAGE === 'mypage-detail' ? 'mypage' : (isAdminPage() ? 'admin' : 'guide'))))), day: '', dong: '', q: '', pDay: '', pDong: '', pq: '', step: 1,
+  var ui = { tab: (PAGE === 'status' ? 'status' : ((PAGE === 'apply' || PAGE === 'apply-event') ? 'apply' : (PAGE === 'first' ? 'first' : (PAGE === 'mypage' || PAGE === 'mypage-detail' ? 'mypage' : (isAdminPage() ? 'admin' : 'guide'))))), day: '', dong: '', q: '', pDay: '', pDong: '', pq: '', step: 1, offStep: 1,
     ranks: { 1: [], 2: [], 3: [] }, slots: {}, rank: 1, designatedOnly: false,
     randomMode: '', randomPool: [], randomLabel: '',
     file: null, filePreview: null, licName: '', licData: '', licMime: '', licNo: '', licNoSrc: '', licNoFail: false, suLicNo: '', suLicNoSrc: '', fcLic: null, drawing: false, daySim: null, appType: 'direct', appTypeTouched: false, adminBrokenOnly: false,
@@ -2947,7 +2947,7 @@
   }
   /* 지금 화면이 보고 있는 게첨 주 — 현황=선택 주차, 접수=게첨 희망 주 */
   function activeWeekStart() {
-    if (PAGE === 'apply') return weekStartOf(ui.applyWeek || ROUND.postStart);
+    if (PAGE === 'apply' || PAGE === 'apply-event') return weekStartOf(ui.applyWeek || ROUND.postStart);
     if (PAGE === 'status') return weekStartOf(ui.statusWeek || ROUND.postStart);
     return currentPostingWeek();
   }
@@ -5304,23 +5304,26 @@
     var reqN = weekRequestCountOf(p.id, wk);
     var off = !!p.broken || slotAllDown(p);
     var assigned = weekAssignedSeatsOf(p.id, wk);
-    var tagCls = p.broken ? ' broken' : '';
     var isLive = (wk === weekStartOf(CUR.start));
     var liveLeft = isLive ? liveAvailOf(p) : 0;
+    var fsum = slotFlagSummary(p);
     var liveBtn = isLive
       ? '<button class="btn sm ' + (liveLeft && !off ? 'primary' : '') + '" data-fclive="' + esc(p.id) + '" type="button"' +
         ((liveLeft && !off) ? '' : ' disabled') + '>' + (off ? '불가' : (liveLeft ? '잔여석 접수' : '마감')) + '</button>'
       : '<button class="btn sm primary" data-apply="' + esc(p.id) + '" data-week="' + wk + '" type="button"' + (off ? ' disabled' : '') + '>' + (off ? '불가' : '접수') + '</button>';
-    return '<div class="plrow' + (off ? ' off' : '') + '" data-detail="' + esc(p.id) + '" data-week="' + wk + '" role="button" tabindex="0" aria-label="' + esc(p.name + ' 상세 보기') + '">' +
-      '<span class="pl-main"><span class="pl-tag' + tagCls + '">' + esc(p.day) + '·' + esc(p.dong) + '</span>' +
-      '<span class="pl-name">' + esc(p.name) + '</span></span>' +
-      '<span class="pl-count">' + (isLive
-        ? '<b>잔여 ' + liveLeft + '면</b>' + (assigned ? ' · 배정 ' + assigned + '면' : '')
-        : '<b>' + reqN + '/' + p.cap + '</b>건 접수중' + (assigned ? ' · 배정 ' + assigned : '')) + '</span>' +
-      '<span class="pl-act">' +
-        '<button class="btn sm hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
+    return '<div class="fc-item' + (off ? ' off' : '') + '" data-detail="' + esc(p.id) + '" data-week="' + wk + '" role="button" tabindex="0" aria-label="' + esc(p.name + ' 상세 보기') + '">' +
+      '<div class="fmain"><b>' + esc(p.name) +
+      (p.youthProtect ? ' <span class="tag broken">🚸 초인접</span>' : '') +
+      (p.broken ? ' <span class="tag broken">고장·수리중</span>'
+        : (slotAllDown(p) ? ' <span class="tag broken">전체 고장·풀가림</span>'
+          : (fsum ? ' <span class="tag broken">' + esc(fsum) + '</span>' : ''))) + '</b>' +
+      '<span>' + esc(p.dong) + ' · ' + esc(p.day) + '요일 설치 · 정원 ' + p.cap + '면' +
+        (assigned ? ' · 배정 ' + assigned + '면' : '') + '</span></div>' +
+      '<div class="fcount' + (isLive && !liveLeft ? ' sold' : '') + '"><b>' + (isLive ? liveLeft : reqN) + '</b><span>' + (isLive ? '잔여 면' : '/' + p.cap + '건 접수중') + '</span></div>' +
+      '<div class="fc-act">' +
+        '<button class="btn sm ghost hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
         liveBtn +
-      '</span></div>';
+      '</div></div>';
   }
 
   /* 테마 배지 + 주소·위치설명 (자료에 있는 게시대만) */
@@ -5859,8 +5862,8 @@
     }
     box.innerHTML = parts.join('');
   }
-  /* 행사 우선접수 입력부 —  체크했을 때만 행사명·기간·사유 칸을 연다 */
-  function eventFormOn() { return !!($('#chkEventApp') && $('#chkEventApp').checked); }
+  /* 행사 우선접수 전용 페이지(apply-event.html)에서만 활성화 */
+  function eventFormOn() { return PAGE === 'apply-event'; }
   /* 행사 우선접수 입력부 열기/닫기
      · 정치행정은 접수 화면에서 삭제했습니다(2026-11-23 김재봉 님 지시) — 관리자 심사 화면에만 남습니다. */
   function syncEventBox() {
@@ -6177,17 +6180,17 @@
     if (code) chips += '<span class="slot-tag pr-slot">' + esc(slotChipTxt(p, code)) + '</span>';
     var btn = off ? '불가'
       : (picked ? '해제' : (adjB ? '택1 제한' : (ui.designatedOnly ? '이 곳 지정' : '선택')));
-    var cls = 'plrow pick-row pick-card' + (picked ? ' picked' : '') + (off ? ' broken off' : '') + (adjB ? ' adj-locked' : '');
+    var cls = 'fc-item pick-row pick-card' + (picked ? ' picked' : '') + (off ? ' off' : '') + (adjB ? ' adj-locked' : '');
     return '<div class="' + cls + '"' + (off ? '' : ' data-pick="' + esc(p.id) + '" tabindex="0" role="button" aria-pressed="' + (picked ? 'true' : 'false') + '"' + (adjB ? ' aria-disabled="true"' : '')) + '>' +
-      '<span class="pl-main">' +
-        '<span class="pl-tag' + (p.broken ? ' broken' : '') + '">' + esc(p.broken ? '고장' : (p.day + '·' + p.dong)) + '</span>' +
-        '<span class="pl-name">' + esc(p.name) + '</span>' +
-        (picked ? '<b class="pl-rank">' + ranks.join('·') + '순위</b>' : '') + chips + '</span>' +
-      '<span class="pl-count"><b>' + reqN + '/' + p.cap + '</b>건 접수중</span>' +
-      '<span class="pl-act">' +
+      '<div class="fmain"><b>' + esc(p.name) +
+        (picked ? ' <span class="pl-rank">' + ranks.join('·') + '순위</span>' : '') + chips + '</b>' +
+        '<span>' + esc(p.dong) + ' · ' + esc(p.day) + '요일 설치 · 정원 ' + p.cap + '면' +
+          (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
+      '<div class="fcount"><b>' + reqN + '</b><span>/' + p.cap + '건 접수중</span></div>' +
+      '<div class="fc-act">' +
         (picked && !off ? '<button class="btn sm ghost hide-sm" type="button" data-slotjump="' + esc(p.id) + '" title="세부 위치(게시동·단) 지정">위치</button>' : '') +
-        '<button class="btn sm ' + (picked ? 'dark' : 'primary') + '" type="button"' + (off ? ' disabled' : '') + '>' + esc(btn) + '</button>' +
-      '</span></div>';
+        '<button class="btn sm ' + (picked ? 'ok' : (off || adjB ? '' : 'primary')) + '" type="button"' + (off ? ' disabled' : '') + '>' + esc(btn) + '</button>' +
+      '</div></div>';
   }
 
   /* 3단계 — 선택 현황(순위별 선택 수 / 입력 수량)과 카드 목록 */
@@ -10136,7 +10139,7 @@
     closeModal();
     renderAuth();
     if (ui.roleLoginPriority) { try { refreshRoleDependentViews(); applySubtabs('admin'); } catch (e) { } }
-    if (PAGE === 'apply') { try { renderApply(); } catch (e) { } }
+    if (PAGE === 'apply' || PAGE === 'apply-event') { try { renderApply(); } catch (e) { } }
     if (PAGE === 'first' || PAGE === 'remain') { try { renderFirst(); } catch (e) { } }
     try { renderMypage(); } catch (e) { }
     if (PAGE === 'mypage-detail' && $('#mpBody')) {
@@ -10714,7 +10717,7 @@
         · 광고주 중복 제한·페널티 제외 · 수수료 공문(면제/별도)
      --------------------------------------------------------------- */
   function activeOfficialWeek() {
-    if (PAGE === 'apply') return weekStartOf(ui.applyWeek || ROUND.postStart);
+    if (PAGE === 'apply' || PAGE === 'apply-event') return weekStartOf(ui.applyWeek || ROUND.postStart);
     if (isAdminPage()) return weekStartOf(ui.offWeek || ROUND.postStart);
     return weekStartOf(ui.statusWeek || ROUND.postStart);
   }
@@ -11523,6 +11526,66 @@
       maker: String(($('#offMaker') || {}).value || '')
     };
   }
+  /* 공문 접수 4단계 스테퍼 전환 및 요약 렌더 */
+  function goOffStep(n) {
+    var s = Math.max(1, Math.min(4, Number(n) || 1));
+    if (s >= 2) {
+      var org = ($('#offOrg') ? $('#offOrg').value : '').trim();
+      var txt = ($('#offText') ? $('#offText').value : '').trim();
+      if ($('#fOffOrg')) $('#fOffOrg').classList.toggle('invalid', !org);
+      if ($('#fOffText')) $('#fOffText').classList.toggle('invalid', !txt);
+      if (!org || !txt) {
+        toast('기관·부서와 현수막 문구를 먼저 입력해 주세요.', true);
+        s = 1;
+      }
+    }
+    if (s >= 3) {
+      var q = offQtyVal();
+      if (q < 1 || q > QTY_MAX) {
+        toast('공문 수량(1~50매)을 입력해 주세요.', true);
+        s = 2;
+      }
+    }
+    if (s >= 4) {
+      renderOffSummary();
+    }
+    ui.offStep = s;
+    $$('#offStepper .step').forEach(function (el) {
+      var st = Number(el.getAttribute('data-offstep') || 0);
+      el.classList.toggle('active', st === s);
+      el.classList.toggle('done', st < s);
+    });
+    for (var i = 1; i <= 4; i++) {
+      var box = $('#offStep' + i);
+      if (box) box.classList.toggle('active', i === s);
+    }
+  }
+  function renderOffSummary() {
+    var box = $('#offSummary');
+    if (!box) return;
+    var org = ($('#offOrg') ? $('#offOrg').value : '').trim() || '—';
+    var docNo = ($('#offDoc') ? $('#offDoc').value : '').trim() || '공문';
+    var maker = ($('#offMaker') ? $('#offMaker').value : '').trim() || (org + ' 지정업체');
+    var txt = ($('#offText') ? $('#offText').value : '').trim() || '—';
+    var days = Number($('#offDays') ? $('#offDays').value : 7) === 14 ? 14 : 7;
+    var owk = weekStartOf(ui.offWeek || ROUND.postStart);
+    var pids = offSelList();
+    var names = pids.map(function (pid) {
+      var p = boardById(pid);
+      var sl = (ui.offSlots || {})[pid];
+      return p ? (p.name + (sl ? ' (' + sl + ')' : '')) : pid;
+    });
+    var feeTotal = pids.length * FEE.official;
+    box.innerHTML = '<dl>' +
+      '<dt>기관·부서</dt><dd>' + esc(org) + ' (' + esc(docNo) + ')</dd>' +
+      '<dt>제작업체</dt><dd>' + esc(maker) + '</dd>' +
+      '<dt>현수막 문구</dt><dd><b>' + esc(txt) + '</b></dd>' +
+      '<dt>게첨 주 · 기간</dt><dd>' + esc(weekRangeTxt(owk)) + ' · ' + (days === 14 ? '<b>2주(14일)</b> 전자결재' : '<b>1주(7일)</b> 즉시 확정') + '</dd>' +
+      '<dt>배정 게시대</dt><dd><b>' + pids.length + ' / ' + offQtyVal() + '매</b>' + (names.length ? '<br>' + names.map(esc).join(', ') : ' (미선택)') + '</dd>' +
+      '<dt>공문 수수료</dt><dd><b>' + won(feeTotal) + '</b> (1매 ' + won(FEE.official) + ' · 시청 인지대 0원 면제)</dd>' +
+    '</dl>';
+  }
+
   function renderOffPanel() {
     if (!has('offPlaces')) return;
     if (!$('#offPlaces')) return;
@@ -11552,19 +11615,24 @@
     $('#offPlaces').innerHTML = ps.length ? ps.map(function (p) {
       var on = !!sel[p.id];
       var off = officialSeatsOf(p.id, owk), capOff = officialCapOf(p), full = off >= capOff;
+      var remOff = Math.max(0, capOff - off);
       var ovFull = officialFullSeatsOf(p);
       var adjB = (!on && !full) ? officialBlock(p.id) : null;
-      var rule = (p.officialOnly || p.low) ? '공문 전용 · 전체' : (ovFull ? '담장 100% + 40%' : '상한 40%');
-      if (adjB) rule = '인접 제한 ' + adjB.no;
-      return '<label class="off-pick' + (on ? ' on' : '') + (full ? ' capped' : '') + (adjB ? ' capped' : '') + '" title="' +
+      var rule = (p.officialOnly || p.low) ? '공문 전용' : (ovFull ? '담장 100%+40%' : '상한 40%');
+      var btnLbl = on ? '선택됨 ✓' : (full ? '상한 도달' : (adjB ? '택1 제한' : '선택'));
+      return '<div class="fc-item' + (on ? ' picked' : '') + (full ? ' off' : '') + (adjB ? ' adj-locked' : '') + '" data-offpick="' + esc(p.id) + '" role="button" tabindex="0" title="' +
         (adjB ? '인접 게시대 택1 제한 — ' + esc(adjB.name) + ' 선택 중(' + esc(adjB.no) + ' 구역) · 함께 배정 불가) ' : '') +
-        esc(p.name) + ' — 공문 배정 ' + off + '/' + capOff + '면 (정원 ' + p.cap + '면' + ((p.officialOnly || p.low) ? ' · 공문 전용' : (ovFull ? ' · ' + officialCapNote(p) : ' · 40% 이하')) + ')">' +
-        '<input type="checkbox" data-offpick="' + p.id + '"' + (on ? ' checked' : '') + '> ' +
-        '<span class="op-name">' + esc(p.name) + (p.low ? ' <span class="tag off">공문 전용</span>' : '') +
-        (ovFull ? ' <span class="tag off" style="background:#eef3ff;color:#22407a;border-color:#c9d8f2">의료원담장(F·G ' + ovFull + '면) 공문 우선 100% 허용</span>' : '') + '</span>' +
-        ' <small>' + esc(p.day) + ' · 정원 ' + p.cap + '면' + (p.low ? '' : ' · ' + weekRequestCount(p.id) + '건 접수중') +
-        ' · <b class="off-cap">공문 ' + off + '/' + capOff + '면' + (full ? ' · 상한 도달' : '') + '</b>' +
-        ' <i class="off-rule">' + rule + '</i></small></label>';
+        esc(p.name) + ' — 공문 배정 ' + off + '/' + capOff + '면 (정원 ' + p.cap + '면)">' +
+        '<div class="fmain"><b>' + esc(p.name) +
+          (p.low ? ' <span class="tag off">공문 전용</span>' : '') +
+          (ovFull ? ' <span class="tag off" style="background:#eef3ff;color:#22407a;border-color:#c9d8f2">담장 F·G 100%</span>' : '') +
+          (adjB ? ' <span class="tag adj">인접 ' + esc(adjB.no) + '</span>' : '') +
+        '</b><span>' + esc(p.dong || '서산시') + ' · ' + esc(p.day) + '요일 설치 · 정원 ' + p.cap + '면 · ' + rule +
+          (p.low ? '' : ' · ' + weekRequestCount(p.id) + '건 접수중') + '</span></div>' +
+        '<div class="fcount' + (remOff ? '' : ' sold') + '"><b>' + off + '/' + capOff + '</b><span>공문 면</span></div>' +
+        '<button class="btn sm ' + (on ? 'ok' : (full || adjB ? '' : 'primary')) + '" data-offpick="' + esc(p.id) + '" type="button"' +
+          ((!on && (full || adjB)) ? ' disabled' : '') + '>' + btnLbl + '</button>' +
+      '</div>';
     }).join('') : '<div class="empty" style="grid-column:1/-1">배정할 수 있는 게시대가 없습니다.</div>';
     if ($('#offSlots')) $('#offSlots').innerHTML = offSlotListHTML();
     renderOffQty();
@@ -11744,6 +11812,7 @@
     ui.offSel = {};
     save();
     renderOfficialAll();
+    if ($('#offStepper')) goOffStep(1);
     renderAdmin();
     if (exRec && !rec) {
       toast('⚠️ 공문 40% 상한 초과 예외 결재 기안 — ' + org + ' · 초과 ' + exRec.pids.length + '면. 5단계 결재(1/5) 완료 시 초과 면이 확정됩니다.');
@@ -15296,7 +15365,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -15412,6 +15481,9 @@
       setPerm(pr, pk, !permOf(pr, pk));
       return;
     }
+    if (el.hasAttribute('data-offnext')) { goOffStep(el.getAttribute('data-offnext')); return; }
+    if (el.hasAttribute('data-offprev')) { goOffStep(el.getAttribute('data-offprev')); return; }
+    if (el.hasAttribute('data-offstep')) { goOffStep(el.getAttribute('data-offstep')); return; }
     if (el.hasAttribute('data-offlow')) { ui.offLow = el.getAttribute('data-offlow') || ''; renderOffPanel(); return; }
     if (el.hasAttribute('data-offday')) { ui.offDay = el.getAttribute('data-offday') || ''; renderOffPanel(); return; }
     if (el.hasAttribute('data-offpick')) { toggleOffPick(el.getAttribute('data-offpick')); return; }
@@ -15600,7 +15672,7 @@
       if (pend === 'fcnext') { fcNextStep(); return; }
       if (pend && pend.indexOf('first:') === 0) { bookFirst(pend.slice(6)); return; }
       if (pend && pend.indexOf('live:') === 0) { bookLive(pend.slice(5)); return; }
-      if (PAGE === 'apply' || PAGE === 'first' || PAGE === 'remain') { maybeShowApplyWarning(false); }
+      if (PAGE === 'apply' || PAGE === 'apply-event' || PAGE === 'first' || PAGE === 'remain') { maybeShowApplyWarning(false); }
       return;
     }
     if (el.hasAttribute('data-repeatoff')) {
@@ -16390,7 +16462,7 @@
     /* ── 페이지별 렌더 — 자기 페이지에 해당하는 섹션만 그린다 ────────── */
     if (PAGE === 'status') {
       renderStatus();
-    } else if (PAGE === 'apply') {
+    } else if (PAGE === 'apply' || PAGE === 'apply-event') {
       applyPlaceFromUrl();
       renderApply();
       if (currentMember() || ui.guestAck) maybeShowApplyWarning(false);
@@ -16426,7 +16498,7 @@
       try { renderPermMatrix(); applySubtabPerms(); enforcePagePermission(); } catch (e) { }
     }
     /* 비로그인 — 접수 화면(apply·first)에 들어오면 로그인/회원가입/비회원 선택 팝업을 바로 띄운다 */
-    if ((PAGE === 'apply' || PAGE === 'first' || PAGE === 'remain') && !currentMember() && !ui.guestAck) {
+    if ((PAGE === 'apply' || PAGE === 'apply-event' || PAGE === 'first' || PAGE === 'remain') && !currentMember() && !ui.guestAck) {
       guestAutoPrompt();
     }
     /* 마이페이지 — 로그아웃(비회원 인증 전) 상태면 진입 즉시 로그인/비회원 인증 팝업 (2026-11-23 김재봉 님 지시) */

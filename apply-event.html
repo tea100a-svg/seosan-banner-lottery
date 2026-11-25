@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>(function(){try{
+  var q=(location.search.match(/[?&]view=(mobile|pc)/)||[])[1]||'';
+  var m='';try{m=sessionStorage.getItem('seosan-device-view')||localStorage.getItem('seosan-device-view')||'';}catch(e){}
+  var auto=(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')||(window.innerWidth||0)<=768)?'mobile':'pc';
+  var v=(q==='mobile'||q==='pc')?q:((m==='mobile'||m==='pc')?m:auto);
+  if(q==='mobile'||q==='pc'){try{sessionStorage.setItem('seosan-device-view',q);localStorage.setItem('seosan-device-view',q);}catch(e){}}
+  document.documentElement.setAttribute('data-device-view',v);
+}catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
+<title>행사 우선접수 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
+<link rel="stylesheet" href="assets/style.css?v=20261126r1">
+</head>
+<body data-page="apply-event">
+<div class="demo-banner">
+  <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
+  <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
+</div>
+
+<header class="site-header">
+  <div class="wrap hdr">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#bfd8ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="4" width="19" height="9.5" rx="1.6" fill="rgba(191,216,255,.14)"/>
+          <path d="M6.5 7.4h11M6.5 10.2h7"/>
+          <path d="M6 13.5v6M18 13.5v6"/>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <span class="org">사단법인 충청남도옥외광고협회 서산시지부</span>
+        <h1>현수막 지정게시대 접수 시스템</h1>
+      </div>
+    </div>
+    <div class="hdr-side">
+      <div class="hdr-auth">
+        <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
+        <div class="hdr-user hidden" id="authUser">
+          <span><b id="authName">회원</b><small id="authSub">일반업체</small></span>
+          <button class="btn-auth sm" id="btnLogout" type="button" data-logout="1">로그아웃</button>
+        </div>
+      </div>
+      <div class="chip-round">
+        <span class="dot"></span>
+        <div>
+          <b id="roundName">2026년 12월 1주차 주간 추첨</b>
+          <small id="roundDue">입고 마감 수 18:00</small>
+        </div>
+      </div>
+      <label class="switch admin-switch" title="협회 관리자 모드 전환" aria-label="관리자 모드 전환">
+        <input type="checkbox" id="adminToggle">
+        <span class="track"><span class="knob"></span></span>
+        <span class="switch-label">관리자 모드</span>
+      </label>
+    </div>
+  </div>
+  <nav class="tabs wrap site-nav" aria-label="페이지 이동">
+    <a class="tab" href="index.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="9" rx="1.5"/><path d="M7 13v6M17 13v6M7 7.5h10M7 10h6"/></svg>
+      게시대 현황
+    </a>
+    <a class="tab" href="apply.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
+      주간 추첨 접수
+    </a>
+    <a class="tab active" href="apply-event.html" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 4.8 5.3.8-3.8 3.7.9 5.3L12 15l-4.8 2.6.9-5.3L4.3 8.6l5.3-.8Z"/></svg>
+      행사 우선접수
+    </a>
+    <a class="tab" href="remain.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      미배정 상시접수
+    </a>
+    <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      취소분 선착순
+    </a>
+    <a class="tab" href="guide-rules.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
+      규격·안내
+    </a>
+    <a class="tab" href="mypage.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      마이페이지
+    </a>
+    <a class="tab admin-tab" href="admin-draw.html" id="adminTab" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
+      협회 관리자
+    </a>
+  </nav>
+</header>
+
+
+<main class="wrap main">
+
+<section class="view active" id="view-apply">
+
+    <div class="view-head">
+      <div>
+        <h2>🎪 행사 우선접수 (심사 신청)</h2>
+        <p id="applyRoundLine">2026년 12월 1주차(게첨 11.30~12.06) · 접수 상시 · 매주 월요일 10:00 추첨 → 다음 주 월요일부터 게첨 · 당첨 현수막은 수요일 18:00까지 협회 입고</p>
+      </div>
+      <span class="badge b-amber" id="applyRoundBadge"><i></i>접수 진행 중</span>
+    </div>
+
+    <div id="applyPolicyNote"></div>
+
+    <ol class="stepper" id="stepper">
+      <li class="step active" data-step="1"><span class="num">1</span><span>광고주·내용<small>구분·시안</small></span></li>
+      <li class="step" data-step="2"><span class="num">2</span><span>수량·게시 기간<small>매수·게시일</small></span></li>
+      <li class="step" data-step="3"><span class="num">3</span><span>게시대 선택<small>1개소 1매</small></span></li>
+      <li class="step" data-step="4"><span class="num">4</span><span>확인·접수<small>수수료 안내</small></span></li>
+    </ol>
+
+    <form class="panel" id="applyForm" autocomplete="off" novalidate>
+      <!-- step 3 · 게시대 선택 (1개소 1매 · 수량별 1·2·3순위 / 고객장소 지정) -->
+      <div class="step-body" id="step3">
+        <div class="designate-box" id="designateBox">
+          <label class="designate-row" for="chkDesignated">
+            <input type="checkbox" id="chkDesignated">
+            <span class="dt">
+              <b>고객장소 지정 (1순위 지정 장소만 추첨 · 2·3순위 미적용)</b>
+              <small>고객이 지정한 장소만 추첨합니다. 1순위에서 떨어지면 다른 게시대로 대체 추첨하지 않고 <b>낙첨</b> 처리됩니다. 체크하면 2·3순위 선택이 비활성화됩니다. 아래 <b>선택한 게시대</b>에서 <b>세부 위치(A·B·C동 / 1~5단)</b>까지 지정할 수 있습니다.</small>
+            </span>
+          </label>
+          <div class="hint-txt hidden" id="designateWarn" style="margin-top:9px;color:var(--purple);font-weight:700">고객장소 지정 시 2순위·3순위는 추첨·저장에 반영되지 않습니다. 선택한 게시대의 [세부 위치]에서 예: 의료원사거리 A2 처럼 동·단까지 지정할 수 있습니다.</div>
+        </div>
+        <div class="rank-status" id="rankStatus"></div>
+        <div class="rank-tabs" id="rankTabs"></div>
+        <div class="pick-status" id="pickStatus"></div>
+        <div class="sect-label">선택한 게시대 <span id="pickSlotsInfo">0개소</span></div>
+        <div class="pick-slots" id="pickSlots"></div>
+        <div class="pick-filters">
+          <div class="chips" id="pickThemeChips"></div>
+          <span class="hint-txt" id="pickThemeInfo" style="margin:0"></span>
+        </div>
+        <div class="pick-filters">
+          <div class="chips sort-chips" id="pickSortChips" aria-label="게시대 정렬"></div>
+          <div class="chips" id="pickDayChips"></div>
+          <select class="input" id="pickDong" aria-label="읍면동 선택"></select>
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+            <input type="search" id="pickSearch" class="ko-ime" lang="ko" placeholder="게시대 · 장소 검색" aria-label="게시대 검색">
+          </div>
+          <span class="hint-txt" id="pickFilterInfo" style="margin:0"></span>
+          <span class="spacer" style="flex:1"></span>
+          <button class="btn sm" id="btnRandAll" type="button" title="고장·설치불가·금지 게시대를 제외한 전체 게시대를 추첨 후보로 선택하고, 추첨 시 1·2순위와 경쟁해 신청 수량만큼 배정합니다">🎲 전체 무작위 선택</button>
+          <button class="btn sm" id="btnRandFilter" type="button" title="지금 보고 있는 목록(읍면동·요일·테마·검색) 전체를 추첨 후보로 선택합니다">🎯 현재 카테고리 무작위 선택</button>
+        </div>
+        <div class="fc-list" id="applyGrid"></div>
+        <div class="pager" id="pickPager"></div>
+        <div class="repeat-box" id="repeatPanel">
+          <div class="rb-head">
+            <b>🔁 같은 값으로 매주 신청 (자동반복접수)</b>
+            <span class="sub">당첨 시 자동 해제 · 미당첨 시 다음 주 자동 재접수 · 후결제</span>
+          </div>
+          <div class="rb-actions">
+            <button class="btn" id="btnRepeatWeek" type="button">🔁 같은 값으로 매주 신청</button>
+            <button class="btn ghost hidden" id="repeatCancelBtn" type="button">반복 신청 취소</button>
+          </div>
+          <div class="hint-txt" id="repeatInfo" style="margin-top:8px"></div>
+        </div>
+        <div class="step-notes" id="stepNotes3">
+          <div class="callout info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+            <div><b>한 게시대에는 1매만</b> 표시할 수 있습니다. 수량(<b>N매</b>)만큼 <b>서로 다른 게시대</b>를 <b>순위(1·2·3)별로</b> 나누어 접수합니다. <b>1순위는 수량과 같은 N개소</b>를 반드시 골라야 하고, 2·3순위는 선택 사항입니다. 순위 간에 같은 게시대는 중복 선택할 수 없습니다.</div>
+          </div>
+          <div class="callout info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10M15 10v10"/></svg>
+            <div><b>세부 위치 지정</b> — 여러 대가 있는 게시대는 <b>게시동 A·B·C동</b>, 위아래는 <b>1~5단</b>으로 나뉩니다.
+              <b>풀가림</b>(가로수·잡초 등으로 시야 가림) 단수와 <b>기타사유</b>(도로공사 등) 단수는 <b>정기 추첨 접수에서 제외</b>되며, <b>목요일 잔여석 선착순</b>에서만 안내를 확인하고 선택할 수 있습니다. 선택한 게시대의 <b>세부 위치</b>를 열어 <b>A2</b>처럼 지정하면 그 자리에만 추첨되고(그 자리가 차면 낙첨), 지정하지 않으면 <b>위치 무관</b>으로 빈 칸에 자동 배정됩니다.</div>
+          </div>
+          <div class="callout warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+            <div><b>인접 게시대 택1 제한</b> — 14개 구역은 <b>같은 순위에서 두 곳을 함께 선택할 수 없습니다.</b> 한 곳을 고르면 충돌하는 게시대에 <b>택1 제한 (선택한 게시대명 선택 시 불가)</b> 표시가 붙고 선택이 막힙니다. 선택을 해제하면 바로 다시 고를 수 있습니다. (<b>규격·안내</b> 탭에 14개 구역 표)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- step 2 · 수량·게시 기간 -->
+      <div class="step-body" id="step2">
+        <!-- 게첨 희망 주 — 1단계에서는 숨기고 2단계에서 확인·변경 (2026-11-23 김재봉 님 지시) -->
+        <div class="week-select-panel" id="weekSelectPanel" style="border:1px solid #cbdcf5;border-radius:14px;padding:14px;margin-bottom:16px;background:#fff">
+          <div class="panel-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+            <h3 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">🗓️ 게첨 희망 주 <span class="sub" style="font-size:11px;color:var(--muted)">추첨 다음 주부터 · 사전 접수</span></h3>
+            <span class="spacer" style="flex:1"></span>
+            <span class="week-now" id="applyWeekNow">📅 2026.11.30 ~ 12.06 게첨 주</span>
+            <button class="btn ghost sm" id="btnApplyWeekCal" type="button" data-caltoggle="apply" aria-expanded="false" aria-controls="applyWeekCal">📅 달력보기</button>
+          </div>
+          <div class="rule-strip-wrap">
+            <div class="rule-strip" id="applyRuleStrip"></div>
+          </div>
+          <div class="hint-txt" id="applyWeekHint" style="margin:0 0 4px">주를 바꾸려면 <b>📅 달력보기</b>를 눌러 <b>게첨을 시작할 월요일이 포함된 주</b>를 고르세요. (월~일 7일 단위 · 이번 회차 게첨 주 이후만 선택)</div>
+          <div id="applyWeekCal" class="cal-collapsed"></div>
+        </div>
+
+        <div class="field" id="fQty">
+          <label for="applyQty">접수 수량 (매)<span class="req">*</span></label>
+          <div class="qty-ctl">
+            <button type="button" class="qty-btn" data-qty-step="-1" aria-label="1매 줄이기">−</button>
+            <input class="input qty-input" id="applyQty" type="number" min="1" max="50" step="1" value="1" inputmode="numeric" aria-describedby="qtyHint">
+            <span class="qty-unit">매</span>
+            <button type="button" class="qty-btn" data-qty-step="1" aria-label="1매 늘리기">+</button>
+            <div class="qty-presets">
+              <button type="button" data-qty-set="1">1매</button>
+              <button type="button" data-qty-set="5">5매</button>
+              <button type="button" data-qty-set="10">10매</button>
+              <button type="button" data-qty-set="20">20매</button>
+              <button type="button" data-qty-set="50">50매</button>
+            </div>
+          </div>
+          <div class="err-txt">1회 최대 접수 수량은 50매까지입니다.</div>
+          <div class="hint-txt" id="qtyHint">한 번에 <b>1매 ~ 50매</b>까지 접수할 수 있습니다. 수수료는 <b>1매 단가 × 수량</b>으로 계산되며, 추첨에서 배정된 매수만 납부·입고합니다.</div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="applyStart">게시 시작일 (게첨 주 월요일)<span class="req">*</span></label>
+            <select class="input" id="applyStart">
+              <option value="2026-11-30">2026-11-30 (월)</option>
+              <option value="2026-12-07">2026-12-07 (월)</option>
+            </select>
+            <div class="hint-txt" style="margin-top:6px">위 <b>게첨 희망 주 선택 달력</b>과 연동됩니다 — 달력에서 주를 고르면 여기도 함께 바뀝니다.</div>
+          </div>
+          <div class="field">
+            <label for="applyDays">게시 기간<span class="req">*</span></label>
+            <select class="input" id="applyDays">
+              <option value="7" selected>1주(7일 · 월~일) 고정</option>
+            </select>
+            <div class="hint-txt" style="margin-top:6px">일반 광고물 게시기간은 <b>1주(7일)</b>로 고정입니다. <b>2주(14일)</b>는 시청 공문만 <b>지부장 결재 → 감사(2인 중 1인) 결재</b>를 거쳐 승인됩니다.</div>
+          </div>
+        </div>
+        <div class="callout info" id="periodPreview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>
+          <div>게시 기간 <b>2026-11-30 ~ 2026-12-06</b> (7일 · 월~일) · 철거 예정일 12-07 · 현수막은 <b>수요일 18:00까지 협회 입고</b></div>
+        </div>
+        <div class="callout info" id="step2RandomBox" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <div>
+            <b>🎲 게시대 무작위 선택 (1순위 무작위와 동일 룰)</b>
+            <div class="hint-txt" style="margin:2px 0 0">게시대 위치를 직접 고르지 않고 <b>전체 게시대</b>를 후보로 접수합니다. 추첨 시 <b>1순위와 같은 룰</b>로 신청 수량만큼 배정되며, 2·3순위 선택 없이 바로 4단계 확인으로 넘어갑니다.</div>
+          </div>
+          <button class="btn primary sm" id="btnStep2Random" type="button">🎲 무작위 선택 (바로 확인)</button>
+        </div>
+        <div class="step-notes" id="stepNotes2">
+        <div class="callout info">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+          <div>접수 수량을 먼저 정합니다. 수량(<b>N매</b>)만큼 3단계에서 <b>서로 다른 게시대를 1개소당 1매씩</b> 선택해야 접수가 완료됩니다. <b>게첨은 1주일(월~일)</b>이 원칙입니다.</div>
+        </div>
+        <div class="callout warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+          <div>같은 업소·같은 내용의 현수막은 <b>1개 게시대에 1건</b>만 표시할 수 있습니다.<span data-skipweek> <b>2회 연속 게시는 불가</b>합니다. (충청남도 옥외광고물 조례 제12조)</span> 여러 게시대가 필요하면 <b>1회 접수 수량(최대 50매)</b>으로 한 번에 신청해 주세요.</div>
+        </div>
+        <div class="callout warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17H6Z"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></svg>
+          <div>당첨된 현수막은 <b>수요일 18:00까지 본인 또는 대리인이 협회에 직접 실물 입고</b>해야 합니다. (<b>🚫 택배·광고도매상을 통한 입고 금지</b> — 분실·지연 책임 확인 및 현장 실명제·규격 검수를 위해 택배·도매상 입고분은 수령 거부되며 미입고 시 자동 취소·반려됩니다.)</div>
+        </div>
+        </div>
+      </div>
+
+      <!-- step 1 · 광고주·내용 -->
+      <div class="step-body active" id="step1">
+        <div class="sect-label">실제 광고주 · 현수막 문구 · 시안 <span>중복 접수·페널티는 실제 광고주 기준</span></div>
+        <div class="field-row">
+          <div class="field" id="fAdvertiser">
+            <label for="applyAdvertiser">실제 광고주명<span class="req">*</span></label>
+            <input class="input ko-ime" id="applyAdvertiser" lang="ko" placeholder="예) 햇살농원 (홍보할 실제 사업자)" maxlength="30" autocomplete="off">
+            <div class="err-txt">실제 광고주명을 입력해 주세요.</div>
+          </div>
+          <div class="field" id="fAdvBiz">
+            <label for="applyAdvBiz">광고주 사업자등록번호</label>
+            <input class="input" id="applyAdvBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" autocomplete="off">
+            <div class="err-txt">사업자등록번호는 숫자 10자리로 입력해 주세요.</div>
+          </div>
+        </div>
+        <div class="field" id="fAdvPhone">
+          <label for="applyAdvPhone">광고주 연락처 <span style="font-weight:700;color:var(--muted)">(선택)</span></label>
+          <input class="input" id="applyAdvPhone" placeholder="010-0000-0000" inputmode="tel" maxlength="13" autocomplete="off">
+          <div class="err-txt">광고주 연락처를 정확히 입력해 주세요.</div>
+          <div class="hint-txt">사업자등록번호가 없으면 <b>광고주명 + 연락처</b>로 중복·페널티를 확인합니다. 비워두면 신청 연락처를 사용합니다.</div>
+        </div>
+        <div class="field" id="fText">
+          <label for="applyText">현수막 문구<span class="req">*</span></label>
+          <textarea class="input ko-ime" id="applyText" lang="ko" maxlength="40" placeholder="예) 가을 수확기 특선 사과 직판 · 30% 할인" autocomplete="off"></textarea>
+          <div class="counter"><span id="textCount">0</span> / 40자</div>
+          <div class="err-txt">문구를 4자 이상 입력해 주세요.</div>
+          <div class="urgent-badge hidden" id="urgentHint">📅 시한임박 감지 — 기본 가산 0% · 직책자 부여 시 최대 +5% · 인정 범위 차차주까지</div>
+        </div>
+        <div class="callout warn hidden dup-hint" id="dedupHint"></div>
+        <div class="callout danger hidden" id="abuseNote" role="alert"></div>
+        <div class="callout warn hidden" id="youthNote" role="status"></div>
+        <div class="field" id="fDesign">
+          <span class="flabel">현수막 시안 파일 첨부<span class="req">*</span></span>
+          <div class="drop" id="dropZone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4.5M8 8l4-4 4 4"/><path d="M4.5 15v3A1.5 1.5 0 0 0 6 19.5h12a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg>
+            <b>시안 파일을 끌어놓거나 눌러서 선택</b>
+            <span>JPG · PNG / 5MB 이하 · 없으면 협회에서 문구로 검수</span>
+            <input type="file" id="applyFile" accept="image/*">
+          </div>
+          <div id="filePreview"></div>
+          <div class="err-txt">현수막 시안 파일을 첨부해 주세요. (JPG·PNG / 5MB 이하)</div>
+          <div class="hint-txt">시안 파일 첨부는 <b>필수</b>입니다 — 사무국이 규격·실명제 박스를 시안으로 확인합니다.
+            <button class="btn sm ghost" type="button" id="btnDesignSample" style="margin-left:6px">시연용 샘플 시안 첨부</button><button class="btn sm ghost" type="button" id="btnDesignSampleName" style="margin-left:4px">✅ 실명제 있는 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleNoName" style="margin-left:4px">⚠️ 실명제 누락 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleBlack" style="margin-left:4px">⬛ 검정 바탕 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleRed" style="margin-left:4px">🟥 빨간 바탕 시안(샘플)</button>
+          </div>
+        </div>
+        <div class="callout warn med-float hidden" id="medicalAdNote" role="status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+          <div><b>🏥 의료광고 안내</b> — 의료광고 심의필 번호가 없는 경우 <b>게첨 중이라도 조기 철거</b>될 수 있습니다.<span class="sm" style="display:block;margin-top:4px">의료 광고는 사전 심의를 받은 뒤 심의필 번호(예: 제2026-123호)를 현수막에 표기해 주세요.</span></div>
+        </div>
+
+
+        <div class="divider"></div>
+        <div class="sect-label">신청인 정보 <span>로그인하면 자동 작성 · 구분은 로그인 상태로 자동 판별</span></div>
+        <div class="hint-txt" id="applicantHint">로그인 회원은 업체 정보가 <b>자동 작성</b>됩니다. <b>광고대행사/일반업체 구분도 로그인 상태로 자동 판별</b>되며, 비회원은 일반업체(직접 신청)로 접수됩니다. 광고대행사는 실제 광고주를 대신 접수합니다.</div>
+        <div class="field-row">
+          <div class="field" id="fCompany">
+            <label for="applyCompany">업체·단체명<span class="req">*</span></label>
+            <input class="input ko-ime" id="applyCompany" lang="ko" placeholder="예) 햇살농원" maxlength="30" autocomplete="off">
+            <div class="err-txt">업체명을 입력해 주세요.</div>
+          </div>
+          <div class="field" id="fOwner">
+            <label for="applyOwner">대표자·담당자<span class="req">*</span></label>
+            <input class="input ko-ime" id="applyOwner" lang="ko" placeholder="예) 김정수" maxlength="20" autocomplete="off">
+            <div class="err-txt">담당자 성명을 입력해 주세요.</div>
+          </div>
+        </div>
+        <div class="field" id="fPhone">
+          <label for="applyPhone">연락처<span class="req">*</span></label>
+          <input class="input" id="applyPhone" placeholder="010-0000-0000" inputmode="tel" maxlength="13" autocomplete="off">
+          <div class="err-txt">연락처를 정확히 입력해 주세요. (예: 010-1234-5678)</div>
+          <div class="sms-verify hidden" id="smsBox">
+            <span class="sms-label">비회원 본인인증<span class="req">*</span></span>
+            <button class="btn sm ghost" id="btnSmsSend" data-smssend="1" type="button">인증번호 발송</button>
+            <input class="input" id="smsCode" placeholder="6자리" inputmode="numeric" maxlength="6" autocomplete="off" style="max-width:110px">
+            <button class="btn sm primary" id="btnSmsVerify" data-smsverify="1" type="button">인증 확인</button>
+            <button class="btn sm ghost" id="btnSmsAuto" data-smsauto="1" type="button">테스트 번호 자동입력</button>
+            <span class="badge b-gray" id="smsState"><i></i>미인증</span>
+          </div>
+          <div class="hint-txt" id="smsHint">비회원은 허위 접수 방지를 위해 휴대폰 본인인증이 필요합니다. (로그인 회원은 생략)</div>
+        </div>
+        <div class="field-row">
+          <div class="field" id="fBiz">
+            <label for="applyBiz">신청 업체 사업자등록번호 <span class="opt">(선택)</span></label>
+            <input class="input" id="applyBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" autocomplete="off">
+            <div class="err-txt">사업자등록번호는 숫자 10자리로 입력해 주세요.</div>
+          </div>
+          <div class="field" id="fEmail">
+            <label for="applyEmail">이메일 <span class="opt">(선택)</span></label>
+            <input class="input" id="applyEmail" type="email" placeholder="예) hatsal@seosan.kr" maxlength="60" autocomplete="off">
+            <div class="err-txt">이메일 형식을 확인해 주세요. (예: hatsal@seosan.kr)</div>
+          </div>
+        </div>
+        <div class="field" id="fOade">
+          <label for="applyOade"><span id="applyOadeLabel">현수막 출력업체 옥외광고업 등록번호</span><span class="opt">(선택 · 참고)</span></label>
+          <input class="input" id="applyOade" placeholder="예) 제 2017-4530186-08-5-00001 호" maxlength="40" autocomplete="off">
+          <div class="hint-txt" id="applyOadeHint">실명제 박스에 인쇄되는 옥외광고업 등록번호입니다. 일반업체는 <b>현수막을 출력하는 업체</b>의 등록번호를 적습니다.</div>
+          <div class="err-txt">옥외광고업 등록번호를 입력해 주세요.</div>
+        </div>
+        <div class="field" id="fLicense">
+          <label for="applyLic">옥외광고업 등록증 사본 첨부<span class="req">*</span></label>
+          <div class="hint-txt" id="licReqHint">일반업체·비회원은 현수막을 <b>출력·설치할 광고사(옥외광고업 등록업체)의 등록증 사본</b>을 첨부해야 합니다. 첨부하면 <b>등록번호가 자동으로 추출</b>됩니다. (광고대행사는 가입 때 제출한 등록증으로 갈음 — 이 칸이 표시되지 않습니다.)</div>
+          <div class="drop" id="licDrop">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4.5M8 8l4-4 4 4"/><path d="M4.5 15v3A1.5 1.5 0 0 0 6 19.5h12a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg>
+            <b>옥외광고업 등록증 사본을 끌어놓거나 눌러서 선택</b>
+            <span>이미지(JPG·PNG)·PDF·텍스트 / 5MB 이하 · 접수 1건마다 1부</span>
+            <input type="file" id="applyLic" accept="image/*,application/pdf,.txt,.csv">
+          </div>
+          <div class="hint-txt" id="licName">첨부된 파일이 없습니다.</div>
+          <div class="lic-extract hidden" id="licExtract"></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            <button class="btn sm ghost" type="button" id="btnLicSample">샘플 등록증 첨부</button>
+            <button class="btn sm ghost" type="button" id="btnLicView">미리보기</button>
+            <button class="btn sm ghost" type="button" id="btnLicClear">삭제</button>
+          </div>
+          <div class="err-txt">옥외광고업 등록증 사본을 첨부해 주세요.</div>
+        </div>
+
+        <div class="divider"></div>
+        <!-- 행사 심사 신청 (선택) — 2026-11-22 김재봉 님 지시 -->
+        <div class="ev-apply on" id="eventApplyBox">
+          <div id="eventFields">
+            <div class="callout info" style="margin-top:8px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+              <div><b>배정 순서</b>는 ① 시청 공문 우선접수 → ② 행사 우선접수(승인 완료) → ③ 일반 추첨입니다. 승인되면 이번 주 일반 접수보다 먼저 자리를 잡습니다. <b>미승인되면 일반 추첨으로 자동 전환</b>되므로, 3단계에서 <b>1·2·3순위를 미리 함께 입력</b>해 주세요(그 순위가 그대로 쓰입니다). 수수료는 일반과 같습니다 — 1매 <b>10,700원</b>(탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000 · 1주 7일).</div>
+            </div>
+            <div class="field-row">
+              <div class="field" id="fEventName">
+                <label for="applyEventName">행사명<span class="req">*</span></label>
+                <input class="input ko-ime" id="applyEventName" lang="ko" maxlength="40" placeholder="예) 2026 서산 시민 걷기축제" autocomplete="off">
+                <div class="err-txt">행사명을 입력해 주세요.</div>
+              </div>
+              <div class="field" id="fEventPeriod">
+                <label for="applyEventPeriod">행사 기간·일자<span class="req">*</span></label>
+                <input class="input" id="applyEventPeriod" maxlength="40" placeholder="예) 2026-12-05 ~ 2026-12-07" autocomplete="off">
+                <div class="err-txt">행사 기간을 입력해 주세요. (예: 2026-12-05)</div>
+              </div>
+            </div>
+            <div class="field" id="fEventReason">
+              <label for="applyEventReason">신청 사유·증빙 <span class="opt">(권장)</span></label>
+              <textarea class="input ko-ime" id="applyEventReason" lang="ko" maxlength="120" placeholder="예) 서산시 주관 시민 걷기축제 홍보 — 시청 협조 공문 사본 첨부"></textarea>
+              <div class="hint-txt">행사승인권한자 5명이 사유·증빙을 보고 투표합니다. 허위 행사는 승인되지 않습니다.</div>
+            </div>
+            <div class="callout warn" id="eventPolNote">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+              <div><b>공문 전용 저단게시대(32개소)는 행사 우선접수에서 선택·배정이 불가</b>합니다 — 3단계 목록에서 제외됩니다. (김재봉 님 지시 2026-11-22)</div>
+            </div>
+            <div class="callout warn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+              <div>행사 우선접수도 <b>시안 심사 → 행사 심사(권한자 5명 투표) → 추첨</b> 순서로 진행됩니다. 반대·기권이 3명 이상이거나 5명 투표에서 찬성이 3명에 못 미치면 <b>미승인 → 일반 추첨</b>으로 처리되고, 신청한 <b>1·2·3순위</b>가 그대로 추첨에 쓰입니다.</div>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <label class="check" id="agree1"><input type="checkbox" id="chkRule"> <span><b>[필수]</b> 지정게시대 표시 기준을 준수합니다. — 적색·흑색 배경 금지, 타인 비방·허위 내용 없음, 규격 <b>7,100×900mm(880mm 권장)</b> · <b>실명제 박스(200×125mm)</b> 표기 준수</span></label>
+        <label class="check" id="agree2"><input type="checkbox" id="chkDup"> <span><b>[필수]</b> 같은 업소·같은 내용으로 다른 게시대에 중복 접수하지 않았습니다.<span data-skipweek> 2회 연속 게시 신청이 아님도 확인합니다.</span></span></label>
+        <div class="step-notes" id="stepNotes1">
+          <div class="callout info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+            <div>먼저 <b>실제 광고주</b>와 <b>현수막 문구·시안</b>을 등록한 뒤, 아래에서 <b>신청인 정보</b>를 확인합니다. 중복 접수와 페널티는 <b>실제 광고주 기준</b>으로 이 단계에서 바로 확인합니다.</div>
+          </div>
+          </div>
+          <div class="callout info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+            <div>중복 접수와 페널티는 <b>신청 업체가 아니라 실제 광고주</b> 기준입니다. 광고대행사는 여러 광고주 건을 접수할 수 있지만, <b>같은 실제 광고주</b>로 이번 회차에 이미 접수된 건이 있으면 차단됩니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- step 4 -->
+      <div class="step-body" id="step4">
+        <div class="summary" id="applySummary"></div>
+        <div class="fee-box">
+          <div>
+            <span id="feeLabel">게시 수수료 (1매 · 주간 7일 기준)</span>
+            <b id="feeTotal">10,700원</b>
+            <div class="fee-lines" id="feeLines"></div>
+          </div>
+          <span class="badge b-amber" style="align-self:center">추첨 후 납부</span>
+        </div>
+        <div class="hint-txt" style="margin-top:12px">수수료는 <b>1매 단가(탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000 = 10,700원) × 접수 수량</b>으로 계산합니다. 예) 10매 107,000원 · 50매 535,000원. 실제 납부는 <b>추첨 배정 매수</b> 기준으로 접수증의 가상계좌에 입금합니다.</div>
+        <div class="hint-txt" style="margin-top:12px">당첨자에 한해 접수증에 안내되는 가상계좌로 입금하시면 됩니다. <b>수요일 18:00까지 접수비 입금과 현수막 실물 입고(본인 또는 대리인 직접 입고 · 택배·광고도매상 입고 금지)</b>를 모두 마쳐야 하며, 미입금·미입고 시 자동 취소(반려)되고 해당 매는 <b>목요일 선착순</b> 또는 차순위로 즉시 전환됩니다.</div>
+        <div class="step-notes" id="stepNotes4">
+        <div class="callout ok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+          <div>아래 내용으로 접수합니다. 접수 후에는 <b>사무국 시안 심사 → 매주 월요일 10:00 전산 추첨 → 수요일 18:00 현수막 입고</b> 순으로 진행됩니다. 추첨은 <b>선택한 게시대마다 1매씩</b> 배정됩니다.</div>
+        </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="apply-foot">
+      <button class="btn ghost" id="btnPrev" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 6l-6 6 6 6"/></svg>
+        이전
+      </button>
+      <div class="hint" id="stepHint">1단계 · 신청 구분·실제 광고주·광고 내용을 입력해 주세요.</div>
+      <div class="spacer"></div>
+      <button class="btn primary" id="btnNext" type="button">
+        다음 단계
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  
+</section>
+<button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
+</main>
+
+<footer class="footer">
+  <div class="wrap fi">
+    <div>
+      <b>사단법인 충청남도옥외광고협회 서산시지부</b><br>
+      충남 서산시 덕지천로 1, 2층 (석남동) · 대표전화 041-665-1216 · 팩스 041-665-1218<br>
+      업무시간 평일 09:00 ~ 18:00 (점심 12:00 ~ 13:00)
+    </div>
+    <div class="links">
+      <span>시연용 프로토타입 v1.5 · 주간 운영(목 선착순·금 마감) · 서산시 지정게시대 77개소</span>
+      <span>·</span>
+      <span>실제 서비스 아님</span>
+      <span>·</span>
+      <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
+      <span>·</span>
+      <button class="view-auto" id="btnViewAuto" type="button" title="접속 환경 자동 감지로 돌아갑니다">🔄 자동 감지로</button>
+    </div>
+  </div>
+</footer>
+
+
+
+<nav class="mtabbar" id="mobileTabbar" aria-label="모바일 빠른 탭바">
+  <a href="index.html" data-mtab="status"><i>🏠</i>현황</a>
+  <a href="apply.html" data-mtab="apply"><i>📝</i>접수</a>
+  <a href="remain.html" data-mtab="remain"><i>⚡</i>상시</a>
+  <a href="mypage.html" data-mtab="mypage"><i>👤</i>마이</a>
+  <a href="admin-draw.html" data-mtab="admin"><i>🛡</i>관리자</a>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal">
+  <div class="modal-bg" data-close></div>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div style="min-width:0">
+        <h3 id="modalTitle">제목</h3>
+        <p id="modalSub"></p>
+      </div>
+      <button class="modal-x" data-close aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<style id="printPageRule"></style>
+<script src="assets/app.js?v=20261126r1"></script>
+</body>
+</html>

@@ -13,7 +13,7 @@
 }catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
 <title>협회 관리자 · 시청 공문 우선접수 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261125r14">
+<link rel="stylesheet" href="assets/style.css?v=20261126r1">
 </head>
 <body data-page="admin-official">
 <div class="demo-banner">
@@ -65,6 +65,9 @@
     </a>
     <a class="tab" href="apply.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
       주간 추첨 접수
+    </a>
+    <a class="tab" href="apply-event.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 4.8 5.3.8-3.8 3.7.9 5.3L12 15l-4.8 2.6.9-5.3L4.3 8.6l5.3-.8Z"/></svg>
+      행사 우선접수
     </a>
     <a class="tab" href="remain.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
       미배정 상시접수
@@ -148,6 +151,14 @@
         <div>시청 공문 현수막은 <b>추첨 전에 게시대를 먼저 확정</b>합니다. 게시대별 공문 배정은 그 게시대 <b>전체 게시면의 40% 이하(내림, 예: 정원 20면 → 최대 8면)</b>까지만 가능하며, 상한을 넘으려 하면 등록이 차단됩니다. 등록 즉시 <b>공문 우선배정</b> 상태가 되어 해당 게시대의 <b>가용 면을 먼저 차감</b>하고, 월요일 전산 추첨은 <b>남은 면으로만</b> 진행됩니다(정원 초과 없음). 공문 건은 <b>광고주 중복 제한·페널티 대상에서 제외</b>되며, <b>시청 인지대 3,000원은 면제(0원)</b>입니다 — 1매 <b>7,700원</b>(탈부착·관리 7,000 + 부가세 700) 또는 <b>공문 별도정산</b>. 현장 게첨 작업지시서에도 <b>(공문)</b> 표기로 설치 대상에 자동 포함됩니다.</div>
       </div>
       <div id="offIntake">
+      <ol class="stepper" id="offStepper">
+        <li class="step active" data-offstep="1"><span class="num">1</span><span>공문·문구<small>파일·기관·문구</small></span></li>
+        <li class="step" data-offstep="2"><span class="num">2</span><span>기간·수량<small>게첨 주·기간·매수</small></span></li>
+        <li class="step" data-offstep="3"><span class="num">3</span><span>게시대 선택<small>일반·저단·동/단수</small></span></li>
+        <li class="step" data-offstep="4"><span class="num">4</span><span>확인·등록<small>내용 확인·배정</small></span></li>
+      </ol>
+
+      <div class="step-body active" id="offStep1">
       <div class="off-file-box" id="offFileBox">
         <div class="off-file-head"><b>📎 공문 파일 첨부 (자동 인식·채우기)</b><span id="offFileInfo">PDF · 이미지 · 텍스트</span></div>
         <div class="hint-txt" style="margin:0 0 8px">공문 파일을 올리면 <b>기관명 · 공문번호 · 현수막 문구 · 매수 · 게시 기간</b>을 읽어 아래 칸을 자동으로 채웁니다. 무엇을 어떻게 인식했는지 배지로 보여 주고, 언제든 직접 고칠 수 있습니다. (시연 환경에서는 PDF 본문 인식이 제한되어 <b>파일명 키워드</b>도 함께 사용합니다.)</div>
@@ -178,6 +189,10 @@
           <input class="input ko-ime" id="offText" lang="ko" placeholder="예) 서산시 희망나눔 캠페인" maxlength="40">
           <div class="err-txt">현수막 문구를 입력해 주세요.</div></div>
       </div>
+      <div class="step-nav"><span></span><button class="btn primary" type="button" data-offnext="2">다음: 기간·수량 →</button></div>
+      </div>
+
+      <div class="step-body" id="offStep2">
       <div class="field" id="fOffWeek">
         <label>게첨 희망 주 (월요일 ~ 일요일)<span class="req">*</span></label>
         <div id="offRuleStrip"></div>
@@ -202,20 +217,32 @@
         <div class="counter"><span id="offQtyCount">0</span> / <span id="offQtyGoal">1</span>매 선택 — 게시대 1곳당 1매</div>
         <div class="err-txt">공문 수량(1~50매)을 먼저 입력해 주세요.</div>
       </div>
+      <div class="step-nav"><button class="btn ghost" type="button" data-offprev="1">← 이전</button><button class="btn primary" type="button" data-offnext="3">다음: 게시대 선택 →</button></div>
+      </div>
+
+      <div class="step-body" id="offStep3">
       <div class="field">
         <span class="flabel">배정 게시대 (복수 선택 · 고장 게시대 제외)<span class="req">*</span></span>
         <div class="hint-txt" style="margin:0 0 6px"><b id="offQtyLine">선택 0 / 목표 1매</b> — 입력한 수량만큼 게시대를 고르면 등록할 수 있습니다.</div>
         <div class="off-days" id="offDayChips"></div>
         <div class="off-days" id="offLowChips" style="margin-top:6px"></div>
-        <div class="off-picks" id="offPlaces"></div>
+        <div class="fc-list off-fc-list" id="offPlaces"></div>
         <div id="offRecBox" class="hidden"></div>
         <div class="off-slot-list" id="offSlots" style="margin-top:10px"></div>
         <div class="hint-txt" id="offPickInfo"></div>
       </div>
+      <div class="step-nav"><button class="btn ghost" type="button" data-offprev="2">← 이전</button><button class="btn primary" type="button" data-offnext="4">다음: 확인·등록 →</button></div>
+      </div>
+
+      <div class="step-body" id="offStep4">
+      <div class="sect-label">공문 우선배정 신청 내역 확인 <span>등록 즉시 사전 배정 처리됩니다</span></div>
+      <div class="summary" id="offSummary" style="margin-bottom:14px"></div>
       <div class="off-actions">
+        <button class="btn ghost" type="button" data-offprev="3">← 이전</button>
         <button class="btn primary" id="btnOffAdd" type="button">공문 우선배정 등록</button>
         <button class="btn ghost" id="btnOffClear" type="button">선택 해제</button>
         <span class="hint-txt" style="margin:0">등록 즉시 확정 · 시연 예시 <b>서산시 희망나눔 캠페인 · 공문(예시)</b> · 공문 수수료 <b>1매 7,700원(시청 인지대 0원 면제)</b></span>
+      </div>
       </div>
       </div>
       <div class="table-wrap" id="offTable" style="margin-top:14px"></div>
@@ -270,6 +297,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261125r14"></script>
+<script src="assets/app.js?v=20261126r1"></script>
 </body>
 </html>
