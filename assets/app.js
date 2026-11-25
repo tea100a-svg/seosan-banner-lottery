@@ -5749,10 +5749,141 @@
     }).join('');
   }
 
+  function placeSchedCell(p, s, wk, plan, smap) {
+    var st = (smap && smap[s.code]) || {};
+    var it = plan && plan.post ? plan.post[s.code] : null;
+    if (p.broken || st.k === 'broken' || st.k === 'fault' || st.k === 'uninstall' || st.k === 'aged') {
+      return { cls: 'off', tag: p.broken ? '수리중' : (SLOT_FLAG_LABEL[st.k] || '사용불가'), adv: '접수 불가', sub: st.label || '' };
+    }
+    if (st.k === 'cover') {
+      return { cls: 'off', tag: '풀가림', adv: '목요 선착순만', sub: '정기 추첨 제외' };
+    }
+    if (st.k === 'other' && st.off) {
+      return { cls: 'off', tag: '접수 제한', adv: (st.note && st.note.text) ? st.note.text : '기타사유 제한', sub: '관리자 제한' };
+    }
+    if (it && it.kind === 'official') {
+      var offObj = it.official || {};
+      return { cls: 'official', tag: '공문 배정', adv: offObj.org || offObj.title || '공문 우선배정', sub: offObj.text || offObj.docNo || '공문 우선' };
+    }
+    if (it && it.kind === 'app') {
+      var appObj = it.app || {};
+      return { cls: 'confirmed', tag: appObj.status || '확정', adv: appObj.advertiser || appObj.company || '배정 완료', sub: appObj.text || '' };
+    }
+    if (wk === weekStartOf(CUR.start) && st.k === 'inuse') {
+      return { cls: 'inuse', tag: '게시중', adv: '진행 주간 게시중', sub: dstr(CUR.start) + '~' + dstr(CUR.end) };
+    }
+    var rv = rivalCount(p.id, s.code, wk);
+    if (rv > 0) {
+      return { cls: 'rival', tag: '접수 ' + rv + '건', adv: '추첨·심사 대기', sub: st.k === 'other' ? '안내 후 선택' : '지정 접수중' };
+    }
+    return { cls: 'free', tag: '빈 자리', adv: '예약·접수 가능', sub: st.k === 'other' ? '안내 후 선택' : '정상 운영' };
+  }
+
+  function renderPlacementSchedHTML(p, mode, baseDate) {
+    var startWk = weekStartOf(baseDate || ROUND.postStart);
+    var codes = slotCodesOf(p);
+    var multi = (Number(p.boards) || 1) > 1;
+    var weeks = [];
+    var nWeeks = mode === '4w' ? 4 : 1;
+    for (var wi = 0; wi < nWeeks; wi++) weeks.push(addDays(startWk, wi * 7));
+
+    var endSunday = addDays(weeks[weeks.length - 1], 6);
+    var periodTxt = mode === '4w'
+      ? (dstr(startWk) + '(월) ~ ' + dstr(endSunday) + '(일) · 4주간')
+      : (dstr(startWk) + '(월) ~ ' + dstr(endSunday) + '(일) · 1주간');
+
+    var plans = weeks.map(function (w) { return slotPlan(p.id, w); });
+    var smaps = weeks.map(function (w) { return slotStateMap(p, w); });
+
+    var totalSlots = codes.length * nWeeks;
+    var usedN = 0, freeN = 0, rivalN = 0, offN = 0;
+    codes.forEach(function (s) {
+      weeks.forEach(function (w, idx) {
+        var c = placeSchedCell(p, s, w, plans[idx], smaps[idx]);
+        if (c.cls === 'confirmed' || c.cls === 'inuse' || c.cls === 'official') usedN += 1;
+        else if (c.cls === 'free') freeN += 1;
+        else if (c.cls === 'rival') rivalN += 1;
+        else offN += 1;
+      });
+    });
+
+    var barHTML = '<div class="pd-sched-bar">' +
+      '<div class="pd-mode-tabs" role="tablist" aria-label="게시현황 기간 선택">' +
+      '<button class="pd-mode-btn' + (mode === '1w' ? ' on' : '') + '" type="button" data-pd-mode="1w">1주 보기</button>' +
+      '<button class="pd-mode-btn' + (mode === '4w' ? ' on' : '') + '" type="button" data-pd-mode="4w">4주 보기</button>' +
+      '</div>' +
+      '<div class="pd-date-nav">' +
+      '<button class="btn ghost sm" type="button" id="pdPrevWk" title="1주 이전">◀ 이전 주</button>' +
+      '<input type="date" class="input sm" id="pdDatePick" value="' + esc(baseDate || startWk) + '" aria-label="게시현황 조회 날짜 선택">' +
+      '<button class="btn ghost sm" type="button" id="pdNextWk" title="1주 다음">다음 주 ▶</button>' +
+      '<button class="btn sm" type="button" id="pdThisWk">이번 회차</button>' +
+      '</div></div>';
+
+    var sumHTML = '<div class="pd-sched-period">' +
+      '<span>조회 기간: <b>' + esc(periodTxt) + '</b></span>' +
+      '<div class="pd-sched-chips">' +
+      '<span class="pd-chip blue">확정·게시 ' + usedN + '면</span>' +
+      (rivalN ? '<span class="pd-chip amber">지정 접수 ' + rivalN + '칸</span>' : '') +
+      '<span class="pd-chip ok">빈 자리 ' + freeN + '면</span>' +
+      (offN ? '<span class="pd-chip red">제한·고장 ' + offN + '면</span>' : '') +
+      '<span class="pd-chip">전체 ' + totalSlots + '면 기준</span>' +
+      '</div></div>';
+
+    var tblHTML = '';
+    if (mode === '1w') {
+      var w0 = weeks[0], p0 = plans[0], s0 = smaps[0];
+      var wkAppsN = weekAppsOf(p.id, w0).length;
+      tblHTML = '<div class="pd-table-wrap"><table class="pd-table"><thead><tr>' +
+        '<th style="width:92px">위치</th><th style="width:94px">상태</th><th>광고주 · 공문 / 내용</th><th style="width:150px">비고 · 세부</th>' +
+        '</tr></thead><tbody>' +
+        codes.map(function (s) {
+          var c = placeSchedCell(p, s, w0, p0, s0);
+          var posLabel = multi ? (s.col + '동 ' + s.row + '단 (' + s.code + ')') : (s.row + '단 (' + s.code + ')');
+          return '<tr>' +
+            '<td class="pd-slot-col">' + esc(posLabel) + '</td>' +
+            '<td><span class="pd-tag ' + c.cls + '">' + esc(c.tag) + '</span></td>' +
+            '<td><div class="pd-adv" style="max-width:290px" title="' + esc(c.adv) + '">' + esc(c.adv) + '</div></td>' +
+            '<td><div class="pd-sub" style="max-width:150px" title="' + esc(c.sub) + '">' + esc(c.sub || '—') + '</div></td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table></div>' +
+        '<div class="sm" style="color:var(--muted);margin-top:6px">※ 해당 주간 이 게시대 전체 접수 신청(1·2·3순위 포함): <b>' + wkAppsN + '건</b></div>';
+    } else {
+      tblHTML = '<div class="pd-table-wrap"><table class="pd-table"><thead><tr>' +
+        '<th style="width:84px">위치</th>' +
+        weeks.map(function (w, idx) {
+          var wEnd = addDays(w, 6);
+          var wkAppsN = weekAppsOf(p.id, w).length;
+          return '<th class="pd-wk-head" data-pd-jump="' + esc(w) + '" title="클릭하면 이 주간 1주 상세 보기로 이동합니다">' +
+            (idx + 1) + '주차 · ' + dstr(w) + '~' + dstr(wEnd) +
+            '<small>접수 ' + wkAppsN + '건 · 클릭시 1주</small></th>';
+        }).join('') +
+        '</tr></thead><tbody>' +
+        codes.map(function (s) {
+          var posLabel = multi ? (s.col + '동 ' + s.row + '단') : (s.row + '단');
+          return '<tr><td class="pd-slot-col">' + esc(posLabel) + ' <span style="color:var(--muted);font-weight:600">' + esc(s.code) + '</span></td>' +
+            weeks.map(function (w, idx) {
+              var c = placeSchedCell(p, s, w, plans[idx], smaps[idx]);
+              return '<td><button class="pd-cell-btn" type="button" data-pd-jump="' + esc(w) + '" title="' + esc(c.tag + ' · ' + c.adv + (c.sub ? ' (' + c.sub + ')' : '')) + '">' +
+                '<div class="pd-cell">' +
+                '<span class="pd-tag ' + c.cls + '">' + esc(c.tag) + '</span>' +
+                '<span class="pd-adv">' + esc(c.adv) + '</span>' +
+                '</div></button></td>';
+            }).join('') +
+            '</tr>';
+        }).join('') +
+        '</tbody></table></div>' +
+        '<div class="sm" style="color:var(--muted);margin-top:6px">※ 주차 머리글이나 칸을 누르면 해당 주차의 <b>1주 보기</b>로 바로 이동해 상세 내용을 볼 수 있습니다.</div>';
+    }
+
+    return barHTML + sumHTML + tblHTML;
+  }
+
   function showPlacementDetail(id) {
     var p = placementById(id);
     if (!p) return;
     var curWk = weekStartOf(ui.statusWeek || ROUND.postStart);
+    var pdState = { mode: '1w', date: curWk };
     var liveWk = (curWk === weekStartOf(CUR.start));
     var liveLeft = liveWk ? liveAvailOf(p) : 0;
     var appsR = appsOfWeek(curWk).filter(function (a) { return requestedPlacesOf(a).indexOf(id) >= 0; });
@@ -5775,6 +5906,8 @@
       '<dt>이번 주 접수중</dt><dd>' + appsR.length + '건 · ' + qtyAppsR + '매 (1개소당 1매)</dd>' +
       (liveWk ? '<dt>진행 중 주간</dt><dd><b>' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + '</b> · 잔여 <b>' + liveLeft + '면</b> — 협회 일괄 게첨이 끝난 주간입니다</dd>' : '') +
       '</dl></div>' +
+      '<div class="sect-label">📅 게시현황 (1주 · 4주 조회) <span>날짜를 고르면 해당 주 기준으로 바로 바뀝니다</span></div>' +
+      '<div class="pd-sched-box" id="pdScheduleBox">' + renderPlacementSchedHTML(p, pdState.mode, pdState.date) + '</div>' +
       (function () {
         var bd = Number(p.boards) || 1;
         if (bd < 2) return '';
@@ -5803,12 +5936,55 @@
           : '<div class="callout info">' + IC.info + '<div>한 게시대에는 <b>1매</b>만 표시할 수 있습니다. 잔여 매는 추첨 후 미배정 물량으로 <b>선착순 예약</b>에 공개됩니다.</div></div>'));
     openModal({
       title: p.name, sub: p.dong + ' · 지정게시대 ' + p.id,
+      wide: true,
       body: body,
       foot: '<button class="btn ghost" data-close type="button">닫기</button>' +
         (liveWk && liveLeft && !p.broken ? '<button class="btn primary" id="mdlLive" type="button">🔥 진행 주간 잔여석 접수</button>' : '') +
         '<button class="btn" id="mdlFirst" type="button"' + (p.broken ? ' disabled' : '') + '>선착순 예약 보기</button>' +
         '<button class="btn primary" id="mdlApply" type="button"' + (p.broken ? ' disabled' : '') + '>주간 추첨 접수</button>',
       after: function () {
+        function bindPdSched() {
+          var box = $('#pdScheduleBox');
+          if (!box) return;
+          box.querySelectorAll('[data-pd-mode]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              pdState.mode = btn.getAttribute('data-pd-mode') === '4w' ? '4w' : '1w';
+              box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
+              bindPdSched();
+            });
+          });
+          box.querySelectorAll('[data-pd-jump]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              pdState.date = btn.getAttribute('data-pd-jump') || pdState.date;
+              pdState.mode = '1w';
+              box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
+              bindPdSched();
+            });
+          });
+          var dp = $('#pdDatePick');
+          if (dp) dp.addEventListener('change', function () {
+            if (!this.value) return;
+            pdState.date = this.value;
+            box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
+            bindPdSched();
+          });
+          onEl('#pdPrevWk', 'click', function () {
+            pdState.date = addDays(weekStartOf(pdState.date), -7);
+            box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
+            bindPdSched();
+          });
+          onEl('#pdNextWk', 'click', function () {
+            pdState.date = addDays(weekStartOf(pdState.date), 7);
+            box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
+            bindPdSched();
+          });
+          onEl('#pdThisWk', 'click', function () {
+            pdState.date = weekStartOf(ROUND.postStart);
+            box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
+            bindPdSched();
+          });
+        }
+        bindPdSched();
         if (p.broken) return;
         onEl('#mdlLive', 'click', function () { closeModal(); goPage('remain.html?place=' + encodeURIComponent(id)); });
         onEl('#mdlApply', 'click', function () {
