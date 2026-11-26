@@ -8648,7 +8648,7 @@
       : '지정게시대';
     var st = weekStartOf(target.start || wk), ed = addDays(st, 6);
     var periodStr = Number(st.slice(5, 7)) + '/' + Number(st.slice(8, 10)) + ' ~ ' + Number(ed.slice(5, 7)) + '/' + Number(ed.slice(8, 10));
-    var todayD = simTodayISO();
+    var todayD = todayISO();
     var y = todayD.slice(0, 4), mo = todayD.slice(5, 7), da = todayD.slice(8, 10);
     var repName = m.rep || adv.name || target.company || '';
     var bizNo = m.bizNo || target.bizNo || '316-01-00000';
