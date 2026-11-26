@@ -9161,7 +9161,7 @@
     if (!okType) { toast('시안 파일은 이미지(JPG·PNG)만 첨부할 수 있습니다.', true); return false; }
     if (file.size && file.size > 5 * 1024 * 1024) { toast('시안 파일은 5MB 이하만 첨부할 수 있습니다.', true); return false; }
     ui.fcFile = { name: file.name, size: file.size || 0 };
-    ui.fcFilePreview = null; ui.fcDesignTone = null;
+    ui.fcFilePreview = null; ui.fcDesignTone = null; ui.fcDesignExtracted = null;
     if ($('#fcFilePreview')) {
       $('#fcFilePreview').innerHTML = '<div class="drop-preview"><div class="fi"><b>' + esc(file.name) + '</b><span>' +
         Math.max(1, Math.round((file.size || 0) / 1024)) + 'KB · 시안 파일</span></div></div>';
@@ -9171,6 +9171,10 @@
       var rd = new FileReader();
       rd.onload = function () {
         ui.fcFilePreview = String(rd.result || '');
+        var info = extractDesignInfo(file.name, ui.fcFilePreview);
+        ui.fcDesignExtracted = info;
+        applyDesignAutofill('fc', info);
+        renderFcFilePreview();
         analyzeDesignTone(ui.fcFilePreview, function (tone) { ui.fcDesignTone = tone; renderFcFilePreview(); });
       };
       rd.readAsDataURL(file);
@@ -14302,34 +14306,133 @@
 
   function handleFile(f) {
     if (!f) return;
-    if (!/^image\//.test(f.type)) { toast('이미지 파일(JPG·PNG)만 첨부할 수 있습니다.', true); return; }
+    if (!/^image\//.test(f.type) && !/\.svg$/i.test(String(f.name || ''))) { toast('이미지 파일(JPG·PNG·SVG)만 첨부할 수 있습니다.', true); return; }
     if (f.size > 5 * 1024 * 1024) { toast('5MB 이하 파일만 첨부할 수 있습니다.', true); return; }
-    ui.file = f; ui.designTone = null;
+    ui.file = f; ui.designTone = null; ui.designExtracted = null;
+    if ($('#fDesign')) $('#fDesign').classList.remove('invalid');
     var reader = new FileReader();
     reader.onload = function (ev) {
       ui.filePreview = ev.target.result;
+      var info = extractDesignInfo(f.name, ui.filePreview);
+      ui.designExtracted = info;
+      applyDesignAutofill('apply', info);
       renderFilePreview();
       analyzeDesignTone(ui.filePreview, function (tone) { ui.designTone = tone; renderFilePreview(); });
     };
     reader.readAsDataURL(f);
   }
 
+  function designSampleMeta(tone) {
+    var t = (tone === 'black' || tone === 'red' || tone === 'noname') ? tone : 'normal';
+    if (t === 'noname') return { advertiser: '서산청과', phone: '010-3333-7777', text: '서산청과 신선 과일 산지 직송 특가' };
+    if (t === 'black') return { advertiser: '대산타이어', phone: '010-8888-2424', text: '대산타이어 겨울용 타이어 교체 특가' };
+    if (t === 'red') return { advertiser: '해미분식', phone: '010-4444-9090', text: '해미분식 오픈 기념 전 메뉴 20% 할인' };
+    return { advertiser: '햇살농원', phone: '010-5555-1234', text: '햇살농원 가을 특선 사과 직판 · 30% 할인' };
+  }
+
+  function extractDesignInfo(fileName, dataUrl) {
+    var out = { advertiser: '', phone: '', text: '' };
+    var url = String(dataUrl || '');
+    if (/^data:image\/svg\+xml/i.test(url)) {
+      try {
+        var raw = url.indexOf(';base64,') >= 0
+          ? decodeURIComponent(escape(atob(url.split(',')[1] || '')))
+          : decodeURIComponent(url.split(',')[1] || '');
+        var mAdv = raw.match(/data-advertiser=["']([^"']+)["']/i);
+        var mPh = raw.match(/data-phone=["']([^"']+)["']/i);
+        var mTxt = raw.match(/data-text=["']([^"']+)["']/i);
+        if (mAdv) out.advertiser = mAdv[1].trim();
+        if (mPh) out.phone = mPh[1].trim();
+        if (mTxt) out.text = mTxt[1].trim();
+        if (!out.phone) {
+          var pm = raw.match(/(01[016789]|02|0[3-6][1-5])[-\s.]?\d{3,4}[-\s.]?\d{4}/);
+          if (pm) out.phone = formatPhone(pm[0]);
+        }
+      } catch (e) { }
+    }
+    var fn = String(fileName || '').replace(/\.[^.]+$/, '');
+    if (fn && !/^(시연용_|IMG_|KakaoTalk_|Screenshot_|photo_|image)/i.test(fn)) {
+      var phInFn = fn.match(/(01[016789]|02|0[3-6][1-5])[-\s.]?\d{3,4}[-\s.]?\d{4}/);
+      if (!out.phone && phInFn) {
+        out.phone = formatPhone(phInFn[0]);
+        fn = fn.replace(phInFn[0], ' ');
+      }
+      var parts = fn.split(/[_\-|]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+      if (parts.length >= 2) {
+        if (!out.advertiser && parts[0].length >= 2 && parts[0].length <= 20) out.advertiser = parts[0];
+        if (!out.text) {
+          var rest = parts.slice(1).join(' ').trim();
+          if (rest.length >= 4) out.text = rest.slice(0, 40);
+        }
+      } else if (parts.length === 1 && parts[0].length >= 4 && !out.text) {
+        out.text = parts[0].slice(0, 40);
+      }
+    }
+    return out;
+  }
+
+  function applyDesignAutofill(scope, info) {
+    if (!info) return;
+    var isFc = scope === 'fc';
+    var elAdv = $(isFc ? '#fcAdvertiser' : '#applyAdvertiser');
+    var elPh = $(isFc ? '#fcAdvPhone' : '#applyAdvPhone');
+    var elTxt = $(isFc ? '#fcText' : '#applyText');
+    var filled = [];
+    if (elAdv && info.advertiser) {
+      elAdv.value = info.advertiser;
+      var fA = $(isFc ? '#fcFAdv' : '#fAdvertiser');
+      if (fA) fA.classList.remove('invalid');
+      filled.push('광고주');
+    }
+    if (elPh && info.phone) {
+      elPh.value = formatPhone(info.phone);
+      var fP = $(isFc ? '#fcFAdvPhone' : '#fAdvPhone');
+      if (fP) fP.classList.remove('invalid');
+      filled.push('연락처');
+    }
+    if (elTxt && info.text) {
+      elTxt.value = info.text.slice(0, 40);
+      var fT = $(isFc ? '#fcFText' : '#fText');
+      if (fT) fT.classList.remove('invalid');
+      try { elTxt.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { }
+      filled.push('광고문구');
+    }
+    if (filled.length) {
+      try {
+        if (elAdv) elAdv.dispatchEvent(new Event('input', { bubbles: true }));
+        if (elPh) elPh.dispatchEvent(new Event('input', { bubbles: true }));
+      } catch (e) { }
+    }
+    return filled;
+  }
+
+  function designExtractNoteHTML(info) {
+    if (!info || (!info.advertiser && !info.phone && !info.text)) {
+      return '<div class="hint-txt" style="margin-top:6px">ℹ️ 시안 이미지가 첨부되었습니다. 이미지에서 문구·연락처를 읽지 못한 경우 아래 칸에 직접 입력해 주세요.</div>';
+    }
+    var parts = [];
+    if (info.advertiser) parts.push('광고주 <b>' + esc(info.advertiser) + '</b>');
+    if (info.phone) parts.push('연락처 <b>' + esc(info.phone) + '</b>');
+    if (info.text) parts.push('문구 <b>' + esc(info.text) + '</b>');
+    return '<div class="callout ok" style="margin-top:8px;padding:9px 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>' +
+      '<div><b>🏷️ 시안에서 자동완성됨</b> — ' + parts.join(' · ') + ' <span class="sm">(아래 칸에서 바로 수정 가능)</span></div></div>';
+  }
+
   /* 시연용 샘플 시안 — 정상 / 검정 바탕 / 빨간 바탕 (2026-11-23 김재봉 님 지시) */
   function designSampleSvg(tone, opts) {
     var t = (tone === 'black' || tone === 'red' || tone === 'noname') ? tone : 'normal';
     var noName = t === 'noname';
+    var meta = designSampleMeta(t);
     var bg = t === 'black' ? '#000000' : (t === 'red' ? '#d0021b' : '#eef3ff');
     var inner = t === 'black' ? '#111111' : (t === 'red' ? '#c00218' : '#ffffff');
     var fg = t === 'normal' ? '#0b2b52' : '#ffffff';
     var sub = t === 'normal' ? '#4a5a74' : '#ffe9e9';
     var line = t === 'normal' ? '#1d5fd6' : (t === 'red' ? '#ffd0d0' : '#ffffff');
-    var lab = t === 'black' ? '검정 바탕 시연용 샘플 시안' : (t === 'red' ? '빨간 바탕 시연용 샘플 시안'
-      : (noName ? '실명제 누락 시연용 샘플 시안' : '실명제 표기 시연용 샘플 시안'));
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1420 180" width="1420" height="180">' +
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1420 180" width="1420" height="180" data-advertiser="' + esc(meta.advertiser) + '" data-phone="' + esc(meta.phone) + '" data-text="' + esc(meta.text) + '">' +
       '<rect width="1420" height="180" fill="' + bg + '"/>' +
       '<rect x="18" y="14" width="1384" height="152" fill="' + inner + '" stroke="' + line + '" stroke-width="4"/>' +
-      '<text x="710" y="86" font-size="46" text-anchor="middle" fill="' + fg + '" font-family="sans-serif">' + lab + ' · 7,100×900mm</text>' +
-      '<text x="710" y="132" font-size="26" text-anchor="middle" fill="' + sub + '" font-family="sans-serif">' + (t === 'normal' ? '실명제 박스(200×125mm) 확인용 도안' : '바탕색 과다 — 게첨 제한·조기 철거 주의') + '</text>' +
+      '<text x="710" y="84" font-size="44" text-anchor="middle" fill="' + fg + '" font-family="sans-serif">' + esc(meta.text) + '</text>' +
+      '<text x="710" y="130" font-size="25" text-anchor="middle" fill="' + sub + '" font-family="sans-serif">문의 ' + esc(meta.phone) + ' · 7,100×900mm' + (t === 'black' || t === 'red' ? ' (바탕색 과다 주의)' : '') + '</text>' +
       /* 왼쪽 하단 실명제 박스 — 정상 샘플에는 제작업체명·연락처를 그려 넣고, 누락 샘플(noname)은 비워 둔다 */
       (noName ? '' :
         '<rect x="40" y="112" width="330" height="56" fill="' + (t === 'normal' ? '#ffffff' : 'rgba(255,255,255,.14)') + '" stroke="' + (t === 'normal' ? '#006b35' : fg) + '" stroke-width="3"/>' +
@@ -14442,14 +14545,19 @@
     var name = t === 'black' ? '시연용_검정바탕_샘플시안.svg' : (t === 'red' ? '시연용_빨간바탕_샘플시안.svg'
       : (t === 'noname' ? '시연용_실명제누락_샘플시안.svg' : '시연용_실명제표기_샘플시안.svg'));
     var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(designSampleSvg(t));
+    var meta = designSampleMeta(t);
     if (scope === 'fc') {
       ui.fcFile = { name: name, size: 184320, type: 'image/svg+xml' };
       ui.fcFilePreview = url;
+      ui.fcDesignExtracted = meta;
     } else {
       ui.file = { name: name, size: 184320, type: 'image/svg+xml' };
       ui.filePreview = url;
+      ui.designExtracted = meta;
     }
     if ($('#fDesign')) $('#fDesign').classList.remove('invalid');
+    if ($('#fcFDesign')) $('#fcFDesign').classList.remove('invalid');
+    applyDesignAutofill(scope === 'fc' ? 'fc' : 'apply', meta);
     analyzeDesignTone(url, function (res) {
       var toneRes = res || { black: 0, red: 0 };
       if (t === 'black') toneRes = { black: 96, red: 0 };
@@ -14699,10 +14807,11 @@
     $('#filePreview').innerHTML = '<div class="drop-preview">' + img +
       '<div class="fi"><b>' + esc(ui.file.name) + '</b><span>' + bytesTxt(ui.file.size) + ' · 검수 대기</span></div>' +
       '<button type="button" id="btnFileDel" aria-label="첨부 삭제">×</button></div>' +
+      designExtractNoteHTML(ui.designExtracted) +
       designToneNoteHTML(ui.designTone, 'designToneNote') +
       designNameNoteHTML(ui.designTone, 'designNameNote');
     onEl('#btnFileDel', 'click', function () {
-      ui.file = null; ui.filePreview = null; ui.designTone = null;
+      ui.file = null; ui.filePreview = null; ui.designTone = null; ui.designExtracted = null;
       $('#applyFile').value = '';
       renderFilePreview();
     });
@@ -14716,10 +14825,11 @@
     box.innerHTML = '<div class="drop-preview">' + img +
       '<div class="fi"><b>' + esc(ui.fcFile.name) + '</b><span>' + bytesTxt(ui.fcFile.size) + ' · 검수 대기</span></div>' +
       '<button type="button" id="btnFcFileDel" aria-label="첨부 삭제">×</button></div>' +
+      designExtractNoteHTML(ui.fcDesignExtracted) +
       designToneNoteHTML(ui.fcDesignTone, 'fcDesignToneNote') +
       designNameNoteHTML(ui.fcDesignTone, 'fcDesignNameNote');
     onEl('#btnFcFileDel', 'click', function () {
-      ui.fcFile = null; ui.fcFilePreview = null; ui.fcDesignTone = null;
+      ui.fcFile = null; ui.fcFilePreview = null; ui.fcDesignTone = null; ui.fcDesignExtracted = null;
       if ($('#fcDesign')) $('#fcDesign').value = '';
       renderFcFilePreview();
     });

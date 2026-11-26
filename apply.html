@@ -13,7 +13,7 @@
 }catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
 <title>주간 추첨 접수 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261126r4">
+<link rel="stylesheet" href="assets/style.css?v=20261126r5">
 </head>
 <body data-page="apply">
 <div class="demo-banner">
@@ -252,7 +252,21 @@
 
       <!-- step 1 · 광고주·내용 -->
       <div class="step-body active" id="step1">
-        <div class="sect-label">실제 광고주 · 현수막 문구 · 시안 <span>중복 접수·페널티는 실제 광고주 기준</span></div>
+        <div class="sect-label">현수막 시안 · 실제 광고주 · 문구 <span>시안 첨부 시 광고주·연락처·문구 자동완성</span></div>
+        <div class="field" id="fDesign">
+          <span class="flabel">현수막 시안 파일 첨부<span class="req">*</span></span>
+          <div class="drop" id="dropZone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4.5M8 8l4-4 4 4"/><path d="M4.5 15v3A1.5 1.5 0 0 0 6 19.5h12a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg>
+            <b>시안 파일을 끌어놓거나 눌러서 선택</b>
+            <span>JPG · PNG · SVG / 5MB 이하 · 첨부 시 광고주·연락처·문구 자동 추출</span>
+            <input type="file" id="applyFile" accept="image/*">
+          </div>
+          <div id="filePreview"></div>
+          <div class="err-txt">현수막 시안 파일을 첨부해 주세요. (JPG·PNG / 5MB 이하)</div>
+          <div class="hint-txt">시안 파일 첨부는 <b>필수</b>입니다 — 규격·실명제 박스를 확인하고 광고주·연락처·문구를 자동완성합니다.
+            <button class="btn sm ghost" type="button" id="btnDesignSample" style="margin-left:6px">시연용 샘플 시안 첨부</button><button class="btn sm ghost" type="button" id="btnDesignSampleName" style="margin-left:4px">✅ 실명제 있는 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleNoName" style="margin-left:4px">⚠️ 실명제 누락 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleBlack" style="margin-left:4px">⬛ 검정 바탕 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleRed" style="margin-left:4px">🟥 빨간 바탕 시안(샘플)</button>
+          </div>
+        </div>
         <div class="field-row">
           <div class="field" id="fAdvertiser">
             <label for="applyAdvertiser">실제 광고주명<span class="req">*</span></label>
@@ -281,20 +295,6 @@
         <div class="callout warn hidden dup-hint" id="dedupHint"></div>
         <div class="callout danger hidden" id="abuseNote" role="alert"></div>
         <div class="callout warn hidden" id="youthNote" role="status"></div>
-        <div class="field" id="fDesign">
-          <span class="flabel">현수막 시안 파일 첨부<span class="req">*</span></span>
-          <div class="drop" id="dropZone">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4.5M8 8l4-4 4 4"/><path d="M4.5 15v3A1.5 1.5 0 0 0 6 19.5h12a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg>
-            <b>시안 파일을 끌어놓거나 눌러서 선택</b>
-            <span>JPG · PNG / 5MB 이하 · 없으면 협회에서 문구로 검수</span>
-            <input type="file" id="applyFile" accept="image/*">
-          </div>
-          <div id="filePreview"></div>
-          <div class="err-txt">현수막 시안 파일을 첨부해 주세요. (JPG·PNG / 5MB 이하)</div>
-          <div class="hint-txt">시안 파일 첨부는 <b>필수</b>입니다 — 사무국이 규격·실명제 박스를 시안으로 확인합니다.
-            <button class="btn sm ghost" type="button" id="btnDesignSample" style="margin-left:6px">시연용 샘플 시안 첨부</button><button class="btn sm ghost" type="button" id="btnDesignSampleName" style="margin-left:4px">✅ 실명제 있는 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleNoName" style="margin-left:4px">⚠️ 실명제 누락 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleBlack" style="margin-left:4px">⬛ 검정 바탕 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnDesignSampleRed" style="margin-left:4px">🟥 빨간 바탕 시안(샘플)</button>
-          </div>
-        </div>
         <div class="callout warn med-float hidden" id="medicalAdNote" role="status">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
           <div><b>🏥 의료광고 안내</b> — 의료광고 심의필 번호가 없는 경우 <b>게첨 중이라도 조기 철거</b>될 수 있습니다.<span class="sm" style="display:block;margin-top:4px">의료 광고는 사전 심의를 받은 뒤 심의필 번호(예: 제2026-123호)를 현수막에 표기해 주세요.</span></div>
@@ -464,6 +464,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261126r4"></script>
+<script src="assets/app.js?v=20261126r5"></script>
 </body>
 </html>
