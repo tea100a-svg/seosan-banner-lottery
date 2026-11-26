@@ -15110,7 +15110,7 @@
     return _tessPromise;
   }
 
-  function parseOcrTextForBanner(rawText) {
+  function parseOcrTextForBanner(rawText, ocrLines) {
     var out = { advertiser: '', phone: '', text: '', score: 0 };
     var txt = String(rawText || '').replace(/\r/g, '\n');
     if (!txt.trim()) return out;
@@ -15126,45 +15126,79 @@
         out.score += 15;
       }
     }
-    /* 자모 낱자·특수기호 노이즈 제거 후 의미 있는 토큰만 추출 */
-    var cleanedRaw = txt
-      .replace(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/g, ' ')
-      .replace(/[ㄱ-ㅎㅏ-ㅣ]/g, ' ')
-      .replace(/[|_~`^*=<>\\[\]{};:'",.?/!@#$%&()+]/g, ' ');
-    var tokens = cleanedRaw.split(/\s+/).map(function (w) { return w.trim(); }).filter(function (w) {
-      if (!w) return false;
-      /* 2글자 이상 완성형 한글 포함 어절 우선 */
-      if (/[가-힣]{2,}/.test(w)) {
-        /* 앞뒤에 붙은 1글자 영문/숫자 찌꺼기 정리 */
-        var koOnly = w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '');
-        return /[가-힣]{2,}/.test(koOnly);
-      }
-      /* 숫자+한글/단위 (예: 100%, 24시, 11월, 30일, 50%) */
-      if (/^\d+[가-힣%]+$/.test(w)) return true;
-      return false;
-    }).map(function (w) {
-      return /[가-힣]{2,}/.test(w) ? w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '') : w;
-    });
-    /* 연속 중복 토큰 제거 */
-    var uniq = [];
-    tokens.forEach(function (w) {
-      if (!uniq.length || uniq[uniq.length - 1] !== w) uniq.push(w);
-    });
-    var koCount = uniq.filter(function (w) { return /[가-힣]{2,}/.test(w); }).length;
+    var cleanLineTokens = function (s) {
+      var c = String(s || '')
+        .replace(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/g, ' ')
+        .replace(/(?:T|TEL|문의|전화)[.\s:]*[2-9]\d{2}[.\-\s]+\d{4}/gi, ' ')
+        .replace(/[ㄱ-ㅎㅏ-ㅣ]/g, ' ')
+        .replace(/[|_~`^*=<>\\[\]{};:'",.?/!@#$%&()+]/g, ' ');
+      var arr = c.split(/\s+/).map(function (w) { return w.trim(); }).filter(function (w) {
+        if (!w) return false;
+        if (/[가-힣]{2,}/.test(w)) {
+          var koOnly = w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '');
+          return /[가-힣]{2,}/.test(koOnly);
+        }
+        if (/^\d+[가-힣%]+$/.test(w)) return true;
+        return false;
+      }).map(function (w) {
+        return /[가-힣]{2,}/.test(w) ? w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '') : w;
+      });
+      var u = [];
+      arr.forEach(function (w) { if (!u.length || u[u.length - 1] !== w) u.push(w); });
+      return u;
+    };
+    var isAddrOrNoise = function (w) {
+      return /^(?:충남|충청남도|서산시|서산|읍내동|동문동|석남동|수석동|해미면|성연면|부춘동|인지면|대산읍|지곡면|음암면|고북면|운산면|팔봉면|사거리|삼거리|오거리|건너편|맞은편|주차|주차장|예약|문의|상담|영업시간|오전|오후|매주|휴무|카톡|카카오톡|인스타|인스타그램|블로그|네이버|위치|주소|지하|\d+층|\d+호|\d+번길|\d+로)$/.test(w) ||
+        /(?:시|구|동|읍|면|리)\s*$/.test(w) && w.length <= 4 && /(?:로|길|동|읍|면)$/.test(w);
+    };
+
+    var allTokens = cleanLineTokens(txt);
+    var koCount = allTokens.filter(function (w) { return /[가-힣]{2,}/.test(w); }).length;
     out.score += koCount * 10;
-    if (uniq.length && koCount >= 1) {
-      out.text = uniq.join(' ').replace(/\s+/g, ' ').trim().slice(0, 40);
-      /* 광고주 후보: 상호 키워드 포함 어절 우선 */
-      var joined = uniq.join(' ');
+
+    if (allTokens.length && koCount >= 1) {
+      var joinedAll = allTokens.join(' ');
       var bizRe = /[가-힣A-Za-z0-9]{2,14}(?:어린이집|유치원|초등학교|고등학교|학원|교육원|필라테스|코딩|아카데미|노래클럽|노래방|피부샵|피부과|한의원|병원|약국|식당|가든|버섯|양꼬치|박가네|미다움|알레르망|변호사|공인중개사|부동산|마트|청과|농원|타이어|분식|코팅|청소|미술관|광고)/;
-      var mBiz = joined.match(bizRe);
+      var mBiz = joinedAll.match(bizRe);
       if (mBiz) {
         out.advertiser = mBiz[0];
         out.score += 15;
       } else {
-        var advCand = uniq.filter(function (w) { return /[가-힣]{2,}/.test(w) && w.length >= 2 && w.length <= 12; });
+        var advCand = allTokens.filter(function (w) { return /[가-힣]{2,}/.test(w) && !isAddrOrNoise(w) && w.length >= 2 && w.length <= 12; });
         if (advCand.length) out.advertiser = advCand[0];
       }
+
+      /* 핵심 문구 추출: 글자 높이(bbox)가 큰 메인 헤드라인 1~2줄만 압축 (최대 22자) */
+      var picked = [];
+      if (Array.isArray(ocrLines) && ocrLines.length) {
+        var lineInfos = ocrLines.map(function (ln) {
+          var toks = cleanLineTokens(ln && ln.text).filter(function (w) { return !isAddrOrNoise(w); });
+          var h = (ln && ln.bbox) ? Math.max(1, (ln.bbox.y1 || 0) - (ln.bbox.y0 || 0)) : 10;
+          var koN = toks.filter(function (w) { return /[가-힣]{2,}/.test(w); }).length;
+          return { toks: toks, h: h, koN: koN };
+        }).filter(function (x) { return x.koN >= 1; });
+
+        if (lineInfos.length) {
+          lineInfos.sort(function (a, b) { return b.h - a.h; });
+          var maxH = lineInfos[0].h;
+          lineInfos.forEach(function (x) {
+            if (x.h < maxH * 0.52 && picked.length >= 2) return;
+            x.toks.forEach(function (w) {
+              if (picked.indexOf(w) >= 0) return;
+              var nextStr = picked.concat([w]).join(' ');
+              if (picked.length < 4 && nextStr.length <= 22) picked.push(w);
+            });
+          });
+        }
+      }
+      if (!picked.length) {
+        allTokens.filter(function (w) { return !isAddrOrNoise(w); }).forEach(function (w) {
+          if (picked.indexOf(w) >= 0) return;
+          var nextStr = picked.concat([w]).join(' ');
+          if (picked.length < 4 && nextStr.length <= 22) picked.push(w);
+        });
+      }
+      out.text = picked.join(' ').trim() || allTokens.slice(0, 3).join(' ').slice(0, 22);
     }
     return out;
   }
@@ -15266,7 +15300,8 @@
       return Promise.all(canvases.map(function (c) {
         return Tess.recognize(c, 'kor+eng').then(function (res) {
           var t = res && res.data ? res.data.text : '';
-          var p = parseOcrTextForBanner(t);
+          var lns = res && res.data ? res.data.lines : [];
+          var p = parseOcrTextForBanner(t, lns);
           var conf = (res && res.data && typeof res.data.confidence === 'number') ? res.data.confidence : 0;
           p.score += Math.round(conf * 0.2);
           return p;
