@@ -4252,7 +4252,9 @@
       openTierSelectModal(p, order[0] || '', n, opts);
       return;
     }
-    var cur = (ui.slots && ui.slots[p.id]) || '';
+    var isOff = !!(opts && opts.scope === 'official');
+    var cur = isOff ? ((ui.offSlots && ui.offSlots[p.id]) || '') : ((ui.slots && ui.slots[p.id]) || '');
+    var applyPick = function (val) { if (isOff) setOffSlot(p.id, val); else setSlot(p.id, val, n); };
     var smap = slotStateMap(p);
     var listHtml = order.map(function (k) {
       var arr = boards[k];
@@ -4280,7 +4282,7 @@
     };
     openModal({
       title: '📍 ' + p.name + ' — 동 선택',
-      sub: p.dong + ' · ' + placeSizeTxt(p) + ' · ' + n + '순위 세부 위치',
+      sub: p.dong + ' · ' + placeSizeTxt(p) + ' · ' + (isOff ? '공문 우선배정 세부 위치' : (n + '순위 세부 위치')),
       body: '<div class="sp-pop-top">' +
         '<button type="button" class="btn' + (!cur ? ' primary' : ' ghost') + '" id="spDongAny">🎲 위치 무관 (빈 칸 자동 배정)</button>' +
       '</div>' +
@@ -4289,7 +4291,7 @@
       foot: '<button type="button" class="btn ghost" id="spDongCancel">닫기</button>',
       after: function () {
         onEl('#spDongAny', 'click', function () {
-          setSlot(p.id, '', n);
+          applyPick('');
           done();
         });
         onEl('#spDongCancel', 'click', function () { done(); });
@@ -4315,7 +4317,9 @@
     });
     var multi = Object.keys(boards).length > 1;
     var arr = boards[dongLetter || ''] || [];
-    var cur = (ui.slots && ui.slots[p.id]) || '';
+    var isOff = !!(opts && opts.scope === 'official');
+    var cur = isOff ? ((ui.offSlots && ui.offSlots[p.id]) || '') : ((ui.slots && ui.slots[p.id]) || '');
+    var applyPick = function (val) { if (isOff) setOffSlot(p.id, val); else setSlot(p.id, val, n); };
     var smap = slotStateMap(p);
 
     var topBtns = '';
@@ -4355,27 +4359,29 @@
     };
     openModal({
       title: '🪜 ' + p.name + ' · ' + (dongLetter ? esc(dongLetter) + '동' : '1대') + ' — 단수 선택',
-      sub: (dd ? dd + ' · ' : p.dong + ' · ') + n + '순위 단수를 골라 주세요',
+      sub: (dd ? dd + ' · ' : p.dong + ' · ') + (isOff ? '공문 배정할 단수를 골라 주세요' : (n + '순위 단수를 골라 주세요')),
       body: '<div class="sp-pop-top">' + topBtns + '</div>' +
         '<div class="tier-pop-list">' + listHtml + '</div>',
       foot: '<button type="button" class="btn ghost" id="spTierCancel">닫기</button>',
       after: function () {
         onEl('#spTierBack', 'click', function () { openDongSelectModal(p, n, opts); });
-        onEl('#spTierAny', 'click', function () { setSlot(p.id, '', n); done(); });
+        onEl('#spTierAny', 'click', function () { applyPick(''); done(); });
         onEl('#spTierAll', 'click', function () {
-          setSlot(p.id, dongLetter + '*', n);
+          applyPick(dongLetter + '*');
           done();
         });
         onEl('#spTierCancel', 'click', function () { done(); });
         $$('[data-tierpick]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var code = btn.getAttribute('data-tierpick') || '';
-            var othPick = slotOtherOf(p, code);
-            if (othPick && othPick.mode === 'warn' && !(ui.otherOk || {})[p.id + '|' + code]) {
-              setSlot(p.id, code, n);
-              return;
+            if (!isOff) {
+              var othPick = slotOtherOf(p, code);
+              if (othPick && othPick.mode === 'warn' && !(ui.otherOk || {})[p.id + '|' + code]) {
+                applyPick(code);
+                return;
+              }
             }
-            setSlot(p.id, code, n);
+            applyPick(code);
             done();
           });
         });
@@ -11962,7 +11968,8 @@
       }).join('');
       return '<div class="off-slot-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #e6edf6">' +
         '<b style="font-size:12.5px;min-width:120px;flex:1 1 140px">' + esc(p.name) + (p.low ? ' <span class="tag off">공문 전용</span>' : '') + '</b>' +
-        '<select class="input sm" data-offslot="' + esc(p.id) + '" style="flex:1 1 220px;max-width:100%">' + opts + '</select></div>';
+        (p.low ? '' : '<button type="button" class="btn sm ' + (cur ? 'ok' : 'primary') + '" data-offslotmodal="' + esc(p.id) + '">' + (cur ? '📍 ' + esc(slotHumanLabel(p, cur)) : '📍 동·단수 선택') + '</button>') +
+        '<select class="input sm" data-offslot="' + esc(p.id) + '" style="flex:1 1 200px;max-width:100%">' + opts + '</select></div>';
     }).join('');
   }
   /* ── 공문 우선배정 — 역할별 접근 분리 (김재봉 님 지시 2026-11-22) ─────────────
@@ -12545,6 +12552,7 @@
         '<div class="fcount' + (remOff ? '' : ' sold') + '"><b>' + off + '/' + capOff + '</b><span>공문 면</span></div>' +
         '<div class="fc-act">' +
           boardMapBtnsHTML(p) +
+          (on && !p.low ? '<button class="btn sm ' + ((ui.offSlots && ui.offSlots[p.id]) ? 'ok' : 'ghost') + '" data-offslotmodal="' + esc(p.id) + '" type="button">' + ((ui.offSlots && ui.offSlots[p.id]) ? '📍 ' + esc(slotHumanLabel(p, ui.offSlots[p.id])) : '📍 동·단수') + '</button>' : '') +
           '<button class="btn sm ' + (on ? 'ok' : (full || adjB ? '' : 'primary')) + '" data-offpick="' + esc(p.id) + '" type="button"' +
             ((!on && (full || adjB)) ? ' disabled' : '') + '>' + btnLbl + '</button>' +
         '</div>' +
@@ -16591,7 +16599,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-boardmap')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardmap'), 'map'); return; }
     if (el.hasAttribute('data-boardroad')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardroad'), 'road'); return; }
@@ -16686,6 +16694,11 @@
     if (el.hasAttribute('data-logout')) { logoutMember(); return; }
     if (el.hasAttribute('data-slotpick')) {
       setSlot(el.getAttribute('data-slotpick'), el.getAttribute('data-slot') || '', Number(el.getAttribute('data-slotrank')) || activeRank());
+      return;
+    }
+    if (el.hasAttribute('data-offslotmodal')) {
+      var op = boardById(el.getAttribute('data-offslotmodal'));
+      if (op) openDongSelectModal(op, 1, { scope: 'official' });
       return;
     }
     if (el.hasAttribute('data-slotmodal')) {
