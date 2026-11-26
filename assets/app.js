@@ -9388,7 +9388,7 @@
           if (fmode === 'done' && fPhotos.length === 0) return;
           var isOn = (String(fid) === String(ui.photoPid) && String(fl) === String(ui.photoDong));
           var thumbs = fPhotos.slice(0, 3).map(function (ph) {
-            return '<img src="' + esc(photoSrc(ph)) + '" alt="' + esc(bName) + '">';
+            return '<img src="' + photoDataOf(ph) + '" alt="' + esc(bName) + '">';
           }).join('');
           folderCards.push(
             '<div class="photo-folder-card' + (fPhotos.length ? ' done' : '') + (isOn ? ' active' : '') + '" data-pffolder="' + esc(fid) + '" data-pfdong="' + esc(fl) + '">' +
