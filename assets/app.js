@@ -15166,7 +15166,7 @@
         try {
           var iw = img.naturalWidth || img.width || 800;
           var ih = img.naturalHeight || img.height || 200;
-          var maxW = 1600;
+          var maxW = 1024;
           var scale = iw > maxW ? (maxW / iw) : 1;
           var w = Math.max(120, Math.round(iw * scale));
           var h = Math.max(60, Math.round(ih * scale));
@@ -15176,7 +15176,7 @@
           cx.fillStyle = '#ffffff';
           cx.fillRect(0, 0, w, h);
           cx.drawImage(img, 0, 0, w, h);
-          var outUrl = cv.toDataURL('image/jpeg', 0.9);
+          var outUrl = cv.toDataURL('image/jpeg', 0.82);
           var b64 = outUrl.split(',')[1] || '';
           resolve({ mimeType: 'image/jpeg', data: b64 });
         } catch (e) {
@@ -15206,11 +15206,20 @@
         '반드시 아래 JSON 형식만 출력하세요:\n' +
         '{"advertiser":"","phone":"","headline":"","isYouthHarmful":false,"youthReason":""}';
 
-      var callModel = function (modelName) {
+      var callModel = function (modelName, useNoThink) {
         var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent?key=' + encodeURIComponent(apiKey);
+        var genCfg = {
+          temperature: 0.1,
+          maxOutputTokens: 250,
+          responseMimeType: 'application/json'
+        };
+        if (useNoThink !== false) genCfg.thinkingConfig = { thinkingBudget: 0 };
+        var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+        var timer = ctrl ? setTimeout(function () { try { ctrl.abort(); } catch (e) { } }, 18000) : null;
         return fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: ctrl ? ctrl.signal : undefined,
           body: JSON.stringify({
             contents: [{
               parts: [
@@ -15218,12 +15227,10 @@
                 { inline_data: { mime_type: imgPart.mimeType, data: imgPart.data } }
               ]
             }],
-            generationConfig: {
-              temperature: 0.1,
-              responseMimeType: 'application/json'
-            }
+            generationConfig: genCfg
           })
         }).then(function (resp) {
+          if (timer) clearTimeout(timer);
           return resp.json().then(function (json) {
             if (!resp.ok) {
               var msg = (json && json.error && json.error.message) ? json.error.message : ('HTTP ' + resp.status);
@@ -15248,17 +15255,38 @@
               youthReason: String(parsed.youthReason || '').trim()
             };
           });
+        }).catch(function (err) {
+          if (timer) clearTimeout(timer);
+          if (err && err.name === 'AbortError') {
+            var te = new Error('응답 시간 초과(18초) — 다시 분석을 눌러주세요.');
+            te.status = 408;
+            throw te;
+          }
+          throw err;
         });
       };
 
-      return callModel('gemini-3.8-flash').catch(function (err) {
-        if (err && (err.status === 404 || /not found|model|no longer available/i.test(err.message || ''))) {
-          return callModel('gemini-2.5-flash').catch(function () {
-            return callModel('gemini-2.0-flash');
-          });
-        }
-        throw err;
-      });
+      var runWithRetry = function (attempt) {
+        return callModel('gemini-3.8-flash', true).catch(function (err) {
+          if (err && err.status === 400 && /thinking/i.test(err.message || '')) {
+            return callModel('gemini-3.8-flash', false);
+          }
+          if (err && (err.status === 429 || err.status === 503 || err.status === 500 || err.status === 408) && attempt < 1) {
+            return new Promise(function (r) { setTimeout(r, 1800); }).then(function () { return runWithRetry(attempt + 1); });
+          }
+          if (err && (err.status === 404 || /not found|model|no longer available/i.test(err.message || ''))) {
+            return callModel('gemini-2.5-flash', false).catch(function () {
+              return callModel('gemini-2.0-flash', false);
+            });
+          }
+          if (err && (err.status === 429 || /quota|rate|exhausted/i.test(err.message || ''))) {
+            throw new Error('무료 API 분당 한도 초과 — 10초 뒤 [다시 분석]을 눌러주세요.');
+          }
+          throw err;
+        });
+      };
+
+      return runWithRetry(0);
     });
   }
 
@@ -15359,9 +15387,12 @@
       return '<div class="callout info" style="margin-top:8px;padding:9px 12px"><div><b>🧠 AI 비전이 시안 이미지를 분석하는 중...</b> <span class="sm">(광고주·연락처·핵심 문구를 읽고 있어요)</span></div></div>';
     }
     if (info && info.aiError) {
-      return '<div class="callout warn" style="margin-top:8px;padding:9px 12px;display:flex;align-items:center;gap:8px">' +
+      return '<div class="callout warn" style="margin-top:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
         '<div><b>⚠️ AI 비전 분석 실패</b> — ' + esc(info.aiError) + '</div>' +
-        '<button class="btn sm primary" type="button" data-aikeybtn="' + sc + '" style="margin-left:auto;white-space:nowrap">🔑 키 다시 설정</button></div>';
+        '<div style="margin-left:auto;display:flex;gap:6px;white-space:nowrap">' +
+          '<button class="btn sm primary" type="button" data-airetry="' + sc + '">🔄 다시 분석</button>' +
+          '<button class="btn sm ghost" type="button" data-aikeybtn="' + sc + '">🔑 키 설정</button>' +
+        '</div></div>';
     }
     var parts = [];
     if (info && info.advertiser) parts.push('광고주 <b>' + esc(info.advertiser) + '</b>');
@@ -16651,9 +16682,17 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-aikeybtn')) { e.stopPropagation(); e.preventDefault(); openAiVisionKeyModal(el.getAttribute('data-aikeybtn') || 'apply'); return; }
+    if (el.hasAttribute('data-airetry')) {
+      e.stopPropagation(); e.preventDefault();
+      var rsc = el.getAttribute('data-airetry') || 'apply';
+      var rUrl = rsc === 'fc' ? ui.fcFilePreview : ui.filePreview;
+      var rFile = rsc === 'fc' ? ui.fcFile : ui.file;
+      if (rUrl) runDesignOcr(rsc, rFile ? rFile.name : '', rUrl, true);
+      return;
+    }
     if (el.hasAttribute('data-boardmap')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardmap'), 'map'); return; }
     if (el.hasAttribute('data-boardroad')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardroad'), 'road'); return; }
     if (el.hasAttribute('data-schedpage')) { e.stopPropagation(); e.preventDefault(); goPage('board-schedule.html?pid=' + encodeURIComponent(el.getAttribute('data-schedpage'))); return; }
