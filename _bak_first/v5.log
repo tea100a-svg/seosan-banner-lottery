@@ -1,0 +1,18 @@
+/workspace/seosan-banner-lottery/multipage/verify_multipage.py:2759: SyntaxWarning: invalid escape sequence '\s'
+  return { notes: !!n, notesTxt: n ? n.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) : '',
+/workspace/seosan-banner-lottery/multipage/verify_multipage.py:3355: SyntaxWarning: invalid escape sequence '\s'
+  return { text: c.textContent.replace(/\s+/g, ' ').trim().slice(0, 40), title: c.getAttribute('title') || '',
+
+== 준비 ==
+  HTTP 서버: http://127.0.0.1:58103/ → /workspace/seosan-banner-lottery/multipage
+  Chromium: 159.0.8154.6
+
+== 1. 23개 페이지 로드 (콘솔 오류 · JS 예외 · 실패 요청) ==
+  ✔ index.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ apply.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ first.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ guide-rules.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ guide-faq.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ guide.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ mypage.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ mypage-detail.html 로드 — 오류 0 · 섹션 1개 표시

@@ -1,0 +1,488 @@
+/workspace/seosan-banner-lottery/multipage/verify_multipage.py:2731: SyntaxWarning: invalid escape sequence '\s'
+  return { notes: !!n, notesTxt: n ? n.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) : '',
+/workspace/seosan-banner-lottery/multipage/verify_multipage.py:3327: SyntaxWarning: invalid escape sequence '\s'
+  return { text: c.textContent.replace(/\s+/g, ' ').trim().slice(0, 40), title: c.getAttribute('title') || '',
+
+== 준비 ==
+  HTTP 서버: http://127.0.0.1:48575/ → /workspace/seosan-banner-lottery/multipage
+  Chromium: 159.0.8154.6
+
+== 1. 23개 페이지 로드 (콘솔 오류 · JS 예외 · 실패 요청) ==
+  ✔ index.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ apply.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ first.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ guide-rules.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ guide-faq.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ guide.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ mypage.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ mypage-detail.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-review.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-event.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-draw.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-official.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-pay.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-deliver.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-report.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-desig.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-photos.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-docs.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-board.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-course.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-roles.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-members.html 로드 — 오류 0 · 섹션 1개 표시
+  ✔ admin-system.html 로드 — 오류 0 · 섹션 1개 표시
+
+== 2. 네비게이션 탭 클릭 → 실제 페이지 이동 (location.pathname) ==
+  ✔ index.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ index.html → apply.html 클릭 — data-page=apply
+  ✔ index.html → first.html 클릭 — data-page=first
+  ✔ index.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ index.html → mypage.html 클릭 — data-page=mypage
+  ✔ index.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ apply.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ apply.html → index.html 클릭 — data-page=status
+  ✔ apply.html → first.html 클릭 — data-page=first
+  ✔ apply.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ apply.html → mypage.html 클릭 — data-page=mypage
+  ✔ apply.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ first.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ first.html → index.html 클릭 — data-page=status
+  ✔ first.html → apply.html 클릭 — data-page=apply
+  ✔ first.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ first.html → mypage.html 클릭 — data-page=mypage
+  ✔ first.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ guide-rules.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ guide-rules.html → index.html 클릭 — data-page=status
+  ✔ guide-rules.html → apply.html 클릭 — data-page=apply
+  ✔ guide-rules.html → first.html 클릭 — data-page=first
+  ✔ guide-rules.html → mypage.html 클릭 — data-page=mypage
+  ✔ guide-rules.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ guide-faq.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ guide-faq.html → index.html 클릭 — data-page=status
+  ✔ guide-faq.html → apply.html 클릭 — data-page=apply
+  ✔ guide-faq.html → first.html 클릭 — data-page=first
+  ✔ guide-faq.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ guide-faq.html → mypage.html 클릭 — data-page=mypage
+  ✔ guide-faq.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ guide.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ guide.html → index.html 클릭 — data-page=status
+  ✔ guide.html → apply.html 클릭 — data-page=apply
+  ✔ guide.html → first.html 클릭 — data-page=first
+  ✔ guide.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ guide.html → mypage.html 클릭 — data-page=mypage
+  ✔ guide.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ mypage.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ mypage.html → index.html 클릭 — data-page=status
+  ✔ mypage.html → apply.html 클릭 — data-page=apply
+  ✔ mypage.html → first.html 클릭 — data-page=first
+  ✔ mypage.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ mypage.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ mypage-detail.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ mypage-detail.html → index.html 클릭 — data-page=status
+  ✔ mypage-detail.html → apply.html 클릭 — data-page=apply
+  ✔ mypage-detail.html → first.html 클릭 — data-page=first
+  ✔ mypage-detail.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ mypage-detail.html → mypage.html 클릭 — data-page=mypage
+  ✔ mypage-detail.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-review.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-review.html → index.html 클릭 — data-page=status
+  ✔ admin-review.html → apply.html 클릭 — data-page=apply
+  ✔ admin-review.html → first.html 클릭 — data-page=first
+  ✔ admin-review.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-review.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-review.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-event.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-event.html → index.html 클릭 — data-page=status
+  ✔ admin-event.html → apply.html 클릭 — data-page=apply
+  ✔ admin-event.html → first.html 클릭 — data-page=first
+  ✔ admin-event.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-event.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-event.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-draw.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-draw.html → index.html 클릭 — data-page=status
+  ✔ admin-draw.html → apply.html 클릭 — data-page=apply
+  ✔ admin-draw.html → first.html 클릭 — data-page=first
+  ✔ admin-draw.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-draw.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-official.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-official.html → index.html 클릭 — data-page=status
+  ✔ admin-official.html → apply.html 클릭 — data-page=apply
+  ✔ admin-official.html → first.html 클릭 — data-page=first
+  ✔ admin-official.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-official.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-official.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-pay.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-pay.html → index.html 클릭 — data-page=status
+  ✔ admin-pay.html → apply.html 클릭 — data-page=apply
+  ✔ admin-pay.html → first.html 클릭 — data-page=first
+  ✔ admin-pay.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-pay.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-pay.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-deliver.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-deliver.html → index.html 클릭 — data-page=status
+  ✔ admin-deliver.html → apply.html 클릭 — data-page=apply
+  ✔ admin-deliver.html → first.html 클릭 — data-page=first
+  ✔ admin-deliver.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-deliver.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-deliver.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-report.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-report.html → index.html 클릭 — data-page=status
+  ✔ admin-report.html → apply.html 클릭 — data-page=apply
+  ✔ admin-report.html → first.html 클릭 — data-page=first
+  ✔ admin-report.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-report.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-report.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-desig.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-desig.html → index.html 클릭 — data-page=status
+  ✔ admin-desig.html → apply.html 클릭 — data-page=apply
+  ✔ admin-desig.html → first.html 클릭 — data-page=first
+  ✔ admin-desig.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-desig.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-desig.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-photos.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-photos.html → index.html 클릭 — data-page=status
+  ✔ admin-photos.html → apply.html 클릭 — data-page=apply
+  ✔ admin-photos.html → first.html 클릭 — data-page=first
+  ✔ admin-photos.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-photos.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-photos.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-docs.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-docs.html → index.html 클릭 — data-page=status
+  ✔ admin-docs.html → apply.html 클릭 — data-page=apply
+  ✔ admin-docs.html → first.html 클릭 — data-page=first
+  ✔ admin-docs.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-docs.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-docs.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-board.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-board.html → index.html 클릭 — data-page=status
+  ✔ admin-board.html → apply.html 클릭 — data-page=apply
+  ✔ admin-board.html → first.html 클릭 — data-page=first
+  ✔ admin-board.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-board.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-board.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-course.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-course.html → index.html 클릭 — data-page=status
+  ✔ admin-course.html → apply.html 클릭 — data-page=apply
+  ✔ admin-course.html → first.html 클릭 — data-page=first
+  ✔ admin-course.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-course.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-course.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-roles.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-roles.html → index.html 클릭 — data-page=status
+  ✔ admin-roles.html → apply.html 클릭 — data-page=apply
+  ✔ admin-roles.html → first.html 클릭 — data-page=first
+  ✔ admin-roles.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-roles.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-roles.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-members.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-members.html → index.html 클릭 — data-page=status
+  ✔ admin-members.html → apply.html 클릭 — data-page=apply
+  ✔ admin-members.html → first.html 클릭 — data-page=first
+  ✔ admin-members.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-members.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-members.html → admin-draw.html 클릭 — data-page=admin-draw
+  ✔ admin-system.html 상단 네비 링크 — 6개 탭 href 일치
+  ✔ admin-system.html → index.html 클릭 — data-page=status
+  ✔ admin-system.html → apply.html 클릭 — data-page=apply
+  ✔ admin-system.html → first.html 클릭 — data-page=first
+  ✔ admin-system.html → guide-rules.html 클릭 — data-page=guide-rules
+  ✔ admin-system.html → mypage.html 클릭 — data-page=mypage
+  ✔ admin-system.html → admin-draw.html 클릭 — data-page=admin-draw
+
+== 2-1. 서브페이지 탭 클릭 (관리자 9 · 규격·안내 3 — 파일 다운로드는 마지막) ==
+  ✔ admin-review.html 서브탭 활성 표시 — active=['review'] · href 5개
+  ✔ admin-review.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-review.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-review.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-review.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-review.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-review.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-review.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-review.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-review.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-review.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-review.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-review.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-review.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-review.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-event.html 서브탭 활성 표시 — active=['event'] · href 5개
+  ✔ admin-event.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-event.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-event.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-event.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-event.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-event.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-event.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-event.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-event.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-event.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-event.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-event.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-event.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-event.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-draw.html 서브탭 활성 표시 — active=['draw'] · href 5개
+  ✔ admin-draw.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-draw.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-draw.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-draw.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-draw.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-draw.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-draw.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-draw.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-draw.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-draw.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-draw.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-draw.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-draw.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-draw.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-official.html 서브탭 활성 표시 — active=['official'] · href 5개
+  ✔ admin-official.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-official.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-official.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-official.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-official.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-official.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-official.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-official.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-official.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-official.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-official.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-official.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-official.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-official.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-pay.html 서브탭 활성 표시 — active=['pay'] · href 5개
+  ✔ admin-pay.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-pay.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-pay.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-pay.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-pay.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-pay.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-pay.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-pay.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-pay.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-pay.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-pay.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-pay.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-pay.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-pay.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-deliver.html 서브탭 활성 표시 — active=['deliver'] · href 5개
+  ✔ admin-deliver.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-deliver.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-deliver.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-deliver.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-deliver.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-deliver.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-deliver.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-deliver.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-deliver.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-deliver.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-deliver.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-deliver.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-deliver.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-deliver.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-report.html 서브탭 활성 표시 — active=['report'] · href 5개
+  ✔ admin-report.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-report.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-report.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-report.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-report.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-report.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-report.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-report.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-report.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-report.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-report.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-report.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-report.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-report.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-desig.html 서브탭 활성 표시 — active=['desig'] · href 5개
+  ✔ admin-desig.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-desig.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-desig.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-desig.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-desig.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-desig.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-desig.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-desig.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-desig.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-desig.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-desig.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-desig.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-desig.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-desig.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-photos.html 서브탭 활성 표시 — active=['photos'] · href 5개
+  ✔ admin-photos.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-photos.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-photos.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-photos.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-photos.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-photos.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-photos.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-photos.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-photos.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-photos.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-photos.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-photos.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-photos.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-photos.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-docs.html 서브탭 활성 표시 — active=['docs'] · href 5개
+  ✔ admin-docs.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-docs.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-docs.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-docs.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-docs.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-docs.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-docs.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-docs.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-docs.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-docs.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-docs.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-docs.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-docs.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-docs.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-board.html 서브탭 활성 표시 — active=['board'] · href 5개
+  ✔ admin-board.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-board.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-board.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-board.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-board.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-board.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-board.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-board.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-board.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-board.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-board.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-board.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-board.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-board.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-course.html 서브탭 활성 표시 — active=['course'] · href 5개
+  ✔ admin-course.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-course.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-course.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-course.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-course.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-course.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-course.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-course.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-course.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-course.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-course.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-course.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-course.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-course.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-roles.html 서브탭 활성 표시 — active=['roles'] · href 5개
+  ✔ admin-roles.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-roles.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-roles.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-roles.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-roles.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-roles.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-roles.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-roles.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-roles.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-roles.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-roles.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-roles.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-roles.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ admin-roles.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-members.html 서브탭 활성 표시 — active=['members'] · href 5개
+  ✔ admin-members.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-members.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-members.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-members.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-members.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-members.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-members.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-members.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-members.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-members.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-members.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-members.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-members.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-members.html 서브탭 → admin-system.html — /admin-system.html
+  ✔ admin-system.html 서브탭 활성 표시 — active=['system'] · href 5개
+  ✔ admin-system.html 서브탭 → admin-review.html — /admin-review.html
+  ✔ admin-system.html 서브탭 → admin-event.html — /admin-event.html
+  ✔ admin-system.html 서브탭 → admin-draw.html — /admin-draw.html
+  ✔ admin-system.html 서브탭 → admin-official.html — /admin-official.html
+  ✔ admin-system.html 서브탭 → admin-pay.html — /admin-pay.html
+  ✔ admin-system.html 서브탭 → admin-deliver.html — /admin-deliver.html
+  ✔ admin-system.html 서브탭 → admin-report.html — /admin-report.html
+  ✔ admin-system.html 서브탭 → admin-desig.html — /admin-desig.html
+  ✔ admin-system.html 서브탭 → admin-photos.html — /admin-photos.html
+  ✔ admin-system.html 서브탭 → admin-docs.html — /admin-docs.html
+  ✔ admin-system.html 서브탭 → admin-board.html — /admin-board.html
+  ✔ admin-system.html 서브탭 → admin-course.html — /admin-course.html
+  ✔ admin-system.html 서브탭 → admin-roles.html — /admin-roles.html
+  ✔ admin-system.html 서브탭 → admin-members.html — /admin-members.html
+  ✔ guide.html 서브탭 활성 표시 — active=['file']
+  ✔ guide.html 서브탭 → guide-rules.html — /guide-rules.html
+  ✔ guide.html 서브탭 → guide-faq.html — /guide-faq.html
+  ✔ guide-rules.html 서브탭 활성 표시 — active=['rules']
+  ✔ guide-rules.html 서브탭 → guide-faq.html — /guide-faq.html
+  ✔ guide-rules.html 서브탭 → guide.html — /guide.html
+  ✔ guide-faq.html 서브탭 활성 표시 — active=['faq']
+  ✔ guide-faq.html 서브탭 → guide-rules.html — /guide-rules.html
+  ✔ guide-faq.html 서브탭 → guide.html — /guide.html
+
+== 3. 페이지 간 상태 공유 — 로그인 · 선착순 · 관리자 모드 · 고장 처리 ==
+  ✔ 로그인 (index.html) — authName='재봉기획' hidden=False
+  ✔ localStorage 세션 저장 — session='M-1002'
+  ✔ 로그인 유지 (mypage.html) — mpHead='재재봉기획옥외광고대행사 · 김재봉 · 010-0000-0000옥외광고대행'
+  ✔ 로그인 유지 (admin-review.html) — authName='재봉기획'
+  ✔ 선착순 시간 규칙 (09:00~18:00 · 금 10:00 입고) — {'from': 9, 'to': 18, 'deliverDate': '2026-11-27', 'deliverTime': '10:00'}
+  ✔ 목요일 일과시간 안내 — 목요일 · 잔여석 선착순 접수 중 (일과시간 09:00~18:00)목요일 일과시간(09:00~18:00)에만 접수합니다. 누르
+  ✔ 18시 이후 접수 차단 — fc-window offhours
+  ✔ 18시 이후 — 2단계 진행 차단 — fcValidate(2)
+  ✔ 선착순 4단계 — 하단 플로팅 [접수 제출] — {'hint': '4단계 · 수수료와 설치 방식을 확인하고 [접수 제출]을 눌러 주세요.', 'next': '접수 제출', 'prevHidden': False}
+  ✔ 선착순 4단계 — 접수 내용 요약 — 접수 창구2026년 12월 1주차 선착순 (목요일 일과시간 09:00~18:00)실제 광고주선착순검증광고주현수막 문구목요일 선착순 접수 검증시안시안_검증.png신청 수량1매 · 1개소 1매선택 게시
+  ✔ 선착순 예약 저장 (first.html) — apps 218 → 219 (P01)
+  ✔ 선착순 당첨분 입고 마감 = 금요일 10:00 — 2026-11-27 10:00
+  ✔ 예약 내역 표시 (mypage.html) — mpBody 에 선착순 확정 있음
+  ✔ 관리자 모드 전환 → 이동 — /admin-draw.html
+  ✔ 관리자 모드 저장 — ADMIN_KEY='1'
+  ✔ 고장 처리 저장 (admin-board.html) — P01 · 고장 1 → 2
+  ✔ 현황 페이지 반영 (index.html) — 고장 2개소 · 의료원사거리 노출=True
+Traceback (most recent call last):
+  File "/workspace/seosan-banner-lottery/multipage/verify_multipage.py", line 3359, in <module>
+    code = main(sys.argv[1:])
+           ^^^^^^^^^^^^^^^^^^
+  File "/workspace/seosan-banner-lottery/multipage/verify_multipage.py", line 447, in main
+    pg.click('#placementGrid [data-apply="%s"]' % free_pid)
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/sync_api/_generated.py", line 16300, in click
+    self._sync(
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/_sync_base.py", line 124, in _sync
+    return task.result()
+           ^^^^^^^^^^^^^
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/page.py", line 1125, in click
+    return await self._main_frame.click(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/frame.py", line 587, in click
+    return await self._channel.click(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/channel_owner.py", line 387, in finish
+    raise e from None
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/channel_owner.py", line 352, in finish
+    result = await zone.run_async(lambda: awaitable)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/utils/zones.py", line 58, in run_async
+    return await func()
+           ^^^^^^^^^^^^
+playwright._impl._errors.TimeoutError: Page.click: Timeout 8000ms exceeded.
+Call log:
+  - waiting for locator("#placementGrid [data-apply=\"P02\"]")
+    - locator resolved to <button type="button" data-apply="P02" class="btn sm primary" data-week="2026-11-30">접수</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    15 × waiting for element to be visible, enabled and stable
+       - element is not visible
+     - retrying click action
+       - waiting 500ms
+

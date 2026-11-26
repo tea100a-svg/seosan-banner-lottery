@@ -2212,3 +2212,49 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .pd-adv{font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:165px}
 .pd-sub{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:165px}
 
+/* 엑셀형 게시현황 1주 · 4주 시트 (2026-현수막게시현황 스타일) */
+.xl-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.xl-tabs{display:inline-flex;gap:4px;background:#eef2f7;padding:4px;border-radius:10px}
+.xl-tabs button{border:0;background:transparent;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.xl-tabs button.on{background:#fff;color:var(--blue-d);box-shadow:0 1px 3px rgba(15,23,42,.1)}
+.xl-legend{display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px;margin-bottom:10px}
+.xl-lg{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;border:1px solid #d5dde8;font-weight:700}
+.xl-lg.ok{background:#eaf2ff;color:#14499e;border-color:#bfd6ff}
+.xl-lg.off{background:#dcfce7;color:#166534;border-color:#9ae6b4}
+.xl-lg.warn{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+.xl-lg.bad{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.xl-lg.free{background:#f8fafc;color:#64748b;border-color:#e2e8f0}
+.xl-wrap{overflow-x:auto;border:1px solid #cbd5e1;border-radius:10px;background:#fff}
+.xl-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:860px}
+.xl-tbl th,.xl-tbl td{border:1px solid #cbd5e1;padding:5px 7px;vertical-align:middle}
+.xl-tbl thead th{background:#f1f5f9;color:#1e293b;font-weight:800;text-align:center;position:sticky;top:0;z-index:2}
+.xl-tbl .xl-c-day{width:34px;text-align:center;font-weight:800;background:#f8fafc}
+.xl-tbl .xl-c-name{min-width:130px;font-weight:700;color:#0f172a;white-space:nowrap}
+.xl-tbl .xl-c-dong{width:34px;text-align:center;font-weight:800;color:#334155;background:#f8fafc}
+.xl-tbl td.xl-slot{min-width:135px;max-width:190px;line-height:1.35}
+.xl-tbl td.xl-slot .xl-txt{display:block;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xl-tbl td.xl-slot .xl-sub{display:block;font-size:10.5px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xl-tbl td.xl-slot.confirmed,.xl-tbl td.xl-slot.inuse{background:#eff6ff}
+.xl-tbl td.xl-slot.official{background:#dcfce7}
+.xl-tbl td.xl-slot.rival{background:#fef3c7}
+.xl-tbl td.xl-slot.off{background:#fee2e2}
+.xl-tbl td.xl-slot.free{background:#ffffff;color:#94a3b8;text-align:center}
+.xl-tbl td.xl-slot.na{background:#f1f5f9;color:#cbd5e1;text-align:center}
+.xl-4w-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:1024px){.xl-4w-grid{grid-template-columns:1fr}}
+.xl-block{border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;background:#fff}
+.xl-block-head{background:#1e3a5f;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:800}
+.xl-block-head small{font-weight:600;color:#cbd5e1;font-size:11.5px}
+.xl-4w-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.xl-4w-tbl th,.xl-4w-tbl td{border:1px solid #dce3ec;padding:4px 6px;vertical-align:middle}
+.xl-4w-tbl thead th{background:#f1f5f9;color:#334155;font-weight:800;text-align:center}
+.xl-4w-tbl td.xl-tier{width:34px;text-align:center;font-weight:800;background:#f8fafc;color:#1e293b}
+.xl-4w-tbl td.xl-per{white-space:nowrap;font-family:ui-monospace,monospace;font-size:11px;color:#334155;text-align:center}
+.xl-4w-tbl tr.is-cur{background:#fef9c3}
+.xl-4w-tbl td.st-official{background:#dcfce7;color:#166534;font-weight:700}
+.xl-4w-tbl td.st-confirmed,.xl-4w-tbl td.st-inuse{background:#eff6ff;color:#1e40af;font-weight:700}
+.xl-4w-tbl td.st-off{background:#fee2e2;color:#991b1b;font-weight:700}
+.xl-4w-tbl td.st-rival{background:#fef3c7;color:#92400e;font-weight:700}
+.xl-4w-tbl td.st-free{color:#94a3b8}
+
+

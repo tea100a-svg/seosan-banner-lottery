@@ -6008,40 +6008,46 @@
     var sel = $('#bsPlaceSelect');
     var list = PLACEMENTS.filter(function (x) { return !x.low && !x.officialOnly; });
     if (!list.length) list = PLACEMENTS;
-    var pid = ui.bsPid || paramOf('pid') || (list[0] && list[0].id) || '';
-    var p = boardById(pid) || list[0];
-    if (!p) { root.innerHTML = '<div class="empty">표시할 게시대가 없습니다.</div>'; return; }
-    ui.bsPid = p.id;
+    var urlPid = paramOf('pid');
+    if (ui.bsPid === undefined) ui.bsPid = urlPid || '';
+    var pFocus = ui.bsPid ? boardById(ui.bsPid) : null;
     var schedMode = ui.bsMode === '4w' ? '4w' : '1w';
     var schedBase = ui.bsDate || weekStartOf(ROUND.postStart);
+    var dayFilter = ui.bsDay || '';
+    var qFilter = String(ui.bsQ || '').trim().toLowerCase();
 
     if (sel) {
-      sel.innerHTML = list.map(function (x, i) {
-        return '<option value="' + esc(x.id) + '"' + (x.id === p.id ? ' selected' : '') + '>' +
-          (i + 1) + '. ' + esc(x.name) + ' (' + esc(x.dong) + ' · ' + x.cap + '면)</option>';
-      }).join('');
+      sel.innerHTML = '<option value="">전체 게시대 (' + list.length + '개소 · 엑셀 전체표)</option>' +
+        list.map(function (x, i) {
+          return '<option value="' + esc(x.id) + '"' + (x.id === ui.bsPid ? ' selected' : '') + '>' +
+            (i + 1) + '. ' + esc(x.name) + ' (' + esc(x.dong) + ' · ' + x.cap + '면)</option>';
+        }).join('');
       if (!sel._bsBound) {
         sel._bsBound = true;
         sel.addEventListener('change', function () {
           ui.bsPid = this.value;
-          try { history.replaceState(null, '', 'board-schedule.html?pid=' + encodeURIComponent(ui.bsPid)); } catch (e) { }
+          try { history.replaceState(null, '', 'board-schedule.html' + (ui.bsPid ? '?pid=' + encodeURIComponent(ui.bsPid) : '')); } catch (e) { }
           renderBoardSchedulePage();
         });
       }
     }
     if ($('#bsHeadSub')) {
-      $('#bsHeadSub').textContent = p.name + ' · ' + (p.addr || '') + ' (' + (p.code || '') + ')';
+      $('#bsHeadSub').textContent = pFocus
+        ? (pFocus.name + ' · ' + (pFocus.addr || '') + ' (' + (pFocus.code || '') + ')')
+        : ('서산시 지정게시대 ' + list.length + '개소 · 엑셀 시트(게시현황1주 · 게시현황4주) 스타일');
     }
     if ($('#bsBoardMeta')) {
-      $('#bsBoardMeta').innerHTML = '<b>' + esc(p.day) + '요일 설치</b> · 정원 <b>' + p.cap + '면</b> · ' +
-        (p.broken ? '<span style="color:var(--warn);font-weight:700">고장·수리중</span>' : '<span style="color:var(--ok);font-weight:700">정상 운영</span>');
+      $('#bsBoardMeta').innerHTML = pFocus
+        ? ('<b>' + esc(pFocus.day) + '요일 설치</b> · 정원 <b>' + pFocus.cap + '면</b> · ' +
+           (pFocus.broken ? '<span style="color:var(--warn);font-weight:700">고장·수리중</span>' : '<span style="color:var(--ok);font-weight:700">정상 운영</span>'))
+        : ('<b>월·화·수 전체 코스</b> · 1~5단 게시현황');
     }
     if ($('#bsPrevBoard') && !$('#bsPrevBoard')._bsBound) {
       $('#bsPrevBoard')._bsBound = true;
       $('#bsPrevBoard').addEventListener('click', function () {
         var idx = -1;
         for (var i = 0; i < list.length; i++) { if (list[i].id === ui.bsPid) { idx = i; break; } }
-        var prev = list[(idx - 1 + list.length) % list.length];
+        var prev = idx <= 0 ? list[list.length - 1] : list[idx - 1];
         if (prev) { ui.bsPid = prev.id; renderBoardSchedulePage(); }
       });
     }
@@ -6050,57 +6056,208 @@
       $('#bsNextBoard').addEventListener('click', function () {
         var idx = -1;
         for (var i = 0; i < list.length; i++) { if (list[i].id === ui.bsPid) { idx = i; break; } }
-        var nxt = list[(idx + 1) % list.length];
+        var nxt = idx < 0 ? list[0] : list[(idx + 1) % list.length];
         if (nxt) { ui.bsPid = nxt.id; renderBoardSchedulePage(); }
       });
     }
     if ($('#bsGoApply') && !$('#bsGoApply')._bsBound) {
       $('#bsGoApply')._bsBound = true;
       $('#bsGoApply').addEventListener('click', function () {
-        goPage('apply.html?place=' + encodeURIComponent(ui.bsPid));
+        goPage('apply.html' + (ui.bsPid ? '?place=' + encodeURIComponent(ui.bsPid) : ''));
       });
     }
 
-    root.innerHTML = '<div class="card" style="padding:16px">' + renderPlacementSchedHTML(p, schedMode, schedBase) + '</div>';
+    var startWk = weekStartOf(schedBase);
+    var endSun = addDays(startWk, schedMode === '4w' ? 27 : 6);
+    var targetBoards = list.filter(function (b) {
+      if (pFocus && b.id !== pFocus.id) return false;
+      if (dayFilter && b.day !== dayFilter) return false;
+      if (qFilter) {
+        var hay = (b.name + ' ' + (b.dong || '') + ' ' + (b.addr || '')).toLowerCase();
+        if (hay.indexOf(qFilter) < 0) return false;
+      }
+      return true;
+    });
 
-    var box = root.querySelector('#pdSchedBox');
-    if (box) {
-      box.querySelectorAll('[data-pdmode]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          ui.bsMode = b.getAttribute('data-pdmode') === '4w' ? '4w' : '1w';
-          renderBoardSchedulePage();
+    var topBar =
+      '<div class="xl-bar">' +
+        '<div class="xl-tabs" role="tablist" aria-label="게시현황 시트 선택">' +
+          '<button type="button" data-bsmode="1w" class="' + (schedMode === '1w' ? 'on' : '') + '">📊 게시현황 1주 (엑셀형)</button>' +
+          '<button type="button" data-bsmode="4w" class="' + (schedMode === '4w' ? 'on' : '') + '">📆 게시현황 4주 (엑셀형)</button>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">' +
+          '<button class="btn sm ghost" type="button" data-bsnav="-1">◀ 이전</button>' +
+          '<input class="input sm" type="date" id="bsDatePick" value="' + esc(startWk) + '" style="width:auto" aria-label="조회 기준 날짜">' +
+          '<button class="btn sm ghost" type="button" data-bsnav="1">다음 ▶</button>' +
+          '<button class="btn sm" type="button" data-bsnow="1">이번 회차</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="xl-bar" style="margin-bottom:10px">' +
+        '<div class="chips">' +
+          '<button class="chip ' + (!dayFilter ? 'on' : '') + '" type="button" data-bsday="">전체 코스</button>' +
+          '<button class="chip ' + (dayFilter === '월' ? 'on' : '') + '" type="button" data-bsday="월">A코스 (월)</button>' +
+          '<button class="chip ' + (dayFilter === '화' ? 'on' : '') + '" type="button" data-bsday="화">B코스 (화)</button>' +
+          '<button class="chip ' + (dayFilter === '수' ? 'on' : '') + '" type="button" data-bsday="수">C코스 (수)</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
+          '<input class="input sm ko-ime" type="search" id="bsSearchIn" placeholder="게시대·동 검색" value="' + esc(ui.bsQ || '') + '" style="width:170px">' +
+          (pFocus ? '<button class="btn sm ghost" type="button" id="bsShowAll">전체 보기</button>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="xl-legend">' +
+        '<span style="font-weight:800;color:var(--ink);align-self:center;margin-right:4px">📅 ' + esc(dstr(startWk)) + '(월) ~ ' + esc(dstr(endSun)) + '(일) · ' + (schedMode === '4w' ? '4주간' : '1주간') + ' (' + targetBoards.length + '개소)</span>' +
+        '<span class="xl-lg ok">확정·게시</span>' +
+        '<span class="xl-lg off">공문·협회</span>' +
+        '<span class="xl-lg warn">접수중</span>' +
+        '<span class="xl-lg bad">고장·불가</span>' +
+        '<span class="xl-lg free">빈 자리</span>' +
+      '</div>';
+
+    var bodyHTML = '';
+    if (schedMode === '1w') {
+      var plan1 = null;
+      var rows1 = [];
+      targetBoards.forEach(function (b) {
+        var codes = slotCodesOf(b);
+        var plan = slotPlan(b.id, startWk);
+        var smap = slotStateMap(b, startWk);
+        var groups = {};
+        var order = [];
+        codes.forEach(function (s) {
+          var col = s.colL || String(s.code || '').charAt(0) || 'A';
+          if (!groups[col]) { groups[col] = {}; order.push(col); }
+          groups[col][s.tier] = s;
         });
-      });
-      var dtIn = box.querySelector('#pdDatePick');
-      if (dtIn) {
-        dtIn.addEventListener('change', function () {
-          if (dtIn.value) { ui.bsDate = weekStartOf(dtIn.value); renderBoardSchedulePage(); }
-        });
-      }
-      box.querySelectorAll('[data-pdnav]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var dir = Number(b.getAttribute('data-pdnav')) || 0;
-          var stepDays = (ui.bsMode === '4w' ? 28 : 7) * dir;
-          ui.bsDate = addDays(weekStartOf(ui.bsDate || ROUND.postStart), stepDays);
-          renderBoardSchedulePage();
-        });
-      });
-      var nowBtn = box.querySelector('[data-pdnow]');
-      if (nowBtn) {
-        nowBtn.addEventListener('click', function () {
-          ui.bsDate = weekStartOf(ROUND.postStart);
-          renderBoardSchedulePage();
-        });
-      }
-      box.querySelectorAll('[data-pdjumpwk]').forEach(function (c) {
-        c.addEventListener('click', function () {
-          var jwk = c.getAttribute('data-pdjumpwk');
-          if (jwk) {
-            ui.bsMode = '1w';
-            ui.bsDate = jwk;
-            renderBoardSchedulePage();
+        order.forEach(function (col, gi) {
+          var tds = '';
+          for (var t = 1; t <= 5; t++) {
+            var sl = groups[col][t];
+            if (!sl) {
+              tds += '<td class="xl-slot na">—</td>';
+            } else {
+              var c = placeSchedCell(b, sl, startWk, plan, smap);
+              if (c.cls === 'free') {
+                tds += '<td class="xl-slot free">빈 자리</td>';
+              } else {
+                var mainTxt = (c.sub && c.sub !== '정상 운영' && c.sub !== '추첨·심사 대기') ? c.sub : c.adv;
+                tds += '<td class="xl-slot ' + esc(c.cls) + '" title="' + esc((b.name + ' ' + col + '동 ' + t + '단 · ' + c.tag + ' · ' + c.adv + ' ' + c.sub).trim()) + '">' +
+                  '<span class="xl-txt">' + esc(mainTxt || c.tag) + '</span>' +
+                  '<span class="xl-sub">' + esc(c.adv) + ' · ' + esc(c.tag) + '</span>' +
+                '</td>';
+              }
+            }
           }
+          rows1.push('<tr>' +
+            '<td class="xl-c-day">' + esc(b.day) + '</td>' +
+            '<td class="xl-c-name">' + (gi === 0 ? esc(b.name) : '<span style="color:#94a3b8">' + esc(b.name) + '</span>') + '</td>' +
+            '<td class="xl-c-dong">' + esc(col) + '</td>' +
+            tds + '</tr>');
         });
+      });
+      bodyHTML = '<div class="xl-wrap"><table class="xl-tbl">' +
+        '<thead><tr><th>요일</th><th>장소 (게시대)</th><th>동</th><th>1단</th><th>2단</th><th>3단</th><th>4단</th><th>5단</th></tr></thead>' +
+        '<tbody>' + (rows1.length ? rows1.join('') : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">해당 조건의 게시대가 없습니다.</td></tr>') + '</tbody>' +
+      '</table></div>';
+    } else {
+      var weeks4 = [0, 1, 2, 3].map(function (wi) { return addDays(startWk, wi * 7); });
+      var blocks = [];
+      var curWk = weekStartOf(ROUND.postStart);
+      targetBoards.forEach(function (b) {
+        var codes = slotCodesOf(b);
+        var plans4 = weeks4.map(function (w) { return slotPlan(b.id, w); });
+        var smaps4 = weeks4.map(function (w) { return slotStateMap(b, w); });
+        var groups = {};
+        var order = [];
+        codes.forEach(function (s) {
+          var col = s.colL || String(s.code || '').charAt(0) || 'A';
+          if (!groups[col]) { groups[col] = []; order.push(col); }
+          groups[col].push(s);
+        });
+        order.forEach(function (col) {
+          var slist = groups[col];
+          var trs = '';
+          slist.forEach(function (sl) {
+            weeks4.forEach(function (w, wi) {
+              var c = placeSchedCell(b, sl, w, plans4[wi], smaps4[wi]);
+              var wEnd = addDays(w, 6);
+              var per = dstr(w).slice(5) + ' ~ ' + dstr(wEnd).slice(5);
+              var isCur = (w === curWk);
+              var txt = (c.cls === 'free') ? '—' : ((c.sub && c.sub !== '정상 운영' && c.sub !== '추첨·심사 대기') ? c.sub : c.adv);
+              var co = (c.cls === 'free') ? '빈 자리' : c.adv;
+              trs += '<tr class="' + (isCur ? 'is-cur' : '') + '">' +
+                (wi === 0 ? '<td class="xl-tier" rowspan="4">' + sl.tier + '단</td>' : '') +
+                '<td class="xl-per">' + esc(per) + (isCur ? ' <b style="color:#b45309">●</b>' : '') + '</td>' +
+                '<td class="st-' + esc(c.cls) + '">' + esc(txt) + '</td>' +
+                '<td>' + esc(co) + '</td>' +
+                '<td style="text-align:center;white-space:nowrap">' + esc(c.tag) + '</td>' +
+              '</tr>';
+            });
+          });
+          blocks.push('<div class="xl-block">' +
+            '<div class="xl-block-head">' +
+              '<span>' + esc(b.name) + ' · ' + esc(col) + '동 (' + slist.length + '단)</span>' +
+              '<small>' + esc(b.day) + '요일 코스 · ' + esc(b.dong) + '</small>' +
+            '</div>' +
+            '<table class="xl-4w-tbl">' +
+              '<thead><tr><th>단</th><th>게시기간</th><th>현수막 내용</th><th>광고주·업체</th><th>구분</th></tr></thead>' +
+              '<tbody>' + trs + '</tbody>' +
+            '</table>' +
+          '</div>');
+        });
+      });
+      bodyHTML = blocks.length
+        ? '<div class="xl-4w-grid">' + blocks.join('') + '</div>'
+        : '<div class="empty">해당 조건의 게시대가 없습니다.</div>';
+    }
+
+    root.innerHTML = '<div class="card" style="padding:14px 16px">' + topBar + bodyHTML + '</div>';
+
+    root.querySelectorAll('[data-bsmode]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        ui.bsMode = b.getAttribute('data-bsmode') === '4w' ? '4w' : '1w';
+        renderBoardSchedulePage();
+      });
+    });
+    var dtIn = root.querySelector('#bsDatePick');
+    if (dtIn) {
+      dtIn.addEventListener('change', function () {
+        if (dtIn.value) { ui.bsDate = weekStartOf(dtIn.value); renderBoardSchedulePage(); }
+      });
+    }
+    root.querySelectorAll('[data-bsnav]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var dir = Number(b.getAttribute('data-bsnav')) || 0;
+        var stepDays = (ui.bsMode === '4w' ? 28 : 7) * dir;
+        ui.bsDate = addDays(weekStartOf(ui.bsDate || ROUND.postStart), stepDays);
+        renderBoardSchedulePage();
+      });
+    });
+    var nowBtn = root.querySelector('[data-bsnow]');
+    if (nowBtn) {
+      nowBtn.addEventListener('click', function () {
+        ui.bsDate = weekStartOf(ROUND.postStart);
+        renderBoardSchedulePage();
+      });
+    }
+    root.querySelectorAll('[data-bsday]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        ui.bsDay = b.getAttribute('data-bsday') || '';
+        renderBoardSchedulePage();
+      });
+    });
+    var srIn = root.querySelector('#bsSearchIn');
+    if (srIn) {
+      srIn.addEventListener('input', function () {
+        ui.bsQ = srIn.value;
+        renderBoardSchedulePage();
+      });
+    }
+    var allBtn = root.querySelector('#bsShowAll');
+    if (allBtn) {
+      allBtn.addEventListener('click', function () {
+        ui.bsPid = '';
+        try { history.replaceState(null, '', 'board-schedule.html'); } catch (e) { }
+        renderBoardSchedulePage();
       });
     }
   }
