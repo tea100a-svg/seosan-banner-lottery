@@ -14330,6 +14330,15 @@
     return { advertiser: '햇살농원', phone: '010-5555-1234', text: '햇살농원 가을 특선 사과 직판 · 30% 할인' };
   }
 
+  function formatDesignPhone(raw) {
+    var d = String(raw || '').replace(/[^0-9]/g, '');
+    if (d.length === 11) return d.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    if (d.length === 10 && d.indexOf('02') === 0) return d.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
+    if (d.length === 10) return d.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    if (d.length === 9 && d.indexOf('02') === 0) return d.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+    return String(raw || '').trim();
+  }
+
   function extractDesignInfo(fileName, dataUrl) {
     var out = { advertiser: '', phone: '', text: '' };
     var url = String(dataUrl || '');
@@ -14346,7 +14355,7 @@
         if (mTxt) out.text = mTxt[1].trim();
         if (!out.phone) {
           var pm = raw.match(/(01[016789]|02|0[3-6][1-5])[-\s.]?\d{3,4}[-\s.]?\d{4}/);
-          if (pm) out.phone = formatPhone(pm[0]);
+          if (pm) out.phone = formatDesignPhone(pm[0]);
         }
       } catch (e) { }
     }
@@ -14354,7 +14363,7 @@
     if (fn && !/^(시연용_|IMG_|KakaoTalk_|Screenshot_|photo_|image)/i.test(fn)) {
       var phInFn = fn.match(/(01[016789]|02|0[3-6][1-5])[-\s.]?\d{3,4}[-\s.]?\d{4}/);
       if (!out.phone && phInFn) {
-        out.phone = formatPhone(phInFn[0]);
+        out.phone = formatDesignPhone(phInFn[0]);
         fn = fn.replace(phInFn[0], ' ');
       }
       var parts = fn.split(/[_\-|]+/).map(function (s) { return s.trim(); }).filter(Boolean);
@@ -14385,7 +14394,7 @@
       filled.push('광고주');
     }
     if (elPh && info.phone) {
-      elPh.value = formatPhone(info.phone);
+      elPh.value = formatDesignPhone(info.phone);
       var fP = $(isFc ? '#fcFAdvPhone' : '#fAdvPhone');
       if (fP) fP.classList.remove('invalid');
       filled.push('연락처');
