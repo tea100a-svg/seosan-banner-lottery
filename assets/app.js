@@ -16437,74 +16437,21 @@
      · head 인라인 스크립트가 첫 페인트 전에 html[data-device-view] 를 정한다(FOUC 없음).
        여기서는 ?view= 파라미터·저장된 수동 선택을 다시 확인하고 토글·푸터 초기화를 붙인다. */
   var VIEW_KEY = 'seosan-device-view';
-  var VIEW_LABEL = { mobile: '모바일 버전', pc: 'PC 버전' };
-  function autoDeviceView() {
-    var ua = (navigator && navigator.userAgent) || '';
-    return (/Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (window.innerWidth || 0) <= 768) ? 'mobile' : 'pc';
+  var VIEW_LABEL = { pc: 'PC 버전' };
+  function autoDeviceView() { return 'pc'; }
+  function storedDeviceView() { return 'pc'; }
+  function deviceView() { return 'pc'; }
+  function updateViewToggle() { }
+  function applyDeviceView() {
+    document.documentElement.setAttribute('data-device-view', 'pc');
+    return 'pc';
   }
-  function storedDeviceView() {
-    var v = '';
-    try { v = sessionStorage.getItem(VIEW_KEY) || localStorage.getItem(VIEW_KEY) || ''; } catch (e) { v = ''; }
-    return (v === 'mobile' || v === 'pc') ? v : '';
-  }
-  function deviceView() {
-    var cur = document.documentElement.getAttribute('data-device-view');
-    return (cur === 'mobile' || cur === 'pc') ? cur : autoDeviceView();
-  }
-  function updateViewToggle() {
-    var cur = deviceView(), other = cur === 'mobile' ? 'pc' : 'mobile';
-    $$('#btnViewToggle').forEach(function (b) {
-      b.textContent = (other === 'mobile' ? '📱 모바일 버전' : '🖥️ PC 버전');
-      b.setAttribute('aria-label', VIEW_LABEL[other] + '(으)로 보기');
-      b.setAttribute('data-next', other);
-    });
-    var page = (document.body && document.body.getAttribute('data-page')) || '';
-    $$('#mobileTabbar a').forEach(function (a) {
-      var k = a.getAttribute('data-mtab');
-      var on = (k === 'status' && (page === 'status')) || (k === 'apply' && page === 'apply') ||
-        (k === 'first' && page === 'first') || (k === 'mypage' && (page === 'mypage' || page === 'mypage-detail')) ||
-        (k === 'admin' && /^admin-/.test(page));
-      a.classList.toggle('on', !!on);
-      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-    });
-  }
-  function applyDeviceView(v, opts) {
-    var want = (v === 'mobile' || v === 'pc') ? v : autoDeviceView();
-    document.documentElement.setAttribute('data-device-view', want);
-    updateViewToggle();
-    if (!(opts && opts.silent)) {
-      var why = (v === 'mobile' || v === 'pc') ? '선택한 ' : '접속 환경에 맞춘 ';
-      if (window.console && console.debug) console.debug('[view]', want, why);
-    }
-    return want;
-  }
-  function setDeviceView(v) {
-    if (v !== 'mobile' && v !== 'pc') return deviceView();
-    try { sessionStorage.setItem(VIEW_KEY, v); localStorage.setItem(VIEW_KEY, v); } catch (e) { }
-    applyDeviceView(v);
-    toast(v === 'mobile'
-      ? '📱 모바일 버전으로 봅니다 — 1열 카드 화면 · 하단 탭바 · 큰 터치 버튼'
-      : '🖥️ PC 버전으로 봅니다 — 넓은 화면(1280px) · 다단 대시보드 · 넓은 표');
-    return v;
-  }
-  function resetDeviceView() {
-    try { sessionStorage.removeItem(VIEW_KEY); localStorage.removeItem(VIEW_KEY); } catch (e) { }
-    var v = applyDeviceView('');
-    toast('접속 환경 자동 감지로 돌아갔습니다 — ' + VIEW_LABEL[v]);
-    return v;
-  }
-  function toggleDeviceView() { return setDeviceView(deviceView() === 'mobile' ? 'pc' : 'mobile'); }
+  function setDeviceView() { return applyDeviceView(); }
+  function resetDeviceView() { return applyDeviceView(); }
+  function toggleDeviceView() { return applyDeviceView(); }
   function initDeviceView() {
-    var q = paramOf('view');
-    if (q === 'mobile' || q === 'pc') { try { sessionStorage.setItem(VIEW_KEY, q); localStorage.setItem(VIEW_KEY, q); } catch (e) { } }
-    applyDeviceView(deviceView(), { silent: true });
-    /* 토글·초기화 클릭은 공통 onClick 처리기가 받는다(중복 바인딩 방지) */
-    var t = null;
-    window.addEventListener('resize', function () {
-      if (storedDeviceView()) return;                 /* 수동 선택은 유지 */
-      clearTimeout(t);
-      t = setTimeout(function () { applyDeviceView('', { silent: true }); }, 180);
-    });
+    try { sessionStorage.removeItem(VIEW_KEY); localStorage.removeItem(VIEW_KEY); } catch (e) { }
+    applyDeviceView();
   }
 
   function onClick(e) {

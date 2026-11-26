@@ -3,23 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>(function(){try{
-  var q=(location.search.match(/[?&]view=(mobile|pc)/)||[])[1]||'';
-  var m='';try{m=sessionStorage.getItem('seosan-device-view')||localStorage.getItem('seosan-device-view')||'';}catch(e){}
-  var auto=(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')||(window.innerWidth||0)<=768)?'mobile':'pc';
-  var v=(q==='mobile'||q==='pc')?q:((m==='mobile'||m==='pc')?m:auto);
-  if(q==='mobile'||q==='pc'){try{sessionStorage.setItem('seosan-device-view',q);localStorage.setItem('seosan-device-view',q);}catch(e){}}
-  document.documentElement.setAttribute('data-device-view',v);
-}catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
+<script>document.documentElement.setAttribute('data-device-view','pc');</script>
 <title>협회 관리자 · 시안 심사 · 유사문구 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261126r27">
+<link rel="stylesheet" href="assets/style.css?v=20261126r28">
 </head>
 <body data-page="admin-review">
 <div class="demo-banner">
   <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
   <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
-  <button class="view-toggle" id="btnViewToggle" type="button" aria-label="버전 전환">📱 모바일 버전</button>
 </div>
 
 <header class="site-header">
@@ -169,21 +161,9 @@
       <span>실제 서비스 아님</span>
       <span>·</span>
       <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
-      <span>·</span>
-      <button class="view-auto" id="btnViewAuto" type="button" title="접속 환경 자동 감지로 돌아갑니다">🔄 자동 감지로</button>
     </div>
   </div>
 </footer>
-
-
-
-<nav class="mtabbar" id="mobileTabbar" aria-label="모바일 빠른 탭바">
-  <a href="index.html" data-mtab="status"><i>🏠</i>현황</a>
-  <a href="apply.html" data-mtab="apply"><i>📝</i>접수</a>
-  <a href="remain.html" data-mtab="remain"><i>⚡</i>상시</a>
-  <a href="mypage.html" data-mtab="mypage"><i>👤</i>마이</a>
-  <a href="admin-draw.html" data-mtab="admin"><i>🛡</i>관리자</a>
-</nav>
 
 <div class="toast" id="toast"></div>
 <div class="modal" id="modal">
@@ -202,6 +182,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261126r27"></script>
+<script src="assets/app.js?v=20261126r28"></script>
 </body>
 </html>
