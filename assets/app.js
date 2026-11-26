@@ -9840,6 +9840,7 @@
         applyDesignAutofill('fc', info);
         renderFcFilePreview();
         analyzeDesignTone(ui.fcFilePreview, function (tone) { ui.fcDesignTone = tone; renderFcFilePreview(); });
+        runDesignOcr('fc', file.name, ui.fcFilePreview);
       };
       rd.readAsDataURL(file);
     } catch (e) { }
@@ -15019,6 +15020,7 @@
       applyDesignAutofill('apply', info);
       renderFilePreview();
       analyzeDesignTone(ui.filePreview, function (tone) { ui.designTone = tone; renderFilePreview(); });
+      runDesignOcr('apply', f.name, ui.filePreview);
     };
     reader.readAsDataURL(f);
   }
@@ -15060,7 +15062,7 @@
         }
       } catch (e) { }
     }
-    var fn = String(fileName || '').replace(/\.[^.]+$/, '');
+    var fn = String(fileName || '').replace(/\.[^.]+$/, '').replace(/^\d+[_\-.\s]+/, '');
     if (fn && !/^(시연용_|IMG_|KakaoTalk_|Screenshot_|photo_|image)/i.test(fn)) {
       var phInFn = fn.match(/(01[016789]|02|0[3-6][1-5])[-\s.]?\d{3,4}[-\s.]?\d{4}/);
       if (!out.phone && phInFn) {
@@ -15071,14 +15073,106 @@
       if (parts.length >= 2) {
         if (!out.advertiser && parts[0].length >= 2 && parts[0].length <= 20) out.advertiser = parts[0];
         if (!out.text) {
-          var rest = parts.slice(1).join(' ').trim();
+          var rest = parts.join(' ').trim();
           if (rest.length >= 4) out.text = rest.slice(0, 40);
         }
-      } else if (parts.length === 1 && parts[0].length >= 4 && !out.text) {
-        out.text = parts[0].slice(0, 40);
+      } else if (parts.length === 1 && parts[0].length >= 2) {
+        if (!out.advertiser && parts[0].length <= 16) out.advertiser = parts[0];
+        if (!out.text && parts[0].length >= 4) out.text = parts[0].slice(0, 40);
       }
     }
     return out;
+  }
+
+  var _tessPromise = null;
+  function loadTesseract() {
+    if (window.Tesseract && typeof window.Tesseract.recognize === 'function') return Promise.resolve(window.Tesseract);
+    if (_tessPromise) return _tessPromise;
+    _tessPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.async = true;
+      s.onload = function () {
+        if (window.Tesseract) resolve(window.Tesseract);
+        else reject(new Error('Tesseract load failed'));
+      };
+      s.onerror = function () { reject(new Error('Tesseract script error')); };
+      document.head.appendChild(s);
+    });
+    return _tessPromise;
+  }
+
+  function parseOcrTextForBanner(rawText) {
+    var out = { advertiser: '', phone: '', text: '' };
+    var txt = String(rawText || '').replace(/\r/g, '\n');
+    if (!txt.trim()) return out;
+    /* 전화번호 추출: 010/041 등 전체 번호 또는 T.688-8899 형태 */
+    var mFull = txt.match(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/);
+    if (mFull) {
+      out.phone = formatDesignPhone(mFull[0]);
+    } else {
+      var mLocal = txt.match(/(?:T|TEL|문의|전화)?[.\s:]*([2-9]\d{2})[.\-\s]+(\d{4})/i);
+      if (mLocal) out.phone = '041-' + mLocal[1] + '-' + mLocal[2];
+    }
+    /* 줄 정리 — 2글자 이상 의미 있는 한글/영문/숫자 줄 */
+    var lines = txt.split('\n').map(function (l) {
+      return l.replace(/[|_~`^*=<>\\[\]{}]/g, ' ').replace(/\s+/g, ' ').trim();
+    }).filter(function (l) {
+      return l.length >= 2 && /[가-힣A-Za-z0-9]{2,}/.test(l);
+    });
+    if (lines.length) {
+      var joined = lines.join(' ').replace(/\s+/g, ' ').trim();
+      out.text = joined.slice(0, 40);
+      /* 광고주 후보: 상호 키워드 포함 어절 우선 */
+      var bizRe = /[가-힣A-Za-z0-9]{2,14}(?:어린이집|유치원|초등학교|고등학교|학원|교육원|필라테스|코딩|아카데미|노래클럽|노래방|피부샵|피부과|한의원|병원|약국|식당|가든|버섯|양꼬치|박가네|미다움|알레르망|변호사|공인중개사|부동산|마트|청과|농원|타이어|분식|코팅|청소|미술관|광고)/;
+      var mBiz = joined.match(bizRe);
+      if (mBiz) {
+        out.advertiser = mBiz[0];
+      } else {
+        /* 키워드가 없으면 전화번호를 뺀 가장 짧은 핵심 단어 */
+        var tokens = joined.replace(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/g, '').split(/\s+/).filter(function (w) {
+          return w.length >= 2 && w.length <= 12 && /[가-힣A-Za-z]/.test(w);
+        });
+        if (tokens.length) out.advertiser = tokens[0];
+      }
+    }
+    return out;
+  }
+
+  function runDesignOcr(scope, fileName, dataUrl) {
+    var url = String(dataUrl || '');
+    if (!url || /^data:image\/svg\+xml/i.test(url)) return;
+    var isFc = scope === 'fc';
+    var cur = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || { advertiser: '', phone: '', text: '' };
+    /* 파일명에서 3개 다 못 뽑았으면 OCR 가동 */
+    if (cur.advertiser && cur.phone && cur.text) return;
+    cur.ocrPending = true;
+    if (isFc) { ui.fcDesignExtracted = cur; renderFcFilePreview(); }
+    else { ui.designExtracted = cur; renderFilePreview(); }
+
+    loadTesseract().then(function (Tess) {
+      return Tess.recognize(url, 'kor+eng');
+    }).then(function (res) {
+      var text = res && res.data ? res.data.text : '';
+      var ocr = parseOcrTextForBanner(text);
+      var latest = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || {};
+      var merged = {
+        advertiser: latest.advertiser || ocr.advertiser || '',
+        phone: latest.phone || ocr.phone || '',
+        text: ocr.text || latest.text || '',
+        ocrPending: false,
+        ocrDone: true
+      };
+      if (isFc) ui.fcDesignExtracted = merged; else ui.designExtracted = merged;
+      var filled = applyDesignAutofill(scope, merged);
+      if (isFc) renderFcFilePreview(); else renderFilePreview();
+      if (filled && filled.length) toast('🔍 시안 이미지에서 ' + filled.join('·') + '을(를) 읽어 자동완성했습니다.');
+    }).catch(function () {
+      var latest = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || {};
+      latest.ocrPending = false;
+      if (isFc) { ui.fcDesignExtracted = latest; renderFcFilePreview(); }
+      else { ui.designExtracted = latest; renderFilePreview(); }
+    });
   }
 
   function applyDesignAutofill(scope, info) {
@@ -15117,6 +15211,9 @@
   }
 
   function designExtractNoteHTML(info) {
+    if (info && info.ocrPending) {
+      return '<div class="callout info" style="margin-top:8px;padding:9px 12px"><div><b>🔍 시안 이미지에서 광고주·연락처·문구를 읽는 중...</b> <span class="sm">(잠시만 기다려 주세요)</span></div></div>';
+    }
     if (!info || (!info.advertiser && !info.phone && !info.text)) {
       return '<div class="hint-txt" style="margin-top:6px">ℹ️ 시안 이미지가 첨부되었습니다. 이미지에서 문구·연락처를 읽지 못한 경우 아래 칸에 직접 입력해 주세요.</div>';
     }
