@@ -8665,17 +8665,17 @@
         '<img class="byeolji-bg" src="assets/form-byeolji1.jpg" alt="별지 제1호서식">' +
         '<div class="byeolji-fields-layer" id="byeoljiFieldsLayer" style="transform:translate(' + off.x + 'mm,' + off.y + 'mm)">' +
         f(15.3, 33.5, 22, repName) +
-        f(15.3, 73.5, 20, m.birth || '760605') +
+        f(15.3, 77.5, 16, m.birth || '760605') +
         f(18.1, 33.5, 22, target.company || '') +
-        f(18.1, 73.5, 20, bizNo) +
+        f(18.1, 77.5, 16, bizNo) +
         f(20.9, 33.5, 24, addr) +
-        f(20.9, 73.5, 20, hp) +
+        f(20.9, 77.5, 16, hp) +
         f(23.9, 33.5, 22, target.company || '') +
-        f(23.9, 73.5, 20, regNo) +
+        f(24.3, 77.0, 17, regNo) +
         f(26.7, 33.5, 22, repName) +
-        f(26.7, 73.5, 20, bizNo) +
+        f(26.7, 77.5, 16, bizNo) +
         f(29.6, 33.5, 24, addr) +
-        f(29.6, 73.5, 20, tel) +
+        f(29.6, 77.5, 16, tel) +
         f(35.0, 16.5, 16, '현수막') +
         f(35.0, 41.0, 10, qty + ' 매') +
         f(35.0, 54.0, 14, '710×90') +
