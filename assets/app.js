@@ -6006,8 +6006,8 @@
     if (!has('bsScheduleRoot')) return;
     var root = $('#bsScheduleRoot');
     var sel = $('#bsPlaceSelect');
-    var list = PLACES.filter(function (x) { return !x.low && !x.officialOnly; });
-    if (!list.length) list = PLACES;
+    var list = PLACEMENTS.filter(function (x) { return !x.low && !x.officialOnly; });
+    if (!list.length) list = PLACEMENTS;
     var pid = ui.bsPid || paramOf('pid') || (list[0] && list[0].id) || '';
     var p = boardById(pid) || list[0];
     if (!p) { root.innerHTML = '<div class="empty">표시할 게시대가 없습니다.</div>'; return; }
