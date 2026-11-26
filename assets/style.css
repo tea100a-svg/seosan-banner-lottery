@@ -2291,6 +2291,20 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .has-tip:hover::after,.has-tip:focus-visible::after{opacity:1;visibility:visible;transform:translate(-50%,0)}
 .has-tip:hover::before,.has-tip:focus-visible::before{opacity:1;visibility:visible}
 
+/* 특별심사 통합 접기/펼치기 패널 */
+details.special-fold{padding:0;overflow:hidden}
+details.special-fold > summary.sf-sum{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;cursor:pointer;user-select:none;background:#fff;transition:background .15s ease}
+details.special-fold > summary.sf-sum::-webkit-details-marker{display:none}
+details.special-fold > summary.sf-sum:hover{background:#f8fafc}
+details.special-fold[open] > summary.sf-sum{border-bottom:1px solid var(--line);background:#f8fafc}
+details.special-fold > summary.sf-sum .sf-left{display:flex;align-items:center;gap:10px;min-width:0}
+details.special-fold > summary.sf-sum h3{margin:0;font-size:16px;font-weight:800;color:var(--ink)}
+details.special-fold > summary.sf-sum .sf-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+details.special-fold > summary.sf-sum .sf-arrow{font-size:12px;font-weight:700;color:var(--brand);padding:4px 10px;border-radius:999px;background:#eef4ff;border:1px solid #d5e3ff}
+details.special-fold[open] > summary.sf-sum .sf-arrow::before{content:"▲ 접기"}
+details.special-fold:not([open]) > summary.sf-sum .sf-arrow::before{content:"▼ 펼치기"}
+details.special-fold > .sf-body{padding:16px 20px 20px}
+
 
 
 
