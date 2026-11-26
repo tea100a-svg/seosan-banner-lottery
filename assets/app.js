@@ -10541,9 +10541,12 @@
           });
         });
         PROXY_ROLES.forEach(function (pr) {
-          btns.push('<button class="preset rl" type="button" data-rolelogin="' + esc(pr.k) + '" title="' + esc(pr.label + '로 바로 로그인') + '">' +
+          var pm = memberById(pr.k === 'proxy_field' ? 'M-2005' : 'M-2004');
+          var pname = pm ? pm.owner : (pr.k === 'proxy_field' ? '최수석' : '한은지');
+          var pcomp = pm ? pm.company : '서산시지부';
+          btns.push('<button class="preset rl" type="button" data-rolelogin="' + esc(pr.k) + '" title="' + esc(pname + ' (' + pr.label + ')로 바로 로그인') + '">' +
             '<span class="pn">' + esc(pr.icon || '·') + '</span>' +
-            '<span><b>' + esc(pr.label) + '</b><small>전 단계 대리결재</small></span></button>');
+            '<span><b>' + esc(pname) + '</b><small>' + esc(pr.label + ' · ' + pcomp + ' · 전 단계 대리결재') + '</small></span></button>');
         });
         return btns.join('');
       })() + '</div>' +
@@ -10566,32 +10569,37 @@
     var raw = String(k || '');
     var p = parseAccessSel(raw);
     var key = (raw === 'super') ? 'super' : p.role;
+    var isProxy = (key === 'proxy_office' || key === 'proxy_field');
     var off = null;
-    if (key !== 'super') {
+    if (key !== 'super' && !isProxy) {
       if (p.memberId) {
         var list = officersOfRole(key);
         for (var i = 0; i < list.length; i++) {
           if (list[i] && list[i].memberId === p.memberId) { off = list[i]; break; }
         }
       }
-      if (!off && !isProxyRole(key)) off = roleLoginOfficer(key);
+      if (!off) off = roleLoginOfficer(key);
     }
     ui.roleLoginPriority = false;
     try { localStorage.removeItem(ROLE_PRI_KEY); } catch (e) { }
-    ui.adminRole = (key === 'super') ? 'super' : (off ? ('team:' + key + ':' + off.memberId) : key);
+    ui.adminRole = (key === 'super') ? 'super' : (isProxy ? key : (off ? ('team:' + key + ':' + off.memberId) : key));
     try { localStorage.setItem(OFFICER_KEY, ui.adminRole); } catch (e) { }
-    var mem = (off && off.memberId) ? memberById(off.memberId) : null;
+    var mem = null;
+    if (isProxy) mem = memberById(key === 'proxy_field' ? 'M-2005' : 'M-2004');
+    else if (off && off.memberId) mem = memberById(off.memberId);
     if (mem) { loginMember(mem, { silent: true }); }
     else {
       if (db.session) { try { logoutMember({ silent: true }); } catch (e) { } }
       closeModal();
       try { renderAuth(); } catch (e) { }
     }
-    try { renderAdminRoleBar(); applyOffAccess(); applySubtabs('admin'); } catch (e) { }
-    try { renderAdmin(); } catch (e) { }
+    try { refreshRoleDependentViews(); } catch (e) { }
     ui.approvalPopupShownFor = '';
     setTimeout(function () { maybeShowApprovalPopup(true); }, 350);
-    toast((key === 'super' ? '마스터' : (off ? off.name + ' (' + officerRoleMeta(key).label + ')' : officerRoleMeta(key).label)) + '(으)로 바로 로그인했습니다.');
+    var whoLabel = (key === 'super') ? '마스터'
+      : (isProxy ? ((mem ? mem.owner + ' ' : '') + '(' + officerRoleMeta(key).label + ')')
+        : (off ? off.name + ' (' + officerRoleMeta(key).label + ')' : officerRoleMeta(key).label));
+    toast(whoLabel + '(으)로 바로 로그인했습니다.');
     return { role: key, member: mem ? mem.company : '', pending: pendingApprovalsFor() };
   }
   function openAuth(tab) {
