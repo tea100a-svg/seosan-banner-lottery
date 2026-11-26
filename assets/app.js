@@ -6012,7 +6012,7 @@
     if (ui.bsPid === undefined) ui.bsPid = urlPid || '';
     var pFocus = ui.bsPid ? boardById(ui.bsPid) : null;
     var schedMode = ui.bsMode === '4w' ? '4w' : '1w';
-    var schedBase = ui.bsDate || weekStartOf(ROUND.postStart);
+    var schedBase = ui.bsDate || weekStartOf(TODAY);
     var dayFilter = ui.bsDay || '';
     var qFilter = String(ui.bsQ || '').trim().toLowerCase();
 
@@ -6124,9 +6124,10 @@
         var groups = {};
         var order = [];
         codes.forEach(function (s) {
-          var col = s.colL || String(s.code || '').charAt(0) || 'A';
+          var col = s.letter || '—';
+          var tier = Number(s.row) || 1;
           if (!groups[col]) { groups[col] = {}; order.push(col); }
-          groups[col][s.tier] = s;
+          groups[col][tier] = s;
         });
         order.forEach(function (col, gi) {
           var tds = '';
@@ -6161,7 +6162,7 @@
     } else {
       var weeks4 = [0, 1, 2, 3].map(function (wi) { return addDays(startWk, wi * 7); });
       var blocks = [];
-      var curWk = weekStartOf(ROUND.postStart);
+      var curWk = weekStartOf(TODAY);
       targetBoards.forEach(function (b) {
         var codes = slotCodesOf(b);
         var plans4 = weeks4.map(function (w) { return slotPlan(b.id, w); });
@@ -6169,7 +6170,7 @@
         var groups = {};
         var order = [];
         codes.forEach(function (s) {
-          var col = s.colL || String(s.code || '').charAt(0) || 'A';
+          var col = s.letter || '—';
           if (!groups[col]) { groups[col] = []; order.push(col); }
           groups[col].push(s);
         });
@@ -6185,7 +6186,7 @@
               var txt = (c.cls === 'free') ? '—' : ((c.sub && c.sub !== '정상 운영' && c.sub !== '추첨·심사 대기') ? c.sub : c.adv);
               var co = (c.cls === 'free') ? '빈 자리' : c.adv;
               trs += '<tr class="' + (isCur ? 'is-cur' : '') + '">' +
-                (wi === 0 ? '<td class="xl-tier" rowspan="4">' + sl.tier + '단</td>' : '') +
+                (wi === 0 ? '<td class="xl-tier" rowspan="4">' + sl.row + '단</td>' : '') +
                 '<td class="xl-per">' + esc(per) + (isCur ? ' <b style="color:#b45309">●</b>' : '') + '</td>' +
                 '<td class="st-' + esc(c.cls) + '">' + esc(txt) + '</td>' +
                 '<td>' + esc(co) + '</td>' +
@@ -6228,14 +6229,14 @@
       b.addEventListener('click', function () {
         var dir = Number(b.getAttribute('data-bsnav')) || 0;
         var stepDays = (ui.bsMode === '4w' ? 28 : 7) * dir;
-        ui.bsDate = addDays(weekStartOf(ui.bsDate || ROUND.postStart), stepDays);
+        ui.bsDate = addDays(weekStartOf(ui.bsDate || TODAY), stepDays);
         renderBoardSchedulePage();
       });
     });
     var nowBtn = root.querySelector('[data-bsnow]');
     if (nowBtn) {
       nowBtn.addEventListener('click', function () {
-        ui.bsDate = weekStartOf(ROUND.postStart);
+        ui.bsDate = weekStartOf(TODAY);
         renderBoardSchedulePage();
       });
     }
