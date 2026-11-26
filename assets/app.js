@@ -15115,11 +15115,11 @@
       body:
         '<div style="display:flex;flex-direction:column;gap:12px">' +
           '<div class="callout info" style="padding:10px 12px;margin:0">' +
-            '<div><b>발급 방법</b> — <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#1d5fd6;font-weight:700;text-decoration:underline">Google AI Studio</a>에서 무료 API 키(AIza...)를 발급받아 아래에 붙여넣어 주세요. 키는 현재 브라우저에만 저장됩니다.</div>' +
+            '<div><b>발급 방법</b> — <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#1d5fd6;font-weight:700;text-decoration:underline">Google AI Studio</a>에서 무료 API 키(`AQ....` 또는 `AIza...`)를 발급받아 아래에 붙여넣어 주세요. 키는 현재 브라우저에만 저장됩니다.</div>' +
           '</div>' +
           '<div class="field">' +
             '<label for="geminiApiKeyInput">Gemini API 키</label>' +
-            '<input class="input" id="geminiApiKeyInput" type="password" value="' + esc(cur) + '" placeholder="AIzaSy..." autocomplete="off">' +
+            '<input class="input" id="geminiApiKeyInput" type="password" value="' + esc(cur) + '" placeholder="AQ.... 또는 AIza..." autocomplete="off">' +
           '</div>' +
         '</div>',
       foot:
@@ -15232,7 +15232,11 @@
               throw err;
             }
             var rawTxt = '';
-            try { rawTxt = json.candidates[0].content.parts[0].text || ''; } catch (e) { }
+            try {
+              var pts = (json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts) || [];
+              var txtParts = pts.filter(function (pt) { return pt && !pt.thought && typeof pt.text === 'string'; });
+              rawTxt = (txtParts.length ? txtParts[txtParts.length - 1].text : (pts[0] && pts[0].text)) || '';
+            } catch (e) { }
             var cleaned = String(rawTxt).replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
             var mObj = cleaned.match(/\{[\s\S]*\}/);
             var parsed = JSON.parse(mObj ? mObj[0] : cleaned);
@@ -15247,9 +15251,11 @@
         });
       };
 
-      return callModel('gemini-2.5-flash').catch(function (err) {
-        if (err && (err.status === 404 || /not found|model/i.test(err.message || ''))) {
-          return callModel('gemini-2.0-flash');
+      return callModel('gemini-3.8-flash').catch(function (err) {
+        if (err && (err.status === 404 || /not found|model|no longer available/i.test(err.message || ''))) {
+          return callModel('gemini-2.5-flash').catch(function () {
+            return callModel('gemini-2.0-flash');
+          });
         }
         throw err;
       });
