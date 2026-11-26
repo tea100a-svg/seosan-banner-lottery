@@ -1830,6 +1830,73 @@
     save();
     return { id: m.id, company: m.company, assocMember: !!m.assocMember, rate: assocRateOfMember(m), pct: pct, total: pct };
   }
+  function renderMemberPendingPanel() {
+    if (!has('memberPendingTable')) return;
+    var all = memberList().filter(function (m) {
+      return m.approvalStatus === 'pending' || m.approvalStatus === 'rejected';
+    });
+    all.sort(function (a, b) {
+      if (a.approvalStatus === b.approvalStatus) return String(b.joinedAt || '').localeCompare(String(a.joinedAt || ''));
+      return a.approvalStatus === 'pending' ? -1 : 1;
+    });
+    var pendCnt = all.filter(function (m) { return m.approvalStatus === 'pending'; }).length;
+    if ($('#memberPendingInfo')) {
+      $('#memberPendingInfo').textContent = pendCnt ? ('승인 대기 ' + pendCnt + '건') : '승인 대기 없음';
+    }
+    if (!all.length) {
+      $('#memberPendingTable').innerHTML = '<div style="padding:18px 12px;text-align:center;color:var(--muted);font-size:13.5px">현재 승인 대기 중인 신규 회원이 없습니다.</div>';
+      return;
+    }
+    var canApprove = isTotalManager();
+    $('#memberPendingTable').innerHTML = '<table><thead><tr><th>업체·단체명</th><th>대표·구분</th><th>연락처 · 아이디</th><th>상태</th><th>신청 시각</th><th style="text-align:right">마스터 처리</th></tr></thead><tbody>' +
+      all.map(function (m) {
+        var isPend = m.approvalStatus === 'pending';
+        var badge = isPend
+          ? '<span class="badge b-amber"><i></i>승인 대기</span>'
+          : '<span class="badge b-red"><i></i>반려됨</span>';
+        return '<tr>' +
+          '<td><span class="co">' + esc(m.company) + '</span>' + (m.biz ? '<span class="sm">' + esc(m.biz) + '</span>' : '') + '</td>' +
+          '<td class="sm">' + esc(m.owner || '') + ' · ' + esc(memberTypeLabel(m)) + '</td>' +
+          '<td class="sm">' + esc(m.phone || '—') + '<br><span style="color:var(--muted)">ID: ' + esc(m.loginId || m.id) + '</span></td>' +
+          '<td>' + badge + '</td>' +
+          '<td class="sm">' + esc(m.joinedAt || '') + (m.approvedBy ? '<br><span style="color:var(--muted)">' + esc(m.approvedBy) + '</span>' : '') + '</td>' +
+          '<td style="text-align:right;white-space:nowrap">' +
+            (isPend
+              ? '<button class="btn ok sm" type="button" data-mbapprove="' + esc(m.id) + '"' + (canApprove ? '' : ' disabled title="마스터만 승인 가능"') + '>✅ 승인</button> ' +
+                '<button class="btn ghost sm" type="button" data-mbreject="' + esc(m.id) + '"' + (canApprove ? '' : ' disabled title="마스터만 반려 가능"') + '>✕ 반려</button>'
+              : '<button class="btn ok sm" type="button" data-mbapprove="' + esc(m.id) + '"' + (canApprove ? '' : ' disabled title="마스터만 승인 가능"') + '>재승인</button>') +
+          '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  function approveNewMember(id) {
+    if (!isTotalManager()) { toast('신규 회원 승인은 마스터만 할 수 있습니다.', true); return null; }
+    var m = memberById(id);
+    if (!m) return null;
+    m.approvalStatus = 'approved';
+    m.approvedAt = nowStamp();
+    m.approvedBy = accessDisplay().label;
+    audit('회원', '신규 회원 승인 — ' + m.company + ' (' + (m.loginId || m.id) + ')');
+    save();
+    renderMemberPendingPanel();
+    renderAssocPanel();
+    renderMemberGradesPanel();
+    renderMemberAppointPanel();
+    toast(m.company + ' 회원가입을 승인했습니다. 이제 로그인할 수 있습니다.');
+    return m;
+  }
+  function rejectNewMember(id) {
+    if (!isTotalManager()) { toast('신규 회원 반려는 마스터만 할 수 있습니다.', true); return null; }
+    var m = memberById(id);
+    if (!m) return null;
+    m.approvalStatus = 'rejected';
+    m.approvedAt = nowStamp();
+    m.approvedBy = accessDisplay().label;
+    audit('회원', '신규 회원 반려 — ' + m.company + ' (' + (m.loginId || m.id) + ')');
+    save();
+    renderMemberPendingPanel();
+    toast(m.company + ' 회원가입을 반려했습니다.');
+    return m;
+  }
   function renderAssocPanel() {
     if (!has('assocTable')) return;
     var list = memberList();
@@ -5193,6 +5260,19 @@
         if (!db.apps.some(function (x) { return x.id === item.id; })) db.apps.push(item);
       });
       db.seedVersion = 12;
+      save();
+    }
+    if (Number(db.seedVersion || 12) < 13) {
+      var pendSample = {
+        id: 'M-PEND-1', loginId: 'seosanflower', pw: '1234', type: 'direct',
+        company: '서산꽃화원(신규)', owner: '이꽃님', phone: '010-7788-9900',
+        biz: '316-22-99104', email: 'flower@seosan.kr', oade: '',
+        joinedAt: '2026-11-26 14:55', approvalStatus: 'pending', assocMember: false
+      };
+      if (!memberList().some(function (x) { return x.id === pendSample.id || x.loginId === pendSample.loginId; })) {
+        memberList().push(pendSample);
+      }
+      db.seedVersion = 13;
       save();
     }
   }
@@ -10934,6 +11014,14 @@
       toast('아이디 또는 비밀번호가 맞지 않습니다. 간편 로그인으로도 체험할 수 있습니다.', true);
       return false;
     }
+    if (m.approvalStatus === 'pending') {
+      toast('마스터 승인 대기 중인 계정입니다. 승인 완료 후 로그인할 수 있습니다.', true);
+      return false;
+    }
+    if (m.approvalStatus === 'rejected') {
+      toast('가입 신청이 반려된 계정입니다. 협회 사무국으로 문의해 주세요.', true);
+      return false;
+    }
     loginMember(m);
     return true;
   }
@@ -11100,13 +11188,16 @@
       id: nextMemberId(), loginId: v.loginId, pw: v.pw, type: v.type,
       company: v.company, owner: v.owner, phone: v.phone,
       biz: v.biz, email: v.email, oade: v.oade, joinedAt: nowStamp(),
+      approvalStatus: 'pending',
       licenseNo: v.licenseNo || '',
       licenseFile: (v.type === 'agency' && v.license) ? { name: v.license, data: v.licenseData || '', mime: v.licenseMime || '' } : null
     };
     memberList().push(m);
     ui.suLicName = ''; ui.suLicData = ''; ui.suLicMime = ''; ui.suLicNo = ''; ui.suLicNoSrc = '';
-    loginMember(m, { silent: true });
-    toast(m.company + ' 회원가입이 완료되었습니다 — 회원 정보로 1단계 입력을 자동 작성했습니다.');
+    audit('회원', '신규 회원가입 신청 — ' + m.company + ' (' + m.loginId + ') · 마스터 승인 대기');
+    save();
+    renderMemberPendingPanel();
+    toast(m.company + ' 회원가입 신청이 접수되었습니다. 마스터 승인 후 로그인할 수 있습니다.');
     return m;
   }
 
@@ -11115,7 +11206,7 @@
     return '<button class="btn ghost" id="btnGuestContinue" type="button">비회원으로 계속</button>' +
       (tab === 'signup'
         ? '<button class="btn ghost" data-close="1" type="button">닫기</button>' +
-          '<button class="btn primary" id="btnAuthSignup" type="button">가입하고 바로 로그인</button>'
+          '<button class="btn primary" id="btnAuthSignup" type="button">회원가입 신청</button>'
         : '<button class="btn ghost" data-close="1" type="button">닫기</button>' +
           '<button class="btn primary" id="btnAuthLogin" type="button">로그인</button>');
   }
@@ -11314,7 +11405,7 @@
             if (r) closeModal();
             return;
           }
-          submitSignup();
+          if (submitSignup()) closeModal();
         });
         /* 회원가입 구분을 바꾸면 옥외광고업 등록번호 필수 표시도 함께 바뀐다 */
         if ($('#suType')) onEl('#suType', 'change', function () {
@@ -11330,7 +11421,7 @@
           if ($('#signupNormal')) $('#signupNormal').classList.toggle('hidden', on);
           if ($('#signupStaff')) $('#signupStaff').classList.toggle('hidden', !on);
           var go = $('#btnAuthSignup');
-          if (go) go.textContent = on ? '직원 가입 신청' : '가입하고 바로 로그인';
+          if (go) go.textContent = on ? '직원 가입 신청' : '회원가입 신청';
         });
         /* 입력란에서 Enter 로 로그인·회원가입 */
         if ($('#modalBody') && $('#modalBody').addEventListener) {
@@ -12999,6 +13090,7 @@
     renderPolPanel();
     renderOfficialReview();
     renderEventApprovers();
+    renderMemberPendingPanel();
     renderAssocPanel();
     renderUrgentGrantPanel();
     renderDesigBatch();
@@ -16426,7 +16518,7 @@
     ['#btnOfficerAdd', '#btnBonusCapSave', '#btnBonusCapReset'].forEach(function (sel) {
       if ($(sel)) $(sel).disabled = !can;
     });
-    $$('[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-assocsave],[data-urgentgrant]').forEach(function (b) {
+    $$('[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-assocsave],[data-urgentgrant]').forEach(function (b) {
       if (can) b.removeAttribute('disabled'); else b.setAttribute('disabled', 'disabled');
     });
   }
@@ -16687,7 +16779,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-aikeybtn')) { e.stopPropagation(); e.preventDefault(); openAiVisionKeyModal(el.getAttribute('data-aikeybtn') || 'apply'); return; }
     if (el.hasAttribute('data-airetry')) {
@@ -17077,6 +17169,8 @@
     if (el.id === 'btnAssocFixedSave') { var afEl = $('#assocFixedInput'); setAssocFixedPct(afEl ? afEl.value : 5); return; }
     if (el.id === 'btnAssocFixedReset') { setAssocFixedPct(ASSOC_FIXED_DEFAULT); return; }
     if (el.hasAttribute('data-ma-appointer')) { toggleMemberAppointer(el.getAttribute('data-ma-appointer')); return; }
+    if (el.hasAttribute('data-mbapprove')) { approveNewMember(el.getAttribute('data-mbapprove')); return; }
+    if (el.hasAttribute('data-mbreject')) { rejectNewMember(el.getAttribute('data-mbreject')); return; }
     if (el.hasAttribute('data-officerapprove')) {
       var ofId = el.getAttribute('data-officerapprove');
       var selEl = document.getElementById('ofRoleSel_' + ofId);
