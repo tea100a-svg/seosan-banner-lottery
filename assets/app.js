@@ -8574,8 +8574,22 @@
   }
   function renderDesigBatch() {
     if (!has('desigBatchList')) return;
+    var wkS = weekStartOf(ui.statusWeek || ROUND.postStart);
+    if ($('#desigDatePick')) $('#desigDatePick').value = wkS;
+    if ($('#desigWeekChips')) {
+      var dOpts = [
+        { v: addDays(ROUND.postStart, -7), t: weekKpiLabel(addDays(ROUND.postStart, -7)), tag: '지난 주 · ' },
+        { v: ROUND.postStart, t: weekKpiLabel(ROUND.postStart), tag: '이번 주 · ' },
+        { v: addDays(ROUND.postStart, 7), t: weekKpiLabel(addDays(ROUND.postStart, 7)), tag: '' },
+        { v: addDays(ROUND.postStart, 14), t: weekKpiLabel(addDays(ROUND.postStart, 14)), tag: '' }
+      ];
+      $('#desigWeekChips').innerHTML = dOpts.map(function (o) {
+        return '<button class="chip' + (o.v === wkS ? ' active' : '') + '" data-desigweek="' + o.v + '" type="button">' +
+          o.tag + esc(o.t) + ' <span class="tc">' + weekRangeTxt(o.v) + '</span></button>';
+      }).join('');
+    }
     var list = desigBatchList();
-    if ($('#desigBatchInfo')) $('#desigBatchInfo').textContent = list.length + '건 · 이번 회차 확정·배정 건 (건마다 A4 1장)';
+    if ($('#desigBatchInfo')) $('#desigBatchInfo').textContent = weekKpiLabel(wkS) + ' (' + weekRangeTxt(wkS) + ') · ' + list.length + '건';
     /* 출력 버튼은 배정 건이 0건이어도 **항상** 보인다 (2026-11-23 김재봉 님 지시 —
        "게시지정서 일괄출력 버튼이 안보여" → 사무실무원이 버튼을 못 찾는 일이 없도록).
        0건일 때 누르면 showDesigBatch([])가 안내 toast만 띄운다. */
@@ -16789,7 +16803,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-desigweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-aikeybtn')) { e.stopPropagation(); e.preventDefault(); openAiVisionKeyModal(el.getAttribute('data-aikeybtn') || 'apply'); return; }
     if (el.hasAttribute('data-airetry')) {
@@ -16968,6 +16982,7 @@
       return;
     }
     if (el.hasAttribute('data-woweek')) { ui.woWeek = weekStartOf(el.getAttribute('data-woweek') || ROUND.postStart); renderWorkOrder(); return; }
+    if (el.hasAttribute('data-desigweek')) { ui.statusWeek = weekStartOf(el.getAttribute('data-desigweek') || ROUND.postStart); renderDesigBatch(); return; }
     if (el.hasAttribute('data-ptheme')) { ui.pTheme = el.getAttribute('data-ptheme') || ''; ui.pickPage = 0; renderPickUI(); return; }
     if (el.hasAttribute('data-fctheme')) { ui.fcTheme = el.getAttribute('data-fctheme') || ''; renderFirst(); return; }
     if (el.hasAttribute('data-themeedit')) { openThemeEdit(el.getAttribute('data-themeedit')); return; }
@@ -17386,6 +17401,12 @@
       ui.woDay = '';
       renderWorkOrder();
       toast('작업지시서를 ' + weekRangeTxt(ui.woWeek) + ' 게첨 주 기준으로 다시 만들었습니다.');
+    });
+    onEl('#desigDatePick', 'change', function () {
+      if (!this.value) return;
+      ui.statusWeek = weekStartOf(this.value);
+      renderDesigBatch();
+      toast('게시 지정서를 ' + weekRangeTxt(ui.statusWeek) + ' 게첨 주 기준으로 불러왔습니다.');
     });
     if ($('#adminRoleSel')) {
       onEl('#adminRoleSel', 'change', function () { try { renderRolesLock(); } catch (e) { } });
