@@ -7027,7 +7027,6 @@
       '<div class="fcount"><b>' + reqN + '</b><span>/' + p.cap + '건 접수중</span></div>' +
       '<div class="fc-act">' +
         (!off ? '<button class="btn sm ghost rand-excl-btn has-tip' + (excluded ? ' is-excl' : '') + '" type="button" data-randexcl="' + esc(p.id) + '" aria-pressed="' + (excluded ? 'true' : 'false') + '" data-tip="체크해 두면 무작위 선택을 눌렀을 때 이 게시대는 후보에서 자동으로 빠져요.">' + (excluded ? '🚫 제외됨' : '무작위 제외') + '</button>' : '') +
-        boardMapBtnsHTML(p) +
         (picked && !off ? '<button class="btn sm ghost hide-sm" type="button" data-slotjump="' + esc(p.id) + '" title="세부 위치(게시동·단) 지정">위치</button>' : '') +
         '<button class="btn sm ' + (picked ? 'ok' : (off || adjB ? '' : 'primary')) + '" type="button"' + (off ? ' disabled' : '') + '>' + esc(btn) + '</button>' +
       '</div></div>';
@@ -9680,7 +9679,6 @@
           (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
         '<div class="fcount' + (rem ? '' : ' sold') + '"><b>' + rem + '</b><span>' + (p.broken ? '가용 면 제외' : (fcIsLive() ? '잔여 면' : '잔여 매')) + '</span></div>' +
         '<div class="fc-act">' +
-          boardMapBtnsHTML(p) +
           '<button class="btn sm ' + (picked ? 'ok' : (label === '담기' ? 'primary' : '')) + '" data-fcpick="' + p.id + '" type="button"' +
             ((open && rem && !bk && !yBlocked) ? '' : ' disabled') + '>' + label + '</button>' +
         '</div>' +
@@ -12554,7 +12552,6 @@
           (p.low ? '' : ' · ' + weekRequestCount(p.id) + '건 접수중') + '</span></div>' +
         '<div class="fcount' + (remOff ? '' : ' sold') + '"><b>' + off + '/' + capOff + '</b><span>공문 면</span></div>' +
         '<div class="fc-act">' +
-          boardMapBtnsHTML(p) +
           (on && !p.low ? '<button class="btn sm ' + ((ui.offSlots && ui.offSlots[p.id]) ? 'ok' : 'ghost') + '" data-offslotmodal="' + esc(p.id) + '" type="button">' + ((ui.offSlots && ui.offSlots[p.id]) ? '📍 ' + esc(slotChipTxt(p, ui.offSlots[p.id])) : '📍 동·단수') + '</button>' : '') +
           '<button class="btn sm ' + (on ? 'ok' : (full || adjB ? '' : 'primary')) + '" data-offpick="' + esc(p.id) + '" type="button"' +
             ((!on && (full || adjB)) ? ' disabled' : '') + '>' + btnLbl + '</button>' +
