@@ -15133,8 +15133,6 @@
       }
       /* 숫자+한글/단위 (예: 100%, 24시, 11월, 30일, 50%) */
       if (/^\d+[가-힣%]+$/.test(w)) return true;
-      /* 3글자 이상 영문 단어 (단, 자음/모음 없는 무작위 잡음 제외) */
-      if (/^[A-Za-z]{3,14}$/.test(w) && /[aeiouAEIOU]/.test(w)) return true;
       return false;
     }).map(function (w) {
       return /[가-힣]{2,}/.test(w) ? w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '') : w;
@@ -15286,7 +15284,7 @@
       if (isFc) ui.fcDesignExtracted = merged; else ui.designExtracted = merged;
       var filled = applyDesignAutofill(scope, merged);
       if (isFc) renderFcFilePreview(); else renderFilePreview();
-      if (filled && filled.length) toast('🔍 시안 이미지에서 ' + filled.join('·') + '을(를) 읽어 자동완성했습니다.');
+      if (filled && filled.length) toast('🔍 시안 이미지에서 ' + filled.join('·') + ' 정보를 읽어 자동완성했습니다.');
     }).catch(function () {
       var latest = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || {};
       latest.ocrPending = false;
