@@ -2331,11 +2331,14 @@ details.special-fold > .sf-body{padding:16px 20px 20px}
 /* ── 별지 제1호서식 빈칸 자동 채움 ── */
 .byeolji-sheet{position:relative;width:100%;max-width:794px;aspect-ratio:1240/1754;margin:0 auto;border:1px solid var(--line);background:#fff;box-shadow:0 4px 16px rgba(15,23,42,.06);overflow:hidden}
 .byeolji-sheet img.byeolji-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}
+.byeolji-sheet.text-only img.byeolji-bg{opacity:.14}
+.byeolji-fields-layer{position:absolute;inset:0;pointer-events:none}
 .byeolji-field{position:absolute;font-size:clamp(9px,1.45vw,12.5px);font-weight:600;color:#0f172a;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .byeolji-field.wrap{white-space:normal;word-break:keep-all}
 @media print{
   body.printing-byeolji *{visibility:hidden}
   body.printing-byeolji #byeoljiSheet,body.printing-byeolji #byeoljiSheet *{visibility:visible}
+  body.printing-byeolji #byeoljiSheet.text-only img.byeolji-bg{visibility:hidden !important}
   body.printing-byeolji #byeoljiSheet{position:fixed;inset:0;width:210mm;height:297mm;max-width:none;border:none;box-shadow:none;margin:0}
 }
 

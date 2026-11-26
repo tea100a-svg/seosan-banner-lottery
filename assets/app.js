@@ -8586,9 +8586,37 @@
     $('#reportPreview').innerHTML = reportCoverHTML();
     renderByeoljiForm();
   }
+  function byeoljiOffsetLoad() {
+    try {
+      var raw = localStorage.getItem('sbl_byeolji_offset_v1');
+      if (raw) { var o = JSON.parse(raw); return { x: Number(o.x) || 0, y: Number(o.y) || 0, textOnly: !!o.textOnly }; }
+    } catch (e) {}
+    return { x: 0, y: 0, textOnly: false };
+  }
+  function byeoljiOffsetSave(o) {
+    try { localStorage.setItem('sbl_byeolji_offset_v1', JSON.stringify(o)); } catch (e) {}
+  }
   function renderByeoljiForm() {
     if (!has('byeoljiPreview')) return;
-    var wk = weekStartOf(reportDateOf());
+    if (!ui.byeoljiWeek) ui.byeoljiWeek = weekStartOf(addDays(ROUND.postStart, -7));
+    var wk = weekStartOf(ui.byeoljiWeek);
+    if ($('#byeoljiDatePick')) $('#byeoljiDatePick').value = wk;
+    if ($('#byeoljiWeekChips')) {
+      var bOpts = [
+        { v: addDays(ROUND.postStart, -14), t: weekKpiLabel(addDays(ROUND.postStart, -14)), tag: '-2주 ' },
+        { v: addDays(ROUND.postStart, -7), t: weekKpiLabel(addDays(ROUND.postStart, -7)), tag: '지난 주 · ' },
+        { v: ROUND.postStart, t: weekKpiLabel(ROUND.postStart), tag: '이번 주 · ' },
+        { v: addDays(ROUND.postStart, 7), t: weekKpiLabel(addDays(ROUND.postStart, 7)), tag: '+1주 ' }
+      ];
+      $('#byeoljiWeekChips').innerHTML = bOpts.map(function (o) {
+        return '<button class="chip' + (o.v === wk ? ' active' : '') + '" data-byeoljiweek="' + o.v + '" type="button">' +
+          o.tag + esc(o.t) + ' <span class="tc">' + weekRangeTxt(o.v) + '</span></button>';
+      }).join('');
+    }
+    var off = byeoljiOffsetLoad();
+    if ($('#byeoljiOffX')) $('#byeoljiOffX').value = off.x;
+    if ($('#byeoljiOffY')) $('#byeoljiOffY').value = off.y;
+    if ($('#byeoljiTextOnly')) $('#byeoljiTextOnly').checked = off.textOnly;
     var apps = db.apps.filter(function (a) {
       if (['반려', '미입고취소', '미입금취소', '본인취소', '접수취소', '낙첨'].indexOf(a.status) >= 0) return false;
       return weekStartOf(a.start || ROUND.postStart) === wk && awardedOf(a) > 0;
@@ -8605,9 +8633,9 @@
       if (apps.length && !apps.some(function (a) { return a.id === ui.byeoljiAppId; })) ui.byeoljiAppId = apps[0].id;
     }
     var target = apps.filter(function (a) { return a.id === ui.byeoljiAppId; })[0] || apps[0];
-    if ($('#byeoljiInfo')) $('#byeoljiInfo').textContent = target ? (target.company + ' · ' + awardedOf(target) + '매') : '배정 건 없음';
+    if ($('#byeoljiInfo')) $('#byeoljiInfo').textContent = weekRangeTxt(wk) + ' · ' + (target ? (target.company + ' · ' + awardedOf(target) + '매') : '배정 건 0건');
     if (!target) {
-      $('#byeoljiPreview').innerHTML = '<div class="photo-empty">선택한 주차에 배정된 접수 건이 없습니다. 표지 날짜를 바꿔 보세요.</div>';
+      $('#byeoljiPreview').innerHTML = '<div class="photo-empty">선택한 주차(' + esc(weekRangeTxt(wk)) + ')에 배정된 접수 건이 없습니다. 위 달력이나 빠른 주 버튼으로 다른 주를 선택해 보세요.</div>';
       return;
     }
     var m = (db.members || []).filter(function (x) { return x.company === target.company || x.id === target.memberId; })[0] || {};
@@ -8620,7 +8648,8 @@
       : '지정게시대';
     var st = weekStartOf(target.start || wk), ed = addDays(st, 6);
     var periodStr = Number(st.slice(5, 7)) + '/' + Number(st.slice(8, 10)) + ' ~ ' + Number(ed.slice(5, 7)) + '/' + Number(ed.slice(8, 10));
-    var y = reportDateOf().slice(0, 4), mo = reportDateOf().slice(5, 7), da = reportDateOf().slice(8, 10);
+    var todayD = simTodayISO();
+    var y = todayD.slice(0, 4), mo = todayD.slice(5, 7), da = todayD.slice(8, 10);
     var repName = m.rep || adv.name || target.company || '';
     var bizNo = m.bizNo || target.bizNo || '316-01-00000';
     var addr = m.addr || '충남 서산시';
@@ -8632,8 +8661,9 @@
       return '<div class="byeolji-field' + (cls ? (' ' + cls) : '') + '" style="top:' + top + '%;left:' + left + '%;width:' + w + '%">' + esc(txt) + '</div>';
     }
     $('#byeoljiPreview').innerHTML =
-      '<div class="byeolji-sheet" id="byeoljiSheet">' +
+      '<div class="byeolji-sheet' + (off.textOnly ? ' text-only' : '') + '" id="byeoljiSheet">' +
         '<img class="byeolji-bg" src="assets/form-byeolji1.jpg" alt="별지 제1호서식">' +
+        '<div class="byeolji-fields-layer" id="byeoljiFieldsLayer" style="transform:translate(' + off.x + 'mm,' + off.y + 'mm)">' +
         f(15.3, 33.5, 22, repName) +
         f(15.3, 73.5, 20, m.birth || '760605') +
         f(18.1, 33.5, 22, target.company || '') +
@@ -8665,6 +8695,7 @@
         f(76.8, 76.5, 4, da) +
         f(80.6, 54.0, 34, addr) +
         f(84.4, 54.0, 24, repName) +
+        '</div>' +
       '</div>';
   }
 
@@ -16973,7 +17004,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,[data-pffilter],[data-pffolder],[data-pfpick],#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-desigweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,[data-pffilter],[data-pffolder],[data-pfpick],#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-desigweek],[data-byeoljiweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-aikeybtn')) { e.stopPropagation(); e.preventDefault(); openAiVisionKeyModal(el.getAttribute('data-aikeybtn') || 'apply'); return; }
     if (el.hasAttribute('data-airetry')) {
@@ -17171,6 +17202,12 @@
       return;
     }
     if (el.hasAttribute('data-woweek')) { ui.woWeek = weekStartOf(el.getAttribute('data-woweek') || ROUND.postStart); renderWorkOrder(); return; }
+    if (el.hasAttribute('data-byeoljiweek')) {
+      ui.byeoljiWeek = el.getAttribute('data-byeoljiweek') || '';
+      ui.byeoljiAppId = '';
+      renderByeoljiForm();
+      return;
+    }
     if (el.hasAttribute('data-desigweek')) { ui.statusWeek = weekStartOf(el.getAttribute('data-desigweek') || ROUND.postStart); renderDesigBatch(); return; }
     if (el.hasAttribute('data-ptheme')) { ui.pTheme = el.getAttribute('data-ptheme') || ''; ui.pickPage = 0; renderPickUI(); return; }
     if (el.hasAttribute('data-fctheme')) { ui.fcTheme = el.getAttribute('data-fctheme') || ''; renderFirst(); return; }
@@ -17603,6 +17640,36 @@
         ui.reportDate = this.value || '';
         renderReportPanel();
         toast('신고 표지 날짜를 ' + reportDateOf() + ' 기준으로 다시 계산했습니다.');
+      });
+    }
+    if ($('#byeoljiDatePick')) {
+      onEl('#byeoljiDatePick', 'change', function () {
+        if (!this.value) return;
+        ui.byeoljiWeek = weekStartOf(this.value);
+        ui.byeoljiAppId = '';
+        renderByeoljiForm();
+      });
+    }
+    function applyByeoljiOff() {
+      var o = {
+        x: Number($('#byeoljiOffX') && $('#byeoljiOffX').value) || 0,
+        y: Number($('#byeoljiOffY') && $('#byeoljiOffY').value) || 0,
+        textOnly: !!($('#byeoljiTextOnly') && $('#byeoljiTextOnly').checked)
+      };
+      byeoljiOffsetSave(o);
+      if ($('#byeoljiFieldsLayer')) $('#byeoljiFieldsLayer').style.transform = 'translate(' + o.x + 'mm,' + o.y + 'mm)';
+      if ($('#byeoljiSheet')) $('#byeoljiSheet').classList.toggle('text-only', o.textOnly);
+    }
+    if ($('#byeoljiOffX')) onEl('#byeoljiOffX', 'input', applyByeoljiOff);
+    if ($('#byeoljiOffY')) onEl('#byeoljiOffY', 'input', applyByeoljiOff);
+    if ($('#byeoljiTextOnly')) onEl('#byeoljiTextOnly', 'change', applyByeoljiOff);
+    if ($('#btnByeoljiOffReset')) {
+      onEl('#btnByeoljiOffReset', 'click', function () {
+        if ($('#byeoljiOffX')) $('#byeoljiOffX').value = 0;
+        if ($('#byeoljiOffY')) $('#byeoljiOffY').value = 0;
+        if ($('#byeoljiTextOnly')) $('#byeoljiTextOnly').checked = false;
+        applyByeoljiOff();
+        toast('인쇄 위치 보정을 초기화했습니다.');
       });
     }
     if ($('#byeoljiCoSel')) {
