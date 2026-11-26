@@ -15434,11 +15434,11 @@
       '<rect x="18" y="14" width="1384" height="152" fill="' + inner + '" stroke="' + line + '" stroke-width="4"/>' +
       '<text x="710" y="84" font-size="44" text-anchor="middle" fill="' + fg + '" font-family="sans-serif">' + esc(meta.text) + '</text>' +
       '<text x="710" y="130" font-size="25" text-anchor="middle" fill="' + sub + '" font-family="sans-serif">문의 ' + esc(meta.phone) + ' · 7,100×900mm' + (t === 'black' || t === 'red' ? ' (바탕색 과다 주의)' : '') + '</text>' +
-      /* 왼쪽 하단 실명제 박스 — 정상 샘플에는 제작업체명·연락처를 그려 넣고, 누락 샘플(noname)은 비워 둔다 */
+      /* 왼쪽 하단 실명제 박스(200×125mm 비율) — 정상 샘플에는 제작업체명·연락처를 그려 넣고, 누락 샘플(noname)은 비워 둔다 */
       (noName ? '' :
-        '<rect x="40" y="112" width="330" height="56" fill="' + (t === 'normal' ? '#ffffff' : 'rgba(255,255,255,.14)') + '" stroke="' + (t === 'normal' ? '#006b35' : fg) + '" stroke-width="3"/>' +
-        '<text x="52" y="136" font-size="22" fill="' + (t === 'normal' ? '#0b2b52' : fg) + '" font-family="sans-serif">서산광고 041-662-0000</text>' +
-        '<text x="52" y="158" font-size="17" fill="' + (t === 'normal' ? '#4a5a74' : sub) + '" font-family="sans-serif">옥외광고업 등록 제2017-4530186호</text>') +
+        '<rect x="22" y="138" width="70" height="34" fill="' + (t === 'normal' ? '#ffffff' : 'rgba(255,255,255,.16)') + '" stroke="' + (t === 'normal' ? '#006b35' : fg) + '" stroke-width="2"/>' +
+        '<text x="27" y="152" font-size="9" font-weight="700" fill="' + (t === 'normal' ? '#0b2b52' : fg) + '" font-family="sans-serif">서산광고</text>' +
+        '<text x="27" y="164" font-size="8" fill="' + (t === 'normal' ? '#4a5a74' : sub) + '" font-family="sans-serif">662-0000</text>') +
       '</svg>';
   }
   /* 실명제 구역 확대 썸네일(샘플) — 표기 있음/없음 차이를 눈으로 확인 */
@@ -15469,15 +15469,15 @@
     if ((tone.black + tone.red) >= TONE_LIMIT) return '⬛🟥 검정·빨강 혼합바탕 주의';
     return '';
   }
-  /* 왼쪽 하단 실명제 표기 검사 결과 — 확인 문구 + 확대 썸네일 (2026-11-23 김재봉 님 지시) */
+  /* 왼쪽 하단 실명제 표기 검사 결과 — 우리 규격(7,100×900mm 중 좌측 하단 200×125mm) 기준 + 확대 썸네일 */
   function designNameNoteHTML(tone, id) {
     if (!tone || !tone.realname) return '';
     var r = tone.realname;
     var ok = !!r.ok;
     return '<div class="callout ' + (ok ? 'ok' : 'warn') + ' des-name" id="' + (id || 'designNameNote') + '">' +
-      '<div><b>' + (ok ? '✅ 좌측 하단 실명제 영역 표기 감지됨' : '⚠️ 왼쪽 하단 실명제(제작업체명·연락처) 표기 누락 의심') + '</b>' +
-      '<span class="sm" style="display:block;margin-top:3px">좌측 0~28% · 하단 72~100% 구역 검사 — 엣지 ' + r.edge + '% · 대비 ' + r.sd + '</span>' +
-      (tone.crop ? '<div class="des-crop"><img src="' + tone.crop + '" alt="왼쪽 하단 실명제 구역 확대"><span>🔍 실명제 구역 확대</span></div>' : '') +
+      '<div><b>' + (ok ? '✅ 좌측 하단 실명제 영역(200×125mm) 표기 감지됨' : '⚠️ 좌측 하단 실명제(200×125mm · 제작업체명·연락처) 표기 누락 의심') + '</b>' +
+      '<span class="sm" style="display:block;margin-top:3px">서산시 규격 기준(좌측 0~6.5% · 하단 76~100%) 검사 — 엣지 ' + r.edge + '% · 대비 ' + r.sd + '</span>' +
+      (tone.crop ? '<div class="des-crop"><img src="' + tone.crop + '" alt="좌측 하단 실명제 구역 확대"><span>🔍 실명제 구역(200×125mm) 확대</span></div>' : '') +
       '</div></div>';
   }
   function designToneNoteHTML(tone, id) {
@@ -15520,19 +15520,28 @@
             }
           }
           var tone = n ? { black: Math.round(bk * 100 / n), red: Math.round(rd * 100 / n) } : { black: 0, red: 0 };
-          /* 왼쪽 하단(좌 0~28% · 하 72~100%) 실명제 표기 검사 — 주변 대비 엣지 밀도 */
-          var x0 = 0, x1 = Math.max(6, Math.round(w * 0.28)), y0 = Math.round(h * 0.72), y1 = h;
+          /* 왼쪽 하단 실명제(7,100×900mm 기준 200×125mm = 좌측 0~6.5% · 하단 76~100%) 정밀 검사 */
+          var srcW = img.naturalWidth || img.width || 1420;
+          var srcH = img.naturalHeight || img.height || 180;
+          var rx0 = 0, ry0 = Math.round(srcH * 0.76);
+          var rcw = Math.max(12, Math.round(srcW * 0.065)), rch = Math.max(12, srcH - ry0);
+          var cvR = document.createElement('canvas');
+          var rw = 160, rh = Math.max(40, Math.round(160 * rch / rcw));
+          cvR.width = rw; cvR.height = rh;
+          var cxR = cvR.getContext('2d');
+          cxR.drawImage(img, rx0, ry0, rcw, rch, 0, 0, rw, rh);
+          var rdR = cxR.getImageData(0, 0, rw, rh).data;
           var lum = [], edge = 0, cnt = 0, mean = 0;
-          for (var yy = y0; yy < y1; yy++) {
-            for (var xx = x0; xx < x1; xx++) {
-              var p = (yy * w + xx) * 4;
-              if (d[p + 3] < 40) continue;
-              var lv = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
-              var pr = (xx > 0) ? (yy * w + (xx - 1)) * 4 : p;
-              var pu = (yy > 0) ? ((yy - 1) * w + xx) * 4 : p;
-              var lp = 0.299 * d[pr] + 0.587 * d[pr + 1] + 0.114 * d[pr + 2];
-              var lu = 0.299 * d[pu] + 0.587 * d[pu + 1] + 0.114 * d[pu + 2];
-              if (Math.abs(lv - lp) > 26 || Math.abs(lv - lu) > 26) edge++;
+          for (var yy = 0; yy < rh; yy++) {
+            for (var xx = 0; xx < rw; xx++) {
+              var p = (yy * rw + xx) * 4;
+              if (rdR[p + 3] < 40) continue;
+              var lv = 0.299 * rdR[p] + 0.587 * rdR[p + 1] + 0.114 * rdR[p + 2];
+              var pr = (xx > 0) ? (yy * rw + (xx - 1)) * 4 : p;
+              var pu = (yy > 0) ? ((yy - 1) * rw + xx) * 4 : p;
+              var lp = 0.299 * rdR[pr] + 0.587 * rdR[pr + 1] + 0.114 * rdR[pr + 2];
+              var lu = 0.299 * rdR[pu] + 0.587 * rdR[pu + 1] + 0.114 * rdR[pu + 2];
+              if (Math.abs(lv - lp) > 22 || Math.abs(lv - lu) > 22) edge++;
               lum.push(lv); mean += lv; cnt++;
             }
           }
@@ -15541,12 +15550,11 @@
           lum.forEach(function (v) { dev += (v - mean) * (v - mean); });
           var sd = cnt ? Math.sqrt(dev / cnt) : 0;
           var edgePct = cnt ? Math.round(edge * 100 / cnt) : 0;
-          tone.realname = { ok: (edgePct >= 6 || sd >= 26), edge: edgePct, sd: Math.round(sd), w: x1 - x0, h: y1 - y0 };
-          /* 크롭 썸네일(확대 확인용) */
+          tone.realname = { ok: (edgePct >= 5 || sd >= 22), edge: edgePct, sd: Math.round(sd), w: rcw, h: rch };
+          /* 크롭 썸네일(확대 확인용 — 실명제 200×125mm 비율 구역만 선명하게) */
           try {
-            var cw = Math.max(1, Math.round(img.width * 0.28)), chh = Math.max(1, Math.round(img.height * 0.28));
-            var cv2 = document.createElement('canvas'); cv2.width = cw; cv2.height = chh;
-            cv2.getContext('2d').drawImage(img, 0, Math.round(img.height * 0.72), cw, chh, 0, 0, cw, chh);
+            var cv2 = document.createElement('canvas'); cv2.width = Math.max(180, rcw); cv2.height = Math.max(90, Math.round(Math.max(180, rcw) * rch / rcw));
+            cv2.getContext('2d').drawImage(img, rx0, ry0, rcw, rch, 0, 0, cv2.width, cv2.height);
             tone.crop = cv2.toDataURL('image/png');
           } catch (e2) { tone.crop = ''; }
           if (cb) cb(tone);
