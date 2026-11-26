@@ -6,7 +6,7 @@
 <script>document.documentElement.setAttribute('data-device-view','pc');</script>
 <title>🏛️ 시청 신고 표지 | 협회 관리자 · 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261126r52">
+<link rel="stylesheet" href="assets/style.css?v=20261126r53">
 </head>
 <body data-page="admin-report">
 <div class="demo-banner">
@@ -96,8 +96,7 @@
   <a class="subtab" href="admin-draw.html" data-adminsub="draw" data-perm="draw">🎯 추첨 · 접수대장</a>
   <a class="subtab" href="admin-pay.html" data-adminsub="pay" data-perm="pay">💰 입금 확인</a>
   <a class="subtab" href="admin-deliver.html" data-adminsub="deliver" data-perm="deliver">📦 현수막 입고</a>
-  <a class="subtab on" href="admin-report.html" data-adminsub="report" data-perm="report">🏛️ 시청 신고 표지</a>
-  <a class="subtab" href="admin-desig.html" data-adminsub="desig" data-perm="desig">🖨️ 게시 지정서</a>
+  <a class="subtab on" href="admin-report.html" data-adminsub="report" data-perm="report">🏛️ 시청신고 · 지정서</a>
   <a class="subtab" href="admin-docs.html" data-adminsub="docs" data-perm="docs">📋 작업지시서</a>
   <a class="subtab" href="admin-loc.html" data-adminsub="loc" data-perm="loc">📍 게시위치</a>
   <a class="subtab" href="admin-photos.html" data-adminsub="photos" data-perm="photos">📸 게첨사진</a>
@@ -120,48 +119,75 @@
     </div>
 <div class="quick-nav" id="docsQuickNav" aria-label="관련 화면">
   <span class="qn-label">관련 화면</span>
-  <a class="btn sm ghost" href="admin-desig.html">🖨️ 게시 지정서</a>
   <a class="btn sm ghost" href="admin-docs.html">📋 작업지시서</a>
+  <a class="btn sm ghost" href="admin-deliver.html">📦 현수막 입고</a>
 </div>
-<div class="panel" id="reportPanel">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
-          🏛️ 시청 신고 표지 — 현수막 접수현황
-        </h3>
-        <span class="sub" id="reportInfo"></span>
+<details class="panel special-fold" id="reportPanel">
+      <summary class="sf-sum">
+        <span class="sf-left">
+          <h3>🏛️ 시청 신고 표지 — 현수막 접수현황</h3>
+          <span class="sub" id="reportInfo"></span>
+        </span>
+        <span class="sf-right"><span class="sf-arrow"></span></span>
+      </summary>
+      <div class="sf-body">
+        <div class="callout info" style="margin-bottom:10px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+          <div>시청에 제출할 <b>현수막 접수현황 표지</b>입니다. 업체별 건수·매수·수수료·세액·인지대·금액을 집계하고, <b>공문 건은 인지대 -</b>(면제·살구색)로 따로 모읍니다. <b>A4 세로 1장</b>으로 인쇄합니다.</div>
+        </div>
+        <div class="report-date-row">
+          <label for="reportDate"><b>표지 날짜</b></label>
+          <input class="input sm" type="date" id="reportDate" aria-label="신고 표지 기준 날짜">
+          <span class="chips" id="reportWeekChips" aria-label="게첨 주 빠른 선택"></span>
+          <span class="hint-txt" style="margin:0">고른 날짜가 속한 게첨 주의 배정 건으로 제목·집계가 즉시 다시 계산됩니다.</span>
+        </div>
+        <div class="off-actions" style="margin-bottom:10px">
+          <button class="btn primary" id="btnReportShow" type="button">미리보기</button>
+          <button class="btn" id="btnReportPrint2" type="button">A4 1장 인쇄</button>
+        </div>
+        <div class="report-preview" id="reportPreview"></div>
       </div>
-      <div class="callout info" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
-        <div>시청에 제출할 <b>현수막 접수현황 표지</b>입니다. 업체별 건수·매수·수수료·세액·인지대·금액을 집계하고, <b>공문 건은 인지대 -</b>(면제·살구색)로 따로 모읍니다. <b>A4 세로 1장</b>으로 인쇄합니다.</div>
+    </details>
+<details class="panel special-fold" id="byeoljiPanel" style="margin-top:12px">
+      <summary class="sf-sum">
+        <span class="sf-left">
+          <h3>📄 별지 제1호서식 — 옥외광고물등 표시 신청(신고)서 (빈칸 자동 채움)</h3>
+          <span class="sub" id="byeoljiInfo"></span>
+        </span>
+        <span class="sf-right"><span class="sf-arrow"></span></span>
+      </summary>
+      <div class="sf-body">
+        <div class="report-date-row">
+          <label for="byeoljiCoSel"><b>업체(접수) 선택</b></label>
+          <select class="input sm" id="byeoljiCoSel" style="min-width:240px"></select>
+          <button class="btn sm primary" id="btnByeoljiPrint" type="button">🖨️ 별지 제1호서식 A4 인쇄</button>
+        </div>
+        <div id="byeoljiPreview" style="margin-top:10px"></div>
       </div>
-      <div class="report-date-row">
-        <label for="reportDate"><b>표지 날짜</b></label>
-        <input class="input sm" type="date" id="reportDate" aria-label="신고 표지 기준 날짜">
-        <span class="chips" id="reportWeekChips" aria-label="게첨 주 빠른 선택"></span>
-        <span class="hint-txt" style="margin:0">고른 날짜가 속한 게첨 주의 배정 건으로 제목·집계가 즉시 다시 계산됩니다.</span>
+    </details>
+<details class="panel special-fold" id="desigBatchPanel" style="margin-top:12px">
+      <summary class="sf-sum">
+        <span class="sf-left">
+          <h3>🖨️ 게시 지정서 일괄 출력</h3>
+          <span class="sub" id="desigBatchInfo"></span>
+        </span>
+        <span class="sf-right"><span class="sf-arrow"></span></span>
+      </summary>
+      <div class="sf-body">
+        <div class="callout info" style="margin-bottom:10px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+          <div>이번 회차 <b>확정·배정 건 전체</b> 또는 <b>체크한 건</b>의 시청제출용 게시 지정서를 한 번에 인쇄합니다. <b>건마다 A4 1장</b>으로 페이지가 나뉘고, 60칸 2단 표·서명란 없음 규격은 단건 출력과 같습니다.</div>
+        </div>
+        <div class="bulkbar" style="margin-bottom:10px">
+          <span class="date-pick">
+            <label for="desigDatePick" class="sm"><b>📅 게첨 주</b></label>
+            <input class="input sm" type="date" id="desigDatePick" aria-label="게시 지정서 게첨 주 선택">
+            <span class="chips" id="desigWeekChips" aria-label="게첨 주 빠른 선택"></span>
+          </span>
+        </div>
+        <div id="desigBatchList"></div>
       </div>
-      <div class="off-actions" style="margin-bottom:10px">
-        <button class="btn primary" id="btnReportShow" type="button">미리보기</button>
-        <button class="btn" id="btnReportPrint2" type="button">A4 1장 인쇄</button>
-      </div>
-      <div class="report-preview" id="reportPreview"></div>
-    </div>
-<div class="panel" id="byeoljiPanel" style="margin-top:16px">
-      <div class="admin-head">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
-          📄 별지 제1호서식 — 빈칸 자동 채움 (서산시청 제출용)
-        </h3>
-        <span class="sub" id="byeoljiInfo"></span>
-      </div>
-      <div class="report-date-row">
-        <label for="byeoljiCoSel"><b>업체(접수) 선택</b></label>
-        <select class="input sm" id="byeoljiCoSel" style="min-width:240px"></select>
-        <button class="btn sm primary" id="btnByeoljiPrint" type="button">🖨️ 별지 제1호서식 A4 인쇄</button>
-      </div>
-      <div id="byeoljiPreview" style="margin-top:10px"></div>
-    </div>
+    </details>
 </section>
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
 </main>
@@ -200,6 +226,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261126r52"></script>
+<script src="assets/app.js?v=20261126r53"></script>
 </body>
 </html>
