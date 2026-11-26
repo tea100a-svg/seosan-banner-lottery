@@ -5101,6 +5101,9 @@
         db.notice.updatedAt = '2026-11-25 09:55';
         db.noticeHiddenOn = '';
       }
+      db.seedVersion = 11;
+      save();
+    }
     /* 시연 데이터 v12 (2026-11-26) — 마이페이지 지난 회차(11월 1·2·3주차) 시연 데이터 보강 */
     if (Number(db.seedVersion || 11) < 12) {
       var pastDemoApps = [
