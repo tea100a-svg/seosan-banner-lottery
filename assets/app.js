@@ -2038,7 +2038,7 @@
   var APPROVAL_TEAMS = [
     { k: 'event',     label: '행사승인팀',     icon: '🎪', defQuota: 5, defNeed: 3, minQuota: 1, maxQuota: 20, step: 'event',     page: 'admin-event.html' },
     { k: 'official',  label: '2주공문승인팀', icon: '📋', defQuota: 3, defNeed: 1, minQuota: 1, maxQuota: 20, step: 'official',  page: 'admin-official-review.html' },
-    { k: 'political', label: '정치행정승인팀', icon: '⚖️', defQuota: 3, defNeed: 1, minQuota: 1, maxQuota: 20, step: 'political', page: 'admin-political.html' },
+    { k: 'political', label: '정치행정승인팀', icon: '⚖️', defQuota: 3, defNeed: 1, minQuota: 1, maxQuota: 20, step: 'political', page: 'admin-official-review.html' },
     { k: 'bonus',     label: '가산점관리팀',   icon: '🎖', defQuota: 3, defNeed: 1, minQuota: 1, maxQuota: 20, step: '',          page: 'admin-members.html' }
   ];
   function teamMeta(k) {
@@ -2496,7 +2496,7 @@
         var done = (a.polApprovals || []).some(function (x) { return myMid && (x.memberId === myMid); });
         if (!done) polN += 1;
       });
-      if (polN) out.push({ key: 'political', page: 'admin-political.html', label: '정치행정 심사', n: polN });
+      if (polN) out.push({ key: 'political', page: 'admin-official-review.html', label: '2주공문·정치행정 심사', n: polN });
     }
     if (role === 'event') {
       var evN = 0;
@@ -16357,6 +16357,7 @@
     $$('#adminSub a[data-perm]').forEach(function (a) {
       var key = a.getAttribute('data-perm') || '';
       var show = total ? true : canSeePage(key);
+      if (key === 'officialreview') show = total ? true : (canSeePage('officialreview') || canSeePage('political'));
       if (key === 'roles' || key === 'members' || key === 'grades' || key === 'system') show = total;
       a.classList.toggle('hidden', !show);
       a.setAttribute('aria-hidden', show ? 'false' : 'true');
@@ -16371,6 +16372,7 @@
     var isMasterOnlyPage = (PAGE === 'admin-roles' || PAGE === 'admin-members' || PAGE === 'admin-grades' || PAGE === 'admin-system');
     var denied = false;
     if (isMasterOnlyPage) denied = !isTotalManager();
+    else if (PAGE === 'admin-official-review') denied = !(canSeePage('officialreview') || canSeePage('political'));
     else if (key) denied = !canSeePage(key);
     if (!denied) {
       var lk0 = $('#permLockBox'); if (lk0) lk0.remove();

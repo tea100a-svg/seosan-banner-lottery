@@ -6,7 +6,7 @@
 <script>document.documentElement.setAttribute('data-device-view','pc');</script>
 <title>협회 관리자 · 📋 2주 공문 심사 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261126r43">
+<link rel="stylesheet" href="assets/style.css?v=20261126r44">
 </head>
 <body data-page="admin-official-review">
 <div class="demo-banner">
@@ -92,8 +92,7 @@
 <div class="subtabs" id="adminSub">
   <a class="subtab" href="admin-review.html" data-adminsub="review" data-perm="review">🔍 시안 심사</a>
   <a class="subtab" href="admin-official.html" data-adminsub="official" data-perm="official">📄 공문 접수</a>
-  <a class="subtab on" href="admin-official-review.html" data-adminsub="officialreview" data-perm="officialreview">📋 2주 공문 심사</a>
-  <a class="subtab" href="admin-political.html" data-adminsub="political" data-perm="political">⚖️ 정치행정 심사</a>
+  <a class="subtab on" href="admin-official-review.html" data-adminsub="officialreview" data-perm="officialreview">📋 2주공문·정치행정 심사</a>
   <a class="subtab" href="admin-event.html" data-adminsub="event" data-perm="event">🎪 행사 심사</a>
   <a class="subtab" href="admin-draw.html" data-adminsub="draw" data-perm="draw">🎯 추첨 · 접수대장</a>
   <a class="subtab" href="admin-pay.html" data-adminsub="pay" data-perm="pay">💰 입금 확인</a>
@@ -108,14 +107,14 @@
 </div>
   <div class="view-head">
     <div>
-      <h2>📋 2주 공문 심사</h2>
-      <p>2주(14일) 이상 공문과 <b>40% 상한 초과 예외</b> 공문의 전자결재 전용 화면입니다. <b>2주공문승인팀</b>이 결재하며, 결재권자 부재 시 <b>사무실무원·현장실무원이 대리 결재(승인·반려 포함)</b>할 수 있습니다. (1주 공문은 등록 즉시 확정)</p>
+      <h2>📋 2주공문 · 정치행정 심사</h2>
+      <p><b>2주(14일) 이상·40% 초과 공문</b>과 <b>정치행정 현수막(3단 배정)</b> 전자결재를 한 화면에서 처리합니다. 각 승인팀이 결재하며, 결재권자 부재 시 <b>사무실무원·현장실무원이 대리 결재(승인·반려 포함)</b>할 수 있습니다.</p>
     </div>
     <span class="badge b-amber" id="offReviewBadge"><i></i>결재 대기</span>
   </div>
   <div class="panel" id="offReviewPanel">
     <div class="admin-head">
-      <h3>📋 2주 공문 심사 · 결재</h3>
+      <h3>📋 2주 공문 심사 · 결재 (2주공문승인팀)</h3>
       <span class="sub" id="offReviewInfo"></span>
     </div>
     <div class="role-bar" id="offReviewAccessBar" style="margin-bottom:12px">
@@ -126,6 +125,16 @@
       <div>2주 공문은 <b>이 페이지에서 결재</b>해야 확정됩니다. 접수·자동추출·배정은 <a href="admin-official.html">📄 공문 접수</a>에서 합니다.</div>
     </div>
     <div class="table-wrap" id="offReviewList"></div>
+  </div>
+  <div class="panel" id="polPanel">
+    <div class="admin-head">
+      <h3>⚖️ 정치행정 현수막 심사 · 결재 (정치행정승인팀)</h3>
+      <span class="sub" id="polInfo"></span>
+    </div>
+    <div class="callout info" style="margin-bottom:10px">
+      <div>정치행정 현수막은 <b>3단(3열)</b>에만 배정되고, <b>정치행정승인팀</b>이 결재합니다. 결재권자 부재 시 <b>사무실무원·현장실무원이 대리 결재(승인·반려 포함)</b>할 수 있습니다.</div>
+    </div>
+    <div id="polList"></div>
   </div>
 </section>
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
@@ -165,6 +174,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261126r43"></script>
+<script src="assets/app.js?v=20261126r44"></script>
 </body>
 </html>
