@@ -10525,17 +10525,28 @@
           '<span class="pn">' + esc(String(m.company).charAt(0)) + '</span>' +
           '<span><b>' + esc(m.company) + '</b><small>' + esc(memberTypeLabel(m)) + ' · ' + esc(m.owner) + ' · ' + esc(m.loginId) + ' / ' + esc(m.pw) + '</small></span></button>';
       }).join('') + '</div>' +
-      /* 시연용 — 마스터 + 3개 승인팀 원클릭 바로 로그인 */
-      '<div class="sect-label" style="margin-top:10px">🛠️ 시연용 관리자·승인팀 바로 로그인 <span>마스터 + 3개 팀 · 누르면 즉시 권한 적용</span></div>' +
+      /* 시연용 — 마스터 + 임명된 개인별 원클릭 바로 로그인 */
+      '<div class="sect-label" style="margin-top:10px">🛠️ 시연용 관리자·결재자 개인별 바로 로그인 <span>개인 단위 · 누르면 즉시 해당 권한 적용</span></div>' +
       '<div class="role-login-grid">' +
-      ['super', 'event', 'official', 'political'].map(function (k) {
-        var meta = officerRoleMeta(k);
-        var label = meta.label;
-        var off = roleLoginOfficer(k);
-        return '<button class="preset rl" type="button" data-rolelogin="' + esc(k) + '" title="' + esc(label) + '로 바로 로그인">' +
-          '<span class="pn">' + (k === 'super' ? '★' : (meta.icon || '·')) + '</span>' +
-          '<span><b>' + esc(label) + '</b><small>' + esc(k === 'super' ? '정원·승인수치·목록 임명' : ((off ? off.name : '미임명') + (off && off.company ? ' · ' + off.company : ''))) + '</small></span></button>';
-      }).join('') + '</div>' +
+      (function () {
+        var btns = ['<button class="preset rl" type="button" data-rolelogin="super" title="마스터로 바로 로그인">' +
+          '<span class="pn">★</span><span><b>마스터</b><small>정원·승인수치·목록 임명</small></span></button>'];
+        APPROVAL_TEAMS.forEach(function (t) {
+          var mems = officersOfRole(t.k);
+          mems.forEach(function (m) {
+            var ov = 'team:' + t.k + ':' + m.memberId;
+            btns.push('<button class="preset rl" type="button" data-rolelogin="' + esc(ov) + '" title="' + esc(m.name + ' (' + t.label + ')로 바로 로그인') + '">' +
+              '<span class="pn">' + esc(t.icon || '·') + '</span>' +
+              '<span><b>' + esc(m.name) + '</b><small>' + esc(t.label + (m.company ? ' · ' + m.company : '')) + '</small></span></button>');
+          });
+        });
+        PROXY_ROLES.forEach(function (pr) {
+          btns.push('<button class="preset rl" type="button" data-rolelogin="' + esc(pr.k) + '" title="' + esc(pr.label + '로 바로 로그인') + '">' +
+            '<span class="pn">' + esc(pr.icon || '·') + '</span>' +
+            '<span><b>' + esc(pr.label) + '</b><small>전 단계 대리결재</small></span></button>');
+        });
+        return btns.join('');
+      })() + '</div>' +
       '<div class="auth-sep">또는 아이디로 로그인</div>' +
       '<div class="field-row">' +
       '<div class="field" style="margin-bottom:8px"><label for="loginId">아이디</label><input class="input" id="loginId" placeholder="예) hatsal" maxlength="20" autocomplete="username"></div>' +
@@ -10552,8 +10563,21 @@
     return list.length ? list[0] : null;
   }
   function roleLogin(k) {
-    var key = (String(k) === 'super') ? 'super' : officerRoleMeta(String(k)).k;
-    var off = (key === 'super') ? null : roleLoginOfficer(key);
+    var raw = String(k || '');
+    var p = parseAccessSel(raw);
+    var key = (raw === 'super') ? 'super' : p.role;
+    var off = null;
+    if (key !== 'super') {
+      if (p.memberId) {
+        var list = officersOfRole(key);
+        for (var i = 0; i < list.length; i++) {
+          if (list[i] && list[i].memberId === p.memberId) { off = list[i]; break; }
+        }
+      }
+      if (!off && !isProxyRole(key)) off = roleLoginOfficer(key);
+    }
+    ui.roleLoginPriority = false;
+    try { localStorage.removeItem(ROLE_PRI_KEY); } catch (e) { }
     ui.adminRole = (key === 'super') ? 'super' : (off ? ('team:' + key + ':' + off.memberId) : key);
     try { localStorage.setItem(OFFICER_KEY, ui.adminRole); } catch (e) { }
     var mem = (off && off.memberId) ? memberById(off.memberId) : null;
@@ -10567,7 +10591,7 @@
     try { renderAdmin(); } catch (e) { }
     ui.approvalPopupShownFor = '';
     setTimeout(function () { maybeShowApprovalPopup(true); }, 350);
-    toast((key === 'super' ? '마스터' : (off ? off.name + ' ' + officerRoleMeta(key).label : officerRoleMeta(key).label)) + '(으)로 바로 로그인했습니다.');
+    toast((key === 'super' ? '마스터' : (off ? off.name + ' (' + officerRoleMeta(key).label + ')' : officerRoleMeta(key).label)) + '(으)로 바로 로그인했습니다.');
     return { role: key, member: mem ? mem.company : '', pending: pendingApprovalsFor() };
   }
   function openAuth(tab) {
