@@ -15103,40 +15103,145 @@
   }
 
   function parseOcrTextForBanner(rawText) {
-    var out = { advertiser: '', phone: '', text: '' };
+    var out = { advertiser: '', phone: '', text: '', score: 0 };
     var txt = String(rawText || '').replace(/\r/g, '\n');
     if (!txt.trim()) return out;
     /* 전화번호 추출: 010/041 등 전체 번호 또는 T.688-8899 형태 */
     var mFull = txt.match(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/);
     if (mFull) {
       out.phone = formatDesignPhone(mFull[0]);
+      out.score += 20;
     } else {
       var mLocal = txt.match(/(?:T|TEL|문의|전화)?[.\s:]*([2-9]\d{2})[.\-\s]+(\d{4})/i);
-      if (mLocal) out.phone = '041-' + mLocal[1] + '-' + mLocal[2];
+      if (mLocal) {
+        out.phone = '041-' + mLocal[1] + '-' + mLocal[2];
+        out.score += 15;
+      }
     }
-    /* 줄 정리 — 2글자 이상 의미 있는 한글/영문/숫자 줄 */
-    var lines = txt.split('\n').map(function (l) {
-      return l.replace(/[|_~`^*=<>\\[\]{}]/g, ' ').replace(/\s+/g, ' ').trim();
-    }).filter(function (l) {
-      return l.length >= 2 && /[가-힣A-Za-z0-9]{2,}/.test(l);
+    /* 자모 낱자·특수기호 노이즈 제거 후 의미 있는 토큰만 추출 */
+    var cleanedRaw = txt
+      .replace(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/g, ' ')
+      .replace(/[ㄱ-ㅎㅏ-ㅣ]/g, ' ')
+      .replace(/[|_~`^*=<>\\[\]{};:'",.?/!@#$%&()+]/g, ' ');
+    var tokens = cleanedRaw.split(/\s+/).map(function (w) { return w.trim(); }).filter(function (w) {
+      if (!w) return false;
+      /* 2글자 이상 완성형 한글 포함 어절 우선 */
+      if (/[가-힣]{2,}/.test(w)) {
+        /* 앞뒤에 붙은 1글자 영문/숫자 찌꺼기 정리 */
+        var koOnly = w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '');
+        return /[가-힣]{2,}/.test(koOnly);
+      }
+      /* 숫자+한글/단위 (예: 100%, 24시, 11월, 30일, 50%) */
+      if (/^\d+[가-힣%]+$/.test(w)) return true;
+      /* 3글자 이상 영문 단어 (단, 자음/모음 없는 무작위 잡음 제외) */
+      if (/^[A-Za-z]{3,14}$/.test(w) && /[aeiouAEIOU]/.test(w)) return true;
+      return false;
+    }).map(function (w) {
+      return /[가-힣]{2,}/.test(w) ? w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '') : w;
     });
-    if (lines.length) {
-      var joined = lines.join(' ').replace(/\s+/g, ' ').trim();
-      out.text = joined.slice(0, 40);
+    /* 연속 중복 토큰 제거 */
+    var uniq = [];
+    tokens.forEach(function (w) {
+      if (!uniq.length || uniq[uniq.length - 1] !== w) uniq.push(w);
+    });
+    var koCount = uniq.filter(function (w) { return /[가-힣]{2,}/.test(w); }).length;
+    out.score += koCount * 10;
+    if (uniq.length && koCount >= 1) {
+      out.text = uniq.join(' ').replace(/\s+/g, ' ').trim().slice(0, 40);
       /* 광고주 후보: 상호 키워드 포함 어절 우선 */
+      var joined = uniq.join(' ');
       var bizRe = /[가-힣A-Za-z0-9]{2,14}(?:어린이집|유치원|초등학교|고등학교|학원|교육원|필라테스|코딩|아카데미|노래클럽|노래방|피부샵|피부과|한의원|병원|약국|식당|가든|버섯|양꼬치|박가네|미다움|알레르망|변호사|공인중개사|부동산|마트|청과|농원|타이어|분식|코팅|청소|미술관|광고)/;
       var mBiz = joined.match(bizRe);
       if (mBiz) {
         out.advertiser = mBiz[0];
+        out.score += 15;
       } else {
-        /* 키워드가 없으면 전화번호를 뺀 가장 짧은 핵심 단어 */
-        var tokens = joined.replace(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/g, '').split(/\s+/).filter(function (w) {
-          return w.length >= 2 && w.length <= 12 && /[가-힣A-Za-z]/.test(w);
-        });
-        if (tokens.length) out.advertiser = tokens[0];
+        var advCand = uniq.filter(function (w) { return /[가-힣]{2,}/.test(w) && w.length >= 2 && w.length <= 12; });
+        if (advCand.length) out.advertiser = advCand[0];
       }
     }
     return out;
+  }
+
+  function preprocessBannerCanvases(dataUrl) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var iw = img.naturalWidth || img.width || 800;
+          var ih = img.naturalHeight || img.height || 200;
+          var scale = ih < 420 ? Math.min(2.6, 460 / ih) : 1;
+          if (iw * scale > 2600) scale = 2600 / iw;
+          var w = Math.max(200, Math.round(iw * scale));
+          var h = Math.max(80, Math.round(ih * scale));
+          var pad = 24;
+          var cw = w + pad * 2, ch = h + pad * 2;
+          var c1 = document.createElement('canvas');
+          c1.width = cw; c1.height = ch;
+          var ctx1 = c1.getContext('2d');
+          ctx1.fillStyle = '#ffffff';
+          ctx1.fillRect(0, 0, cw, ch);
+          ctx1.drawImage(img, pad, pad, w, h);
+          var imgData = ctx1.getImageData(0, 0, cw, ch);
+          var d = imgData.data;
+          /* Otsu 임계값 계산 (원본 영역 기준) */
+          var hist = new Array(256);
+          for (var k = 0; k < 256; k++) hist[k] = 0;
+          var total = 0;
+          for (var y = pad; y < pad + h; y++) {
+            for (var x = pad; x < pad + w; x++) {
+              var idx = (y * cw + x) * 4;
+              var lum = Math.round(0.299 * d[idx] + 0.587 * d[idx + 1] + 0.114 * d[idx + 2]);
+              hist[lum]++; total++;
+            }
+          }
+          var sum = 0;
+          for (var t = 0; t < 256; t++) sum += t * hist[t];
+          var sumB = 0, wB = 0, varMax = 0, thresh = 128;
+          for (var t2 = 0; t2 < 256; t2++) {
+            wB += hist[t2];
+            if (wB === 0) continue;
+            var wF = total - wB;
+            if (wF === 0) break;
+            sumB += t2 * hist[t2];
+            var mB = sumB / wB, mF = (sum - sumB) / wF;
+            var vb = wB * wF * (mB - mF) * (mB - mF);
+            if (vb > varMax) { varMax = vb; thresh = t2; }
+          }
+          /* Pass 1: 일반 이진화 (밝은 바탕 / 어두운 글씨) */
+          var cNorm = document.createElement('canvas');
+          cNorm.width = cw; cNorm.height = ch;
+          var ctxN = cNorm.getContext('2d');
+          var dN = ctxN.createImageData(cw, ch);
+          /* Pass 2: 반전 이진화 (어두운/컬러 바탕 / 밝은 글씨) */
+          var cInv = document.createElement('canvas');
+          cInv.width = cw; cInv.height = ch;
+          var ctxI = cInv.getContext('2d');
+          var dI = ctxI.createImageData(cw, ch);
+          for (var i = 0; i < d.length; i += 4) {
+            var px = (i / 4) % cw, py = Math.floor((i / 4) / cw);
+            var inBox = (px >= pad && px < pad + w && py >= pad && py < pad + h);
+            if (!inBox) {
+              dN.data[i] = dN.data[i + 1] = dN.data[i + 2] = 255; dN.data[i + 3] = 255;
+              dI.data[i] = dI.data[i + 1] = dI.data[i + 2] = 255; dI.data[i + 3] = 255;
+              continue;
+            }
+            var g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            var vN = g >= thresh ? 255 : 0;
+            var vI = g >= thresh ? 0 : 255;
+            dN.data[i] = dN.data[i + 1] = dN.data[i + 2] = vN; dN.data[i + 3] = 255;
+            dI.data[i] = dI.data[i + 1] = dI.data[i + 2] = vI; dI.data[i + 3] = 255;
+          }
+          ctxN.putImageData(dN, 0, 0);
+          ctxI.putImageData(dI, 0, 0);
+          resolve([cNorm, cInv]);
+        } catch (e) {
+          resolve([dataUrl]);
+        }
+      };
+      img.onerror = function () { resolve([dataUrl]); };
+      img.src = dataUrl;
+    });
   }
 
   function runDesignOcr(scope, fileName, dataUrl) {
@@ -15150,11 +15255,26 @@
     if (isFc) { ui.fcDesignExtracted = cur; renderFcFilePreview(); }
     else { ui.designExtracted = cur; renderFilePreview(); }
 
-    loadTesseract().then(function (Tess) {
-      return Tess.recognize(url, 'kor+eng');
-    }).then(function (res) {
-      var text = res && res.data ? res.data.text : '';
-      var ocr = parseOcrTextForBanner(text);
+    Promise.all([loadTesseract(), preprocessBannerCanvases(url)]).then(function (pair) {
+      var Tess = pair[0], canvases = pair[1];
+      return Promise.all(canvases.map(function (c) {
+        return Tess.recognize(c, 'kor+eng').then(function (res) {
+          var t = res && res.data ? res.data.text : '';
+          var p = parseOcrTextForBanner(t);
+          var conf = (res && res.data && typeof res.data.confidence === 'number') ? res.data.confidence : 0;
+          p.score += Math.round(conf * 0.2);
+          return p;
+        }).catch(function () { return { advertiser: '', phone: '', text: '', score: 0 }; });
+      }));
+    }).then(function (results) {
+      results.sort(function (a, b) { return b.score - a.score; });
+      var best = results[0] || { advertiser: '', phone: '', text: '' };
+      var backup = results[1] || { advertiser: '', phone: '', text: '' };
+      var ocr = {
+        advertiser: best.advertiser || backup.advertiser || '',
+        phone: best.phone || backup.phone || '',
+        text: best.text || backup.text || ''
+      };
       var latest = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || {};
       var merged = {
         advertiser: latest.advertiser || ocr.advertiser || '',
