@@ -2399,17 +2399,18 @@
     var acc = isProxyRole ? { memberId: roleNow, name: proxyStaffLabel() } : accessOfficer();
     if (!acc || !acc.memberId) { toast('임명된 정치행정승인팀 팀원으로 전환해 주세요.', true); return null; }
     var isPhoneProxy = isProxyRole || !!phoneNote;
-    var targetMem = (isPhoneProxy && who) ? memberById(who) : null;
+    var targetMem = (isPhoneProxy && who) ? (officersOfRole('political').filter(function (m) { return m.memberId === who; })[0] || memberById(who)) : null;
+    var targetName = targetMem ? (targetMem.name || targetMem.rep || targetMem.company || '') : '';
     a.polApprovals = a.polApprovals || [];
-    var actorKey = isPhoneProxy ? (targetMem ? targetMem.id : ('proxy_' + acc.memberId + '_' + (a.polApprovals.length + 1))) : acc.memberId;
+    var actorKey = isPhoneProxy ? (targetMem ? (targetMem.memberId || targetMem.id) : ('proxy_' + acc.memberId + '_' + (a.polApprovals.length + 1))) : acc.memberId;
     var dup = a.polApprovals.some(function (x) { return (x.memberId || x.k) === actorKey; });
-    if (dup) { toast((targetMem ? targetMem.name : actor.name) + ' 님 몫은 이미 승인되었습니다. 다른 팀원 몫을 선택해 주세요.', true); return null; }
-    var recName = isPhoneProxy ? (targetMem ? (targetMem.name + ' (' + proxyStaffLabel() + ' 대리)') : (actor.name + '·유선대리')) : actor.name;
+    if (dup) { toast((targetName || actor.name) + ' 님 몫은 이미 승인되었습니다. 다른 팀원 몫을 선택해 주세요.', true); return null; }
+    var recName = isPhoneProxy ? (targetName ? (targetName + '·' + proxyStaffLabel() + '대리') : (actor.name + '·유선대리')) : actor.name;
     a.polApprovals.push({
       k: 'political', memberId: actorKey, by: actor.label, byName: recName, at: nowStamp(),
-      phoneProxy: isPhoneProxy, phoneTarget: isPhoneProxy ? (targetMem ? targetMem.name : '부재 팀원') : '', phoneNote: isPhoneProxy ? String(phoneNote) : ''
+      phoneProxy: isPhoneProxy, phoneTarget: isPhoneProxy ? (targetName || '부재 팀원') : '', phoneNote: isPhoneProxy ? String(phoneNote) : ''
     });
-    var viaTxt = isPhoneProxy ? (' [대리결재: ' + (targetMem ? (targetMem.name + ' 몫 · ') : '') + phoneNote + ']') : '';
+    var viaTxt = isPhoneProxy ? (' [대리결재: ' + (targetName ? (targetName + ' 몫 · ') : '') + phoneNote + ']') : '';
     var need = polNeedCount();
     if (polDoneCount(a) >= need) {
       a.status = '추첨대기';
@@ -2428,13 +2429,14 @@
     var a = findApp(id);
     if (!a || !a.polApp || a.status !== '정치심사중') { toast('정치행정 심사 대기 중인 건이 아닙니다.', true); return null; }
     var isProxy = isProxyStaffNow() || !!phoneNote;
-    var targetMem = (isProxy && who) ? memberById(who) : null;
-    var recName = isProxy ? (targetMem ? (targetMem.name + ' (' + proxyStaffLabel() + ' 대리반려)') : (proxyStaffLabel() + '·대리반려')) : (accessDisplay().name || '정치행정승인팀');
+    var targetMem = (isProxy && who) ? (officersOfRole('political').filter(function (m) { return m.memberId === who; })[0] || memberById(who)) : null;
+    var targetName = targetMem ? (targetMem.name || targetMem.rep || targetMem.company || '') : '';
+    var recName = isProxy ? (targetName ? (targetName + '·' + proxyStaffLabel() + '대리반려') : (proxyStaffLabel() + '·대리반려')) : (accessDisplay().name || '정치행정승인팀');
     a.polApprovals = a.polApprovals || [];
-    a.polApprovals.push({ k: 'political_reject', memberId: targetMem ? targetMem.id : '', label: '대리 반려', by: recName, byName: recName, at: nowStamp(), phoneProxy: isProxy, phoneTarget: targetMem ? targetMem.name : '', phoneNote: String(phoneNote || '') });
+    a.polApprovals.push({ k: 'political_reject', memberId: targetMem ? (targetMem.memberId || targetMem.id) : '', label: '대리 반려', by: recName, byName: recName, at: nowStamp(), phoneProxy: isProxy, phoneTarget: targetName, phoneNote: String(phoneNote || '') });
     a.polStatus = '반려';
     a.status = '반려';
-    a.rejectReason = phoneNote ? ('대리 결재 반려' + (targetMem ? '(' + targetMem.name + ' 몫)' : '') + ': ' + phoneNote) : '정치행정 심사 반려';
+    a.rejectReason = phoneNote ? ('대리 결재 반려' + (targetName ? '(' + targetName + ' 몫)' : '') + ': ' + phoneNote) : '정치행정 심사 반려';
     audit('정치행정', a.id + ' ' + a.company + ' — ' + recName + ' 반려' + (phoneNote ? ' [' + phoneNote + ']' : ''));
     save(); renderAdmin(); renderMypage();
     toast(a.company + ' 정치행정 심사를 ' + (isProxy ? '대리 ' : '') + '반려 처리했습니다.');
@@ -2445,10 +2447,11 @@
     (db.official || []).forEach(function (x) { if (x.id === id) o = x; });
     if (!o || o.status !== 'pending') { toast('결재 대기 중인 공문이 아닙니다.', true); return null; }
     var isProxy = isProxyStaffNow() || !!phoneNote;
-    var targetMem = (isProxy && who) ? memberById(who) : null;
-    var byName = isProxy ? (targetMem ? (targetMem.name + ' (' + proxyStaffLabel() + ' 대리반려)') : (proxyStaffLabel() + '·대리반려')) : (accessDisplay().name || '2주공문승인팀');
+    var targetMem = (isProxy && who) ? (officersOfRole('official').filter(function (m) { return m.memberId === who; })[0] || memberById(who)) : null;
+    var targetName = targetMem ? (targetMem.name || targetMem.rep || targetMem.company || '') : '';
+    var byName = isProxy ? (targetName ? (targetName + '·' + proxyStaffLabel() + '대리반려') : (proxyStaffLabel() + '·대리반려')) : (accessDisplay().name || '2주공문승인팀');
     o.approvals = o.approvals || [];
-    o.approvals.push({ k: 'official_reject', memberId: targetMem ? targetMem.id : '', label: '대리 반려', by: byName, byName: byName, at: nowStamp(), phoneProxy: isProxy, phoneTarget: targetMem ? targetMem.name : '', phoneNote: String(phoneNote || '') });
+    o.approvals.push({ k: 'official_reject', memberId: targetMem ? (targetMem.memberId || targetMem.id) : '', label: '대리 반려', by: byName, byName: byName, at: nowStamp(), phoneProxy: isProxy, phoneTarget: targetName, phoneNote: String(phoneNote || '') });
     o.status = 'rejected';
     o.rejectedAt = nowStamp();
     audit('공문 결재', o.id + ' ' + o.org + ' — ' + byName + ' 반려' + (phoneNote ? ' [' + phoneNote + ']' : ''));
@@ -11994,21 +11997,22 @@
       return null;
     }
     var isPhoneProxy = isProxyRole || !!phoneNote;
-    var targetMem = (isPhoneProxy && who) ? memberById(who) : null;
+    var targetMem = (isPhoneProxy && who) ? (officersOfRole('official').filter(function (m) { return m.memberId === who; })[0] || memberById(who)) : null;
+    var targetName = targetMem ? (targetMem.name || targetMem.rep || targetMem.company || '') : '';
     o.approvals = o.approvals || [];
-    var actorKey = isPhoneProxy ? (targetMem ? targetMem.id : ('proxy_' + officer.memberId + '_' + (o.approvals.length + 1))) : officer.memberId;
+    var actorKey = isPhoneProxy ? (targetMem ? (targetMem.memberId || targetMem.id) : ('proxy_' + officer.memberId + '_' + (o.approvals.length + 1))) : officer.memberId;
     var dup = o.approvals.some(function (x) { return (x.memberId || x.k) === actorKey; });
     if (dup) {
-      toast((targetMem ? targetMem.name : actor.name) + ' 님 몫은 이미 승인되었습니다. 다른 팀원 몫을 선택해 주세요.', true);
+      toast((targetName || actor.name) + ' 님 몫은 이미 승인되었습니다. 다른 팀원 몫을 선택해 주세요.', true);
       return null;
     }
-    var byName = isPhoneProxy ? (targetMem ? (targetMem.name + ' (' + proxyStaffLabel() + ' 대리)') : (officer.name + '·유선대리')) : officer.name;
+    var byName = isPhoneProxy ? (targetName ? (targetName + '·' + proxyStaffLabel() + '대리') : (officer.name + '·유선대리')) : officer.name;
     o.approvals.push({
       k: 'official', memberId: actorKey, label: '2주공문승인팀 승인', by: actor.label, byName: byName,
       byRole: actor.label, at: nowStamp(),
-      phoneProxy: isPhoneProxy, phoneTarget: targetMem ? targetMem.name : '', phoneNote: isPhoneProxy ? String(phoneNote) : ''
+      phoneProxy: isPhoneProxy, phoneTarget: targetName, phoneNote: isPhoneProxy ? String(phoneNote) : ''
     });
-    var viaTxt = isPhoneProxy ? (' [대리결재: ' + (targetMem ? (targetMem.name + ' 몫 · ') : '') + phoneNote + ']') : '';
+    var viaTxt = isPhoneProxy ? (' [대리결재: ' + (targetName ? (targetName + ' 몫 · ') : '') + phoneNote + ']') : '';
     var need = teamNeedOf('official');
     var doneN = officialDoneCount(o);
     if (doneN >= need) {
