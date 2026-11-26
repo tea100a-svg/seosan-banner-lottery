@@ -2842,6 +2842,7 @@
   }
   function renderAdminRoleBar() {
     ensureTopRoleBar();
+    syncMasterTab();
     if (!has('adminRoleSel')) return;
     var priChk = $('#adminRoleLoginPri'), priWrap = $('#adminRolePriWrap');
     if (priChk) priChk.checked = !!ui.roleLoginPriority;
@@ -16341,15 +16342,22 @@
       '<th>구분</th><th>성명 · 업체 · 아이디</th><th>승인팀 임명 / 해제 (중복 임명 가능)</th>' +
       '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
+  function syncMasterTab() {
+    var mt = $('#masterTab');
+    if (!mt) return;
+    var show = isTotalManager();
+    mt.classList.toggle('hidden', !show);
+    mt.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
   /* 서브탭 — 권한 없는 탭은 아예 렌더하지 않는다 */
   function applySubtabPerms() {
+    syncMasterTab();
     var total = isTotalManager();
     var appointer = canAppointNow();
     $$('#adminSub a[data-perm]').forEach(function (a) {
       var key = a.getAttribute('data-perm') || '';
       var show = total ? true : canSeePage(key);
-      if (key === 'roles') show = total || appointer;
-      if (key === 'grades') show = total;
+      if (key === 'roles' || key === 'members' || key === 'grades' || key === 'system') show = total;
       a.classList.toggle('hidden', !show);
       a.setAttribute('aria-hidden', show ? 'false' : 'true');
       if (!show && a.classList.contains('on')) a.classList.remove('on');
@@ -16360,9 +16368,9 @@
     if (!isAdminPage()) return true;
     var key = '';
     PERM_PAGES.forEach(function (p) { if (p.page === PAGE) key = p.k; });
+    var isMasterOnlyPage = (PAGE === 'admin-roles' || PAGE === 'admin-members' || PAGE === 'admin-grades' || PAGE === 'admin-system');
     var denied = false;
-    if (PAGE === 'admin-roles') denied = !(isTotalManager() || canAppointNow());
-    else if (PAGE === 'admin-grades') denied = !isTotalManager();
+    if (isMasterOnlyPage) denied = !isTotalManager();
     else if (key) denied = !canSeePage(key);
     if (!denied) {
       var lk0 = $('#permLockBox'); if (lk0) lk0.remove();
@@ -17891,6 +17899,7 @@
       if ($('#adminToggle')) $('#adminToggle').checked = true;
       if ($('#adminTab')) $('#adminTab').classList.remove('hidden');
     }
+    syncMasterTab();
     applySubtabs('admin'); applySubtabs('guide');
     renderDemoNowBar(); applyFirstNavVisibility();
     /* 공지 팝업은 '첫 화면'(게시대 현황 = index.html)에서만 자동 노출
