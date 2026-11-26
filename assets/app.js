@@ -8584,6 +8584,88 @@
     var rows = reportRowsOf(), t = reportSummaryOf(rows);
     if ($('#reportInfo')) $('#reportInfo').textContent = reportDateOf() + ' 기준 · ' + t.count + '건 / ' + t.seats + '매 · 인지대 ₩' + won(t.genSeats * 3000);
     $('#reportPreview').innerHTML = reportCoverHTML();
+    renderByeoljiForm();
+  }
+  function renderByeoljiForm() {
+    if (!has('byeoljiPreview')) return;
+    var wk = weekStartOf(reportDateOf());
+    var apps = db.apps.filter(function (a) {
+      if (['반려', '미입고취소', '미입금취소', '본인취소', '접수취소', '낙첨'].indexOf(a.status) >= 0) return false;
+      return weekStartOf(a.start || ROUND.postStart) === wk && awardedOf(a) > 0;
+    });
+    var sel = $('#byeoljiCoSel');
+    if (sel) {
+      var prev = ui.byeoljiAppId || sel.value || '';
+      sel.innerHTML = apps.length
+        ? apps.map(function (a) {
+            return '<option value="' + esc(a.id) + '"' + (a.id === prev ? ' selected' : '') + '>' +
+              esc(a.company) + ' (' + esc(a.id) + ') · ' + awardedOf(a) + '매</option>';
+          }).join('')
+        : '<option value="">배정된 접수 건이 없습니다</option>';
+      if (apps.length && !apps.some(function (a) { return a.id === ui.byeoljiAppId; })) ui.byeoljiAppId = apps[0].id;
+    }
+    var target = apps.filter(function (a) { return a.id === ui.byeoljiAppId; })[0] || apps[0];
+    if ($('#byeoljiInfo')) $('#byeoljiInfo').textContent = target ? (target.company + ' · ' + awardedOf(target) + '매') : '배정 건 없음';
+    if (!target) {
+      $('#byeoljiPreview').innerHTML = '<div class="photo-empty">선택한 주차에 배정된 접수 건이 없습니다. 표지 날짜를 바꿔 보세요.</div>';
+      return;
+    }
+    var m = (db.members || []).filter(function (x) { return x.company === target.company || x.id === target.memberId; })[0] || {};
+    var adv = advOfApp(target);
+    var qty = awardedOf(target);
+    var places = awardedPlacesOf(target);
+    var firstP = places.length ? boardById(places[0].pid) : null;
+    var placeTxt = places.length
+      ? ('지정게시대  ' + (firstP ? firstP.name : '게시대') + (places.length > 1 ? (' 외 ' + (qty - 1) + ' 개소') : ''))
+      : '지정게시대';
+    var st = weekStartOf(target.start || wk), ed = addDays(st, 6);
+    var periodStr = Number(st.slice(5, 7)) + '/' + Number(st.slice(8, 10)) + ' ~ ' + Number(ed.slice(5, 7)) + '/' + Number(ed.slice(8, 10));
+    var y = reportDateOf().slice(0, 4), mo = reportDateOf().slice(5, 7), da = reportDateOf().slice(8, 10);
+    var repName = m.rep || adv.name || target.company || '';
+    var bizNo = m.bizNo || target.bizNo || '316-01-00000';
+    var addr = m.addr || '충남 서산시';
+    var tel = m.tel || target.tel || '041-665-1216';
+    var hp = m.phone || tel;
+    var regNo = m.outdoorReg || '제 2024-4530133-08-2-00001 호';
+    var contentTxt = (target.text || '현수막 게시') + (qty > 1 ? (' 외 ' + (qty - 1) + '건') : '');
+    function f(top, left, w, txt, cls) {
+      return '<div class="byeolji-field' + (cls ? (' ' + cls) : '') + '" style="top:' + top + '%;left:' + left + '%;width:' + w + '%">' + esc(txt) + '</div>';
+    }
+    $('#byeoljiPreview').innerHTML =
+      '<div class="byeolji-sheet" id="byeoljiSheet">' +
+        '<img class="byeolji-bg" src="assets/form-byeolji1.jpg" alt="별지 제1호서식">' +
+        f(15.3, 33.5, 22, repName) +
+        f(15.3, 73.5, 20, m.birth || '760605') +
+        f(18.1, 33.5, 22, target.company || '') +
+        f(18.1, 73.5, 20, bizNo) +
+        f(20.9, 33.5, 24, addr) +
+        f(20.9, 73.5, 20, hp) +
+        f(23.9, 33.5, 22, target.company || '') +
+        f(23.9, 73.5, 20, regNo) +
+        f(26.7, 33.5, 22, repName) +
+        f(26.7, 73.5, 20, bizNo) +
+        f(29.6, 33.5, 24, addr) +
+        f(29.6, 73.5, 20, tel) +
+        f(35.0, 16.5, 16, '현수막') +
+        f(35.0, 41.0, 10, qty + ' 매') +
+        f(35.0, 54.0, 14, '710×90') +
+        f(35.0, 74.0, 14, '천') +
+        f(38.4, 16.5, 44, placeTxt) +
+        f(42.0, 16.5, 30, periodStr) +
+        f(42.0, 62.5, 28, contentTxt) +
+        f(48.6, 16.5, 20, target.company || '') +
+        f(48.6, 44.5, 13, repName) +
+        f(48.6, 59.5, 15, bizNo) +
+        f(48.6, 77.0, 16, hp) +
+        f(51.9, 16.5, 18, repName) +
+        f(51.9, 44.5, 28, addr) +
+        f(51.9, 77.0, 16, tel) +
+        f(76.8, 66.2, 6, y) +
+        f(76.8, 72.3, 4, mo) +
+        f(76.8, 76.5, 4, da) +
+        f(80.6, 54.0, 34, addr) +
+        f(84.4, 54.0, 24, repName) +
+      '</div>';
   }
 
   /* 게시 지정서 일괄 출력 — 이번 회차 확정·배정 건을 A4 1장씩 이어 인쇄 (김재봉 님 지시 2026-11-22) */
@@ -17521,6 +17603,24 @@
         ui.reportDate = this.value || '';
         renderReportPanel();
         toast('신고 표지 날짜를 ' + reportDateOf() + ' 기준으로 다시 계산했습니다.');
+      });
+    }
+    if ($('#byeoljiCoSel')) {
+      onEl('#byeoljiCoSel', 'change', function () {
+        ui.byeoljiAppId = this.value || '';
+        renderByeoljiForm();
+      });
+    }
+    if ($('#btnByeoljiPrint')) {
+      onEl('#btnByeoljiPrint', 'click', function () {
+        var rule = $('#printPageRule');
+        if (rule) rule.textContent = '@page{size:A4 portrait;margin:0}';
+        document.body.classList.add('printing-byeolji');
+        try { window.print(); } catch (e) { /* 인쇄 불가 환경 */ }
+        setTimeout(function () {
+          document.body.classList.remove('printing-byeolji');
+          if (rule) rule.textContent = '';
+        }, 600);
       });
     }
     if ($('#reportWeekChips')) {

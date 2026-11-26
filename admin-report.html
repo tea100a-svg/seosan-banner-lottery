@@ -6,7 +6,7 @@
 <script>document.documentElement.setAttribute('data-device-view','pc');</script>
 <title>🏛️ 시청 신고 표지 | 협회 관리자 · 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261126r51">
+<link rel="stylesheet" href="assets/style.css?v=20261126r52">
 </head>
 <body data-page="admin-report">
 <div class="demo-banner">
@@ -147,6 +147,21 @@
       </div>
       <div class="report-preview" id="reportPreview"></div>
     </div>
+<div class="panel" id="byeoljiPanel" style="margin-top:16px">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+          📄 별지 제1호서식 — 빈칸 자동 채움 (서산시청 제출용)
+        </h3>
+        <span class="sub" id="byeoljiInfo"></span>
+      </div>
+      <div class="report-date-row">
+        <label for="byeoljiCoSel"><b>업체(접수) 선택</b></label>
+        <select class="input sm" id="byeoljiCoSel" style="min-width:240px"></select>
+        <button class="btn sm primary" id="btnByeoljiPrint" type="button">🖨️ 별지 제1호서식 A4 인쇄</button>
+      </div>
+      <div id="byeoljiPreview" style="margin-top:10px"></div>
+    </div>
 </section>
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
 </main>
@@ -185,6 +200,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261126r51"></script>
+<script src="assets/app.js?v=20261126r52"></script>
 </body>
 </html>
