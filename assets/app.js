@@ -15168,56 +15168,54 @@
         if (advCand.length) out.advertiser = advCand[0];
       }
 
-      /* 핵심 단어 추출: Tesseract words의 실제 글자 높이(bbox)와 신뢰도(confidence) 기준 */
-      var wordCandidates = [];
-      if (Array.isArray(ocrWords) && ocrWords.length) {
-        ocrWords.forEach(function (wd) {
-          if (!wd || (typeof wd.confidence === 'number' && wd.confidence < 38)) return;
-          var h = wd.bbox ? Math.max(1, (wd.bbox.y1 || 0) - (wd.bbox.y0 || 0)) : 10;
-          var x0 = wd.bbox ? (wd.bbox.x0 || 0) : 0;
-          var y0 = wd.bbox ? (wd.bbox.y0 || 0) : 0;
-          var toks = cleanLineTokens(wd.text).filter(function (w) { return !isAddrOrNoise(w); });
-          toks.forEach(function (t) {
-            wordCandidates.push({ text: t, h: h, x0: x0, y0: y0, conf: wd.confidence || 50 });
-          });
-        });
-      }
-      if (!wordCandidates.length && Array.isArray(ocrLines) && ocrLines.length) {
+      /* 핵심 문구 추출: Tesseract lines의 글자 높이(bbox) 기준으로 가장 큰 메인 헤드라인 줄을 온전히 살림 */
+      var lineCandidates = [];
+      if (Array.isArray(ocrLines) && ocrLines.length) {
         ocrLines.forEach(function (ln) {
-          var h = (ln && ln.bbox) ? Math.max(1, (ln.bbox.y1 || 0) - (ln.bbox.y0 || 0)) : 10;
-          var x0 = (ln && ln.bbox) ? (ln.bbox.x0 || 0) : 0;
-          var y0 = (ln && ln.bbox) ? (ln.bbox.y0 || 0) : 0;
-          cleanLineTokens(ln && ln.text).filter(function (w) { return !isAddrOrNoise(w); }).forEach(function (t) {
-            wordCandidates.push({ text: t, h: h, x0: x0, y0: y0, conf: ln.confidence || 50 });
-          });
+          if (!ln) return;
+          var h = ln.bbox ? Math.max(1, (ln.bbox.y1 || 0) - (ln.bbox.y0 || 0)) : 10;
+          var x0 = ln.bbox ? (ln.bbox.x0 || 0) : 0;
+          var y0 = ln.bbox ? (ln.bbox.y0 || 0) : 0;
+          var conf = typeof ln.confidence === 'number' ? ln.confidence : 50;
+          var toks = cleanLineTokens(ln.text).filter(function (w) { return !isAddrOrNoise(w); });
+          /* 2글자 이상 완성형 한글이 포함된 줄만 유효 헤드라인 후보로 */
+          var koToks = toks.filter(function (w) { return /[가-힣]{2,}/.test(w); });
+          if (!koToks.length) return;
+          var lineTxt = toks.join(' ').trim();
+          /* 불완전한 조사 조각으로만 끝나는 짧은 잡음 제외 */
+          if (lineTxt.length < 2) return;
+          lineCandidates.push({ text: lineTxt, toks: toks, h: h, x0: x0, y0: y0, conf: conf, koN: koToks.length });
         });
       }
-      out.headlineTokens = wordCandidates;
+      out.headlineTokens = lineCandidates;
 
-      var picked = [];
-      if (wordCandidates.length) {
-        var sortedByH = wordCandidates.slice().sort(function (a, b) { return b.h - a.h; });
-        var maxH = sortedByH[0].h;
-        /* 가장 큰 글씨(최대 높이의 52% 이상) 위주로 모은 뒤 좌->우/상->하 읽기 순서로 정렬 */
-        var bigWords = sortedByH.filter(function (w) { return w.h >= maxH * 0.52; });
-        bigWords.sort(function (a, b) {
-          if (Math.abs(a.y0 - b.y0) > maxH * 0.45) return a.y0 - b.y0;
+      var pickedLines = [];
+      if (lineCandidates.length) {
+        var sortedL = lineCandidates.slice().sort(function (a, b) { return b.h - a.h; });
+        var maxLH = sortedL[0].h;
+        /* 가장 큰 줄(최대 높이의 58% 이상) 위주로 위->아래/좌->우 순서 정렬 */
+        var bigLines = sortedL.filter(function (l) { return l.h >= maxLH * 0.58; });
+        bigLines.sort(function (a, b) {
+          if (Math.abs(a.y0 - b.y0) > maxLH * 0.45) return a.y0 - b.y0;
           return a.x0 - b.x0;
         });
-        bigWords.forEach(function (w) {
-          if (picked.indexOf(w.text) >= 0) return;
-          var nextStr = picked.concat([w.text]).join(' ');
-          if (picked.length < 4 && nextStr.length <= 22) picked.push(w.text);
+        bigLines.forEach(function (l) {
+          if (pickedLines.indexOf(l.text) >= 0) return;
+          var nextStr = pickedLines.concat([l.text]).join(' ');
+          if (pickedLines.length < 2 && nextStr.length <= 26) pickedLines.push(l.text);
         });
       }
-      if (!picked.length) {
+      if (!pickedLines.length) {
+        var fallbackToks = [];
         allTokens.filter(function (w) { return !isAddrOrNoise(w); }).forEach(function (w) {
-          if (picked.indexOf(w) >= 0) return;
-          var nextStr = picked.concat([w]).join(' ');
-          if (picked.length < 4 && nextStr.length <= 22) picked.push(w);
+          if (fallbackToks.indexOf(w) >= 0) return;
+          var nextStr = fallbackToks.concat([w]).join(' ');
+          if (fallbackToks.length < 4 && nextStr.length <= 22) fallbackToks.push(w);
         });
+        out.text = fallbackToks.join(' ').trim() || allTokens.slice(0, 3).join(' ').slice(0, 22);
+      } else {
+        out.text = pickedLines.join(' ').trim().slice(0, 26);
       }
-      out.text = picked.join(' ').trim() || allTokens.slice(0, 3).join(' ').slice(0, 22);
     }
     return out;
   }
@@ -15333,28 +15331,25 @@
       var best = results[0] || { advertiser: '', phone: '', text: '' };
       var backup = results[1] || { advertiser: '', phone: '', text: '' };
       var backup2 = results[2] || { advertiser: '', phone: '', text: '' };
-      /* 3패스(원본·일반·반전)에서 나온 큰 글씨 핵심 단어를 통합해 최고 높이 헤드라인 조합 */
-      var allBig = [];
+      /* 3패스(원본·일반·반전)에서 나온 가장 큰 헤드라인 줄 중 신뢰도·완성도가 가장 높은 줄 선택 */
+      var allBigLines = [];
       results.forEach(function (r) {
-        (r.headlineTokens || []).forEach(function (w) { allBig.push(w); });
+        (r.headlineTokens || []).forEach(function (l) { allBigLines.push(l); });
       });
       var combinedHeadline = '';
-      if (allBig.length) {
-        allBig.sort(function (a, b) { return b.h - a.h; });
-        var topH = allBig[0].h;
-        var topWords = allBig.filter(function (w) { return w.h >= topH * 0.54 && w.conf >= 42; });
-        if (!topWords.length) topWords = allBig.slice(0, 6);
-        topWords.sort(function (a, b) {
-          if (Math.abs(a.y0 - b.y0) > topH * 0.45) return a.y0 - b.y0;
-          return a.x0 - b.x0;
+      if (allBigLines.length) {
+        allBigLines.sort(function (a, b) {
+          var scoreA = a.h * (a.conf >= 45 ? 1.2 : 0.7) + Math.min(a.koN, 4) * 6;
+          var scoreB = b.h * (b.conf >= 45 ? 1.2 : 0.7) + Math.min(b.koN, 4) * 6;
+          return scoreB - scoreA;
         });
-        var hp = [];
-        topWords.forEach(function (w) {
-          if (hp.indexOf(w.text) >= 0) return;
-          var ns = hp.concat([w.text]).join(' ');
-          if (hp.length < 4 && ns.length <= 22) hp.push(w.text);
+        var mainLine = allBigLines[0];
+        var subLine = allBigLines.find(function (l) {
+          if (l.text === mainLine.text) return false;
+          if (l.text.indexOf(mainLine.text) >= 0 || mainLine.text.indexOf(l.text) >= 0) return false;
+          return l.h >= mainLine.h * 0.55 && l.conf >= 42 && (mainLine.text.length + 1 + l.text.length) <= 26;
         });
-        combinedHeadline = hp.join(' ').trim();
+        combinedHeadline = subLine ? (mainLine.text + ' ' + subLine.text) : mainLine.text;
       }
       var ocr = {
         advertiser: best.advertiser || backup.advertiser || backup2.advertiser || '',
