@@ -15607,39 +15607,69 @@
     return body;
   }
 
+  function syncDropZonePreview(zone, fileObj, previewUrl, delId, onDelete) {
+    if (!zone) return;
+    var prev = zone.querySelector('.drop-in-preview');
+    if (prev) prev.remove();
+    if (!fileObj) {
+      zone.classList.remove('has-file');
+      return;
+    }
+    zone.classList.add('has-file');
+    var wrap = document.createElement('div');
+    wrap.className = 'drop-in-preview';
+    wrap.innerHTML =
+      (previewUrl ? '<img src="' + previewUrl + '" alt="시안 미리보기">' : '') +
+      '<div class="drop-in-meta"><b>' + esc(fileObj.name) + '</b><span>' + bytesTxt(fileObj.size) + ' · 누르면 교체</span>' +
+      '<button type="button" class="drop-in-del" id="' + delId + '" aria-label="첨부 삭제">× 삭제</button></div>';
+    zone.appendChild(wrap);
+    var delBtn = document.getElementById(delId);
+    if (delBtn) {
+      delBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        onDelete();
+      });
+    }
+  }
+
   function renderFilePreview() {
     if (!has('filePreview')) return;
-    if (!ui.file) { $('#filePreview').innerHTML = ''; return; }
-    var img = ui.filePreview ? '<img src="' + ui.filePreview + '" alt="시안 미리보기">' : '<img alt="">';
-    $('#filePreview').innerHTML = '<div class="drop-preview">' + img +
-      '<div class="fi"><b>' + esc(ui.file.name) + '</b><span>' + bytesTxt(ui.file.size) + ' · 검수 대기</span></div>' +
-      '<button type="button" id="btnFileDel" aria-label="첨부 삭제">×</button></div>' +
+    var zone = $('#dropZone');
+    if (!ui.file) {
+      syncDropZonePreview(zone, null, '', 'btnFileDel', null);
+      $('#filePreview').innerHTML = '';
+      return;
+    }
+    syncDropZonePreview(zone, ui.file, ui.filePreview, 'btnFileDel', function () {
+      ui.file = null; ui.filePreview = null; ui.designTone = null; ui.designExtracted = null;
+      if ($('#applyFile')) $('#applyFile').value = '';
+      renderFilePreview();
+    });
+    $('#filePreview').innerHTML =
       designExtractNoteHTML(ui.designExtracted) +
       designToneNoteHTML(ui.designTone, 'designToneNote') +
       designNameNoteHTML(ui.designTone, 'designNameNote');
-    onEl('#btnFileDel', 'click', function () {
-      ui.file = null; ui.filePreview = null; ui.designTone = null; ui.designExtracted = null;
-      $('#applyFile').value = '';
-      renderFilePreview();
-    });
   }
   /* fc(remain·first) 시안 미리보기 — 검정·빨간 바탕 경고 포함 */
   function renderFcFilePreview() {
     var box = $('#fcFilePreview');
     if (!box) return;
-    if (!ui.fcFile) { box.innerHTML = ''; return; }
-    var img = ui.fcFilePreview ? '<img src="' + ui.fcFilePreview + '" alt="시안 미리보기">' : '<img alt="">';
-    box.innerHTML = '<div class="drop-preview">' + img +
-      '<div class="fi"><b>' + esc(ui.fcFile.name) + '</b><span>' + bytesTxt(ui.fcFile.size) + ' · 검수 대기</span></div>' +
-      '<button type="button" id="btnFcFileDel" aria-label="첨부 삭제">×</button></div>' +
-      designExtractNoteHTML(ui.fcDesignExtracted) +
-      designToneNoteHTML(ui.fcDesignTone, 'fcDesignToneNote') +
-      designNameNoteHTML(ui.fcDesignTone, 'fcDesignNameNote');
-    onEl('#btnFcFileDel', 'click', function () {
+    var zone = $('#fcDropZone') || (box.previousElementSibling && box.previousElementSibling.classList && box.previousElementSibling.classList.contains('drop') ? box.previousElementSibling : null);
+    if (!ui.fcFile) {
+      syncDropZonePreview(zone, null, '', 'btnFcFileDel', null);
+      box.innerHTML = '';
+      return;
+    }
+    syncDropZonePreview(zone, ui.fcFile, ui.fcFilePreview, 'btnFcFileDel', function () {
       ui.fcFile = null; ui.fcFilePreview = null; ui.fcDesignTone = null; ui.fcDesignExtracted = null;
       if ($('#fcDesign')) $('#fcDesign').value = '';
       renderFcFilePreview();
     });
+    box.innerHTML =
+      designExtractNoteHTML(ui.fcDesignExtracted) +
+      designToneNoteHTML(ui.fcDesignTone, 'fcDesignToneNote') +
+      designNameNoteHTML(ui.fcDesignTone, 'fcDesignNameNote');
   }
 
   function onAdminToggle() {

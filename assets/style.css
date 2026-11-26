@@ -644,6 +644,15 @@ html[data-device-view="mobile"] .top-role-bar select{max-width:160px;height:27px
 .drop-preview .fi span{font-size:11.5px;color:var(--muted)}
 .drop-preview button{appearance:none;border:0;background:transparent;color:#9aa8bd;cursor:pointer;font-size:18px;line-height:1}
 .drop-preview button:hover{color:var(--bad)}
+.drop.has-file{padding:10px;border-style:solid;border-color:#93c5fd;background:#fff;position:relative}
+.drop.has-file > :not(input):not(.drop-in-preview){display:none}
+.drop-in-preview{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.drop-in-preview img{width:100%;max-height:150px;object-fit:contain;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0}
+.drop-in-meta{display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;font-size:12px;color:#334155}
+.drop-in-meta b{display:inline;font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;text-align:left}
+.drop-in-meta span{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.drop-in-del{appearance:none;border:1px solid #fca5a5;background:#fef2f2;color:#b91c1c;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.drop-in-del:hover{background:#fee2e2}
 
 .apply-foot{display:flex;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
 .apply-foot .spacer{flex:1}
