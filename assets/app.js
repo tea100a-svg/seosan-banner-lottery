@@ -7530,9 +7530,9 @@
   }
   /* ── 🚸 청소년유해광고 자동 차단 (2026-11-23 김재봉 님 지시) ──────────────
      · 유흥·성인·도박·대부 키워드가 광고주·문구에 있으면 학교·유치원 초인접 게시대는 담을 수 없다. */
-  var YOUTH_RE = /(유흥주점|단란주점|룸살롱|룸사롱|룸싸롱|나이트클럽|나이트|성인용품|성인방송|19금|카지노|도박|사설토토|토토|바카라|대부업|대부|사채|일수|전자담배|액상|유흥업소|호스트바|퇴폐|마사지)/;
+  var YOUTH_RE = /(유흥주점|단란주점|룸살롱|룸사롱|룸싸롱|나이트클럽|노래클럽|노래연습장|노래주점|가요주점|가라오케|노래방|노래홀|노래타운|나이트|성인용품|성인방송|19금|카지노|도박|사설토토|토토|바카라|대부업|대부|사채|일수|전자담배|액상|유흥업소|호스트바|퇴폐|마사지)/;
   /* 청소년유해 키워드 — 우회 표기(공백·특수문자·숫자·된소리 오타)까지 잡는다 (2026-11-23 김재봉 님 지시) */
-  var YOUTH_WORDS = ['유흥주점', '단란주점', '룸살롱', '룸사롱', '룸싸롱', '나이트클럽', '나이트', '성인용품', '성인방송', '19금',
+  var YOUTH_WORDS = ['유흥주점', '단란주점', '룸살롱', '룸사롱', '룸싸롱', '나이트클럽', '노래클럽', '노래연습장', '노래주점', '가요주점', '가라오케', '노래방', '노래홀', '노래타운', '나이트', '성인용품', '성인방송', '19금',
     '카지노', '도박', '사설토토', '토토', '바카라', '대부업', '대부', '사채', '일수', '전자담배', '액상', '유흥업소', '호스트바', '퇴폐', '마사지'];
   /* 된소리·유사음 정규화 — 룸살롱/룸사롱/름살롱, 카지노/까지노, 나이트/나이뜨 … */
   function youthNorm(t) {
@@ -15433,6 +15433,7 @@
     if (!tone) return '';
     if (tone.black >= TONE_LIMIT && tone.black >= tone.red) return '⬛ 검정바탕 주의';
     if (tone.red >= TONE_LIMIT) return '🟥 빨간바탕 주의 (조기철거 대상)';
+    if ((tone.black + tone.red) >= TONE_LIMIT) return '⬛🟥 검정·빨강 혼합바탕 주의';
     return '';
   }
   /* 왼쪽 하단 실명제 표기 검사 결과 — 확인 문구 + 확대 썸네일 (2026-11-23 김재봉 님 지시) */
@@ -15448,19 +15449,20 @@
   }
   function designToneNoteHTML(tone, id) {
     if (!tone || !designToneLabel(tone)) return '';
-    var pct = (tone.black >= TONE_LIMIT ? tone.black : tone.red);
-    var kind = (tone.black >= TONE_LIMIT && tone.black >= tone.red) ? '검정' : '빨간';
+    var combined = tone.black + tone.red;
+    var kind = (tone.black >= TONE_LIMIT && tone.black >= tone.red) ? '검정' : (tone.red >= TONE_LIMIT ? '빨간' : '검정·빨강 혼합');
+    var pct = kind === '검정' ? tone.black : (kind === '빨간' ? tone.red : combined);
     return '<div class="callout warn" id="' + (id || 'designToneNote') + '">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>' +
-      '<div><b>⚠️ 시안 바탕색 주의:</b> 검정색 또는 빨간색 바탕이 과다한 현수막은 관련 규정에 따라 <b>게첨이 제한되거나 조기 철거</b>될 수 있습니다. (검출: ' + kind + ' 바탕 ' + pct + '%)</div></div>';
+      '<div><b>⚠️ 시안 바탕색 주의 (조례 기준):</b> 검정색 또는 빨간색 바탕이 과다한 현수막은 관련 규정에 따라 <b>게첨이 제한되거나 조기 철거</b>될 수 있습니다. (검출: ' + kind + ' 바탕 ' + pct + '% · 흑 ' + tone.black + '% / 적 ' + tone.red + '%)</div></div>';
   }
-  /* 업로드/샘플 시안의 검정·빨간 바탕 비율 분석 (Canvas getImageData) */
+  /* 업로드/샘플 시안의 검정·빨간 바탕 비율 분석 (HSV 색공간 기반 정밀 판별) */
   function analyzeDesignTone(url, cb) {
     try {
       var img = new Image();
       img.onload = function () {
         try {
-          var cv = document.createElement('canvas'), w = 96, h = Math.max(12, Math.round(96 * (img.height || 180) / (img.width || 1420)));
+          var cv = document.createElement('canvas'), w = 180, h = Math.max(20, Math.round(180 * (img.height || 180) / (img.width || 1420)));
           cv.width = w; cv.height = h;
           var cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, w, h);
           var d = cx.getImageData(0, 0, w, h).data, n = 0, bk = 0, rd = 0;
@@ -15468,8 +15470,21 @@
             if (d[i + 3] < 40) continue;
             n++;
             var r = d[i], g = d[i + 1], b = d[i + 2];
-            if (r < 62 && g < 62 && b < 62) bk++;
-            else if (r > 140 && g < 90 && b < 90) rd++;
+            var mx = Math.max(r, g, b), mn = Math.min(r, g, b), diff = mx - mn;
+            var sat = mx ? diff / mx : 0;
+            var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+            /* 적색(빨강·진홍·다홍): Hue가 적색 구간(0~18도 또는 336~360도)이고 채도·명도 충분 */
+            var isRedHue = false;
+            if (diff > 18 && r === mx) {
+              var hue = (60 * ((g - b) / diff) + 360) % 360;
+              if (hue <= 18 || hue >= 336) isRedHue = true;
+            }
+            if (isRedHue && sat >= 0.34 && mx >= 80) {
+              rd++;
+            } else if ((lum <= 64 && sat <= 0.35) || (mx <= 78 && diff <= 30)) {
+              /* 흑색(검정·진한 먹색): 명도가 낮고 채도가 낮은 어두운 무채색 */
+              bk++;
+            }
           }
           var tone = n ? { black: Math.round(bk * 100 / n), red: Math.round(rd * 100 / n) } : { black: 0, red: 0 };
           /* 왼쪽 하단(좌 0~28% · 하 72~100%) 실명제 표기 검사 — 주변 대비 엣지 밀도 */
