@@ -5418,6 +5418,26 @@
   /* 한 줄(compact single-row) 게시대 행 — 게시대현황·주간 현황 공통
      `[게시요일·행정동] 게시대명 · 정원/접수중 · [상세/접수]`
      · 이번 주 게첨(진행 중 주간)을 보고 있을 때는 접수 버튼을 [잔여석 접수](first.html?mode=live)로 바꾼다. */
+  function boardMapBtnsHTML(p) {
+    return '<button class="btn sm ghost" data-boardmap="' + esc(p.id) + '" type="button" title="지도보기 (구현 예정)">지도보기</button>' +
+      '<button class="btn sm ghost" data-boardroad="' + esc(p.id) + '" type="button" title="로드뷰보기 (구현 예정)">로드뷰보기</button>';
+  }
+  function showBoardFeatureSoon(pid, kind) {
+    var p = boardById(pid);
+    var nm = p ? p.name : '게시대';
+    var lbl = kind === 'road' ? '로드뷰보기' : '지도보기';
+    var icon = kind === 'road' ? '📷' : '🗺️';
+    toast(icon + ' ' + nm + ' · ' + lbl + ' — 구현 예정입니다.');
+    openModal({
+      title: icon + ' ' + nm + ' · ' + lbl,
+      sub: (p && p.addr ? p.addr : '서산시 지정게시대'),
+      body: '<div style="padding:14px 4px;font-size:14.5px;line-height:1.65;color:var(--ink)">' +
+        '<b>' + esc(lbl) + '</b> 기능은 <b>구현 예정입니다.</b><br>' +
+        '<span style="color:var(--muted);font-size:13px">게시대별 다음지도 링크·축척·로드뷰 각도 자료가 반영되면 바로 연결됩니다.</span>' +
+      '</div>',
+      foot: '<button class="btn primary" data-close="1" type="button">확인</button>'
+    });
+  }
   function placementRow(p, opts) {
     opts = opts || {};
     var wk = weekStartOf(opts.week || activeWeekStart());
@@ -5441,6 +5461,7 @@
         (assigned ? ' · 배정 ' + assigned + '면' : '') + '</span></div>' +
       '<div class="fcount' + (isLive && !liveLeft ? ' sold' : '') + '"><b>' + (isLive ? liveLeft : reqN) + '</b><span>' + (isLive ? '잔여 면' : '/' + p.cap + '건 접수중') + '</span></div>' +
       '<div class="fc-act">' +
+        boardMapBtnsHTML(p) +
         '<button class="btn sm ghost hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
         liveBtn +
       '</div></div>';
@@ -6486,6 +6507,7 @@
           (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
       '<div class="fcount"><b>' + reqN + '</b><span>/' + p.cap + '건 접수중</span></div>' +
       '<div class="fc-act">' +
+        boardMapBtnsHTML(p) +
         (picked && !off ? '<button class="btn sm ghost hide-sm" type="button" data-slotjump="' + esc(p.id) + '" title="세부 위치(게시동·단) 지정">위치</button>' : '') +
         '<button class="btn sm ' + (picked ? 'ok' : (off || adjB ? '' : 'primary')) + '" type="button"' + (off ? ' disabled' : '') + '>' + esc(btn) + '</button>' +
       '</div></div>';
@@ -9129,8 +9151,11 @@
             : (fsum ? ' · ' + esc(fsum) + (fcIsLive() ? '' : ' · 풀가림·기타는 목요일 선착순만') : '')) +
           (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
         '<div class="fcount' + (rem ? '' : ' sold') + '"><b>' + rem + '</b><span>' + (p.broken ? '가용 면 제외' : (fcIsLive() ? '잔여 면' : '잔여 매')) + '</span></div>' +
-        '<button class="btn sm ' + (picked ? 'ok' : (label === '담기' ? 'primary' : '')) + '" data-fcpick="' + p.id + '" type="button"' +
-          ((open && rem && !bk && !yBlocked) ? '' : ' disabled') + '>' + label + '</button>' +
+        '<div class="fc-act">' +
+          boardMapBtnsHTML(p) +
+          '<button class="btn sm ' + (picked ? 'ok' : (label === '담기' ? 'primary' : '')) + '" data-fcpick="' + p.id + '" type="button"' +
+            ((open && rem && !bk && !yBlocked) ? '' : ' disabled') + '>' + label + '</button>' +
+        '</div>' +
         '</div>';
     }).join('');
   }
@@ -11998,8 +12023,11 @@
         '</b><span>' + esc(p.dong || '서산시') + ' · ' + esc(p.day) + '요일 설치 · 정원 ' + p.cap + '면 · ' + rule +
           (p.low ? '' : ' · ' + weekRequestCount(p.id) + '건 접수중') + '</span></div>' +
         '<div class="fcount' + (remOff ? '' : ' sold') + '"><b>' + off + '/' + capOff + '</b><span>공문 면</span></div>' +
-        '<button class="btn sm ' + (on ? 'ok' : (full || adjB ? '' : 'primary')) + '" data-offpick="' + esc(p.id) + '" type="button"' +
-          ((!on && (full || adjB)) ? ' disabled' : '') + '>' + btnLbl + '</button>' +
+        '<div class="fc-act">' +
+          boardMapBtnsHTML(p) +
+          '<button class="btn sm ' + (on ? 'ok' : (full || adjB ? '' : 'primary')) + '" data-offpick="' + esc(p.id) + '" type="button"' +
+            ((!on && (full || adjB)) ? ' disabled' : '') + '>' + btnLbl + '</button>' +
+        '</div>' +
       '</div>';
     }).join('') : '<div class="empty" style="grid-column:1/-1">배정할 수 있는 게시대가 없습니다.</div>';
     if ($('#offSlots')) $('#offSlots').innerHTML = offSlotListHTML();
@@ -15852,8 +15880,10 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-boardmap],[data-boardroad],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
+    if (el.hasAttribute('data-boardmap')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardmap'), 'map'); return; }
+    if (el.hasAttribute('data-boardroad')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardroad'), 'road'); return; }
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
     if (el.id === 'btnPhotoSample') { addSamplePhotos(); return; }
