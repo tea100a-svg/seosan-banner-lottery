@@ -9,7 +9,7 @@
      · 각 페이지는 body[data-page] 로 자기를 알고, 자기 섹션만 렌더한다.
      · 탭·서브탭은 실제 <a href> 이동이므로 location.pathname 이 바뀐다. */
   var PAGE = (document.body && document.body.getAttribute('data-page')) || 'status';
-  var PAGE_HREF = { status: 'index.html', apply: 'apply.html', 'apply-event': 'apply-event.html', first: 'first.html', remain: 'remain.html',
+  var PAGE_HREF = { status: 'index.html', 'board-schedule': 'board-schedule.html', apply: 'apply.html', 'apply-event': 'apply-event.html', first: 'first.html', remain: 'remain.html',
     guide: 'guide.html', mypage: 'mypage.html', admin: 'admin-draw.html' };
   var ADMIN_PAGES = ['admin-draw', 'admin-review', 'admin-event', 'admin-official', 'admin-official-review',
     'admin-political', 'admin-loc',
@@ -5462,6 +5462,7 @@
       '<div class="fcount' + (isLive && !liveLeft ? ' sold' : '') + '"><b>' + (isLive ? liveLeft : reqN) + '</b><span>' + (isLive ? '잔여 면' : '/' + p.cap + '건 접수중') + '</span></div>' +
       '<div class="fc-act">' +
         boardMapBtnsHTML(p) +
+        '<button class="btn sm ghost" data-schedpage="' + esc(p.id) + '" type="button" title="1주·4주 게시현황 별도 페이지로 보기">게시현황</button>' +
         '<button class="btn sm ghost hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
         liveBtn +
       '</div></div>';
@@ -5920,6 +5921,108 @@
     return { cls: 'free', tag: '빈 자리', adv: '예약·접수 가능', sub: st.k === 'other' ? '안내 후 선택' : '정상 운영' };
   }
 
+  function renderBoardSchedulePage() {
+    if (!has('bsScheduleRoot')) return;
+    var root = $('#bsScheduleRoot');
+    var sel = $('#bsPlaceSelect');
+    var list = PLACES.filter(function (x) { return !x.low && !x.officialOnly; });
+    if (!list.length) list = PLACES;
+    var pid = ui.bsPid || paramOf('pid') || (list[0] && list[0].id) || '';
+    var p = boardById(pid) || list[0];
+    if (!p) { root.innerHTML = '<div class="empty">표시할 게시대가 없습니다.</div>'; return; }
+    ui.bsPid = p.id;
+    var schedMode = ui.bsMode === '4w' ? '4w' : '1w';
+    var schedBase = ui.bsDate || weekStartOf(ROUND.postStart);
+
+    if (sel) {
+      sel.innerHTML = list.map(function (x, i) {
+        return '<option value="' + esc(x.id) + '"' + (x.id === p.id ? ' selected' : '') + '>' +
+          (i + 1) + '. ' + esc(x.name) + ' (' + esc(x.dong) + ' · ' + x.cap + '면)</option>';
+      }).join('');
+      if (!sel._bsBound) {
+        sel._bsBound = true;
+        sel.addEventListener('change', function () {
+          ui.bsPid = this.value;
+          try { history.replaceState(null, '', 'board-schedule.html?pid=' + encodeURIComponent(ui.bsPid)); } catch (e) { }
+          renderBoardSchedulePage();
+        });
+      }
+    }
+    if ($('#bsHeadSub')) {
+      $('#bsHeadSub').textContent = p.name + ' · ' + (p.addr || '') + ' (' + (p.code || '') + ')';
+    }
+    if ($('#bsBoardMeta')) {
+      $('#bsBoardMeta').innerHTML = '<b>' + esc(p.day) + '요일 설치</b> · 정원 <b>' + p.cap + '면</b> · ' +
+        (p.broken ? '<span style="color:var(--warn);font-weight:700">고장·수리중</span>' : '<span style="color:var(--ok);font-weight:700">정상 운영</span>');
+    }
+    if ($('#bsPrevBoard') && !$('#bsPrevBoard')._bsBound) {
+      $('#bsPrevBoard')._bsBound = true;
+      $('#bsPrevBoard').addEventListener('click', function () {
+        var idx = -1;
+        for (var i = 0; i < list.length; i++) { if (list[i].id === ui.bsPid) { idx = i; break; } }
+        var prev = list[(idx - 1 + list.length) % list.length];
+        if (prev) { ui.bsPid = prev.id; renderBoardSchedulePage(); }
+      });
+    }
+    if ($('#bsNextBoard') && !$('#bsNextBoard')._bsBound) {
+      $('#bsNextBoard')._bsBound = true;
+      $('#bsNextBoard').addEventListener('click', function () {
+        var idx = -1;
+        for (var i = 0; i < list.length; i++) { if (list[i].id === ui.bsPid) { idx = i; break; } }
+        var nxt = list[(idx + 1) % list.length];
+        if (nxt) { ui.bsPid = nxt.id; renderBoardSchedulePage(); }
+      });
+    }
+    if ($('#bsGoApply') && !$('#bsGoApply')._bsBound) {
+      $('#bsGoApply')._bsBound = true;
+      $('#bsGoApply').addEventListener('click', function () {
+        goPage('apply.html?place=' + encodeURIComponent(ui.bsPid));
+      });
+    }
+
+    root.innerHTML = '<div class="card" style="padding:16px">' + renderPlacementSchedHTML(p, schedMode, schedBase) + '</div>';
+
+    var box = root.querySelector('#pdSchedBox');
+    if (box) {
+      box.querySelectorAll('[data-pdmode]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          ui.bsMode = b.getAttribute('data-pdmode') === '4w' ? '4w' : '1w';
+          renderBoardSchedulePage();
+        });
+      });
+      var dtIn = box.querySelector('#pdDatePick');
+      if (dtIn) {
+        dtIn.addEventListener('change', function () {
+          if (dtIn.value) { ui.bsDate = weekStartOf(dtIn.value); renderBoardSchedulePage(); }
+        });
+      }
+      box.querySelectorAll('[data-pdnav]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var dir = Number(b.getAttribute('data-pdnav')) || 0;
+          var stepDays = (ui.bsMode === '4w' ? 28 : 7) * dir;
+          ui.bsDate = addDays(weekStartOf(ui.bsDate || ROUND.postStart), stepDays);
+          renderBoardSchedulePage();
+        });
+      });
+      var nowBtn = box.querySelector('[data-pdnow]');
+      if (nowBtn) {
+        nowBtn.addEventListener('click', function () {
+          ui.bsDate = weekStartOf(ROUND.postStart);
+          renderBoardSchedulePage();
+        });
+      }
+      box.querySelectorAll('[data-pdjumpwk]').forEach(function (c) {
+        c.addEventListener('click', function () {
+          var jwk = c.getAttribute('data-pdjumpwk');
+          if (jwk) {
+            ui.bsMode = '1w';
+            ui.bsDate = jwk;
+            renderBoardSchedulePage();
+          }
+        });
+      });
+    }
+  }
   function renderPlacementSchedHTML(p, mode, baseDate) {
     var startWk = weekStartOf(baseDate || ROUND.postStart);
     var codes = slotCodesOf(p);
@@ -15880,10 +15983,11 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-boardmap],[data-boardroad],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-boardmap],[data-boardroad],[data-schedpage],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-boardmap')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardmap'), 'map'); return; }
     if (el.hasAttribute('data-boardroad')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardroad'), 'road'); return; }
+    if (el.hasAttribute('data-schedpage')) { e.stopPropagation(); e.preventDefault(); goPage('board-schedule.html?pid=' + encodeURIComponent(el.getAttribute('data-schedpage'))); return; }
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
     if (el.id === 'btnPhotoSample') { addSamplePhotos(); return; }
@@ -16989,6 +17093,8 @@
     /* ── 페이지별 렌더 — 자기 페이지에 해당하는 섹션만 그린다 ────────── */
     if (PAGE === 'status') {
       renderStatus();
+    } else if (PAGE === 'board-schedule') {
+      renderBoardSchedulePage();
     } else if (PAGE === 'apply' || PAGE === 'apply-event') {
       applyPlaceFromUrl();
       renderApply();
