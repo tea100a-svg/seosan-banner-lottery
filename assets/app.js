@@ -2484,8 +2484,10 @@
       ? ('<div class="field"><label for="phoneProxyOnBehalf">누구 몫의 대리 결재인가요? (부재 결재권자)*</label>' +
          '<select class="input" id="phoneProxyOnBehalf">' +
          cands.map(function (c, i) {
+           var tk = kind === 'off' ? 'official' : (kind === 'pol' ? 'political' : 'event');
+           var tm = teamMeta(tk);
            return '<option value="' + esc(c.memberId) + '"' + ((who && who === c.memberId) || (!who && i === 0) ? ' selected' : '') + '>' +
-             esc(c.name) + ' · ' + esc(teamLabel(kind === 'off' ? 'official' : (kind === 'pol' ? 'political' : 'event'))) + ' (미결재)</option>';
+             esc(c.name) + ' · ' + esc((tm && tm.label) || '') + ' (미결재)</option>';
          }).join('') +
          '</select><span class="hint-txt">선택한 팀원 몫으로 결재가 기록되며, 해당 팀원은 중복 결재할 수 없습니다.</span></div>')
       : '';
