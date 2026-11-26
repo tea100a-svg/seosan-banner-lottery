@@ -10734,13 +10734,13 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>' +
       '<input type="search" id="mpSearch" class="ko-ime" lang="ko" placeholder="접수번호 · 실제 광고주 · 문구 · 게시대 검색" aria-label="내 접수 검색" value="' + esc(String(ui.mpq || '')) + '">' +
       '</div>';
-    html += '<div class="callout info mp-foldhint" style="margin-bottom:12px"><div>💡 <b>이번 주 게첨</b>이 맨 위에 펼쳐져 있고, <b>지난 회차</b>는 접혀 있습니다 — 제목을 누르면 펼쳐집니다. 검색어를 넣으면 지난 회차 일치 건도 자동으로 펼쳐집니다.</div></div>';
-    /* 이번 주 게첨·진행 주간 → 이번 회차 → 사전 접수 → 지난 회차(접힘) 순 (2026-11-23 김재봉 님 정정 지시) */
+    html += '<div class="callout info mp-foldhint" style="margin-bottom:12px"><div>💡 <b>모든 회차 목록이 기본적으로 접혀 있습니다</b> — 보고 싶은 회차 제목을 누르면 펼쳐집니다. 검색어를 넣으면 일치 건이 자동으로 펼쳐집니다.</div></div>';
+    /* 이번 주 게첨·진행 주간 → 이번 회차 → 사전 접수 → 지난 회차 (모두 기본 접힘 · 접기 우선) */
     html += mpSectionHTML('live', '🔥 이번 주 게첨 · 진행 중 주간(' + dstr(liveWk) + ' ~ ' + dstr(CUR.end) + ') 잔여석 접수', liveNow.length + '건', liveNow,
-      '<div class="callout warn" style="margin:2px 0 12px">' + IC.alert + '<div>이 주간은 협회 일괄 게첨이 끝났습니다 — <b>광고대행사는 직접 현장에 설치(게첨)</b>, <b>일반인은 규정상 직접 설치가 금지되어 반드시 옥외광고업 등록 광고사에 의뢰</b>해야 합니다.</div></div>', true);
-    html += mpSectionHTML('cur', IC.doc + ' ' + esc(weekRangeTxt(curWk)) + ' 게첨 주 접수', cur.length + '건 · 이번 회차', cur, '', true);
-    html += mpSectionHTML('up', IC.cal + ' 사전 접수 · 게첨 예정', upcoming.length + '건', upcoming, '', true);
-    html += mpSectionHTML('past', IC.cal + ' 지난 회차 · 게시 중·종료', past.length + '건', past, '', true);
+      '<div class="callout warn" style="margin:2px 0 12px">' + IC.alert + '<div>이 주간은 협회 일괄 게첨이 끝났습니다 — <b>광고대행사는 직접 현장에 설치(게첨)</b>, <b>일반인은 규정상 직접 설치가 금지되어 반드시 옥외광고업 등록 광고사에 의뢰</b>해야 합니다.</div></div>', false);
+    html += mpSectionHTML('cur', IC.doc + ' ' + esc(weekRangeTxt(curWk)) + ' 게첨 주 접수', cur.length + '건 · 이번 회차', cur, '', false);
+    html += mpSectionHTML('up', IC.cal + ' 사전 접수 · 게첨 예정', upcoming.length + '건', upcoming, '', false);
+    html += mpSectionHTML('past', IC.cal + ' 지난 회차 · 게시 중·종료', past.length + '건', past, '', false);
 
     var needPay = mine.filter(function (a) { return (a.status === '입고대기' || a.status === '선착순확정') && !a.paid; });
     if (needPay.length) {
