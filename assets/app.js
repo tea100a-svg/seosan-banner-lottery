@@ -6012,7 +6012,7 @@
     if (ui.bsPid === undefined) ui.bsPid = urlPid || '';
     var pFocus = ui.bsPid ? boardById(ui.bsPid) : null;
     var schedMode = ui.bsMode === '4w' ? '4w' : '1w';
-    var schedBase = ui.bsDate || weekStartOf(today());
+    var schedBase = ui.bsDate || weekStartOf(todayISO());
     var dayFilter = ui.bsDay || '';
     var qFilter = String(ui.bsQ || '').trim().toLowerCase();
 
@@ -6162,7 +6162,7 @@
     } else {
       var weeks4 = [0, 1, 2, 3].map(function (wi) { return addDays(startWk, wi * 7); });
       var blocks = [];
-      var curWk = weekStartOf(today());
+      var curWk = weekStartOf(todayISO());
       targetBoards.forEach(function (b) {
         var codes = slotCodesOf(b);
         var plans4 = weeks4.map(function (w) { return slotPlan(b.id, w); });
@@ -6229,14 +6229,14 @@
       b.addEventListener('click', function () {
         var dir = Number(b.getAttribute('data-bsnav')) || 0;
         var stepDays = (ui.bsMode === '4w' ? 28 : 7) * dir;
-        ui.bsDate = addDays(weekStartOf(ui.bsDate || today()), stepDays);
+        ui.bsDate = addDays(weekStartOf(ui.bsDate || todayISO()), stepDays);
         renderBoardSchedulePage();
       });
     });
     var nowBtn = root.querySelector('[data-bsnow]');
     if (nowBtn) {
       nowBtn.addEventListener('click', function () {
-        ui.bsDate = weekStartOf(today());
+        ui.bsDate = weekStartOf(todayISO());
         renderBoardSchedulePage();
       });
     }
