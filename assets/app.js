@@ -11968,7 +11968,7 @@
       }).join('');
       return '<div class="off-slot-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #e6edf6">' +
         '<b style="font-size:12.5px;min-width:120px;flex:1 1 140px">' + esc(p.name) + (p.low ? ' <span class="tag off">공문 전용</span>' : '') + '</b>' +
-        (p.low ? '' : '<button type="button" class="btn sm ' + (cur ? 'ok' : 'primary') + '" data-offslotmodal="' + esc(p.id) + '">' + (cur ? '📍 ' + esc(slotHumanLabel(p, cur)) : '📍 동·단수 선택') + '</button>') +
+        (p.low ? '' : '<button type="button" class="btn sm ' + (cur ? 'ok' : 'primary') + '" data-offslotmodal="' + esc(p.id) + '">' + (cur ? '📍 ' + esc(slotChipTxt(p, cur)) : '📍 동·단수 선택') + '</button>') +
         '<select class="input sm" data-offslot="' + esc(p.id) + '" style="flex:1 1 200px;max-width:100%">' + opts + '</select></div>';
     }).join('');
   }
@@ -12552,7 +12552,7 @@
         '<div class="fcount' + (remOff ? '' : ' sold') + '"><b>' + off + '/' + capOff + '</b><span>공문 면</span></div>' +
         '<div class="fc-act">' +
           boardMapBtnsHTML(p) +
-          (on && !p.low ? '<button class="btn sm ' + ((ui.offSlots && ui.offSlots[p.id]) ? 'ok' : 'ghost') + '" data-offslotmodal="' + esc(p.id) + '" type="button">' + ((ui.offSlots && ui.offSlots[p.id]) ? '📍 ' + esc(slotHumanLabel(p, ui.offSlots[p.id])) : '📍 동·단수') + '</button>' : '') +
+          (on && !p.low ? '<button class="btn sm ' + ((ui.offSlots && ui.offSlots[p.id]) ? 'ok' : 'ghost') + '" data-offslotmodal="' + esc(p.id) + '" type="button">' + ((ui.offSlots && ui.offSlots[p.id]) ? '📍 ' + esc(slotChipTxt(p, ui.offSlots[p.id])) : '📍 동·단수') + '</button>' : '') +
           '<button class="btn sm ' + (on ? 'ok' : (full || adjB ? '' : 'primary')) + '" data-offpick="' + esc(p.id) + '" type="button"' +
             ((!on && (full || adjB)) ? ' disabled' : '') + '>' + btnLbl + '</button>' +
         '</div>' +
