@@ -2336,12 +2336,20 @@ details.special-fold > .sf-body{padding:16px 20px 20px}
 .byeolji-field{position:absolute;font-size:clamp(9px,1.45vw,12.5px);font-weight:600;color:#0f172a;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .byeolji-field.sm-txt{font-size:clamp(7.5px,1.15vw,10.5px)}
 .byeolji-field.wrap{white-space:normal;word-break:keep-all}
+#byeoljiBatchPrintWrap{display:none}
 @media print{
   body.printing-byeolji *{visibility:hidden}
   body.printing-byeolji #byeoljiSheet,body.printing-byeolji #byeoljiSheet *{visibility:visible}
   body.printing-byeolji #byeoljiSheet img.byeolji-bg{display:none !important;visibility:hidden !important}
   body.printing-byeolji #byeoljiSheet.with-bg img.byeolji-bg{display:block !important;visibility:visible !important;opacity:1}
   body.printing-byeolji #byeoljiSheet{position:fixed;inset:0;width:210mm;height:297mm;max-width:none;border:none;box-shadow:none;margin:0}
+  body.printing-byeolji-batch *{visibility:hidden}
+  body.printing-byeolji-batch #byeoljiBatchPrintWrap,body.printing-byeolji-batch #byeoljiBatchPrintWrap *{visibility:visible}
+  body.printing-byeolji-batch #byeoljiBatchPrintWrap{display:block;position:fixed;inset:0;width:210mm;margin:0;padding:0}
+  body.printing-byeolji-batch #byeoljiBatchPrintWrap .byeolji-sheet{position:relative;width:210mm;height:297mm;max-width:none;border:none;box-shadow:none;margin:0;page-break-after:always;break-after:page}
+  body.printing-byeolji-batch #byeoljiBatchPrintWrap .byeolji-sheet:last-child{page-break-after:auto;break-after:auto}
+  body.printing-byeolji-batch #byeoljiBatchPrintWrap .byeolji-sheet img.byeolji-bg{display:none !important;visibility:hidden !important}
+  body.printing-byeolji-batch #byeoljiBatchPrintWrap .byeolji-sheet.with-bg img.byeolji-bg{display:block !important;visibility:visible !important;opacity:1}
 }
 
 

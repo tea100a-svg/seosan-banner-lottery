@@ -8596,48 +8596,13 @@
   function byeoljiOffsetSave(o) {
     try { localStorage.setItem('sbl_byeolji_offset_v1', JSON.stringify(o)); } catch (e) {}
   }
-  function renderByeoljiForm() {
-    if (!has('byeoljiPreview')) return;
-    if (!ui.byeoljiWeek) ui.byeoljiWeek = weekStartOf(addDays(ROUND.postStart, -7));
-    var wk = weekStartOf(ui.byeoljiWeek);
-    if ($('#byeoljiDatePick')) $('#byeoljiDatePick').value = wk;
-    if ($('#byeoljiWeekChips')) {
-      var bOpts = [
-        { v: addDays(ROUND.postStart, -14), t: weekKpiLabel(addDays(ROUND.postStart, -14)), tag: '-2주 ' },
-        { v: addDays(ROUND.postStart, -7), t: weekKpiLabel(addDays(ROUND.postStart, -7)), tag: '지난 주 · ' },
-        { v: ROUND.postStart, t: weekKpiLabel(ROUND.postStart), tag: '이번 주 · ' },
-        { v: addDays(ROUND.postStart, 7), t: weekKpiLabel(addDays(ROUND.postStart, 7)), tag: '+1주 ' }
-      ];
-      $('#byeoljiWeekChips').innerHTML = bOpts.map(function (o) {
-        return '<button class="chip' + (o.v === wk ? ' active' : '') + '" data-byeoljiweek="' + o.v + '" type="button">' +
-          o.tag + esc(o.t) + ' <span class="tc">' + weekRangeTxt(o.v) + '</span></button>';
-      }).join('');
-    }
-    var off = byeoljiOffsetLoad();
-    if ($('#byeoljiOffX')) $('#byeoljiOffX').value = off.x;
-    if ($('#byeoljiOffY')) $('#byeoljiOffY').value = off.y;
-    if ($('#byeoljiWithBg')) $('#byeoljiWithBg').checked = off.withBg;
-    var apps = db.apps.filter(function (a) {
+  function byeoljiAppsOfWeek(wk) {
+    return db.apps.filter(function (a) {
       if (['반려', '미입고취소', '미입금취소', '본인취소', '접수취소', '낙첨'].indexOf(a.status) >= 0) return false;
       return weekStartOf(a.start || ROUND.postStart) === wk && awardedOf(a) > 0;
     });
-    var sel = $('#byeoljiCoSel');
-    if (sel) {
-      var prev = ui.byeoljiAppId || sel.value || '';
-      sel.innerHTML = apps.length
-        ? apps.map(function (a) {
-            return '<option value="' + esc(a.id) + '"' + (a.id === prev ? ' selected' : '') + '>' +
-              esc(a.company) + ' (' + esc(a.id) + ') · ' + awardedOf(a) + '매</option>';
-          }).join('')
-        : '<option value="">배정된 접수 건이 없습니다</option>';
-      if (apps.length && !apps.some(function (a) { return a.id === ui.byeoljiAppId; })) ui.byeoljiAppId = apps[0].id;
-    }
-    var target = apps.filter(function (a) { return a.id === ui.byeoljiAppId; })[0] || apps[0];
-    if ($('#byeoljiInfo')) $('#byeoljiInfo').textContent = weekRangeTxt(wk) + ' · ' + (target ? (target.company + ' · ' + awardedOf(target) + '매') : '배정 건 0건');
-    if (!target) {
-      $('#byeoljiPreview').innerHTML = '<div class="photo-empty">선택한 주차(' + esc(weekRangeTxt(wk)) + ')에 배정된 접수 건이 없습니다. 위 달력이나 빠른 주 버튼으로 다른 주를 선택해 보세요.</div>';
-      return;
-    }
+  }
+  function byeoljiSheetHTML(target, wk, off, idAttr) {
     var m = (db.members || []).filter(function (x) { return x.company === target.company || x.id === target.memberId; })[0] || {};
     var adv = advOfApp(target);
     var qty = awardedOf(target);
@@ -8660,43 +8625,87 @@
     function f(top, left, w, txt, cls) {
       return '<div class="byeolji-field' + (cls ? (' ' + cls) : '') + '" style="top:' + top + '%;left:' + left + '%;width:' + w + '%">' + esc(txt) + '</div>';
     }
-    $('#byeoljiPreview').innerHTML =
-      '<div class="byeolji-sheet' + (off.withBg ? ' with-bg' : '') + '" id="byeoljiSheet">' +
-        '<img class="byeolji-bg" src="assets/form-byeolji1.jpg" alt="별지 제1호서식">' +
-        '<div class="byeolji-fields-layer" id="byeoljiFieldsLayer" style="transform:translate(' + off.x + 'mm,' + off.y + 'mm)">' +
-        f(15.3, 33.5, 22, repName) +
-        f(15.3, 77.5, 16, m.birth || '760605') +
-        f(18.1, 33.5, 22, target.company || '') +
-        f(18.1, 77.5, 16, bizNo) +
-        f(20.9, 33.5, 24, addr) +
-        f(20.9, 77.5, 16, hp) +
-        f(23.9, 33.5, 22, target.company || '') +
-        f(24.7, 78.2, 16, regNo, 'sm-txt') +
-        f(26.7, 33.5, 22, repName) +
-        f(26.7, 77.5, 16, bizNo) +
-        f(29.6, 33.5, 24, addr) +
-        f(29.6, 77.5, 16, tel) +
-        f(35.0, 16.5, 16, '현수막') +
-        f(35.0, 41.0, 10, qty + ' 매') +
-        f(35.0, 54.0, 14, '710×90') +
-        f(35.0, 74.0, 14, '천') +
-        f(38.4, 16.5, 44, placeTxt) +
-        f(42.0, 16.5, 30, periodStr) +
-        f(42.0, 62.5, 28, contentTxt) +
-        f(48.6, 16.5, 20, target.company || '') +
-        f(48.6, 44.5, 13, repName) +
-        f(48.6, 59.5, 15, bizNo) +
-        f(48.6, 77.0, 16, hp) +
-        f(51.9, 16.5, 18, repName) +
-        f(51.9, 44.5, 28, addr) +
-        f(51.9, 77.0, 16, tel) +
-        f(76.8, 66.2, 6, y) +
-        f(76.8, 72.3, 4, mo) +
-        f(76.8, 76.5, 4, da) +
-        f(80.6, 54.0, 34, addr) +
-        f(84.4, 54.0, 24, repName) +
-        '</div>' +
-      '</div>';
+    return '<div class="byeolji-sheet' + (off.withBg ? ' with-bg' : '') + '"' + (idAttr ? (' id="' + idAttr + '"') : '') + '>' +
+      '<img class="byeolji-bg" src="assets/form-byeolji1.jpg" alt="별지 제1호서식">' +
+      '<div class="byeolji-fields-layer"' + (idAttr ? ' id="byeoljiFieldsLayer"' : '') + ' style="transform:translate(' + off.x + 'mm,' + off.y + 'mm)">' +
+      f(15.3, 33.5, 22, repName) +
+      f(15.3, 77.5, 16, m.birth || '760605') +
+      f(18.1, 33.5, 22, target.company || '') +
+      f(18.1, 77.5, 16, bizNo) +
+      f(20.9, 33.5, 24, addr) +
+      f(20.9, 77.5, 16, hp) +
+      f(23.9, 33.5, 22, target.company || '') +
+      f(24.7, 78.2, 16, regNo, 'sm-txt') +
+      f(26.7, 33.5, 22, repName) +
+      f(26.7, 77.5, 16, bizNo) +
+      f(29.6, 33.5, 24, addr) +
+      f(29.6, 77.5, 16, tel) +
+      f(35.0, 16.5, 16, '현수막') +
+      f(35.0, 41.0, 10, qty + ' 매') +
+      f(35.0, 54.0, 14, '710×90') +
+      f(35.0, 74.0, 14, '천') +
+      f(38.4, 16.5, 44, placeTxt) +
+      f(42.0, 16.5, 30, periodStr) +
+      f(42.0, 62.5, 28, contentTxt) +
+      f(48.6, 16.5, 20, target.company || '') +
+      f(48.6, 44.5, 13, repName) +
+      f(48.6, 59.5, 15, bizNo) +
+      f(48.6, 77.0, 16, hp) +
+      f(51.9, 16.5, 18, repName) +
+      f(51.9, 44.5, 28, addr) +
+      f(51.9, 77.0, 16, tel) +
+      f(76.8, 66.2, 6, y) +
+      f(76.8, 72.3, 4, mo) +
+      f(76.8, 76.5, 4, da) +
+      f(80.6, 54.0, 34, addr) +
+      f(84.4, 54.0, 24, repName) +
+      '</div>' +
+    '</div>';
+  }
+  function renderByeoljiForm() {
+    if (!has('byeoljiPreview')) return;
+    if (!ui.byeoljiWeek) ui.byeoljiWeek = weekStartOf(addDays(ROUND.postStart, -7));
+    var wk = weekStartOf(ui.byeoljiWeek);
+    if ($('#byeoljiDatePick')) $('#byeoljiDatePick').value = wk;
+    if ($('#byeoljiWeekChips')) {
+      var bOpts = [
+        { v: addDays(ROUND.postStart, -14), t: weekKpiLabel(addDays(ROUND.postStart, -14)), tag: '-2주 ' },
+        { v: addDays(ROUND.postStart, -7), t: weekKpiLabel(addDays(ROUND.postStart, -7)), tag: '지난 주 · ' },
+        { v: ROUND.postStart, t: weekKpiLabel(ROUND.postStart), tag: '이번 주 · ' },
+        { v: addDays(ROUND.postStart, 7), t: weekKpiLabel(addDays(ROUND.postStart, 7)), tag: '+1주 ' }
+      ];
+      $('#byeoljiWeekChips').innerHTML = bOpts.map(function (o) {
+        return '<button class="chip' + (o.v === wk ? ' active' : '') + '" data-byeoljiweek="' + o.v + '" type="button">' +
+          o.tag + esc(o.t) + ' <span class="tc">' + weekRangeTxt(o.v) + '</span></button>';
+      }).join('');
+    }
+    var off = byeoljiOffsetLoad();
+    if ($('#byeoljiOffX')) $('#byeoljiOffX').value = off.x;
+    if ($('#byeoljiOffY')) $('#byeoljiOffY').value = off.y;
+    if ($('#byeoljiWithBg')) $('#byeoljiWithBg').checked = off.withBg;
+    var apps = byeoljiAppsOfWeek(wk);
+    if ($('#btnByeoljiBatchPrint')) {
+      $('#btnByeoljiBatchPrint').textContent = '🖨️ 이번 회차 전체 일괄 인쇄 (' + apps.length + '건)';
+      $('#btnByeoljiBatchPrint').disabled = !apps.length;
+    }
+    var sel = $('#byeoljiCoSel');
+    if (sel) {
+      var prev = ui.byeoljiAppId || sel.value || '';
+      sel.innerHTML = apps.length
+        ? apps.map(function (a) {
+            return '<option value="' + esc(a.id) + '"' + (a.id === prev ? ' selected' : '') + '>' +
+              esc(a.company) + ' (' + esc(a.id) + ') · ' + awardedOf(a) + '매</option>';
+          }).join('')
+        : '<option value="">배정된 접수 건이 없습니다</option>';
+      if (apps.length && !apps.some(function (a) { return a.id === ui.byeoljiAppId; })) ui.byeoljiAppId = apps[0].id;
+    }
+    var target = apps.filter(function (a) { return a.id === ui.byeoljiAppId; })[0] || apps[0];
+    if ($('#byeoljiInfo')) $('#byeoljiInfo').textContent = weekRangeTxt(wk) + ' · ' + (target ? (target.company + ' · ' + awardedOf(target) + '매 (전체 ' + apps.length + '건)') : '배정 건 0건');
+    if (!target) {
+      $('#byeoljiPreview').innerHTML = '<div class="photo-empty">선택한 주차(' + esc(weekRangeTxt(wk)) + ')에 배정된 접수 건이 없습니다. 위 달력이나 빠른 주 버튼으로 다른 주를 선택해 보세요.</div>';
+      return;
+    }
+    $('#byeoljiPreview').innerHTML = byeoljiSheetHTML(target, wk, off, 'byeoljiSheet');
   }
 
   /* 게시 지정서 일괄 출력 — 이번 회차 확정·배정 건을 A4 1장씩 이어 인쇄 (김재봉 님 지시 2026-11-22) */
@@ -17676,6 +17685,26 @@
       onEl('#byeoljiCoSel', 'change', function () {
         ui.byeoljiAppId = this.value || '';
         renderByeoljiForm();
+      });
+    }
+    if ($('#btnByeoljiBatchPrint')) {
+      onEl('#btnByeoljiBatchPrint', 'click', function () {
+        var wk = weekStartOf(ui.byeoljiWeek || addDays(ROUND.postStart, -7));
+        var apps = byeoljiAppsOfWeek(wk);
+        if (!apps.length) { toast('선택한 주차에 일괄 인쇄할 배정 건이 없습니다.', true); return; }
+        var off = byeoljiOffsetLoad();
+        var wrap = $('#byeoljiBatchPrintWrap');
+        if (!wrap) return;
+        wrap.innerHTML = apps.map(function (a) { return byeoljiSheetHTML(a, wk, off, ''); }).join('');
+        var rule = $('#printPageRule');
+        if (rule) rule.textContent = '@page{size:A4 portrait;margin:0}';
+        document.body.classList.add('printing-byeolji-batch');
+        try { window.print(); } catch (e) { /* 인쇄 불가 환경 */ }
+        setTimeout(function () {
+          document.body.classList.remove('printing-byeolji-batch');
+          if (rule) rule.textContent = '';
+          wrap.innerHTML = '';
+        }, 800);
       });
     }
     if ($('#btnByeoljiPrint')) {
