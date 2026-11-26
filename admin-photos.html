@@ -6,7 +6,7 @@
 <script>document.documentElement.setAttribute('data-device-view','pc');</script>
 <title>📸 게첨사진 등록 | 협회 관리자 · 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261126r49">
+<link rel="stylesheet" href="assets/style.css?v=20261126r50">
 </head>
 <body data-page="admin-photos">
 <div class="demo-banner">
@@ -141,13 +141,26 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16.4v.1"/></svg>
         <div><b>사진 보관기간: 등록일로부터 3개월(90일) 후 자동 삭제됩니다.</b> 게첨 완료 사진은 등록일로부터 3개월(90일)간 보관 후 자동 삭제됩니다. 증빙이 필요한 경우 기간 내에 미리 다운로드하거나 인쇄해 보관해 주세요.<br><span class="sm" id="photoRetainInfo"></span></div>
       </div>
-      <div class="photo-tools">
+      <div class="photo-datebar">
+        <label for="photoDatePick">📅 날짜(게첨 주) 선택 <input class="input sm" type="date" id="photoDatePick" aria-label="게첨사진 날짜 선택"></label>
         <label for="photoWeek">주차 <select class="input sm" id="photoWeek"></select></label>
-        <label for="photoPid">게시대 <select class="input sm" id="photoPid"></select></label>
+        <input class="input sm ko-ime" id="photoFolderQuery" lang="ko" placeholder="게시대명 검색 (예: 의료원)" style="width:170px">
+        <span class="chips" id="photoFolderFilter">
+          <button class="chip active" type="button" data-pffilter="all">전체</button>
+          <button class="chip" type="button" data-pffilter="todo">미등록만</button>
+          <button class="chip" type="button" data-pffilter="done">등록완료</button>
+        </span>
+        <span class="spacer"></span>
+        <span class="sm" id="photoFolderSummary" style="font-weight:700;color:#475569"></span>
+      </div>
+      <div class="sect-label" style="margin:2px 0 6px">📁 게시대별 폴더 카드 — <b>카드 위에 사진 파일을 끌어다 놓으세요 (드래그앤드롭)</b></div>
+      <div class="photo-folder-grid" id="photoFolderGrid"></div>
+      <div class="photo-tools">
+        <label for="photoPid">선택 게시대 <select class="input sm" id="photoPid"></select></label>
         <label for="photoDong">동 <select class="input sm" id="photoDong"></select></label>
         <span class="spacer"></span>
         <input type="file" id="photoFile" accept="image/*" multiple style="display:none">
-        <button class="btn sm primary" id="btnPhotoPick" type="button">📁 사진 선택해서 올리기</button>
+        <button class="btn sm primary" id="btnPhotoPick" type="button">📁 선택 게시대에 사진 올리기</button>
         <button class="btn sm" id="btnPhotoSample" type="button">🧪 시연용 샘플 게첨사진 생성</button>
         <span class="photo-msg" id="photoMsg"></span>
       </div>
@@ -194,6 +207,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261126r49"></script>
+<script src="assets/app.js?v=20261126r50"></script>
 </body>
 </html>

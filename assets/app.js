@@ -3103,7 +3103,7 @@
     statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, drawWeek: ROUND.postStart, locWeek: ROUND.postStart, calMonth: {}, offSlots: {},
     themeSel: {}, themeSearch: '', themeEditSel: {},
     /* 현장 게첨사진 — 게시대 동 단위 등록 화면의 선택값 (2026-11-23) */
-    photoWeek: '', photoPid: '', photoDong: '' };
+    photoWeek: '', photoPid: '', photoDong: '', photoFolderFilter: 'all', photoFolderQuery: '' };
 
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
   function pad4(n) { return ('000' + n).slice(-4); }
@@ -9036,11 +9036,12 @@
     fr.onerror = function () { cb('', 0, 0); };
     fr.readAsDataURL(file);
   }
-  function handlePhotoFiles(files) {
+  function handlePhotoFiles(files, targetPid, targetDong) {
     if (!photoCanEdit()) { toast('게첨사진 등록은 현장실무원·마스터만 할 수 있습니다.', true); return; }
     var arr = Array.prototype.slice.call(files || []), imgs = arr.filter(function (f) { return /^image\//.test(f.type || '') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name || ''); });
     if (!imgs.length) { toast('사진 파일(PNG·JPG)을 선택해 주세요.', true); return; }
-    var wk = photoWeekOf(), pid = ui.photoPid, L = ui.photoDong, n = 0, left = imgs.length;
+    var wk = photoWeekOf(), pid = targetPid || ui.photoPid, L = (targetDong != null) ? targetDong : ui.photoDong, n = 0, left = imgs.length;
+    if (targetPid) { ui.photoPid = targetPid; ui.photoDong = L; }
     imgs.forEach(function (f) {
       readAndScalePhoto(f, function (data, w, h) {
         if (data) { addPhotoRecord({ week: wk, pid: pid, dong: L, data: data, w: w, h: h, name: f.name || '게첨사진.jpg' }); n += 1; }
@@ -9280,12 +9281,14 @@
     if (!has('photoList')) return;
     if (!ui.photoWeek) ui.photoWeek = addDays(currentPostingWeek(), -7);
     var wk = weekStartOf(ui.photoWeek), base = currentPostingWeek();
+    if ($('#photoDatePick')) $('#photoDatePick').value = wk;
     var wsel = $('#photoWeek');
     if (wsel) {
       var wopts = [];
       for (var i = -4; i <= 1; i++) wopts.push(addDays(base, i * 7));
-      wsel.innerHTML = wopts.reverse().map(function (s) {
-        var tag = s === base ? ' · 이번 회차(추첨 전)' : (s === addDays(base, -7) ? ' · 이번 주 게첨' : ' · 지난 주');
+      if (wopts.indexOf(wk) < 0) wopts.push(wk);
+      wsel.innerHTML = wopts.sort().reverse().map(function (s) {
+        var tag = s === base ? ' · 이번 회차(추첨 전)' : (s === addDays(base, -7) ? ' · 이번 주 게첨' : ' · 다른 주');
         return '<option value="' + s + '"' + (s === wk ? ' selected' : '') + '>' + weekRangeTxt(s) + tag + '</option>';
       }).join('');
     }
@@ -9367,6 +9370,43 @@
         : '<div class="photo-empty">등록된 게첨사진이 없습니다. <b>📁 사진 선택해서 올리기</b>로 현장 사진을 올리거나, <b>🧪 시연용 샘플 게첨사진 생성</b>으로 확인해 보세요.</div>';
     }
     if ($('#photoMsg')) $('#photoMsg').textContent = photoCanEdit() ? '' : '등록·삭제는 현장실무원·마스터만 가능합니다.';
+    if ($('#photoFolderGrid')) {
+      var q = String(ui.photoFolderQuery || '').trim().toLowerCase();
+      var fmode = ui.photoFolderFilter || 'all';
+      var folderCards = [], totalCards = 0, doneCards = 0;
+      pids.forEach(function (fid) {
+        var bp = boardById(fid);
+        var bLetters = (bp ? boardLettersOf(bp) : ['']).slice().sort(function (x, y) { return folderIndexOf(fid, x) - folderIndexOf(fid, y); });
+        bLetters.forEach(function (fl) {
+          var fApps = photoAppsOfCell(wk, fid, fl);
+          var fPhotos = photosOfCell(wk, fid, fl);
+          totalCards += 1;
+          if (fPhotos.length) doneCards += 1;
+          var bName = bp ? bp.name : fid;
+          if (q && bName.toLowerCase().indexOf(q) < 0 && photoDongLabel(fid, fl).toLowerCase().indexOf(q) < 0) return;
+          if (fmode === 'todo' && fPhotos.length > 0) return;
+          if (fmode === 'done' && fPhotos.length === 0) return;
+          var isOn = (String(fid) === String(ui.photoPid) && String(fl) === String(ui.photoDong));
+          var thumbs = fPhotos.slice(0, 3).map(function (ph) {
+            return '<img src="' + esc(photoSrc(ph)) + '" alt="' + esc(bName) + '">';
+          }).join('');
+          folderCards.push(
+            '<div class="photo-folder-card' + (fPhotos.length ? ' done' : '') + (isOn ? ' active' : '') + '" data-pffolder="' + esc(fid) + '" data-pfdong="' + esc(fl) + '">' +
+              '<div class="pfc-top"><div><div class="pfc-title">📁 ' + esc(bName) + ' · ' + esc(photoDongLabel(fid, fl)) + '</div>' +
+              '<div class="pfc-sub">배정 ' + fApps.length + '건 · ' + esc(photoFolderName({ pid: fid, dong: fl }).replace(/^_/, '')) + '</div></div>' +
+              '<span class="pfc-badge ' + (fPhotos.length ? 'ok' : 'wait') + '">' + (fPhotos.length ? ('✅ ' + fPhotos.length + '장') : '미등록') + '</span></div>' +
+              (thumbs ? ('<div class="pfc-thumbs">' + thumbs + '</div>') : '<div class="pfc-drop">여기에 사진 파일을 끌어다 놓으세요</div>') +
+              '<div class="pfc-actions"><span class="sm">' + (fPhotos.length ? '추가 드래그 가능' : '클릭 또는 드롭') + '</span>' +
+              '<button class="btn sm ghost" type="button" data-pfpick="' + esc(fid) + '" data-pfdong="' + esc(fl) + '">+ 사진 올리기</button></div>' +
+            '</div>'
+          );
+        });
+      });
+      if ($('#photoFolderSummary')) $('#photoFolderSummary').textContent = weekRangeTxt(wk) + ' · 폴더 ' + totalCards + '개 중 ' + doneCards + '개 등록완료';
+      $('#photoFolderGrid').innerHTML = folderCards.length
+        ? folderCards.join('')
+        : '<div class="photo-empty">조건에 맞는 게시대 폴더가 없습니다. 검색어나 필터를 바꿔 보세요.</div>';
+    }
   }
 
   /* ---------------------------------------------------------------
@@ -16851,7 +16891,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-desigweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,[data-pffilter],[data-pffolder],[data-pfpick],#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-desigweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-aikeybtn')) { e.stopPropagation(); e.preventDefault(); openAiVisionKeyModal(el.getAttribute('data-aikeybtn') || 'apply'); return; }
     if (el.hasAttribute('data-airetry')) {
@@ -16868,6 +16908,25 @@
     if (el.hasAttribute('data-randexcl')) { e.stopPropagation(); e.preventDefault(); toggleRandExcluded(el.getAttribute('data-randexcl')); return; }
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
+    if (el.hasAttribute('data-pffilter')) {
+      ui.photoFolderFilter = el.getAttribute('data-pffilter') || 'all';
+      $$('#photoFolderFilter .chip').forEach(function (c) { c.classList.toggle('active', c === el); });
+      renderPhotoPanel();
+      return;
+    }
+    if (el.hasAttribute('data-pfpick')) {
+      ui.photoPid = el.getAttribute('data-pfpick') || '';
+      ui.photoDong = el.getAttribute('data-pfdong') || '';
+      renderPhotoPanel();
+      if ($('#photoFile')) $('#photoFile').click();
+      return;
+    }
+    if (el.hasAttribute('data-pffolder')) {
+      ui.photoPid = el.getAttribute('data-pffolder') || '';
+      ui.photoDong = el.getAttribute('data-pfdong') || '';
+      renderPhotoPanel();
+      return;
+    }
     if (el.id === 'btnPhotoSample') { addSamplePhotos(); return; }
     if (el.hasAttribute('data-photoview')) { previewPhoto(el.getAttribute('data-photoview')); return; }
     if (el.hasAttribute('data-photodel')) { deletePhoto(el.getAttribute('data-photodel')); return; }
@@ -17397,6 +17456,43 @@
     if ($('#adminRoleSel')) onEl('#adminRoleSel', 'change', function () { setAdminRole(this.value); });
     if ($('#adminRoleLoginPri')) onEl('#adminRoleLoginPri', 'change', function () { setRoleLoginPriority(!!this.checked); });
     /* 현장 게첨사진 — 주차·게시대·동 선택, 사진 파일 첨부 (2026-11-23) */
+    if ($('#photoDatePick')) onEl('#photoDatePick', 'change', function () {
+      if (!this.value) return;
+      ui.photoWeek = weekStartOf(this.value);
+      ui.photoPid = '';
+      ui.photoDong = '';
+      renderPhotoPanel();
+      toast('게첨 주(' + weekRangeTxt(ui.photoWeek) + ') 폴더 목록을 불러왔습니다.');
+    });
+    if ($('#photoFolderQuery')) onEl('#photoFolderQuery', 'input', function () {
+      ui.photoFolderQuery = this.value || '';
+      renderPhotoPanel();
+    });
+    if ($('#photoFolderGrid')) {
+      var pfGrid = $('#photoFolderGrid');
+      pfGrid.addEventListener('dragover', function (e) {
+        var card = (e.target && e.target.closest) ? e.target.closest('.photo-folder-card') : null;
+        if (!card) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+        $$('#photoFolderGrid .photo-folder-card.dragover').forEach(function (x) { if (x !== card) x.classList.remove('dragover'); });
+        card.classList.add('dragover');
+      });
+      pfGrid.addEventListener('dragleave', function (e) {
+        var card = (e.target && e.target.closest) ? e.target.closest('.photo-folder-card') : null;
+        if (card && (!e.relatedTarget || !card.contains(e.relatedTarget))) card.classList.remove('dragover');
+      });
+      pfGrid.addEventListener('drop', function (e) {
+        var card = (e.target && e.target.closest) ? e.target.closest('.photo-folder-card') : null;
+        if (!card) return;
+        e.preventDefault();
+        card.classList.remove('dragover');
+        var files = e.dataTransfer && e.dataTransfer.files;
+        if (files && files.length) {
+          handlePhotoFiles(files, card.getAttribute('data-pffolder'), card.getAttribute('data-pfdong'));
+        }
+      });
+    }
     if ($('#photoWeek')) onEl('#photoWeek', 'change', function () { ui.photoWeek = this.value; ui.photoPid = ''; ui.photoDong = ''; renderPhotoPanel(); });
     if ($('#photoPid')) onEl('#photoPid', 'change', function () { ui.photoPid = this.value; ui.photoDong = ''; renderPhotoPanel(); });
     if ($('#photoDong')) onEl('#photoDong', 'change', function () { ui.photoDong = this.value; renderPhotoPanel(); });
