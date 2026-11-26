@@ -7020,7 +7020,7 @@
           (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
       '<div class="fcount"><b>' + reqN + '</b><span>/' + p.cap + '건 접수중</span></div>' +
       '<div class="fc-act">' +
-        (!off ? '<button class="btn sm ghost rand-excl-btn' + (excluded ? ' is-excl' : '') + '" type="button" data-randexcl="' + esc(p.id) + '" aria-pressed="' + (excluded ? 'true' : 'false') + '" title="체크하면 무작위 선택 시 후보에서 빠집니다">' + (excluded ? '🚫 제외됨' : '무작위 제외') + '</button>' : '') +
+        (!off ? '<button class="btn sm ghost rand-excl-btn has-tip' + (excluded ? ' is-excl' : '') + '" type="button" data-randexcl="' + esc(p.id) + '" aria-pressed="' + (excluded ? 'true' : 'false') + '" data-tip="체크해 두면 무작위 선택을 눌렀을 때 이 게시대는 후보에서 자동으로 빠져요.">' + (excluded ? '🚫 제외됨' : '무작위 제외') + '</button>' : '') +
         boardMapBtnsHTML(p) +
         (picked && !off ? '<button class="btn sm ghost hide-sm" type="button" data-slotjump="' + esc(p.id) + '" title="세부 위치(게시동·단) 지정">위치</button>' : '') +
         '<button class="btn sm ' + (picked ? 'ok' : (off || adjB ? '' : 'primary')) + '" type="button"' + (off ? ' disabled' : '') + '>' + esc(btn) + '</button>' +
