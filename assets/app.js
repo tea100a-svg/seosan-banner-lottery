@@ -15110,8 +15110,8 @@
     return _tessPromise;
   }
 
-  function parseOcrTextForBanner(rawText, ocrLines) {
-    var out = { advertiser: '', phone: '', text: '', score: 0 };
+  function parseOcrTextForBanner(rawText, ocrLines, ocrWords) {
+    var out = { advertiser: '', phone: '', text: '', score: 0, headlineTokens: [] };
     var txt = String(rawText || '').replace(/\r/g, '\n');
     if (!txt.trim()) return out;
     /* 전화번호 추출: 010/041 등 전체 번호 또는 T.688-8899 형태 */
@@ -15168,28 +15168,47 @@
         if (advCand.length) out.advertiser = advCand[0];
       }
 
-      /* 핵심 문구 추출: 글자 높이(bbox)가 큰 메인 헤드라인 1~2줄만 압축 (최대 22자) */
-      var picked = [];
-      if (Array.isArray(ocrLines) && ocrLines.length) {
-        var lineInfos = ocrLines.map(function (ln) {
-          var toks = cleanLineTokens(ln && ln.text).filter(function (w) { return !isAddrOrNoise(w); });
-          var h = (ln && ln.bbox) ? Math.max(1, (ln.bbox.y1 || 0) - (ln.bbox.y0 || 0)) : 10;
-          var koN = toks.filter(function (w) { return /[가-힣]{2,}/.test(w); }).length;
-          return { toks: toks, h: h, koN: koN };
-        }).filter(function (x) { return x.koN >= 1; });
-
-        if (lineInfos.length) {
-          lineInfos.sort(function (a, b) { return b.h - a.h; });
-          var maxH = lineInfos[0].h;
-          lineInfos.forEach(function (x) {
-            if (x.h < maxH * 0.52 && picked.length >= 2) return;
-            x.toks.forEach(function (w) {
-              if (picked.indexOf(w) >= 0) return;
-              var nextStr = picked.concat([w]).join(' ');
-              if (picked.length < 4 && nextStr.length <= 22) picked.push(w);
-            });
+      /* 핵심 단어 추출: Tesseract words의 실제 글자 높이(bbox)와 신뢰도(confidence) 기준 */
+      var wordCandidates = [];
+      if (Array.isArray(ocrWords) && ocrWords.length) {
+        ocrWords.forEach(function (wd) {
+          if (!wd || (typeof wd.confidence === 'number' && wd.confidence < 38)) return;
+          var h = wd.bbox ? Math.max(1, (wd.bbox.y1 || 0) - (wd.bbox.y0 || 0)) : 10;
+          var x0 = wd.bbox ? (wd.bbox.x0 || 0) : 0;
+          var y0 = wd.bbox ? (wd.bbox.y0 || 0) : 0;
+          var toks = cleanLineTokens(wd.text).filter(function (w) { return !isAddrOrNoise(w); });
+          toks.forEach(function (t) {
+            wordCandidates.push({ text: t, h: h, x0: x0, y0: y0, conf: wd.confidence || 50 });
           });
-        }
+        });
+      }
+      if (!wordCandidates.length && Array.isArray(ocrLines) && ocrLines.length) {
+        ocrLines.forEach(function (ln) {
+          var h = (ln && ln.bbox) ? Math.max(1, (ln.bbox.y1 || 0) - (ln.bbox.y0 || 0)) : 10;
+          var x0 = (ln && ln.bbox) ? (ln.bbox.x0 || 0) : 0;
+          var y0 = (ln && ln.bbox) ? (ln.bbox.y0 || 0) : 0;
+          cleanLineTokens(ln && ln.text).filter(function (w) { return !isAddrOrNoise(w); }).forEach(function (t) {
+            wordCandidates.push({ text: t, h: h, x0: x0, y0: y0, conf: ln.confidence || 50 });
+          });
+        });
+      }
+      out.headlineTokens = wordCandidates;
+
+      var picked = [];
+      if (wordCandidates.length) {
+        var sortedByH = wordCandidates.slice().sort(function (a, b) { return b.h - a.h; });
+        var maxH = sortedByH[0].h;
+        /* 가장 큰 글씨(최대 높이의 52% 이상) 위주로 모은 뒤 좌->우/상->하 읽기 순서로 정렬 */
+        var bigWords = sortedByH.filter(function (w) { return w.h >= maxH * 0.52; });
+        bigWords.sort(function (a, b) {
+          if (Math.abs(a.y0 - b.y0) > maxH * 0.45) return a.y0 - b.y0;
+          return a.x0 - b.x0;
+        });
+        bigWords.forEach(function (w) {
+          if (picked.indexOf(w.text) >= 0) return;
+          var nextStr = picked.concat([w.text]).join(' ');
+          if (picked.length < 4 && nextStr.length <= 22) picked.push(w.text);
+        });
       }
       if (!picked.length) {
         allTokens.filter(function (w) { return !isAddrOrNoise(w); }).forEach(function (w) {
@@ -15274,7 +15293,8 @@
           }
           ctxN.putImageData(dN, 0, 0);
           ctxI.putImageData(dI, 0, 0);
-          resolve([cNorm, cInv]);
+          /* Pass 3: 원본 컬러/고대비 (흰 패딩만 적용 — 혼합 배경의 큰 제목 보존) */
+          resolve([c1, cNorm, cInv]);
         } catch (e) {
           resolve([dataUrl]);
         }
@@ -15301,20 +15321,45 @@
         return Tess.recognize(c, 'kor+eng').then(function (res) {
           var t = res && res.data ? res.data.text : '';
           var lns = res && res.data ? res.data.lines : [];
-          var p = parseOcrTextForBanner(t, lns);
+          var wds = res && res.data ? res.data.words : [];
+          var p = parseOcrTextForBanner(t, lns, wds);
           var conf = (res && res.data && typeof res.data.confidence === 'number') ? res.data.confidence : 0;
           p.score += Math.round(conf * 0.2);
           return p;
-        }).catch(function () { return { advertiser: '', phone: '', text: '', score: 0 }; });
+        }).catch(function () { return { advertiser: '', phone: '', text: '', score: 0, headlineTokens: [] }; });
       }));
     }).then(function (results) {
       results.sort(function (a, b) { return b.score - a.score; });
       var best = results[0] || { advertiser: '', phone: '', text: '' };
       var backup = results[1] || { advertiser: '', phone: '', text: '' };
+      var backup2 = results[2] || { advertiser: '', phone: '', text: '' };
+      /* 3패스(원본·일반·반전)에서 나온 큰 글씨 핵심 단어를 통합해 최고 높이 헤드라인 조합 */
+      var allBig = [];
+      results.forEach(function (r) {
+        (r.headlineTokens || []).forEach(function (w) { allBig.push(w); });
+      });
+      var combinedHeadline = '';
+      if (allBig.length) {
+        allBig.sort(function (a, b) { return b.h - a.h; });
+        var topH = allBig[0].h;
+        var topWords = allBig.filter(function (w) { return w.h >= topH * 0.54 && w.conf >= 42; });
+        if (!topWords.length) topWords = allBig.slice(0, 6);
+        topWords.sort(function (a, b) {
+          if (Math.abs(a.y0 - b.y0) > topH * 0.45) return a.y0 - b.y0;
+          return a.x0 - b.x0;
+        });
+        var hp = [];
+        topWords.forEach(function (w) {
+          if (hp.indexOf(w.text) >= 0) return;
+          var ns = hp.concat([w.text]).join(' ');
+          if (hp.length < 4 && ns.length <= 22) hp.push(w.text);
+        });
+        combinedHeadline = hp.join(' ').trim();
+      }
       var ocr = {
-        advertiser: best.advertiser || backup.advertiser || '',
-        phone: best.phone || backup.phone || '',
-        text: best.text || backup.text || ''
+        advertiser: best.advertiser || backup.advertiser || backup2.advertiser || '',
+        phone: best.phone || backup.phone || backup2.phone || '',
+        text: combinedHeadline || best.text || backup.text || backup2.text || ''
       };
       var latest = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || {};
       var merged = {
