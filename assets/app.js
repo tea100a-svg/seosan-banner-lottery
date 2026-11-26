@@ -5101,7 +5101,85 @@
         db.notice.updatedAt = '2026-11-25 09:55';
         db.noticeHiddenOn = '';
       }
-      db.seedVersion = 11;
+    /* 시연 데이터 v12 (2026-11-26) — 마이페이지 지난 회차(11월 1·2·3주차) 시연 데이터 보강 */
+    if (Number(db.seedVersion || 11) < 12) {
+      var pastDemoApps = [
+        {
+          id: '2026-W45-MP-01', round: '2026-W45', memberId: 'M-2002', company: '수석현수막(가상)', owner: '최수석', phone: '010-2200-0002',
+          appType: 'agency', advertiser: '서산한우직판장', advertiserBiz: '314-82-20119', advertiserPhone: '041-665-8801',
+          qty: 2, awardedQty: 2, placements: ['P01', 'P05'], assignedPlaces: [{ pid: 'P01', qty: 1, slot: 'A2' }, { pid: 'P05', qty: 1, slot: 'A3' }],
+          p1: 'P01', p2: 'P05', p3: '', eco: true, status: '게시종료',
+          text: '명품 서산한우 11월 감사 세일', appliedAt: '2026-11-03 10:15',
+          start: '2026-11-16', days: 7, file: null, preview: null, mine: true, paid: true,
+          delivered: true, deliveredAt: '2026-11-11 14:20', deliveryDue: '2026-11-11 18:00',
+          assignedTo: 'P01', rank: null, reject: null, drawId: 'D-2026-W45-01'
+        },
+        {
+          id: '2026-W44-MP-02', round: '2026-W44', memberId: 'M-2002', company: '수석현수막(가상)', owner: '최수석', phone: '010-2200-0002',
+          appType: 'agency', advertiser: '석림정형외과', advertiserBiz: '314-18-44902', advertiserPhone: '041-662-7500',
+          qty: 2, awardedQty: 1, placements: ['P01', 'P31'], assignedPlaces: [{ pid: 'P31', qty: 1, slot: 'A1' }],
+          p1: 'P01', p2: 'P31', p3: 'P04', eco: false, status: '게시종료',
+          text: '석림정형외과 도수·재활치료 안내', appliedAt: '2026-10-27 14:30',
+          start: '2026-11-09', days: 7, file: null, preview: null, mine: true, paid: true,
+          delivered: true, deliveredAt: '2026-11-04 11:10', deliveryDue: '2026-11-04 18:00',
+          assignedTo: 'P31', rank: null, reject: null, drawId: 'D-2026-W44-02'
+        },
+        {
+          id: '2026-W43-MP-03', round: '2026-W43', memberId: 'M-2002', company: '수석현수막(가상)', owner: '최수석', phone: '010-2200-0002',
+          appType: 'agency', advertiser: '수석자동차정비', advertiserBiz: '314-31-90812', advertiserPhone: '041-669-3300',
+          qty: 1, awardedQty: 0, placements: ['P01'], assignedPlaces: [],
+          p1: 'P01', p2: 'P32', p3: '', eco: false, status: '낙첨',
+          text: '가을철 타이어 무상 점검 이벤트', appliedAt: '2026-10-20 09:45',
+          start: '2026-11-02', days: 7, file: null, preview: null, mine: true, paid: false,
+          delivered: false, deliveredAt: null, deliveryDue: null,
+          assignedTo: null, awardedQty: 0, rank: null, reject: null, drawId: 'D-2026-W43-03'
+        },
+        {
+          id: '2026-W45-MP-04', round: '2026-W45', memberId: 'M-2001', company: '해미광고(가상)', owner: '박해미', phone: '010-2200-0001',
+          appType: 'agency', advertiser: '해미읍성한과', advertiserBiz: '314-82-51120', advertiserPhone: '041-688-4400',
+          qty: 2, awardedQty: 2, placements: ['P21', 'P22'], assignedPlaces: [{ pid: 'P21', qty: 1, slot: 'A2' }, { pid: 'P22', qty: 1, slot: 'A1' }],
+          p1: 'P21', p2: 'P22', p3: '', eco: true, status: '게시종료',
+          text: '해미읍성 전통 한과 선물세트 할인', appliedAt: '2026-11-04 11:20',
+          start: '2026-11-16', days: 7, file: null, preview: null, mine: false, paid: true,
+          delivered: true, deliveredAt: '2026-11-11 16:05', deliveryDue: '2026-11-11 18:00',
+          assignedTo: 'P21', rank: null, reject: null, drawId: 'D-2026-W45-04'
+        },
+        {
+          id: '2026-W45-MP-05', round: '2026-W45', company: '재봉기획', owner: '김재봉', phone: '010-6210-9433',
+          appType: 'agency', advertiser: '서산사과농원', advertiserBiz: '314-82-33101', advertiserPhone: '010-5555-1234',
+          qty: 2, awardedQty: 2, placements: ['P01', 'P31'], assignedPlaces: [{ pid: 'P01', qty: 1, slot: 'B3' }, { pid: 'P31', qty: 1, slot: 'A2' }],
+          p1: 'P01', p2: 'P31', p3: '', eco: true, status: '게시종료',
+          text: '서산 꿀사과 11월 수확 직판전', appliedAt: '2026-11-03 15:10',
+          start: '2026-11-16', days: 7, file: null, preview: null, mine: true, paid: true,
+          delivered: true, deliveredAt: '2026-11-11 13:50', deliveryDue: '2026-11-11 18:00',
+          assignedTo: 'P01', rank: null, reject: null, drawId: 'D-2026-W45-05'
+        },
+        {
+          id: '2026-W44-MP-06', round: '2026-W44', company: '재봉기획', owner: '김재봉', phone: '010-6210-9433',
+          appType: 'agency', advertiser: '부춘서점', advertiserBiz: '314-12-88712', advertiserPhone: '041-663-1122',
+          qty: 1, awardedQty: 1, placements: ['P11'], assignedPlaces: [{ pid: 'P11', qty: 1, slot: 'A2' }],
+          p1: 'P11', p2: '', p3: '', eco: false, status: '게시종료',
+          text: '부춘서점 수험서·신간 도서 할인', appliedAt: '2026-10-28 10:05',
+          start: '2026-11-09', days: 7, file: null, preview: null, mine: true, paid: true,
+          delivered: true, deliveredAt: '2026-11-04 15:40', deliveryDue: '2026-11-04 18:00',
+          assignedTo: 'P11', rank: null, reject: null, drawId: 'D-2026-W44-06'
+        },
+        {
+          id: '2026-W45-MP-07', round: '2026-W45', company: '햇살농원', owner: '이햇살', phone: '010-5555-1234',
+          appType: 'direct', advertiser: '햇살농원', advertiserBiz: '314-91-77201', advertiserPhone: '010-5555-1234',
+          qty: 1, awardedQty: 1, placements: ['P04'], assignedPlaces: [{ pid: 'P04', qty: 1, slot: 'A1' }],
+          p1: 'P04', p2: '', p3: '', eco: true, status: '게시종료',
+          text: '햇살농원 부사 사과 산지 직송', appliedAt: '2026-11-04 09:20',
+          start: '2026-11-16', days: 7, file: null, preview: null, mine: false, paid: true,
+          delivered: true, deliveredAt: '2026-11-11 10:30', deliveryDue: '2026-11-11 18:00',
+          assignedTo: 'P04', rank: null, reject: null, drawId: 'D-2026-W45-07'
+        }
+      ];
+      db.apps = db.apps || [];
+      pastDemoApps.forEach(function (item) {
+        if (!db.apps.some(function (x) { return x.id === item.id; })) db.apps.push(item);
+      });
+      db.seedVersion = 12;
       save();
     }
   }
@@ -10324,7 +10402,7 @@
       '<div class="callout warn" style="margin:2px 0 12px">' + IC.alert + '<div>이 주간은 협회 일괄 게첨이 끝났습니다 — <b>광고대행사는 직접 현장에 설치(게첨)</b>, <b>일반인은 규정상 직접 설치가 금지되어 반드시 옥외광고업 등록 광고사에 의뢰</b>해야 합니다.</div></div>', true);
     html += mpSectionHTML('cur', IC.doc + ' ' + esc(weekRangeTxt(curWk)) + ' 게첨 주 접수', cur.length + '건 · 이번 회차', cur, '', true);
     html += mpSectionHTML('up', IC.cal + ' 사전 접수 · 게첨 예정', upcoming.length + '건', upcoming, '', true);
-    html += mpSectionHTML('past', IC.cal + ' 지난 회차 · 게시 중·종료', past.length + '건', past, '', false);
+    html += mpSectionHTML('past', IC.cal + ' 지난 회차 · 게시 중·종료', past.length + '건', past, '', true);
 
     var needPay = mine.filter(function (a) { return (a.status === '입고대기' || a.status === '선착순확정') && !a.paid; });
     if (needPay.length) {
