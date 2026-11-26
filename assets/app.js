@@ -7555,7 +7555,10 @@
   function syncYouthNote(sel, txt) {
     var box = $(sel);
     if (!box) return false;
-    var hit = youthHitOf(txt);
+    var aiHarm = (sel === '#fcYouthNote')
+      ? !!(ui.fcDesignExtracted && ui.fcDesignExtracted.aiYouthHarmful)
+      : !!(ui.designExtracted && ui.designExtracted.aiYouthHarmful);
+    var hit = youthHitOf(txt) || aiHarm;
     if (hit) {
       var n = youthBoards().length;
       box.innerHTML = '<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg><div><b>🚸 청소년유해광고 감지</b> — 학교·유치원 초인접 게시대(<b>' + n + '개소</b>) 선택이 자동 차단됩니다.</div></div>';
@@ -15092,287 +15095,219 @@
     return out;
   }
 
-  var _tessPromise = null;
-  function loadTesseract() {
-    if (window.Tesseract && typeof window.Tesseract.recognize === 'function') return Promise.resolve(window.Tesseract);
-    if (_tessPromise) return _tessPromise;
-    _tessPromise = new Promise(function (resolve, reject) {
-      var s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-      s.async = true;
-      s.onload = function () {
-        if (window.Tesseract) resolve(window.Tesseract);
-        else reject(new Error('Tesseract load failed'));
-      };
-      s.onerror = function () { reject(new Error('Tesseract script error')); };
-      document.head.appendChild(s);
-    });
-    return _tessPromise;
+  var GEMINI_KEY_STORE = 'sbl_gemini_api_key_v1';
+  function getGeminiApiKey() {
+    try { return String(localStorage.getItem(GEMINI_KEY_STORE) || '').trim(); } catch (e) { return ''; }
+  }
+  function setGeminiApiKey(v) {
+    try {
+      var s = String(v || '').trim();
+      if (s) localStorage.setItem(GEMINI_KEY_STORE, s);
+      else localStorage.removeItem(GEMINI_KEY_STORE);
+    } catch (e) { }
   }
 
-  function parseOcrTextForBanner(rawText, ocrLines, ocrWords) {
-    var out = { advertiser: '', phone: '', text: '', score: 0, headlineTokens: [] };
-    var txt = String(rawText || '').replace(/\r/g, '\n');
-    if (!txt.trim()) return out;
-    /* 전화번호 추출: 010/041 등 전체 번호 또는 T.688-8899 형태 */
-    var mFull = txt.match(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/);
-    if (mFull) {
-      out.phone = formatDesignPhone(mFull[0]);
-      out.score += 20;
-    } else {
-      var mLocal = txt.match(/(?:T|TEL|문의|전화)?[.\s:]*([2-9]\d{2})[.\-\s]+(\d{4})/i);
-      if (mLocal) {
-        out.phone = '041-' + mLocal[1] + '-' + mLocal[2];
-        out.score += 15;
-      }
-    }
-    var cleanLineTokens = function (s) {
-      var c = String(s || '')
-        .replace(/(01[016789]|02|0[3-6][1-5])[.\-\s)]*\d{3,4}[.\-\s]*\d{4}/g, ' ')
-        .replace(/(?:T|TEL|문의|전화)[.\s:]*[2-9]\d{2}[.\-\s]+\d{4}/gi, ' ')
-        .replace(/[ㄱ-ㅎㅏ-ㅣ]/g, ' ')
-        .replace(/[|_~`^*=<>\\[\]{};:'",.?/!@#$%&()+]/g, ' ');
-      var arr = c.split(/\s+/).map(function (w) { return w.trim(); }).filter(function (w) {
-        if (!w) return false;
-        if (/[가-힣]{2,}/.test(w)) {
-          var koOnly = w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '');
-          return /[가-힣]{2,}/.test(koOnly);
+  function openAiVisionKeyModal(scope) {
+    var cur = getGeminiApiKey();
+    openModal({
+      title: '🧠 AI 비전 시안 분석 설정 (Gemini)',
+      sub: '무료 Google AI Studio API 키를 한 번만 입력하면, 현수막 시안 이미지를 AI가 직접 보고 광고주·연락처·핵심문구·유해여부를 정확히 추출합니다.',
+      body:
+        '<div style="display:flex;flex-direction:column;gap:12px">' +
+          '<div class="callout info" style="padding:10px 12px;margin:0">' +
+            '<div><b>발급 방법</b> — <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#1d5fd6;font-weight:700;text-decoration:underline">Google AI Studio</a>에서 무료 API 키(AIza...)를 발급받아 아래에 붙여넣어 주세요. 키는 현재 브라우저에만 저장됩니다.</div>' +
+          '</div>' +
+          '<div class="field">' +
+            '<label for="geminiApiKeyInput">Gemini API 키</label>' +
+            '<input class="input" id="geminiApiKeyInput" type="password" value="' + esc(cur) + '" placeholder="AIzaSy..." autocomplete="off">' +
+          '</div>' +
+        '</div>',
+      foot:
+        (cur ? '<button class="btn ghost" id="btnAiKeyClear" type="button" style="color:#c62828">키 해제</button>' : '') +
+        '<button class="btn ghost" type="button" data-close>닫기</button>' +
+        '<button class="btn primary" id="btnAiKeySave" type="button">저장 후 시안 분석</button>',
+      after: function () {
+        var inp = $('#geminiApiKeyInput');
+        if (inp) setTimeout(function () { inp.focus(); }, 60);
+        if ($('#btnAiKeyClear')) {
+          $('#btnAiKeyClear').onclick = function () {
+            setGeminiApiKey('');
+            closeModal();
+            toast('AI 비전 API 키를 해제했습니다.');
+            var isFc = scope === 'fc';
+            var curEx = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || {};
+            curEx.aiUnconfigured = true; curEx.aiPowered = false; curEx.aiError = '';
+            if (isFc) renderFcFilePreview(); else renderFilePreview();
+          };
         }
-        if (/^\d+[가-힣%]+$/.test(w)) return true;
-        return false;
-      }).map(function (w) {
-        return /[가-힣]{2,}/.test(w) ? w.replace(/^[^가-힣0-9]+|[^가-힣0-9]+$/g, '') : w;
-      });
-      var u = [];
-      arr.forEach(function (w) { if (!u.length || u[u.length - 1] !== w) u.push(w); });
-      return u;
-    };
-    var isAddrOrNoise = function (w) {
-      return /^(?:충남|충청남도|서산시|서산|읍내동|동문동|석남동|수석동|해미면|성연면|부춘동|인지면|대산읍|지곡면|음암면|고북면|운산면|팔봉면|사거리|삼거리|오거리|건너편|맞은편|주차|주차장|예약|문의|상담|영업시간|오전|오후|매주|휴무|카톡|카카오톡|인스타|인스타그램|블로그|네이버|위치|주소|지하|\d+층|\d+호|\d+번길|\d+로)$/.test(w) ||
-        /(?:시|구|동|읍|면|리)\s*$/.test(w) && w.length <= 4 && /(?:로|길|동|읍|면)$/.test(w);
-    };
-
-    var allTokens = cleanLineTokens(txt);
-    var koCount = allTokens.filter(function (w) { return /[가-힣]{2,}/.test(w); }).length;
-    out.score += koCount * 10;
-
-    if (allTokens.length && koCount >= 1) {
-      var joinedAll = allTokens.join(' ');
-      var bizRe = /[가-힣A-Za-z0-9]{2,14}(?:어린이집|유치원|초등학교|고등학교|학원|교육원|필라테스|코딩|아카데미|노래클럽|노래방|피부샵|피부과|한의원|병원|약국|식당|가든|버섯|양꼬치|박가네|미다움|알레르망|변호사|공인중개사|부동산|마트|청과|농원|타이어|분식|코팅|청소|미술관|광고)/;
-      var mBiz = joinedAll.match(bizRe);
-      if (mBiz) {
-        out.advertiser = mBiz[0];
-        out.score += 15;
-      } else {
-        var advCand = allTokens.filter(function (w) { return /[가-힣]{2,}/.test(w) && !isAddrOrNoise(w) && w.length >= 2 && w.length <= 12; });
-        if (advCand.length) out.advertiser = advCand[0];
+        if ($('#btnAiKeySave')) {
+          $('#btnAiKeySave').onclick = function () {
+            var val = inp ? inp.value.trim() : '';
+            if (!val) { toast('Gemini API 키를 입력해 주세요.', 'warn'); return; }
+            setGeminiApiKey(val);
+            closeModal();
+            toast('🧠 Gemini AI 비전 키가 저장되었습니다.');
+            var isFc = scope === 'fc';
+            var previewUrl = isFc ? ui.fcFilePreview : ui.filePreview;
+            var fileObj = isFc ? ui.fcFile : ui.file;
+            if (previewUrl) {
+              runDesignOcr(scope || 'apply', fileObj ? fileObj.name : '', previewUrl, true);
+            }
+          };
+        }
       }
-
-      /* 핵심 문구 추출: Tesseract lines의 글자 높이(bbox) 기준으로 가장 큰 메인 헤드라인 줄을 온전히 살림 */
-      var lineCandidates = [];
-      if (Array.isArray(ocrLines) && ocrLines.length) {
-        ocrLines.forEach(function (ln) {
-          if (!ln) return;
-          var h = ln.bbox ? Math.max(1, (ln.bbox.y1 || 0) - (ln.bbox.y0 || 0)) : 10;
-          var x0 = ln.bbox ? (ln.bbox.x0 || 0) : 0;
-          var y0 = ln.bbox ? (ln.bbox.y0 || 0) : 0;
-          var conf = typeof ln.confidence === 'number' ? ln.confidence : 50;
-          var toks = cleanLineTokens(ln.text).filter(function (w) { return !isAddrOrNoise(w); });
-          /* 2글자 이상 완성형 한글이 포함된 줄만 유효 헤드라인 후보로 */
-          var koToks = toks.filter(function (w) { return /[가-힣]{2,}/.test(w); });
-          if (!koToks.length) return;
-          var lineTxt = toks.join(' ').trim();
-          /* 불완전한 조사 조각으로만 끝나는 짧은 잡음 제외 */
-          if (lineTxt.length < 2) return;
-          lineCandidates.push({ text: lineTxt, toks: toks, h: h, x0: x0, y0: y0, conf: conf, koN: koToks.length });
-        });
-      }
-      out.headlineTokens = lineCandidates;
-
-      var pickedLines = [];
-      if (lineCandidates.length) {
-        var sortedL = lineCandidates.slice().sort(function (a, b) { return b.h - a.h; });
-        var maxLH = sortedL[0].h;
-        /* 가장 큰 줄(최대 높이의 58% 이상) 위주로 위->아래/좌->우 순서 정렬 */
-        var bigLines = sortedL.filter(function (l) { return l.h >= maxLH * 0.58; });
-        bigLines.sort(function (a, b) {
-          if (Math.abs(a.y0 - b.y0) > maxLH * 0.45) return a.y0 - b.y0;
-          return a.x0 - b.x0;
-        });
-        bigLines.forEach(function (l) {
-          if (pickedLines.indexOf(l.text) >= 0) return;
-          var nextStr = pickedLines.concat([l.text]).join(' ');
-          if (pickedLines.length < 2 && nextStr.length <= 26) pickedLines.push(l.text);
-        });
-      }
-      if (!pickedLines.length) {
-        var fallbackToks = [];
-        allTokens.filter(function (w) { return !isAddrOrNoise(w); }).forEach(function (w) {
-          if (fallbackToks.indexOf(w) >= 0) return;
-          var nextStr = fallbackToks.concat([w]).join(' ');
-          if (fallbackToks.length < 4 && nextStr.length <= 22) fallbackToks.push(w);
-        });
-        out.text = fallbackToks.join(' ').trim() || allTokens.slice(0, 3).join(' ').slice(0, 22);
-      } else {
-        out.text = pickedLines.join(' ').trim().slice(0, 26);
-      }
-    }
-    return out;
+    });
   }
 
-  function preprocessBannerCanvases(dataUrl) {
+  function resizeBannerForVision(dataUrl) {
     return new Promise(function (resolve) {
       var img = new Image();
       img.onload = function () {
         try {
           var iw = img.naturalWidth || img.width || 800;
           var ih = img.naturalHeight || img.height || 200;
-          var scale = ih < 420 ? Math.min(2.6, 460 / ih) : 1;
-          if (iw * scale > 2600) scale = 2600 / iw;
-          var w = Math.max(200, Math.round(iw * scale));
-          var h = Math.max(80, Math.round(ih * scale));
-          var pad = 24;
-          var cw = w + pad * 2, ch = h + pad * 2;
-          var c1 = document.createElement('canvas');
-          c1.width = cw; c1.height = ch;
-          var ctx1 = c1.getContext('2d');
-          ctx1.fillStyle = '#ffffff';
-          ctx1.fillRect(0, 0, cw, ch);
-          ctx1.drawImage(img, pad, pad, w, h);
-          var imgData = ctx1.getImageData(0, 0, cw, ch);
-          var d = imgData.data;
-          /* Otsu 임계값 계산 (원본 영역 기준) */
-          var hist = new Array(256);
-          for (var k = 0; k < 256; k++) hist[k] = 0;
-          var total = 0;
-          for (var y = pad; y < pad + h; y++) {
-            for (var x = pad; x < pad + w; x++) {
-              var idx = (y * cw + x) * 4;
-              var lum = Math.round(0.299 * d[idx] + 0.587 * d[idx + 1] + 0.114 * d[idx + 2]);
-              hist[lum]++; total++;
-            }
-          }
-          var sum = 0;
-          for (var t = 0; t < 256; t++) sum += t * hist[t];
-          var sumB = 0, wB = 0, varMax = 0, thresh = 128;
-          for (var t2 = 0; t2 < 256; t2++) {
-            wB += hist[t2];
-            if (wB === 0) continue;
-            var wF = total - wB;
-            if (wF === 0) break;
-            sumB += t2 * hist[t2];
-            var mB = sumB / wB, mF = (sum - sumB) / wF;
-            var vb = wB * wF * (mB - mF) * (mB - mF);
-            if (vb > varMax) { varMax = vb; thresh = t2; }
-          }
-          /* Pass 1: 일반 이진화 (밝은 바탕 / 어두운 글씨) */
-          var cNorm = document.createElement('canvas');
-          cNorm.width = cw; cNorm.height = ch;
-          var ctxN = cNorm.getContext('2d');
-          var dN = ctxN.createImageData(cw, ch);
-          /* Pass 2: 반전 이진화 (어두운/컬러 바탕 / 밝은 글씨) */
-          var cInv = document.createElement('canvas');
-          cInv.width = cw; cInv.height = ch;
-          var ctxI = cInv.getContext('2d');
-          var dI = ctxI.createImageData(cw, ch);
-          for (var i = 0; i < d.length; i += 4) {
-            var px = (i / 4) % cw, py = Math.floor((i / 4) / cw);
-            var inBox = (px >= pad && px < pad + w && py >= pad && py < pad + h);
-            if (!inBox) {
-              dN.data[i] = dN.data[i + 1] = dN.data[i + 2] = 255; dN.data[i + 3] = 255;
-              dI.data[i] = dI.data[i + 1] = dI.data[i + 2] = 255; dI.data[i + 3] = 255;
-              continue;
-            }
-            var g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-            var vN = g >= thresh ? 255 : 0;
-            var vI = g >= thresh ? 0 : 255;
-            dN.data[i] = dN.data[i + 1] = dN.data[i + 2] = vN; dN.data[i + 3] = 255;
-            dI.data[i] = dI.data[i + 1] = dI.data[i + 2] = vI; dI.data[i + 3] = 255;
-          }
-          ctxN.putImageData(dN, 0, 0);
-          ctxI.putImageData(dI, 0, 0);
-          /* Pass 3: 원본 컬러/고대비 (흰 패딩만 적용 — 혼합 배경의 큰 제목 보존) */
-          resolve([c1, cNorm, cInv]);
+          var maxW = 1600;
+          var scale = iw > maxW ? (maxW / iw) : 1;
+          var w = Math.max(120, Math.round(iw * scale));
+          var h = Math.max(60, Math.round(ih * scale));
+          var cv = document.createElement('canvas');
+          cv.width = w; cv.height = h;
+          var cx = cv.getContext('2d');
+          cx.fillStyle = '#ffffff';
+          cx.fillRect(0, 0, w, h);
+          cx.drawImage(img, 0, 0, w, h);
+          var outUrl = cv.toDataURL('image/jpeg', 0.9);
+          var b64 = outUrl.split(',')[1] || '';
+          resolve({ mimeType: 'image/jpeg', data: b64 });
         } catch (e) {
-          resolve([dataUrl]);
+          var m = String(dataUrl || '').match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+          resolve(m ? { mimeType: m[1], data: m[2] } : null);
         }
       };
-      img.onerror = function () { resolve([dataUrl]); };
+      img.onerror = function () {
+        var m = String(dataUrl || '').match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+        resolve(m ? { mimeType: m[1], data: m[2] } : null);
+      };
       img.src = dataUrl;
     });
   }
 
-  function runDesignOcr(scope, fileName, dataUrl) {
+  function analyzeDesignWithGemini(apiKey, dataUrl) {
+    return resizeBannerForVision(dataUrl).then(function (imgPart) {
+      if (!imgPart || !imgPart.data) throw new Error('이미지 데이터를 읽지 못했습니다.');
+      var prompt =
+        '당신은 대한민국 서산시 옥외광고협회 현수막 지정게시대 시안 검수 AI입니다.\n' +
+        '첨부된 현수막 디자인 이미지를 보고 아래 항목을 정확하게 추출해 JSON 객체로만 답하세요.\n\n' +
+        '1. advertiser: 실제 광고주 상호명·업체명·기관명 (예: "황금버섯", "올댓필라테스", "골든노래클럽", "용성어린이집", "차오름학원"). 확신할 수 없으면 "".\n' +
+        '2. phone: 현수막의 대표 전화번호 (예: "041-688-8899", "010-1234-5678". 지역번호 없이 7자리면 앞에 "041-"를 붙임). 없으면 "".\n' +
+        '3. headline: 현수막의 가장 핵심 광고 문구 1~2줄 (24자 이내, 자연스러운 한국어 띄어쓰기 적용. 주소/주차안내/영업시간/작은 부가설명은 제외하고 가장 큰 메인 홍보 문구만 추출).\n' +
+        '4. isYouthHarmful: 노래클럽, 노래연습장, 노래방, 유흥주점, 단란주점, 룸살롱, 성인용품, 도박, 불법사금융 등 청소년유해업소·유해광고에 해당하면 true, 아니면 false.\n' +
+        '5. youthReason: isYouthHarmful이 true일 때 간단한 사유, 아니면 "".\n\n' +
+        '반드시 아래 JSON 형식만 출력하세요:\n' +
+        '{"advertiser":"","phone":"","headline":"","isYouthHarmful":false,"youthReason":""}';
+
+      var callModel = function (modelName) {
+        var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent?key=' + encodeURIComponent(apiKey);
+        return fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: imgPart.mimeType, data: imgPart.data } }
+              ]
+            }],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json'
+            }
+          })
+        }).then(function (resp) {
+          return resp.json().then(function (json) {
+            if (!resp.ok) {
+              var msg = (json && json.error && json.error.message) ? json.error.message : ('HTTP ' + resp.status);
+              var err = new Error(msg);
+              err.status = resp.status;
+              throw err;
+            }
+            var rawTxt = '';
+            try { rawTxt = json.candidates[0].content.parts[0].text || ''; } catch (e) { }
+            var cleaned = String(rawTxt).replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+            var mObj = cleaned.match(/\{[\s\S]*\}/);
+            var parsed = JSON.parse(mObj ? mObj[0] : cleaned);
+            return {
+              advertiser: String(parsed.advertiser || '').trim(),
+              phone: parsed.phone ? formatDesignPhone(String(parsed.phone)) : '',
+              text: String(parsed.headline || '').trim().slice(0, 30),
+              isYouthHarmful: !!parsed.isYouthHarmful,
+              youthReason: String(parsed.youthReason || '').trim()
+            };
+          });
+        });
+      };
+
+      return callModel('gemini-2.5-flash').catch(function (err) {
+        if (err && (err.status === 404 || /not found|model/i.test(err.message || ''))) {
+          return callModel('gemini-2.0-flash');
+        }
+        throw err;
+      });
+    });
+  }
+
+  function runDesignOcr(scope, fileName, dataUrl, forceAi) {
     var url = String(dataUrl || '');
     if (!url || /^data:image\/svg\+xml/i.test(url)) return;
     var isFc = scope === 'fc';
     var cur = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || { advertiser: '', phone: '', text: '' };
-    /* 파일명에서 3개 다 못 뽑았으면 OCR 가동 */
-    if (cur.advertiser && cur.phone && cur.text) return;
+    var apiKey = getGeminiApiKey();
+
+    if (!apiKey) {
+      cur.ocrPending = false;
+      cur.aiUnconfigured = true;
+      cur.aiPowered = false;
+      cur.aiError = '';
+      if (isFc) { ui.fcDesignExtracted = cur; renderFcFilePreview(); }
+      else { ui.designExtracted = cur; renderFilePreview(); }
+      return;
+    }
+
+    if (!forceAi && cur.aiPowered && cur.advertiser && cur.text) return;
+
     cur.ocrPending = true;
+    cur.aiUnconfigured = false;
+    cur.aiError = '';
     if (isFc) { ui.fcDesignExtracted = cur; renderFcFilePreview(); }
     else { ui.designExtracted = cur; renderFilePreview(); }
 
-    Promise.all([loadTesseract(), preprocessBannerCanvases(url)]).then(function (pair) {
-      var Tess = pair[0], canvases = pair[1];
-      return Promise.all(canvases.map(function (c) {
-        return Tess.recognize(c, 'kor+eng').then(function (res) {
-          var t = res && res.data ? res.data.text : '';
-          var lns = res && res.data ? res.data.lines : [];
-          var wds = res && res.data ? res.data.words : [];
-          var p = parseOcrTextForBanner(t, lns, wds);
-          var conf = (res && res.data && typeof res.data.confidence === 'number') ? res.data.confidence : 0;
-          p.score += Math.round(conf * 0.2);
-          return p;
-        }).catch(function () { return { advertiser: '', phone: '', text: '', score: 0, headlineTokens: [] }; });
-      }));
-    }).then(function (results) {
-      results.sort(function (a, b) { return b.score - a.score; });
-      var best = results[0] || { advertiser: '', phone: '', text: '' };
-      var backup = results[1] || { advertiser: '', phone: '', text: '' };
-      var backup2 = results[2] || { advertiser: '', phone: '', text: '' };
-      /* 3패스(원본·일반·반전)에서 나온 가장 큰 헤드라인 줄 중 신뢰도·완성도가 가장 높은 줄 선택 */
-      var allBigLines = [];
-      results.forEach(function (r) {
-        (r.headlineTokens || []).forEach(function (l) { allBigLines.push(l); });
-      });
-      var combinedHeadline = '';
-      if (allBigLines.length) {
-        allBigLines.sort(function (a, b) {
-          var scoreA = a.h * (a.conf >= 45 ? 1.2 : 0.7) + Math.min(a.koN, 4) * 6;
-          var scoreB = b.h * (b.conf >= 45 ? 1.2 : 0.7) + Math.min(b.koN, 4) * 6;
-          return scoreB - scoreA;
-        });
-        var mainLine = allBigLines[0];
-        var subLine = allBigLines.find(function (l) {
-          if (l.text === mainLine.text) return false;
-          if (l.text.indexOf(mainLine.text) >= 0 || mainLine.text.indexOf(l.text) >= 0) return false;
-          return l.h >= mainLine.h * 0.55 && l.conf >= 42 && (mainLine.text.length + 1 + l.text.length) <= 26;
-        });
-        combinedHeadline = subLine ? (mainLine.text + ' ' + subLine.text) : mainLine.text;
-      }
-      var ocr = {
-        advertiser: best.advertiser || backup.advertiser || backup2.advertiser || '',
-        phone: best.phone || backup.phone || backup2.phone || '',
-        text: combinedHeadline || best.text || backup.text || backup2.text || ''
-      };
+    analyzeDesignWithGemini(apiKey, url).then(function (aiRes) {
       var latest = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || {};
       var merged = {
-        advertiser: latest.advertiser || ocr.advertiser || '',
-        phone: latest.phone || ocr.phone || '',
-        text: ocr.text || latest.text || '',
+        advertiser: aiRes.advertiser || latest.advertiser || '',
+        phone: aiRes.phone || latest.phone || '',
+        text: aiRes.text || latest.text || '',
+        aiYouthHarmful: !!aiRes.isYouthHarmful,
+        aiYouthReason: aiRes.youthReason || '',
         ocrPending: false,
-        ocrDone: true
+        ocrDone: true,
+        aiPowered: true,
+        aiUnconfigured: false,
+        aiError: ''
       };
       if (isFc) ui.fcDesignExtracted = merged; else ui.designExtracted = merged;
       var filled = applyDesignAutofill(scope, merged);
       if (isFc) renderFcFilePreview(); else renderFilePreview();
-      if (filled && filled.length) toast('🔍 시안 이미지에서 ' + filled.join('·') + ' 정보를 읽어 자동완성했습니다.');
-    }).catch(function () {
+      if (filled && filled.length) toast('🧠 AI 비전이 시안에서 ' + filled.join('·') + ' 정보를 정확히 읽어왔습니다.');
+      else toast('🧠 AI 비전 시안 분석이 완료되었습니다.');
+    }).catch(function (err) {
       var latest = (isFc ? ui.fcDesignExtracted : ui.designExtracted) || {};
       latest.ocrPending = false;
+      latest.aiPowered = false;
+      latest.aiError = (err && err.message) ? String(err.message).slice(0, 80) : 'AI 비전 요청 실패';
       if (isFc) { ui.fcDesignExtracted = latest; renderFcFilePreview(); }
       else { ui.designExtracted = latest; renderFilePreview(); }
+      toast('⚠️ AI 비전 분석 실패: ' + latest.aiError, 'warn');
     });
   }
 
@@ -15411,19 +15346,40 @@
     return filled;
   }
 
-  function designExtractNoteHTML(info) {
+  function designExtractNoteHTML(info, scope) {
+    var sc = esc(scope || 'apply');
+    var keyBtn = '<button class="btn sm ghost" type="button" data-aikeybtn="' + sc + '" style="margin-left:auto;white-space:nowrap">🔑 AI 키 설정</button>';
     if (info && info.ocrPending) {
-      return '<div class="callout info" style="margin-top:8px;padding:9px 12px"><div><b>🔍 시안 이미지에서 광고주·연락처·문구를 읽는 중...</b> <span class="sm">(잠시만 기다려 주세요)</span></div></div>';
+      return '<div class="callout info" style="margin-top:8px;padding:9px 12px"><div><b>🧠 AI 비전이 시안 이미지를 분석하는 중...</b> <span class="sm">(광고주·연락처·핵심 문구를 읽고 있어요)</span></div></div>';
     }
-    if (!info || (!info.advertiser && !info.phone && !info.text)) {
-      return '<div class="hint-txt" style="margin-top:6px">ℹ️ 시안 이미지가 첨부되었습니다. 이미지에서 문구·연락처를 읽지 못한 경우 아래 칸에 직접 입력해 주세요.</div>';
+    if (info && info.aiError) {
+      return '<div class="callout warn" style="margin-top:8px;padding:9px 12px;display:flex;align-items:center;gap:8px">' +
+        '<div><b>⚠️ AI 비전 분석 실패</b> — ' + esc(info.aiError) + '</div>' +
+        '<button class="btn sm primary" type="button" data-aikeybtn="' + sc + '" style="margin-left:auto;white-space:nowrap">🔑 키 다시 설정</button></div>';
     }
     var parts = [];
-    if (info.advertiser) parts.push('광고주 <b>' + esc(info.advertiser) + '</b>');
-    if (info.phone) parts.push('연락처 <b>' + esc(info.phone) + '</b>');
-    if (info.text) parts.push('문구 <b>' + esc(info.text) + '</b>');
-    return '<div class="callout ok" style="margin-top:8px;padding:9px 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>' +
-      '<div><b>🏷️ 시안에서 자동완성됨</b> — ' + parts.join(' · ') + ' <span class="sm">(아래 칸에서 바로 수정 가능)</span></div></div>';
+    if (info && info.advertiser) parts.push('광고주 <b>' + esc(info.advertiser) + '</b>');
+    if (info && info.phone) parts.push('연락처 <b>' + esc(info.phone) + '</b>');
+    if (info && info.text) parts.push('문구 <b>' + esc(info.text) + '</b>');
+
+    if (info && info.aiPowered) {
+      return '<div class="callout ok" style="margin-top:8px;padding:9px 12px;display:flex;align-items:center;gap:8px">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>' +
+        '<div><b>🧠 AI 비전 분석 완료</b> — ' + (parts.length ? parts.join(' · ') : '추출 항목 없음') + ' <span class="sm">(아래 칸에서 수정 가능)</span></div>' +
+        keyBtn + '</div>';
+    }
+    if (!getGeminiApiKey()) {
+      return '<div class="callout info" style="margin-top:8px;padding:9px 12px;display:flex;align-items:center;gap:8px">' +
+        '<div><b>🤖 AI 비전 분석 미연결</b> — ' + (parts.length ? ('파일명 기준 ' + parts.join(' · ') + '만 반영됨 · ') : '') +
+        '<span class="sm">무료 Gemini API 키를 한 번만 넣으면 AI가 시안 글자를 정확히 읽어옵니다.</span></div>' +
+        '<button class="btn sm primary" type="button" data-aikeybtn="' + sc + '" style="margin-left:auto;white-space:nowrap">🔑 Gemini 키 연결</button></div>';
+    }
+    if (!parts.length) {
+      return '<div class="hint-txt" style="margin-top:6px;display:flex;align-items:center;gap:8px">ℹ️ 시안 이미지가 첨부되었습니다. 아래 칸에 직접 입력하거나 AI 키를 확인해 주세요.' + keyBtn + '</div>';
+    }
+    return '<div class="callout ok" style="margin-top:8px;padding:9px 12px;display:flex;align-items:center;gap:8px">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>' +
+      '<div><b>🏷️ 시안에서 자동완성됨</b> — ' + parts.join(' · ') + ' <span class="sm">(아래 칸에서 바로 수정 가능)</span></div>' + keyBtn + '</div>';
   }
 
   /* 시연용 샘플 시안 — 정상 / 검정 바탕 / 빨간 바탕 (2026-11-23 김재봉 님 지시) */
@@ -15863,7 +15819,7 @@
       renderFilePreview();
     });
     $('#filePreview').innerHTML =
-      designExtractNoteHTML(ui.designExtracted) +
+      designExtractNoteHTML(ui.designExtracted, 'apply') +
       designToneNoteHTML(ui.designTone, 'designToneNote') +
       designNameNoteHTML(ui.designTone, 'designNameNote');
   }
@@ -15883,7 +15839,7 @@
       renderFcFilePreview();
     });
     box.innerHTML =
-      designExtractNoteHTML(ui.fcDesignExtracted) +
+      designExtractNoteHTML(ui.fcDesignExtracted, 'fc') +
       designToneNoteHTML(ui.fcDesignTone, 'fcDesignToneNote') +
       designNameNoteHTML(ui.fcDesignTone, 'fcDesignNameNote');
   }
@@ -16689,8 +16645,9 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
+    if (el.hasAttribute('data-aikeybtn')) { e.stopPropagation(); e.preventDefault(); openAiVisionKeyModal(el.getAttribute('data-aikeybtn') || 'apply'); return; }
     if (el.hasAttribute('data-boardmap')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardmap'), 'map'); return; }
     if (el.hasAttribute('data-boardroad')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardroad'), 'road'); return; }
     if (el.hasAttribute('data-schedpage')) { e.stopPropagation(); e.preventDefault(); goPage('board-schedule.html?pid=' + encodeURIComponent(el.getAttribute('data-schedpage'))); return; }
