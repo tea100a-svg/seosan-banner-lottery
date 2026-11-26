@@ -13,7 +13,7 @@
 }catch(e){document.documentElement.setAttribute('data-device-view','pc');}})();</script>
 <title>주간 추첨 접수 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261126r21">
+<link rel="stylesheet" href="assets/style.css?v=20261126r22">
 </head>
 <body data-page="apply">
 <div class="demo-banner">
@@ -138,6 +138,7 @@
           </div>
           <span class="hint-txt" id="pickFilterInfo" style="margin:0"></span>
           <span class="spacer" style="flex:1"></span>
+          <button class="btn sm ghost" id="btnRandExclude" type="button" title="무작위 선택 시 후보에서 뺄 게시대·읍면동을 미리 체크해 둡니다">🚫 무작위 제외 설정</button>
           <button class="btn sm" id="btnRandAll" type="button" title="고장·설치불가·금지 게시대를 제외한 전체 게시대를 추첨 후보로 선택하고, 추첨 시 1·2순위와 경쟁해 신청 수량만큼 배정합니다">🎲 전체 무작위 선택</button>
           <button class="btn sm" id="btnRandFilter" type="button" title="지금 보고 있는 목록(읍면동·요일·테마·검색) 전체를 추첨 후보로 선택합니다">🎯 현재 카테고리 무작위 선택</button>
         </div>
@@ -232,7 +233,10 @@
             <b>🎲 게시대 무작위 선택 (1순위 무작위와 동일 룰)</b>
             <div class="hint-txt" style="margin:2px 0 0">게시대 위치를 직접 고르지 않고 <b>전체 게시대</b>를 후보로 접수합니다. 추첨 시 <b>1순위와 같은 룰</b>로 신청 수량만큼 배정되며, 2·3순위 선택 없이 바로 4단계 확인으로 넘어갑니다.</div>
           </div>
-          <button class="btn primary sm" id="btnStep2Random" type="button">🎲 무작위 선택 (바로 확인)</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <button class="btn sm ghost" id="btnStep2RandExcl" type="button" title="무작위 선택 시 후보에서 뺄 게시대·읍면동을 미리 체크해 둡니다">🚫 제외 설정</button>
+            <button class="btn primary sm" id="btnStep2Random" type="button">🎲 무작위 선택 (바로 확인)</button>
+          </div>
         </div>
         <div class="step-notes" id="stepNotes2">
         <div class="callout info">
@@ -464,6 +468,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261126r21"></script>
+<script src="assets/app.js?v=20261126r22"></script>
 </body>
 </html>

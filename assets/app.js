@@ -6824,6 +6824,171 @@
     return ui.designatedOnly;
   }
 
+  /* ── 무작위 선택 제외(기피 게시대·읍면동) 저장·모달 (김재봉 님 지시 2026-11-26) ── */
+  function randExclKey() {
+    var m = currentMember();
+    return 'sbl_rand_excl_v1_' + (m && m.id ? m.id : 'guest');
+  }
+  function loadRandExclMap() {
+    try {
+      var raw = localStorage.getItem(randExclKey());
+      var arr = raw ? JSON.parse(raw) : [];
+      var map = {};
+      if (Array.isArray(arr)) arr.forEach(function (id) { if (id) map[String(id)] = true; });
+      return map;
+    } catch (e) { return {}; }
+  }
+  function saveRandExclMap(map) {
+    try {
+      var arr = Object.keys(map || {}).filter(function (k) { return !!map[k]; });
+      localStorage.setItem(randExclKey(), JSON.stringify(arr));
+    } catch (e) { }
+  }
+  function isRandExcluded(pid) {
+    if (!pid) return false;
+    return !!loadRandExclMap()[String(pid)];
+  }
+  function randExcludedCount() {
+    return Object.keys(loadRandExclMap()).length;
+  }
+  function syncRandExclBadges() {
+    var cnt = randExcludedCount();
+    var b3 = $('#btnRandExclude');
+    if (b3) {
+      b3.textContent = cnt ? ('🚫 무작위 제외 (' + cnt + '곳)') : '🚫 무작위 제외 설정';
+      b3.classList.toggle('is-excl', cnt > 0);
+    }
+    var b2 = $('#btnStep2RandExcl');
+    if (b2) {
+      b2.textContent = cnt ? ('🚫 제외 설정 (' + cnt + '곳)') : '🚫 제외 설정';
+      b2.classList.toggle('is-excl', cnt > 0);
+    }
+  }
+  function toggleRandExcluded(pid, silent) {
+    if (!pid) return false;
+    var map = loadRandExclMap();
+    var key = String(pid);
+    var next = !map[key];
+    if (next) map[key] = true; else delete map[key];
+    saveRandExclMap(map);
+    syncRandExclBadges();
+    renderPickUI();
+    if (!silent) {
+      var p = placementById(pid);
+      toast((p ? p.name : '게시대') + (next ? ' — 무작위 선택에서 제외했습니다.' : ' — 무작위 선택 후보에 다시 포함했습니다.'));
+    }
+    return next;
+  }
+  function openRandExcludeModal() {
+    if (!db || !db.placements) return;
+    var q = '';
+    function renderBody() {
+      var map = loadRandExclMap();
+      var dongs = {};
+      db.placements.forEach(function (p) {
+        if (!dongs[p.dong]) dongs[p.dong] = { total: 0, excl: 0, ids: [] };
+        dongs[p.dong].total += 1;
+        dongs[p.dong].ids.push(p.id);
+        if (map[p.id]) dongs[p.dong].excl += 1;
+      });
+      var dongChips = Object.keys(dongs).sort().map(function (dn) {
+        var d = dongs[dn];
+        var cls = (d.excl === d.total) ? ' on' : (d.excl > 0 ? ' partial' : '');
+        return '<button type="button" class="re-dong-chip' + cls + '" data-redong="' + esc(dn) + '">' +
+          esc(dn) + ' (' + (d.excl ? (d.excl + '/' + d.total) : d.total) + ')</button>';
+      }).join('');
+      var ql = q.trim().toLowerCase();
+      var shown = db.placements.filter(function (p) {
+        if (!ql) return true;
+        return (p.name + ' ' + p.dong + ' ' + p.day + '요일').toLowerCase().indexOf(ql) >= 0;
+      });
+      var listHTML = shown.map(function (p) {
+        var on = !!map[p.id];
+        return '<label class="re-item' + (on ? ' on' : '') + '">' +
+          '<input type="checkbox" data-rechk="' + esc(p.id) + '"' + (on ? ' checked' : '') + '>' +
+          '<span><b>' + esc(p.name) + '</b></span>' +
+          '<span class="re-sub">' + esc(p.dong) + ' · ' + esc(p.day) + '</span>' +
+        '</label>';
+      }).join('');
+      var cnt = Object.keys(map).length;
+      return '<div class="re-top">' +
+          '<span class="hint-txt" style="margin:0">현재 제외됨: <b style="color:#b91c1c">' + cnt + '곳</b> / 전체 ' + db.placements.length + '곳</span>' +
+          '<div style="display:flex;gap:6px;align-items:center">' +
+            '<input type="search" id="reSearch" class="input ko-ime" style="width:170px;padding:5px 9px;font-size:12px" placeholder="게시대·읍면동 검색" value="' + esc(q) + '">' +
+            '<button type="button" class="btn sm ghost" id="btnReClearAll">전체 해제</button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px">읍면동 일괄 제외/해제 (클릭)</div>' +
+        '<div class="re-dongs" id="reDongBox">' + dongChips + '</div>' +
+        '<div class="re-list" id="reListBox">' + (listHTML || '<div style="padding:12px;color:#64748b">검색 결과가 없습니다.</div>') + '</div>';
+    }
+    openModal({
+      title: '🚫 무작위 선택 제외 게시대 설정',
+      sub: '여기서 체크한 게시대·읍면동은 무작위 선택 시 후보에서 자동으로 빠집니다. (회원별 자동 저장)',
+      wide: true,
+      body: '<div id="reModalRoot">' + renderBody() + '</div>',
+      foot: '<button type="button" class="btn ghost" data-close>닫기</button>' +
+            '<button type="button" class="btn primary" id="btnReApplyRand">저장 후 전체 무작위 선택</button>',
+      after: function () {
+        function refreshModal() {
+          var root = $('#reModalRoot');
+          if (!root) return;
+          root.innerHTML = renderBody();
+          bindInside();
+          syncRandExclBadges();
+          renderPickUI();
+        }
+        function bindInside() {
+          if ($('#reSearch')) {
+            onEl('#reSearch', 'input', function () {
+              q = this.value;
+              var curPos = this.selectionStart || q.length;
+              refreshModal();
+              var rs = $('#reSearch');
+              if (rs) { try { rs.focus(); rs.setSelectionRange(curPos, curPos); } catch (e) { } }
+            });
+          }
+          if ($('#btnReClearAll')) {
+            onEl('#btnReClearAll', 'click', function () {
+              saveRandExclMap({});
+              refreshModal();
+              toast('무작위 제외 목록을 모두 해제했습니다.');
+            });
+          }
+          $$('#reDongBox [data-redong]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var dn = this.getAttribute('data-redong');
+              var map = loadRandExclMap();
+              var ids = db.placements.filter(function (p) { return p.dong === dn; }).map(function (p) { return p.id; });
+              var allOn = ids.length > 0 && ids.every(function (id) { return !!map[id]; });
+              ids.forEach(function (id) { if (allOn) delete map[id]; else map[id] = true; });
+              saveRandExclMap(map);
+              refreshModal();
+              toast(dn + (allOn ? ' 일괄 제외를 해제했습니다.' : ' 전체(' + ids.length + '곳)를 무작위 제외했습니다.'));
+            });
+          });
+          $$('#reListBox [data-rechk]').forEach(function (chk) {
+            chk.addEventListener('change', function () {
+              var pid = this.getAttribute('data-rechk');
+              var map = loadRandExclMap();
+              if (this.checked) map[pid] = true; else delete map[pid];
+              saveRandExclMap(map);
+              refreshModal();
+            });
+          });
+        }
+        bindInside();
+        if ($('#btnReApplyRand')) {
+          onEl('#btnReApplyRand', 'click', function () {
+            closeModal();
+            if ($('#step2RandomBox') && ui.step === 2 && !validateStep(2)) return;
+            pickRandom('all');
+          });
+        }
+      }
+    });
+  }
+
   /* 3단계 게시대 선택 — 게시대현황과 같은 한 줄(compact single-row) 행 (김재봉 님 지시 2026-11-22)
      `[요일·행정동] 게시대명 · 순위 · N/M건 접수중 · [위치] [선택]` 한 줄에 담고, 선택·해제·순위·
      인접 택1 제한·고장/풀가림·제작업체 금지 안내는 그대로 유지합니다. */
@@ -6835,6 +7000,7 @@
     var off = p.broken || allDown || evLowBlock;
     var adjB = (!picked && !off) ? adjPickBlock(p.id) : null;
     var mbHit = (off || picked) ? null : makerBlockOf(p.id, currentMakerInfo());
+    var excluded = isRandExcluded(p.id);
     var code = (ui.slots && ui.slots[p.id]) || '';
     var chips = '';
     if (p.broken) chips += '<span class="tag broken">고장·수리중</span>';
@@ -6842,10 +7008,11 @@
     else if (mbHit) chips += '<span class="tag broken">제작업체 금지</span>';
     else if (adjB) chips += '<span class="tag adj">택1 제한</span>';
     else if (slotFlagSummary(p)) chips += '<span class="tag broken">' + esc(slotFlagSummary(p)) + '</span>';
+    if (excluded) chips += '<span class="tag rand-excl">무작위 제외</span>';
     if (code) chips += '<span class="slot-tag pr-slot">' + esc(slotChipTxt(p, code)) + '</span>';
     var btn = off ? '불가'
       : (picked ? '해제' : (adjB ? '택1 제한' : (ui.designatedOnly ? '이 곳 지정' : '선택')));
-    var cls = 'fc-item pick-row pick-card' + (picked ? ' picked' : '') + (off ? ' off' : '') + (adjB ? ' adj-locked' : '');
+    var cls = 'fc-item pick-row pick-card' + (picked ? ' picked' : '') + (off ? ' off' : '') + (adjB ? ' adj-locked' : '') + (excluded ? ' rand-excluded' : '');
     return '<div class="' + cls + '"' + (off ? '' : ' data-pick="' + esc(p.id) + '" tabindex="0" role="button" aria-pressed="' + (picked ? 'true' : 'false') + '"' + (adjB ? ' aria-disabled="true"' : '')) + '>' +
       '<div class="fmain"><b>' + esc(p.name) +
         (picked ? ' <span class="pl-rank">' + ranks.join('·') + '순위</span>' : '') + chips + '</b>' +
@@ -6853,6 +7020,7 @@
           (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
       '<div class="fcount"><b>' + reqN + '</b><span>/' + p.cap + '건 접수중</span></div>' +
       '<div class="fc-act">' +
+        (!off ? '<button class="btn sm ghost rand-excl-btn' + (excluded ? ' is-excl' : '') + '" type="button" data-randexcl="' + esc(p.id) + '" aria-pressed="' + (excluded ? 'true' : 'false') + '" title="체크하면 무작위 선택 시 후보에서 빠집니다">' + (excluded ? '🚫 제외됨' : '무작위 제외') + '</button>' : '') +
         boardMapBtnsHTML(p) +
         (picked && !off ? '<button class="btn sm ghost hide-sm" type="button" data-slotjump="' + esc(p.id) + '" title="세부 위치(게시동·단) 지정">위치</button>' : '') +
         '<button class="btn sm ' + (picked ? 'ok' : (off || adjB ? '' : 'primary')) + '" type="button"' + (off ? ' disabled' : '') + '>' + esc(btn) + '</button>' +
@@ -6934,6 +7102,7 @@
       ? ppg.shown.map(function (p) { return pickRowHTML(p); }).join('')
       : '<div class="empty" style="grid-column:1/-1">' + IC.empty + '<div>조건에 맞는 게시대가 없습니다.</div></div>';
     if ($('#pickPager')) $('#pickPager').innerHTML = pagerHTML(vis.length, ppg.size, ppg.page, 'p', ui.pickAll);
+    syncRandExclBadges();
   }
 
   /* ── 무작위 선택 (김재봉 님 지시 2026-11-24 개편) ─────────────────────────
@@ -6952,23 +7121,27 @@
     if (!need || need < QTY_MIN) { toast('2단계에서 접수 수량(1~50매)을 먼저 입력해 주세요.', true); return 0; }
     var pool = (scope === 'filter') ? pickVisible().slice() : db.placements.slice();
     var maker = currentMakerInfo();
+    var exclSkipped = 0;
     var cands = pool.filter(function (p) {
       if (placeBlocked(p)) return false;
       if (makerBlockOf(p.id, maker)) return false;
       if (eventFormOn() && (isLowBoard(p))) return false;   /* 행사 우선접수 — 저단 제외 */
+      if (isRandExcluded(p.id)) { exclSkipped += 1; return false; }
       return true;
     });
     if (!cands.length) {
-      toast((scope === 'filter' ? '현재 목록' : '전체') + '에서 선택할 수 있는 게시대가 없습니다 — 필터를 바꾸거나 수량을 확인해 주세요.', true);
+      toast((scope === 'filter' ? '현재 목록' : '전체') + '에서 선택할 수 있는 게시대가 없습니다' + (exclSkipped ? ' (무작위 제외 ' + exclSkipped + '곳 포함)' : '') + ' — 필터나 제외 설정을 확인해 주세요.', true);
       return 0;
     }
     if (cands.length < need) {
-      toast((scope === 'filter' ? '현재 목록' : '전체') + '의 가용 게시대(' + cands.length + '곳)가 신청 수량(' + need + '매)보다 적습니다.', true);
+      toast((scope === 'filter' ? '현재 목록' : '전체') + '의 가용 게시대(' + cands.length + '곳' + (exclSkipped ? ' · 제외 ' + exclSkipped + '곳' : '') + ')가 신청 수량(' + need + '매)보다 적습니다.', true);
       return 0;
     }
     ui.randomMode = (scope === 'filter') ? 'filter' : 'all';
     ui.randomPool = cands.map(function (p) { return p.id; });
-    ui.randomLabel = (scope === 'filter') ? ('현재 카테고리 (' + cands.length + '개소)') : ('전체 게시대 (' + cands.length + '개소)');
+    ui.randomLabel = (scope === 'filter')
+      ? ('현재 카테고리 (' + cands.length + '개소' + (exclSkipped ? ' · 제외 ' + exclSkipped + '곳' : '') + ')')
+      : ('전체 게시대 (' + cands.length + '개소' + (exclSkipped ? ' · 제외 ' + exclSkipped + '곳' : '') + ')');
     ui.ranks = { 1: [], 2: [], 3: [] };
     ui.slots = {};
     ui.rank = 1;
@@ -16226,11 +16399,12 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-boardmap],[data-boardroad],[data-schedpage],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-boardmap')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardmap'), 'map'); return; }
     if (el.hasAttribute('data-boardroad')) { e.stopPropagation(); e.preventDefault(); showBoardFeatureSoon(el.getAttribute('data-boardroad'), 'road'); return; }
     if (el.hasAttribute('data-schedpage')) { e.stopPropagation(); e.preventDefault(); goPage('board-schedule.html?pid=' + encodeURIComponent(el.getAttribute('data-schedpage'))); return; }
+    if (el.hasAttribute('data-randexcl')) { e.stopPropagation(); e.preventDefault(); toggleRandExcluded(el.getAttribute('data-randexcl')); return; }
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
     if (el.id === 'btnPhotoSample') { addSamplePhotos(); return; }
@@ -17091,6 +17265,8 @@
       if (r) toast('제작업체 금지 게시대 등록 — ' + (r.maker || r.oade) + ' · ' + r.pids.length + '곳');
     });
     if ($('#btnStep2Random')) onEl('#btnStep2Random', 'click', function () { if (!validateStep(2)) return; pickRandom('all'); });
+    if ($('#btnStep2RandExcl')) onEl('#btnStep2RandExcl', 'click', function () { openRandExcludeModal(); });
+    if ($('#btnRandExclude')) onEl('#btnRandExclude', 'click', function () { openRandExcludeModal(); });
     if ($('#btnRandAll')) onEl('#btnRandAll', 'click', function () { pickRandom('all'); });
     if ($('#btnRandFilter')) onEl('#btnRandFilter', 'click', function () { pickRandom('filter'); });
     if ($('#btnOffClear')) onEl('#btnOffClear', 'click', function () { ui.offSel = {}; renderOffPanel(); });

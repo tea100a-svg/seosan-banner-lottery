@@ -2257,4 +2257,22 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .xl-4w-tbl td.st-rival{background:#fef3c7;color:#92400e;font-weight:700}
 .xl-4w-tbl td.st-free{color:#94a3b8}
 
+/* 무작위 제외 설정 (카드 체크 + 제외 팝업) */
+.pick-row.rand-excluded{background:#fff8f6;border-color:#fed7aa}
+.tag.rand-excl{background:#ffedd5;color:#9a3412;border:1px solid #fdba74}
+.rand-excl-btn.is-excl{background:#fee2e2;color:#991b1b;border-color:#fca5a5;font-weight:700}
+.re-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.re-dongs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+.re-dong-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;font-size:11.5px;font-weight:700;color:#334155;cursor:pointer}
+.re-dong-chip.on{background:#fee2e2;border-color:#f87171;color:#991b1b}
+.re-dong-chip.partial{background:#fef3c7;border-color:#fbbf24;color:#92400e}
+.re-list{max-height:330px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;background:#fff;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:8px}
+@media (max-width:640px){.re-list{grid-template-columns:1fr}}
+.re-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:8px;border:1px solid #f1f5f9;font-size:12.5px;cursor:pointer}
+.re-item:hover{background:#f8fafc}
+.re-item.on{background:#fff1f2;border-color:#fecdd3}
+.re-item input{width:15px;height:15px;accent-color:#dc2626;cursor:pointer;flex:0 0 auto}
+.re-item .re-sub{margin-left:auto;font-size:11px;color:#64748b;white-space:nowrap}
+
+
 
