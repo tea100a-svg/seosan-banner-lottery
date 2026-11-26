@@ -8589,9 +8589,9 @@
   function byeoljiOffsetLoad() {
     try {
       var raw = localStorage.getItem('sbl_byeolji_offset_v1');
-      if (raw) { var o = JSON.parse(raw); return { x: Number(o.x) || 0, y: Number(o.y) || 0, textOnly: !!o.textOnly }; }
+      if (raw) { var o = JSON.parse(raw); return { x: Number(o.x) || 0, y: Number(o.y) || 0, withBg: !!o.withBg }; }
     } catch (e) {}
-    return { x: 0, y: 0, textOnly: false };
+    return { x: 0, y: 0, withBg: false };
   }
   function byeoljiOffsetSave(o) {
     try { localStorage.setItem('sbl_byeolji_offset_v1', JSON.stringify(o)); } catch (e) {}
@@ -8616,7 +8616,7 @@
     var off = byeoljiOffsetLoad();
     if ($('#byeoljiOffX')) $('#byeoljiOffX').value = off.x;
     if ($('#byeoljiOffY')) $('#byeoljiOffY').value = off.y;
-    if ($('#byeoljiTextOnly')) $('#byeoljiTextOnly').checked = off.textOnly;
+    if ($('#byeoljiWithBg')) $('#byeoljiWithBg').checked = off.withBg;
     var apps = db.apps.filter(function (a) {
       if (['반려', '미입고취소', '미입금취소', '본인취소', '접수취소', '낙첨'].indexOf(a.status) >= 0) return false;
       return weekStartOf(a.start || ROUND.postStart) === wk && awardedOf(a) > 0;
@@ -8661,7 +8661,7 @@
       return '<div class="byeolji-field' + (cls ? (' ' + cls) : '') + '" style="top:' + top + '%;left:' + left + '%;width:' + w + '%">' + esc(txt) + '</div>';
     }
     $('#byeoljiPreview').innerHTML =
-      '<div class="byeolji-sheet' + (off.textOnly ? ' text-only' : '') + '" id="byeoljiSheet">' +
+      '<div class="byeolji-sheet' + (off.withBg ? ' with-bg' : '') + '" id="byeoljiSheet">' +
         '<img class="byeolji-bg" src="assets/form-byeolji1.jpg" alt="별지 제1호서식">' +
         '<div class="byeolji-fields-layer" id="byeoljiFieldsLayer" style="transform:translate(' + off.x + 'mm,' + off.y + 'mm)">' +
         f(15.3, 33.5, 22, repName) +
@@ -8671,7 +8671,7 @@
         f(20.9, 33.5, 24, addr) +
         f(20.9, 77.5, 16, hp) +
         f(23.9, 33.5, 22, target.company || '') +
-        f(24.3, 77.0, 17, regNo) +
+        f(24.7, 78.2, 16, regNo, 'sm-txt') +
         f(26.7, 33.5, 22, repName) +
         f(26.7, 77.5, 16, bizNo) +
         f(29.6, 33.5, 24, addr) +
@@ -17654,20 +17654,20 @@
       var o = {
         x: Number($('#byeoljiOffX') && $('#byeoljiOffX').value) || 0,
         y: Number($('#byeoljiOffY') && $('#byeoljiOffY').value) || 0,
-        textOnly: !!($('#byeoljiTextOnly') && $('#byeoljiTextOnly').checked)
+        withBg: !!($('#byeoljiWithBg') && $('#byeoljiWithBg').checked)
       };
       byeoljiOffsetSave(o);
       if ($('#byeoljiFieldsLayer')) $('#byeoljiFieldsLayer').style.transform = 'translate(' + o.x + 'mm,' + o.y + 'mm)';
-      if ($('#byeoljiSheet')) $('#byeoljiSheet').classList.toggle('text-only', o.textOnly);
+      if ($('#byeoljiSheet')) $('#byeoljiSheet').classList.toggle('with-bg', o.withBg);
     }
     if ($('#byeoljiOffX')) onEl('#byeoljiOffX', 'input', applyByeoljiOff);
     if ($('#byeoljiOffY')) onEl('#byeoljiOffY', 'input', applyByeoljiOff);
-    if ($('#byeoljiTextOnly')) onEl('#byeoljiTextOnly', 'change', applyByeoljiOff);
+    if ($('#byeoljiWithBg')) onEl('#byeoljiWithBg', 'change', applyByeoljiOff);
     if ($('#btnByeoljiOffReset')) {
       onEl('#btnByeoljiOffReset', 'click', function () {
         if ($('#byeoljiOffX')) $('#byeoljiOffX').value = 0;
         if ($('#byeoljiOffY')) $('#byeoljiOffY').value = 0;
-        if ($('#byeoljiTextOnly')) $('#byeoljiTextOnly').checked = false;
+        if ($('#byeoljiWithBg')) $('#byeoljiWithBg').checked = false;
         applyByeoljiOff();
         toast('인쇄 위치 보정을 초기화했습니다.');
       });
