@@ -14,7 +14,7 @@
   var ADMIN_PAGES = ['admin-draw', 'admin-review', 'admin-event', 'admin-official', 'admin-official-review',
     'admin-political', 'admin-loc',
     'admin-pay', 'admin-deliver', 'admin-report', 'admin-desig', 'admin-photos', 'admin-docs',
-    'admin-board', 'admin-course', 'admin-roles', 'admin-members', 'admin-system'];
+    'admin-board', 'admin-course', 'admin-roles', 'admin-members', 'admin-grades', 'admin-system'];
   function isAdminPage() { return ADMIN_PAGES.indexOf(PAGE) >= 0; }
   function has(id) { return !!document.getElementById(id); }
   function onEl(sel, ev, fn, opt) { var el = $(sel); if (el && el.addEventListener) el.addEventListener(ev, fn, opt); return el; }
@@ -1826,11 +1826,106 @@
     var r = setAssocMember(id, on);
     if (!r) return null;
     renderAssocPanel();
+    renderMemberGradesPanel();
     renderAssocFixedPanel();
     renderDesigBatch();
     renderReportPanel(); renderAdmin();
     toast(r.company + ' — 협회 등록 ' + (r.assocMember ? '지정 (+' + assocFixedPct() + '% 고정)' : '해제'));
     return r;
+  }
+
+  /* ── 🎖️ 회원 등급관리 페이지 (마스터 전용 · 2026-11-26 김재봉 님 지시) ── */
+  function setMemberGrade(memberId, grade) {
+    if (!isTotalManager()) {
+      toast('회원 등급 변경은 마스터만 할 수 있습니다.', true);
+      return null;
+    }
+    var m = memberById(memberId);
+    if (!m) return null;
+    var g = (grade === 'staff' || grade === 'assoc' || grade === 'agency' || grade === 'direct') ? grade : 'direct';
+    var prev = memberTypeOf(m);
+    m.type = g;
+    m.assocMember = (g === 'assoc');
+    m.isStaff = (g === 'staff');
+    if (g === 'staff') {
+      m.admin = true;
+      if (!m.roleKey || (m.roleKey !== 'staff' && m.roleKey !== 'field' && m.roleKey !== 'office' && m.roleKey !== 'chief' && m.roleKey !== 'senior' && m.roleKey !== 'audit1' && m.roleKey !== 'audit2')) {
+        m.roleKey = 'staff';
+      }
+      if (!m.roleLabel) m.roleLabel = '협회직원';
+    } else {
+      m.admin = false;
+    }
+    save();
+    audit('회원등급', (m.company || m.loginId) + ' 등급 변경: ' + (TYPE_LABEL[prev] || prev) + ' → ' + (TYPE_LABEL[g] || g) + ' [마스터]');
+    return m;
+  }
+  function renderMemberGradesPanel() {
+    if (!has('gradesTable')) return;
+    var can = isTotalManager();
+    if ($('#gradesLock')) {
+      $('#gradesLock').classList.toggle('hidden', can);
+      $('#gradesLock').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>' +
+        '<div><b>읽기 전용</b> — 회원 등급 변경은 <b>마스터</b>만 할 수 있습니다. 현재 접속 권한: <b>' + esc(accessRoleLabel()) + '</b>. 시연용 직책 전환에서 마스터를 선택해 주세요.</div>';
+    }
+    var all = memberList();
+    var counts = { direct: 0, agency: 0, assoc: 0, staff: 0 };
+    all.forEach(function (m) {
+      var k = memberTypeOf(m);
+      counts[k] = (counts[k] || 0) + 1;
+    });
+    if ($('#gradeKpis')) {
+      $('#gradeKpis').innerHTML =
+        '<div class="kpi"><span class="k">일반광고주</span><span class="v">' + counts.direct + '<em>명</em></span><span class="s">직접 신청 · 등록증 매번 첨부</span></div>' +
+        '<div class="kpi"><span class="k">광고대행사</span><span class="v">' + counts.agency + '<em>곳</em></span><span class="s">대행 신청 · 등록증 가입 시 1회</span></div>' +
+        '<div class="kpi"><span class="k">협회회원</span><span class="v">' + counts.assoc + '<em>곳</em></span><span class="s">회원사 · 추천 가산점 +' + assocFixedPct() + '%</span></div>' +
+        '<div class="kpi"><span class="k">협회직원</span><span class="v">' + counts.staff + '<em>명</em></span><span class="s">사무국 · 현장 직원</span></div>';
+    }
+    var q = ($('#gradeSearch') ? String($('#gradeSearch').value || '').trim().toLowerCase() : '');
+    var flt = ($('#gradeFilter') ? String($('#gradeFilter').value || 'all') : 'all');
+    var list = all.filter(function (m) {
+      var k = memberTypeOf(m);
+      if (flt !== 'all' && k !== flt) return false;
+      if (q) {
+        var hay = [m.company, m.owner, m.loginId, m.phone, TYPE_LABEL[k]].join(' ').toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+    if ($('#gradesInfo')) $('#gradesInfo').textContent = '전체 ' + all.length + '명 중 ' + list.length + '명 표시';
+    var badgeCls = { direct: 'b-gray', agency: 'b-blue', assoc: 'b-green', staff: 'b-amber' };
+    var opts = [
+      ['direct', '일반광고주'],
+      ['agency', '광고대행사'],
+      ['assoc', '협회회원'],
+      ['staff', '협회직원']
+    ];
+    $('#gradesTable').innerHTML = '<table><thead><tr><th>업체·단체 (아이디)</th><th>대표·연락처</th><th>현재 등급</th><th>등급 변경</th><th>처리</th></tr></thead><tbody>' +
+      (list.length ? list.map(function (m, i) {
+        var cur = memberTypeOf(m);
+        var sel = '<select class="input sm" id="gradeSel' + i + '"' + (can ? '' : ' disabled') + ' aria-label="회원 등급 선택">' +
+          opts.map(function (o) {
+            return '<option value="' + o[0] + '"' + (cur === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') + '</select>';
+        return '<tr><td><span class="co">' + esc(m.company || '—') + '</span><span class="sm">' + esc(m.loginId || m.id) + '</span></td>' +
+          '<td class="sm">' + esc(m.owner || '—') + (m.phone ? ' · ' + esc(m.phone) : '') + '</td>' +
+          '<td><span class="badge ' + (badgeCls[cur] || 'b-gray') + '"><i></i>' + esc(TYPE_LABEL[cur] || '일반광고주') + '</span></td>' +
+          '<td>' + sel + '</td>' +
+          '<td><button class="btn sm primary" type="button" data-gradesave="' + esc(m.id) + '" data-gradeidx="' + i + '"' + (can ? '' : ' disabled') + '>저장</button></td></tr>';
+      }).join('') : '<tr><td colspan="5" class="sm" style="text-align:center;padding:18px">조건에 맞는 회원이 없습니다.</td></tr>') +
+      '</tbody></table>';
+  }
+  function saveMemberGradeRow(id, idx) {
+    if (!isTotalManager()) { toast('회원 등급 변경은 마스터만 할 수 있습니다.', true); return null; }
+    var sel = $('#gradeSel' + idx);
+    var grade = sel ? sel.value : 'direct';
+    var m = setMemberGrade(id, grade);
+    if (!m) return null;
+    renderMemberGradesPanel();
+    renderAssocPanel();
+    renderAuth();
+    toast((m.company || m.loginId) + ' — 회원 등급을 [' + memberTypeLabel(m) + '](으)로 변경했습니다.');
+    return m;
   }
 
   /* ── 행사 우선접수 · 행사승인권한자 5명 과반수 승인 (김재봉 님 지시 2026-11-22) ────────
@@ -2554,6 +2649,7 @@
     renderBonusCapPanel();
     renderRoleQuotaPanel();
     renderMemberAppointPanel();
+    renderMemberGradesPanel();
     renderAssocFixedPanel();
     renderEventPanel();
     renderPolPanel();
@@ -12347,6 +12443,7 @@
     renderUrgentGrantPanel();
     renderPolicyPanel();
     renderRolesLock();
+    renderMemberGradesPanel();
     renderAdminPlace();
     renderThemeAdmin();
     renderMakerBlock();
@@ -15247,6 +15344,7 @@
       var key = a.getAttribute('data-perm') || '';
       var show = total ? true : canSeePage(key);
       if (key === 'roles') show = total || appointer;
+      if (key === 'grades') show = total;
       a.classList.toggle('hidden', !show);
       a.setAttribute('aria-hidden', show ? 'false' : 'true');
       if (!show && a.classList.contains('on')) a.classList.remove('on');
@@ -15259,6 +15357,7 @@
     PERM_PAGES.forEach(function (p) { if (p.page === PAGE) key = p.k; });
     var denied = false;
     if (PAGE === 'admin-roles') denied = !(isTotalManager() || canAppointNow());
+    else if (PAGE === 'admin-grades') denied = !isTotalManager();
     else if (key) denied = !canSeePage(key);
     if (!denied) {
       var lk0 = $('#permLockBox'); if (lk0) lk0.remove();
@@ -15728,7 +15827,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     /* 현장 게첨사진 — 실무자 등록·미리보기·삭제 / 접수자 다운로드·인쇄 (2026-11-23) */
     if (el.id === 'btnPhotoPick') { if ($('#photoFile')) $('#photoFile').click(); return; }
@@ -15797,6 +15896,7 @@
       eventVote(evId, evWho, el.getAttribute('data-evval')); return;
     }
     if (el.hasAttribute('data-assocsave')) { saveAssocRow(el.getAttribute('data-assocsave'), el.getAttribute('data-associdx') || '0'); return; }
+    if (el.hasAttribute('data-gradesave')) { saveMemberGradeRow(el.getAttribute('data-gradesave'), el.getAttribute('data-gradeidx') || '0'); return; }
     if (el.hasAttribute('data-evsave')) { saveEventApprover(el.getAttribute('data-evsave'), el.getAttribute('data-evidx') || '0'); return; }
     /* 3단계 한 줄 선택 — [위치] → 위 선택 목록의 세부 위치 펼치기 */
     if (el.hasAttribute('data-slotjump')) {
@@ -16196,6 +16296,8 @@
 
   function bindEvents() {
     document.addEventListener('click', onClick);
+    if ($('#gradeSearch')) onEl('#gradeSearch', 'input', function () { renderMemberGradesPanel(); });
+    if ($('#gradeFilter')) onEl('#gradeFilter', 'change', function () { renderMemberGradesPanel(); });
     /* 5인 투표 내역 팝업 — 마우스 호버(PC)와 탭(모바일) 모두 (2026-11-23 김재봉 님 지시) */
     document.addEventListener('mouseover', function (e) {
       var t = e.target && e.target.closest ? e.target.closest('[data-evtip]') : null;
