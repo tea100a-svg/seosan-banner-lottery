@@ -2255,11 +2255,15 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .xl-block{border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;background:#fff}
 .xl-block-head{background:#1e3a5f;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:800}
 .xl-block-head small{font-weight:600;color:#cbd5e1;font-size:11.5px}
-.xl-4w-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
-.xl-4w-tbl th,.xl-4w-tbl td{border:1px solid #dce3ec;padding:4px 6px;vertical-align:middle}
+.xl-4w-tbl{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
+.xl-4w-tbl th,.xl-4w-tbl td{border:1px solid #dce3ec;padding:4px 5px;vertical-align:middle;word-break:break-word;overflow-wrap:anywhere}
 .xl-4w-tbl thead th{background:#f1f5f9;color:#334155;font-weight:800;text-align:center}
-.xl-4w-tbl td.xl-tier{width:34px;text-align:center;font-weight:800;background:#f8fafc;color:#1e293b}
-.xl-4w-tbl td.xl-per{white-space:nowrap;font-family:ui-monospace,monospace;font-size:11px;color:#334155;text-align:center}
+.xl-4w-tbl thead th:nth-child(1){width:32px}
+.xl-4w-tbl thead th:nth-child(2){width:94px}
+.xl-4w-tbl thead th:nth-child(4){width:24%}
+.xl-4w-tbl thead th:nth-child(5){width:54px}
+.xl-4w-tbl td.xl-tier{width:32px;text-align:center;font-weight:800;background:#f8fafc;color:#1e293b}
+.xl-4w-tbl td.xl-per{white-space:nowrap;font-family:ui-monospace,monospace;font-size:10.5px;color:#334155;text-align:center}
 .xl-4w-tbl tr.is-cur{background:#fef9c3}
 .xl-4w-tbl td.st-official{background:#dcfce7;color:#166534;font-weight:700}
 .xl-4w-tbl td.st-confirmed,.xl-4w-tbl td.st-inuse{background:#eff6ff;color:#1e40af;font-weight:700}
