@@ -5692,7 +5692,6 @@
       '<div class="fcount' + (isLive && !liveLeft ? ' sold' : '') + '"><b>' + (isLive ? liveLeft : reqN) + '</b><span>' + (isLive ? '잔여 면' : '/' + p.cap + '건 접수중') + '</span></div>' +
       '<div class="fc-act">' +
         boardMapBtnsHTML(p) +
-        '<button class="btn sm ghost" data-schedpage="' + esc(p.id) + '" type="button" title="1주·4주 게시현황 별도 페이지로 보기">게시현황</button>' +
         '<button class="btn sm ghost hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
         liveBtn +
       '</div></div>';
