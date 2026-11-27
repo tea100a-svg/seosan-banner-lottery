@@ -4187,11 +4187,11 @@
     });
     return n;
   }
-  function slotStateMap(p, week) {
+  function slotStateMap(p, week, prePlan) {
     var map = {};
     if (!p) return map;
     var wk = weekStartOf(week || activeWeekStart());
-    var plan = slotPlan(p.id, wk);
+    var plan = prePlan || slotPlan(p.id, wk);
     var usable = p.broken ? 0 : Math.max(0, availOf(p) - plan.count.app);
     slotCodesOf(p).forEach(function (s) {
       var it = plan.post[s.code];
@@ -6130,13 +6130,141 @@
       return { cls: 'confirmed', tag: appObj.status || '확정', adv: appObj.advertiser || appObj.company || '배정 완료', sub: appObj.text || '' };
     }
     if (wk === weekStartOf(CUR.start) && st.k === 'inuse') {
-      return { cls: 'inuse', tag: '게시중', adv: '진행 주간 게시중', sub: dstr(CUR.start) + '~' + dstr(CUR.end) };
+      return { cls: 'inuse', tag: '게시중', adv: '기존 배정', sub: '진행 주간 게시중 (' + dstr(CUR.start) + '~' + dstr(CUR.end) + ')' };
     }
-    var rv = rivalCount(p.id, s.code, wk);
+    var rv = (typeof st.rivals === 'number') ? st.rivals : rivalCount(p.id, s.code, wk);
     if (rv > 0) {
       return { cls: 'rival', tag: '접수 ' + rv + '건', adv: '추첨·심사 대기', sub: st.k === 'other' ? '안내 후 선택' : '지정 접수중' };
     }
     return { cls: 'free', tag: '빈 자리', adv: '예약·접수 가능', sub: st.k === 'other' ? '안내 후 선택' : '정상 운영' };
+  }
+
+  /* 게시현황(1·4주) 전용 고속 주간 인덱스 — 전체 db.apps·officials를 단 1회만 스캔 */
+  function buildSchedWeekIndex(weeks) {
+    var wkSet = {};
+    weeks.forEach(function (w) { wkSet[w] = true; });
+    var minWk = weeks.slice().sort()[0] || activeWeekStart();
+    var appsByWkPid = {};   /* wk -> pid -> [app, ...] */
+    var prevByPid = {};     /* pid -> [app, ...] (과거 회차 회수용) */
+    var rivalByWkPid = {};  /* wk -> pid -> slotCode -> count */
+    var offByWkPid = {};    /* wk -> pid -> [official, ...] */
+    var curRoundStart = ROUND.postStart;
+
+    (db.apps || []).forEach(function (a) {
+      if (!a) return;
+      var aWk = weekStartOf(a.start || curRoundStart);
+      var places = awardedPlacesOf(a);
+      if (wkSet[aWk] && SEAT_STATUS.indexOf(a.status) >= 0) {
+        if (!appsByWkPid[aWk]) appsByWkPid[aWk] = {};
+        places.forEach(function (pl) {
+          if (!pl || !pl.pid) return;
+          if (!appsByWkPid[aWk][pl.pid]) appsByWkPid[aWk][pl.pid] = [];
+          appsByWkPid[aWk][pl.pid].push({ a: a, pl: pl });
+        });
+      }
+      if (wkSet[aWk] && (a.status === '추첨대기' || a.status === '시안심사중' || a.status === '행사심사중')) {
+        if (!rivalByWkPid[aWk]) rivalByWkPid[aWk] = {};
+        (a.pids || []).forEach(function (pid) {
+          var sc = slotFor(a, pid);
+          if (!sc) return;
+          if (!rivalByWkPid[aWk][pid]) rivalByWkPid[aWk][pid] = {};
+          rivalByWkPid[aWk][pid][sc] = (rivalByWkPid[aWk][pid][sc] || 0) + 1;
+        });
+      }
+      if (aWk < minWk && (a.status === '게시중' || a.status === '입고완료' || a.status === '게시종료')) {
+        places.forEach(function (pl) {
+          if (!pl || !pl.pid) return;
+          if (!prevByPid[pl.pid]) prevByPid[pl.pid] = [];
+          prevByPid[pl.pid].push({ a: a, pl: pl, wk: aWk });
+        });
+      }
+    });
+
+    weeks.forEach(function (w) {
+      offByWkPid[w] = {};
+      officialActive(w).forEach(function (r) {
+        (r.pids || []).forEach(function (pid) {
+          if (!offByWkPid[w][pid]) offByWkPid[w][pid] = [];
+          offByWkPid[w][pid].push(r);
+        });
+      });
+    });
+
+    function fastPlan(p, wk) {
+      var codes = slotCodeListOf(p);
+      var o = { p: p, week: wk, codes: codes, post: {}, remove: {}, free: [], count: { official: 0, app: 0 } };
+      var order = slotOrderOf(p);
+      var free = codes.filter(function (c) { return !slotIsBlocked(p, c); });
+      free.sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
+      function take(code) { var i = free.indexOf(code); if (i < 0) return false; free.splice(i, 1); return true; }
+
+      free = officialSlotOrder(p).filter(function (c) { return free.indexOf(c) >= 0; });
+      var offs = (offByWkPid[wk] && offByWkPid[wk][p.id]) || [];
+      offs.forEach(function (r) {
+        if (!free.length) return;
+        var want = officialSlotFor(r, p.id), code = '';
+        if (want && slotBoardAll(want)) {
+          for (var i2 = 0; i2 < free.length; i2++) { if (free[i2].charAt(0) === want.charAt(0)) { code = free[i2]; break; } }
+        } else if (want && free.indexOf(want) >= 0) {
+          code = want;
+        }
+        if (!code) code = free[0];
+        take(code);
+        o.post[code] = { kind: 'official', official: r, slot: code, want: want };
+        o.count.official += 1;
+      });
+
+      free.sort(function (a, b) {
+        var ca = slotFlagOf(p, a) === 'cover' ? 1 : 0, cb = slotFlagOf(p, b) === 'cover' ? 1 : 0;
+        if (ca !== cb) return ca - cb;
+        return order.indexOf(a) - order.indexOf(b);
+      });
+
+      var wApps = (appsByWkPid[wk] && appsByWkPid[wk][p.id]) || [];
+      wApps.forEach(function (it) {
+        if (!free.length) return;
+        var want = it.pl.slot || slotFor(it.a, p.id);
+        if (!want || free.indexOf(want) < 0) want = free[0];
+        take(want);
+        o.post[want] = { kind: 'app', app: it.a, slot: want };
+        o.count.app += 1;
+      });
+      o.free = free.slice();
+      return o;
+    }
+
+    function fastSmap(p, wk, plan) {
+      var map = {};
+      var rMap = (rivalByWkPid[wk] && rivalByWkPid[wk][p.id]) || {};
+      var usable = p.broken ? 0 : Math.max(0, availOf(p) - plan.count.app);
+      slotCodesOf(p).forEach(function (s) {
+        var it = plan.post[s.code];
+        var rv = rMap[s.code] || 0;
+        if (p.broken) { map[s.code] = { k: 'broken', label: '고장·수리중', off: true, rivals: 0 }; return; }
+        var flag = slotFlagOf(p, s.code);
+        if (flag === 'fault' || flag === 'uninstall' || flag === 'aged') {
+          map[s.code] = { k: flag, label: SLOT_FLAG_LABEL[flag] + ' (선택 불가)', off: true, flag: flag, rivals: 0 };
+          return;
+        }
+        if (flag === 'cover') {
+          map[s.code] = { k: 'cover', label: '풀가림 · 목요일 선착순만 선택', off: true, flag: flag, cover: true, rivals: rv };
+          return;
+        }
+        if (flag === 'other') {
+          var note = slotOtherOf(p, s.code) || { text: '', mode: 'block' };
+          var oBlocked = note.mode !== 'warn';
+          map[s.code] = { k: 'other', label: '기타사유 · ' + (oBlocked ? '접수 제한' : '안내 후 선택'), off: oBlocked, flag: flag, other: true, note: note, rivals: rv };
+          return;
+        }
+        if (it && it.kind === 'official') { map[s.code] = { k: 'official', label: '공문 우선배정', off: true, item: it, rivals: 0 }; return; }
+        if (it && it.kind === 'app') { map[s.code] = { k: 'confirmed', label: '이번 회차 확정', off: true, item: it, rivals: 0 }; return; }
+        if (usable > 0) { usable -= 1; map[s.code] = { k: 'free', label: '빈 칸 (가능)', off: false, rivals: rv }; return; }
+        map[s.code] = { k: 'inuse', label: '현재 게시 중', off: false, rivals: rv };
+      });
+      return map;
+    }
+
+    return { plan: fastPlan, smap: fastSmap };
   }
 
   function renderBoardSchedulePage() {
@@ -6252,12 +6380,12 @@
 
     var bodyHTML = '';
     if (schedMode === '1w') {
-      var plan1 = null;
+      var idx1 = buildSchedWeekIndex([startWk]);
       var rows1 = [];
       targetBoards.forEach(function (b) {
         var codes = slotCodesOf(b);
-        var plan = slotPlan(b.id, startWk);
-        var smap = slotStateMap(b, startWk);
+        var plan = idx1.plan(b, startWk);
+        var smap = idx1.smap(b, startWk, plan);
         var groups = {};
         var order = [];
         codes.forEach(function (s) {
@@ -6298,12 +6426,13 @@
       '</table></div>';
     } else {
       var weeks4 = [0, 1, 2, 3].map(function (wi) { return addDays(startWk, wi * 7); });
+      var idx4 = buildSchedWeekIndex(weeks4);
       var blocks = [];
       var curWk = weekStartOf(todayISO());
       targetBoards.forEach(function (b) {
         var codes = slotCodesOf(b);
-        var plans4 = weeks4.map(function (w) { return slotPlan(b.id, w); });
-        var smaps4 = weeks4.map(function (w) { return slotStateMap(b, w); });
+        var plans4 = weeks4.map(function (w) { return idx4.plan(b, w); });
+        var smaps4 = weeks4.map(function (w, wi) { return idx4.smap(b, w, plans4[wi]); });
         var groups = {};
         var order = [];
         codes.forEach(function (s) {
@@ -6318,10 +6447,21 @@
             weeks4.forEach(function (w, wi) {
               var c = placeSchedCell(b, sl, w, plans4[wi], smaps4[wi]);
               var wEnd = addDays(w, 6);
-              var per = dstr(w).slice(5) + ' ~ ' + dstr(wEnd).slice(5);
+              var per = dstr(w) + ' ~ ' + dstr(wEnd);
               var isCur = (w === curWk);
-              var txt = (c.cls === 'free') ? '—' : ((c.sub && c.sub !== '정상 운영' && c.sub !== '추첨·심사 대기') ? c.sub : c.adv);
-              var co = (c.cls === 'free') ? '빈 자리' : c.adv;
+              var txt, co;
+              if (c.cls === 'free') {
+                txt = '—'; co = '빈 자리';
+              } else if (c.cls === 'inuse') {
+                txt = '진행 주간 게시중'; co = '기존 배정';
+              } else if (c.cls === 'rival') {
+                txt = '추첨·심사 대기'; co = c.sub || '지정 접수중';
+              } else if (c.cls === 'off') {
+                txt = c.adv || '접수 불가'; co = '—';
+              } else {
+                txt = (c.sub && c.sub !== '정상 운영' && c.sub !== '추첨·심사 대기') ? c.sub : c.adv;
+                co = c.adv || '—';
+              }
               trs += '<tr class="' + (isCur ? 'is-cur' : '') + '">' +
                 (wi === 0 ? '<td class="xl-tier" rowspan="4">' + sl.row + '단</td>' : '') +
                 '<td class="xl-per">' + esc(per) + (isCur ? ' <b style="color:#b45309">●</b>' : '') + '</td>' +
