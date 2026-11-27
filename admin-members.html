@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>document.documentElement.setAttribute('data-device-view','pc');</script>
+<title>협회 관리자 · 회원 · 권한 · 가산점 · 행사권한자 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
+<link rel="stylesheet" href="assets/style.css?v=20261127r66">
+</head>
+<body data-page="admin-members">
+<div class="demo-banner">
+  <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
+</div>
+
+<header class="site-header">
+  <div class="wrap hdr">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#bfd8ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="4" width="19" height="9.5" rx="1.6" fill="rgba(191,216,255,.14)"/>
+          <path d="M6.5 7.4h11M6.5 10.2h7"/>
+          <path d="M6 13.5v6M18 13.5v6"/>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <span class="org">사단법인 충청남도옥외광고협회 서산시지부</span>
+        <h1>현수막 지정게시대 접수 시스템</h1>
+      </div>
+    </div>
+    <div class="hdr-side">
+      <div class="hdr-auth">
+        <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
+        <div class="hdr-user hidden" id="authUser">
+          <span><b id="authName">회원</b><small id="authSub">일반업체</small></span>
+          <button class="btn-auth sm" id="btnLogout" type="button" data-logout="1">로그아웃</button>
+        </div>
+      </div>
+      <div class="chip-round">
+        <span class="dot"></span>
+        <div>
+          <b id="roundName">2026년 12월 1주차 주간 추첨</b>
+          <small id="roundDue">입고 마감 수 18:00</small>
+        </div>
+      </div>
+      <label class="switch admin-switch" title="협회 관리자 모드 전환" aria-label="관리자 모드 전환">
+        <input type="checkbox" id="adminToggle">
+        <span class="track"><span class="knob"></span></span>
+        <span class="switch-label">관리자 모드</span>
+      </label>
+    </div>
+  </div>
+  <nav class="tabs wrap site-nav" aria-label="페이지 이동">
+    <a class="tab" href="index.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="9" rx="1.5"/><path d="M7 13v6M17 13v6M7 7.5h10M7 10h6"/></svg>
+      게시대 현황
+    </a>
+    <a class="tab" href="board-schedule.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg>
+      게시현황(1·4주)
+    </a>
+    <a class="tab" href="apply.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
+      주간 추첨 접수
+    </a>
+    <a class="tab" href="apply-event.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 4.8 5.3.8-3.8 3.7.9 5.3L12 15l-4.8 2.6.9-5.3L4.3 8.6l5.3-.8Z"/></svg>
+      행사 우선접수
+    </a>
+    <a class="tab" href="remain.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      미배정 상시접수
+    </a>
+    <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      취소분 선착순
+    </a>
+    <a class="tab" href="guide-rules.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
+      규격·안내
+    </a>
+    <a class="tab" href="mypage.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      마이페이지
+    </a>
+    <a class="tab admin-tab" href="admin-draw.html" id="adminTab" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
+      협회 관리자
+    </a>
+    <a class="tab active admin-tab" href="admin-roles.html" id="masterTab" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18M4 15l2-9 6 4 6-4 2 9Z"/></svg>
+      마스터 관리
+    </a>
+  </nav>
+</header>
+
+
+<main class="wrap main">
+
+<section class="view active" id="view-admin">
+<div class="subtabs" id="adminSub">
+  <a class="subtab" href="admin-roles.html" data-adminsub="roles" data-perm="roles">🛡️ 관리자 권한</a>
+  <a class="subtab on" href="admin-members.html" data-adminsub="members" data-perm="members">👥 회원 · 가산점</a>
+  <a class="subtab" href="admin-grades.html" data-adminsub="grades" data-perm="grades">🎖️ 회원 등급관리</a>
+  <a class="subtab" href="admin-system.html" data-adminsub="system" data-perm="system">📢 공지 · 로그</a>
+</div>
+<div class="view-head">
+      <div>
+        <h2>👥 회원 · 회원사 가산점</h2>
+        <p>협회 <b>회원·회원사</b>와 <b>회원 추천 가산점(고정 N%)</b>, 제재(페널티) 현황을 관리합니다. <b>임원 직책·결재 권한·고정 가산점 설정·행사승인권한자</b>는 <a href="admin-roles.html">🛡️ 관리자 권한</a> 페이지에서 관리합니다.</p>
+      </div>
+    </div>
+<div class="role-bar" id="adminRoleBar">
+      <span class="role-badge">🔐 현재 접속 권한: <b id="adminRoleNow">마스터</b></span>
+      <span class="role-who" id="adminRoleWho"></span>
+      <span class="spacer"></span>
+      <label class="sm" for="adminRoleSel">시연용 직책 전환</label>
+      <select class="input sm" id="adminRoleSel"></select>
+      <span class="sm role-note" id="adminRoleNote"></span>
+    </div>
+<div class="panel" id="memberPendingPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+          🆕 신규 회원 승인 대기 (마스터 전용)
+        </h3>
+        <span class="sub" id="memberPendingInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>일반업체·옥외광고대행사 신규 회원가입은 <b>마스터 승인</b>을 거쳐야 로그인 및 접수가 가능합니다.</div>
+      </div>
+      <div class="table-wrap" id="memberPendingTable"></div>
+    </div>
+<div class="panel" id="assocPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V8l6-4 6 4v12"/><path d="M15 20V11h6v9"/><path d="M6.5 11h1M6.5 14h1M6.5 17h1M10 11h.5M10 14h.5"/></svg>
+          🏢 협회 등록 회원사 · 추첨 가산점
+        </h3>
+        <span class="sub" id="assocInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>회원 등급은 <b>일반광고주 · 광고대행사 · 협회회원 · 협회직원</b> 4단계로 나뉩니다. <b>가산점관리팀</b>(마스터 임명)이 <b>협회회원(회원사) 가산점</b>과 아래 <b>기한임박 현수막 가산점</b>을 함께 관리합니다.</div>
+      </div>
+      <div class="table-wrap" id="assocTable"></div>
+    </div>
+<div class="panel" id="urgentGrantPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          ⏰ 기한임박 현수막 가산점 관리 (가산점관리팀)
+        </h3>
+        <span class="sub" id="urgentGrantInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>문구에 행사일이 있고 차차주 이내에 게첨이 필요한 <b>기한임박 현수막</b>에 대해 <b>가산점관리팀</b>이 가산점(0~5%)을 부여·해제합니다.</div>
+      </div>
+      <div class="table-wrap" id="urgentGrantTable"></div>
+    </div>
+<div class="panel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M12 9v4M12 16.5v.1"/></svg>
+          제재(페널티) 현황
+        </h3>
+        <span class="sub" id="penaltyInfo"></span>
+      </div>
+      <div class="callout warn" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+        <div>당첨 후 <b>본인 사유 취소</b>, <b>미입금(입금 지연)</b>, <b>수요일 18:00 미입고 자동 취소</b>는 실제 광고주(사업자번호+연락처) 기준으로 <b>차기 1개 주 회차 접수 제한</b>이 자동 부여됩니다. <b>협회 시안 반려는 제재 대상이 아닙니다</b>(재접수 가능). 제한 중에는 주간 추첨·목요일 선착순 접수가 모두 차단됩니다.</div>
+      </div>
+      <div class="table-wrap" id="adminPenaltyTable"></div>
+    </div>
+</section>
+<button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
+</main>
+
+<footer class="footer">
+  <div class="wrap fi">
+    <div>
+      <b>사단법인 충청남도옥외광고협회 서산시지부</b><br>
+      충남 서산시 덕지천로 1, 2층 (석남동) · 대표전화 041-665-1216 · 팩스 041-665-1218<br>
+      업무시간 평일 09:00 ~ 18:00 (점심 12:00 ~ 13:00)
+    </div>
+    <div class="links">
+      <span>시연용 프로토타입 v1.5 · 주간 운영(목 선착순·금 마감) · 서산시 지정게시대 81개소</span>
+      <span>·</span>
+      <span>실제 서비스 아님</span>
+      <span>·</span>
+      <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal">
+  <div class="modal-bg" data-close></div>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div style="min-width:0">
+        <h3 id="modalTitle">제목</h3>
+        <p id="modalSub"></p>
+      </div>
+      <button class="modal-x" data-close aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<style id="printPageRule"></style>
+<script src="assets/app.js?v=20261127r66"></script>
+</body>
+</html>

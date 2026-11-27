@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>document.documentElement.setAttribute('data-device-view','pc');</script>
+<title>협회 관리자 · 테마 추천코스 · 제작업체 금지 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
+<link rel="stylesheet" href="assets/style.css?v=20261127r66">
+</head>
+<body data-page="admin-course">
+<div class="demo-banner">
+  <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
+</div>
+
+<header class="site-header">
+  <div class="wrap hdr">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#bfd8ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="4" width="19" height="9.5" rx="1.6" fill="rgba(191,216,255,.14)"/>
+          <path d="M6.5 7.4h11M6.5 10.2h7"/>
+          <path d="M6 13.5v6M18 13.5v6"/>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <span class="org">사단법인 충청남도옥외광고협회 서산시지부</span>
+        <h1>현수막 지정게시대 접수 시스템</h1>
+      </div>
+    </div>
+    <div class="hdr-side">
+      <div class="hdr-auth">
+        <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
+        <div class="hdr-user hidden" id="authUser">
+          <span><b id="authName">회원</b><small id="authSub">일반업체</small></span>
+          <button class="btn-auth sm" id="btnLogout" type="button" data-logout="1">로그아웃</button>
+        </div>
+      </div>
+      <div class="chip-round">
+        <span class="dot"></span>
+        <div>
+          <b id="roundName">2026년 12월 1주차 주간 추첨</b>
+          <small id="roundDue">입고 마감 수 18:00</small>
+        </div>
+      </div>
+      <label class="switch admin-switch" title="협회 관리자 모드 전환" aria-label="관리자 모드 전환">
+        <input type="checkbox" id="adminToggle">
+        <span class="track"><span class="knob"></span></span>
+        <span class="switch-label">관리자 모드</span>
+      </label>
+    </div>
+  </div>
+  <nav class="tabs wrap site-nav" aria-label="페이지 이동">
+    <a class="tab" href="index.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="9" rx="1.5"/><path d="M7 13v6M17 13v6M7 7.5h10M7 10h6"/></svg>
+      게시대 현황
+    </a>
+    <a class="tab" href="board-schedule.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg>
+      게시현황(1·4주)
+    </a>
+    <a class="tab" href="apply.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
+      주간 추첨 접수
+    </a>
+    <a class="tab" href="apply-event.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 4.8 5.3.8-3.8 3.7.9 5.3L12 15l-4.8 2.6.9-5.3L4.3 8.6l5.3-.8Z"/></svg>
+      행사 우선접수
+    </a>
+    <a class="tab" href="remain.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      미배정 상시접수
+    </a>
+    <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      취소분 선착순
+    </a>
+    <a class="tab" href="guide-rules.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
+      규격·안내
+    </a>
+    <a class="tab" href="mypage.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      마이페이지
+    </a>
+    <a class="tab active admin-tab" href="admin-draw.html" id="adminTab" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
+      협회 관리자
+    </a>
+    <a class="tab admin-tab hidden" href="admin-roles.html" id="masterTab" role="tab" aria-selected="false" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18M4 15l2-9 6 4 6-4 2 9Z"/></svg>
+      마스터 관리
+    </a>
+  </nav>
+</header>
+
+
+<main class="wrap main">
+
+<section class="view active" id="view-admin">
+<div class="subtabs" id="adminSub">
+  <a class="subtab" href="admin-review.html" data-adminsub="review" data-perm="review">🔍 시안 심사</a>
+  <a class="subtab" href="admin-official.html" data-adminsub="official" data-perm="official">📄 공문 접수</a>
+  <a class="subtab" href="admin-official-review.html" data-adminsub="officialreview" data-perm="officialreview">📋 특별심사</a>
+  <a class="subtab" href="admin-draw.html" data-adminsub="draw" data-perm="draw">🎯 추첨 · 접수대장</a>
+  <a class="subtab" href="admin-pay.html" data-adminsub="pay" data-perm="pay">💰 입금 확인</a>
+  <a class="subtab" href="admin-deliver.html" data-adminsub="deliver" data-perm="deliver">📦 현수막 입고</a>
+  <a class="subtab" href="admin-report.html" data-adminsub="report" data-perm="report">🏛️ 시청신고서류</a>
+  <a class="subtab" href="admin-docs.html" data-adminsub="docs" data-perm="docs">📋 작업지시서</a>
+  <a class="subtab" href="admin-loc.html" data-adminsub="loc" data-perm="loc">📍 게시위치</a>
+  <a class="subtab" href="admin-photos.html" data-adminsub="photos" data-perm="photos">📸 게첨사진</a>
+  <a class="subtab" href="admin-board.html" data-adminsub="board" data-perm="board">🛠️ 게시대 관리</a>
+  <a class="subtab on" href="admin-course.html" data-adminsub="course" data-perm="course">🗺️ 테마코스 · 금지</a>
+</div>
+<div class="view-head">
+      <div>
+        <h2>🗺️ 테마별 추천 코스 · 제작업체별 금지 게시대</h2>
+        <p>게시대를 묶은 추천 코스를 만들고, 제작업체별로 배정을 막을 게시대를 지정합니다.</p>
+      </div>
+    </div>
+<div class="role-bar" id="adminRoleBar">
+      <span class="role-badge">🔐 현재 접속 권한: <b id="adminRoleNow">마스터</b></span>
+      <span class="role-who" id="adminRoleWho"></span>
+      <span class="spacer"></span>
+      <label class="sm" for="adminRoleSel">시연용 직책 전환</label>
+      <select class="input sm" id="adminRoleSel"></select>
+      <span class="sm role-note" id="adminRoleNote"></span>
+    </div>
+<div class="panel" id="themeAdminPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v13L9 17l6 3 6-2.5v-13L15 7Z"/><path d="M9 4v13M15 7v13"/></svg>
+          🗺️ 테마별 추천 코스 관리
+        </h3>
+        <span class="sub" id="themeAdminInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>여기서 저장한 테마 코스는 <b>게시대 현황 · 3단계 게시대 선택 · 미배정 선착순</b>의 테마 필터에 <b>바로</b> 나타나고, 새로고침해도 유지됩니다. 기본 3종(학교·통학로 / 통근버스·정류소 / 산업단지 인근)도 게시대를 추가·해제할 수 있고, 새로 만든 테마는 삭제할 수 있습니다. <b>테마</b>는 광고주에게 보이는 추천 묶음일 뿐이며 <b>추첨·배정·수수료에는 영향이 없습니다</b>.</div>
+      </div>
+      <div class="table-wrap" id="themeAdminTable"></div>
+      <div class="place-add" id="themeAdd">
+        <div class="pa-head"><b>새 테마 코스 추가</b><span>테마명·코스 설명을 적고 포함할 게시대를 골라 저장하세요.</span></div>
+        <div class="field-row">
+          <div class="field"><label for="thName">테마명<span class="req">*</span></label>
+            <input class="input ko-ime" id="thName" lang="ko" placeholder="예) 대산공단 출퇴근 코스" maxlength="24"></div>
+          <div class="field"><label for="thDesc">코스 설명</label>
+            <input class="input ko-ime" id="thDesc" lang="ko" placeholder="예) 대산읍·성연면 산업단지 통근 동선" maxlength="60"></div>
+        </div>
+        <div class="field"><label>포함할 게시대 — <span id="thCount">0개소 선택</span></label>
+          <input class="input sm" id="thSearch" placeholder="게시대·읍면동 검색" style="max-width:240px;margin-bottom:8px">
+          <div class="th-picks" id="thPicks"></div></div>
+        <div class="off-actions">
+          <button class="btn primary" id="btnThemeAdd" type="button">테마 코스 저장</button>
+          <button class="btn ghost" id="btnThemeClear" type="button">선택 해제</button>
+        </div>
+      </div>
+    </div>
+<div class="panel" id="makerBlockPanel">
+      <div class="admin-head">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.5 5.5l13 13"/></svg>
+          🚫 제작업체별 금지 게시대
+        </h3>
+        <span class="sub" id="makerBlockInfo"></span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div>제작업체(<b>업체명</b> 또는 <b>옥외광고업 등록번호</b>)를 지정하고 금지할 게시대를 고르면, 그 업체가 접수한 건은 <b>3단계 선택 · 무작위 담기 · 선착순 · 추첨 배정</b>에서 그 게시대가 자동으로 빠집니다. 일반업체가 그 출력업체 등록번호로 접수한 경우도 함께 적용됩니다.</div>
+      </div>
+      <div class="place-add" id="makerBlockAdd">
+        <div class="pa-head"><b>금지 게시대 등록</b><span>업체명·등록번호 중 하나는 꼭 입력하세요.</span></div>
+        <div class="field-row">
+          <div class="field"><label for="mbMaker">제작업체명</label>
+            <input class="input ko-ime" id="mbMaker" lang="ko" placeholder="예) 재봉기획" maxlength="30"></div>
+          <div class="field"><label for="mbOade">옥외광고업 등록번호</label>
+            <input class="input" id="mbOade" placeholder="예) 제 2017-4530186-08-5-00001 호" maxlength="40"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="mbReason">사유</label>
+            <input class="input ko-ime" id="mbReason" lang="ko" placeholder="예) 업체 장비·안전상 설치 불가" maxlength="60"></div>
+          <div class="field"><label for="mbPlaces">금지할 게시대 (여러 곳 선택)</label>
+            <select class="input" id="mbPlaces" multiple size="6" style="height:auto"></select></div>
+        </div>
+        <div class="off-actions">
+          <button class="btn primary" id="btnMakerBlockAdd" type="button">금지 게시대 등록</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="makerBlockTable"></div>
+    </div>
+</section>
+<button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
+</main>
+
+<footer class="footer">
+  <div class="wrap fi">
+    <div>
+      <b>사단법인 충청남도옥외광고협회 서산시지부</b><br>
+      충남 서산시 덕지천로 1, 2층 (석남동) · 대표전화 041-665-1216 · 팩스 041-665-1218<br>
+      업무시간 평일 09:00 ~ 18:00 (점심 12:00 ~ 13:00)
+    </div>
+    <div class="links">
+      <span>시연용 프로토타입 v1.5 · 주간 운영(목 선착순·금 마감) · 서산시 지정게시대 81개소</span>
+      <span>·</span>
+      <span>실제 서비스 아님</span>
+      <span>·</span>
+      <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal">
+  <div class="modal-bg" data-close></div>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div style="min-width:0">
+        <h3 id="modalTitle">제목</h3>
+        <p id="modalSub"></p>
+      </div>
+      <button class="modal-x" data-close aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<style id="printPageRule"></style>
+<script src="assets/app.js?v=20261127r66"></script>
+</body>
+</html>

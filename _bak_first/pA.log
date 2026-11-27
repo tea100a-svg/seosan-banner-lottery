@@ -1,0 +1,305 @@
+/workspace/seosan-banner-lottery/multipage/verify_part.py:2460: SyntaxWarning: invalid escape sequence '\s'
+  return { notes: !!n, notesTxt: n ? n.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) : '',
+/workspace/seosan-banner-lottery/multipage/verify_part.py:3056: SyntaxWarning: invalid escape sequence '\s'
+  return { text: c.textContent.replace(/\s+/g, ' ').trim().slice(0, 40), title: c.getAttribute('title') || '',
+
+== 준비 ==
+  HTTP 서버: http://127.0.0.1:35795/ → /workspace/seosan-banner-lottery/multipage
+  Chromium: 159.0.8154.6
+
+== 4. 360px 모바일 뷰포트 가로 넘침 · 한 줄 게시대 행 ==
+  ✔ index.html 360px — scrollWidth 360 ≤ 360
+  ✔ apply.html 360px — scrollWidth 360 ≤ 360
+  ✔ remain.html 360px — scrollWidth 360 ≤ 360
+  ✔ first.html 360px — scrollWidth 360 ≤ 360
+  ✔ guide-rules.html 360px — scrollWidth 360 ≤ 360
+  ✔ guide-faq.html 360px — scrollWidth 360 ≤ 360
+  ✔ guide.html 360px — scrollWidth 360 ≤ 360
+  ✔ mypage.html 360px — scrollWidth 360 ≤ 360
+  ✔ mypage-detail.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-review.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-event.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-draw.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-official.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-pay.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-deliver.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-report.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-desig.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-photos.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-docs.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-board.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-course.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-roles.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-members.html 360px — scrollWidth 360 ≤ 360
+  ✔ admin-system.html 360px — scrollWidth 360 ≤ 360
+  ✔ 360px 한 줄 게시대 행 — {'h': 52, 'sw': 332, 'cw': 332, 'cols': '215.156px 57.0469px 33.7969px'}
+
+== 5. guide.html 대지·실명제 파일 다운로드 (규격·안내 마지막 페이지) ==
+  ✔ 다운로드 링크 5개 — 현수막대지.ai, 실명제.ai, 현수막대지.eps, 실명제.eps, 1.실명제 안내문.pdf
+  ✔ HTTP 200 · 현수막대지.ai — 1281044 bytes
+  ✔ HTTP 200 · 실명제.ai — 1380705 bytes
+  ✔ HTTP 200 · 현수막대지.eps — 6717614 bytes
+  ✔ HTTP 200 · 실명제.eps — 3469338 bytes
+  ✔ HTTP 200 · 1.실명제 안내문.pdf — 33776 bytes
+  ✔ 브라우저 다운로드 클릭 — 1.실명제 안내문.pdf (33776 bytes)
+  ✔ 규격 도식 기둥 제거 — .sv-posts 0개
+  ✔ 규격 도식 예시 문구 — '서산시 지정게시대 표준 현수막 시안 예시'
+  ✔ 규격 도식 표시면 배경 — radial-gradient(120% 90% at 15% 0%, rgba(255, 255, 255, 0.85
+  ✔ 규격 도식 실제 비율(7,100:900) — 7.89 : 1
+  ✔ 규격 도식 좌·표시면·우측 봉미싱·말리는 부분 비율(100 / 6,800 / 50 / 150mm) — 좌 1.41% · 표시면 95.77% · 우측 봉미싱 0.70% · 말리는 부분 2.11%
+  ✔ 규격 도식 내부 넘침 없음 — scroll 458 / 458
+  ✔ 우측 봉미싱 · 말리는 부분 별도 구간 분리 — r2=0.70% · r=2.11%
+  ✔ 규격 도식 범례 — 봉미싱 100 · 글씨 6,750 · 배경 6,850 · 우측 봉미싱 50 · 말리는 부분 150mm —                1좌측 봉미싱 100mm               2글씨 표시구간 6,750mm · 배경 6,850mm               3우측 봉미싱 50mm (5cm 이상)  
+  ✔ 규격 도식 안내 문구 — 실제 비례 — 늘여=0
+  ✔ 규격 표 순서 — 좌측 봉미싱 → 우측 봉미싱 → 말리는 부분 → 글씨 표시구간 — 총 길이 (미싱 마감 후), 좌측 봉미싱, 우측 봉미싱, 말리는 부분 (봉미싱 제외 말림 여유), 글씨 표시구간 (좌측에서), 배경 인쇄구간 (좌측에서)
+
+== 6. 첫 화면 달력 제거 · 주간 규칙 · 게첨 주 사전 접수 ==
+  ✔ 첫 화면 — 달력보기 바·주별 달력 제거 — {'panel': False, 'btn': False, 'bar': False}
+  ✔ 달력 기능은 다른 화면에 유지(추첨 접수대장) — True
+  ✔ 주간 규칙 스트립 유지 — 달력 대신 스트립·요약으로 표시
+  ✔ 첫 화면 달력 주 목록 없음 — 0주
+  ✔ apply.html 달력 주 선택(?week=) — 2026-12-07 · 📅 12.07 ~ 12.13 게첨 주 · 접수 6건 · 신청 11매 (변경: 달력보기)
+  ✔ apply.html 주 선택 달력 표시 — 5주
+  ✔ 접수 1단계 — 게첨 희망 주 선택 박스 삭제 — step1 내부=False
+  ✔ 접수 2단계 — 게첨 희망 주 확인·변경 배치
+  ✔ 2단계 — 달력 기본 접힘 · 달력보기 버튼 — {'page': 'apply', 'open': False, 'text': '📅 12.07 ~ 12.13 게첨 주 · 접수 6건 · 신청 11매 (변경: 달력보기)', 'btn': '📅 달력보기', 'visible': False}
+  ✔ 접수 1단계 — 달력보기 클릭 → 달력 펼침 — {'page': 'apply', 'open': True, 'text': '📅 12.07 ~ 12.13 게첨 주 · 접수 6건 · 신청 11매', 'btn': '📅 달력 접기', 'visible': True}
+  ✔ 달력 주 변경 → 게시 시작일 연동 — 2026-12-14 / 2026-12-14
+  ✔ 2단계 게시기간 미리보기 연동 — 게시 기간 2026-12-14 ~ 2026-12-20 (7일 · 월~일) · 철거 예정일 2026-12-21이 게첨 주의 추첨
+  ✔ 4단계 요약에 사전 접수 주차 표시 — 신청 구분일반 업체 (직접 신청)업체·단체햇살농원대표자 · 연락처김정수 · 010-3000-1000실제 광고주사전접수검증광고주 · 사업자 312-45-67120현
+  ✔ 사전 접수 저장 (start=2026-12-14) — {'start': '2026-12-14', 'week': '2026-12-14', 'round': '2026-W49', 'qty': 1}
+  ✔ 마이페이지 사전 접수 표시 — 사전 접수 섹션=True
+  ✔ 현황 달력 주간 집계에 사전 접수 반영 — 12-14 주 접수 3건
+  ✔ 사전 접수 시나리오 콘솔 오류 — 0건
+
+== 7. 광고대행사 10곳 · 대형 3곳(5건 이상) · 회원가입 샘플 등록증 ==
+  ✔ 추첨 접수대장 — 달력 기본 접힘 — {'page': 'draw', 'open': False, 'text': '📅 11.30 ~ 12.06 · 접수 91건 · 배정 0매 (변경: 달력보기)', 'btn': '📅 달력보기', 'visible': False}
+  ✔ 추첨 접수대장 — 달력보기 클릭 → 펼침 — {'page': 'draw', 'open': True, 'text': '📅 11.30 ~ 12.06 · 접수 91건 · 배정 0매', 'btn': '📅 달력 접기', 'visible': True}
+  ✔ 추첨 페이지 주차별 접수대장 — week=2026-12-07 · 6행 · 대행사 표시=True
+  ✔ 로그인 화면 대행사 10곳 + 임원 7명 프리셋 — 17곳
+  ✔ 대형 대행사 3곳 표시 — 3곳
+  ✔ 대형 대행사 3곳 이번 주 5건 이상 — {'M-1002': 6, 'M-1004': 7, 'M-1005': 5}
+  ✔ 대행사 10곳 접수 데이터 — 10곳
+  ✔ 회원가입 대행사 선택 시 등록증 칸 표시 — block
+  ✔ 샘플 등록증 제출 · 미리보기 — 첨부 완료 옥외광고업등록증_샘플_이미지.svg시연용 옥외광고업 등록증 사본 미리보기 — 가
+  ✔ 샘플 등록증으로 대행사 가입 완료 — authName='검증대행사'
+  ✔ 대행사·회원가입 콘솔 오류 — 0건
+
+== 7-1. 석지제사거리 — A·B·C 기존 3개동 · D·E 중흥아파트 담장(선호) 우선 ==
+  ✔ 석지제 A동 = 기존 3개동 설명 — 기존 석지제 게시대 · 양열로 석지제사거리 [C.A.B] 중앙
+  ✔ 석지제 D·E동 = 중흥아파트 담장(선호) — 중흥아파트 담장 (선호) · 석지제사거리 중흥S클래스 방향 좌측 / 중흥아파트 담장 (선호) · 석지제사거리 중흥S클래스 방향 우측
+  ✔ 일반 추첨 배정 순서 — D·E동 먼저 — DDDDDEEEEE
+  ✔ 공문 배정 순서 — D·E동 먼저 — DDDDDEEEEE
+  ✔ 석지제 상세 모달 — 동 안내 표시 — 담장=True · 동안내=True
+
+== 8. 관리자 공문 — 게첨 주 달력 · 특정 위치 지정 · 2주 결재 ==
+  ✔ 공문 화면 — 총괄 관리자(그 외) 차단 — mode=none · blocked=True
+  ✔ 사무실무원 — 접수 폼 전용(결재 버튼 숨김) — intake · {'intake': True, 'blocked': False, 'approveBtns': 0}
+  ✔ 공문 게첨 주 달력 표시
+  ✔ 공문 우선접수 — 달력 기본 접힘 · 주 요약 + 달력보기 — {'page': 'official', 'open': False, 'text': '📅 11.30 ~ 12.06 · 공문 1건 (변경: 달력보기)', 'btn': '📅 달력보기', 'visible': False}
+  ✔ 공문 우선접수 — 달력보기 클릭 → 달력 펼침 — {'page': 'official', 'open': True, 'text': '📅 11.30 ~ 12.06 · 공문 1건', 'btn': '📅 달력 접기', 'visible': True}
+  ✔ 공문 게첨 주 선택 → 12-07 — 2026-12-07
+  ✔ 공문 특정 위치 선택 UI — data-offslot=P01
+  ✔ 공문 2주 등록 — official 6 → 7
+  ✔ 2주 결재선 = 지부장 ∥ 감사(2인 중 1인) — ['chief', 'audit']
+  ✔ 공문 레코드 주차·기간 — week=2026-12-07 days=14
+  ✔ 공문 특정 위치(A2) 저장 — [{'pid': 'P01', 'slot': 'A2'}]
+  ✔ 공문 접수자 저장 (이름·직책) — {'by': '한은지 (사무실무원)', 'role': '사무실무원'}
+  ✔ 공문 목록에 접수자 표시 — 접수자 열=True
+  ✔ 사무국장(그 외) — 공문 화면 차단 — none · {'intake': False, 'blocked': True}
+  ✔ 지부장 — 승인 전용(접수 폼 숨김) — approve · {'intake': False, 'blocked': False, 'approveBtns': 3}
+  ✔ 지부장 결재 → 다음 감사 단계 — {'days': 14, 'exception': False, 'chain': ['chief', 'audit'], 'done': 1, 'next': 'audit', 'len': 2, 'status': 'pending', 'week': '2026-12-07', 'slots': [{'pid': 'P01', 'slot': 'A2'}], 'pids': ['P01']}
+  ✔ 감사(2인 중 1인) 결재 → 2주 승인 완료 — {'days': 14, 'exception': False, 'chain': ['chief', 'audit'], 'done': 2, 'next': '', 'len': 2, 'status': 'active', 'week': '2026-12-07', 'slots': [{'pid': 'P01', 'slot': 'A2'}], 'pids': ['P01']}
+  ✔ 특정 위치가 배정에 반영 (P01 A2) — ['A2']
+  ✔ 공문 표에 2주 범위 표시 — 기관·공문접수자현수막 문구제작업체배정 게시대수수료게시기간 · 결재상태서산시청 문화관광과서산시청 문화관광과 · 공문 · 2026-11-21 14:
+  ✔ 공문 2주가 주별 현황 2주에 반영 — 12-07 공문 1면 · 12-14 공문 1면
+  ✔ 공문 결재 시나리오 콘솔 오류 — 0건
+
+== 9. 의료원사거리 본게시대 우선 · 비선호 담장(F·G) 나중 ==
+  ✔ 공문 위치 순서 — 담장(F·G)이 본게시대(A~D) 뒤 — AAAAABBBBBCCCCCDDDDDFFGG…
+  ✔ 의료원사거리 본게시대 20면(A~D 5단) — 20면
+  ✔ 공문 위치 무관 등록 — [{'pid': 'P01', 'slot': ''}]
+  ✔ 공문 무관 배정은 본게시대 우선 — ['A3']
+  ✔ 추첨 P01 — 담장은 본게시대 20면 이후 — core 20 · wall 4 · ACBBGBGFBDACDACCFDBDADCA
+  ✔ 작업지시서 — 게시동 단위 굵은 구분선 — {'rows': 193, 'ends': 62, 'bw': '2px', 'bs': 'solid', 'label': '석림주공사거리5'}
+  ✔ 의료원 우선순위 콘솔 오류 — 0건
+
+== 10. 달력 일요일 시작 · 3단계 한 줄 보기 · 행사 우선접수(5명 중 3명) · 시한임박 가산(차차주·직책자 부여) ==
+  ✔ index.html — 첫 화면 달력 제거 — weekCal=False
+  ✔ apply.html 달력 요일 일요일 시작 — 일 월 화 수 목 금 토
+  ✔ apply.html 달력 첫 칸 = 일요일 — {'first': '1', 'expect': '1', 'isSun': True, 'cells': 7, 'last': '7'}
+  ✔ admin-draw.html 달력 요일 일요일 시작 — 일 월 화 수 목 금 토
+  ✔ admin-draw.html 달력 첫 칸 = 일요일 — {'first': '1', 'expect': '1', 'isSun': True, 'cells': 7, 'last': '7'}
+  ✔ 2단계 — 게첨 주 달력 기본 접힘 — {'page': 'apply', 'open': False, 'text': '📅 11.30 ~ 12.06 게첨 주 · 접수 91건 · 신청 126매 (변경: 달력보기)', 'btn': '📅 달력보기', 'visible': False}
+  ✔ 2단계 — 달력보기 클릭 → 게첨 주 달력 표시 — {'page': 'apply', 'open': True, 'text': '📅 11.30 ~ 12.06 게첨 주 · 접수 91건 · 신청 126매', 'btn': '📅 달력 접기', 'visible': True}
+  ✔ 행사 심사 신청란 펼침 — {'hidden': False, 'head': '🎪 행사 심사 신청 (선택) · 회원 직접 신청 — 축제·행사 홍보로 일반 추첨보다 먼저 배정받고 싶을 때 회원이 이 화면에서 직접 신청합니다. 협회 행사승인권한자 5
+  ✔ 2·3단계 — 게첨 주 한 줄 요약 유지 — False · 📅 11.30 ~ 12.06 게첨 주 · 접수 91건 · 신청 126매
+  ✔ 3단계 게시대 한 줄 보기 — step=3 · 12행 · 한 줄 초과 0
+  ✔ 3단계 1·2·3순위 선택 — 1순위 2 · 2순위 1 · 3순위 1 (클릭 2/1/1)
+  ✔ 4단계 요약에 행사 우선접수 표시 — 신청 구분일반 업체 (직접 신청)업체·단체햇살농원대표자 · 연락처김정수 · 010-3000-1000실제 광고주행사검증광고주 · 사업자 321-45-67890현수막 문구겨울 시민 걷
+  ✔ 행사 우선접수 접수 저장 — {'id': '2026-W47-A-0164', 'status': '시안심사중', 'ev': True, 'evStatus': '심사중', 'p1': 2, 'p2': 1, 'p3': 1, 'qty': 2, 'name': '2026 검증 시민 걷기축제'}
+  ✔ 접수 데이터에 1·2·3순위 유지 — {'id': '2026-W47-A-0164', 'status': '시안심사중', 'ev': True, 'evStatus': '심사중', 'p1': 2, 'p2': 1, 'p3': 1, 'qty': 2, 'name': '2026 검증 시민 걷기축제'}
+  ✔ 시안 승인 → 행사 심사 이관 — {'on': True, 'status': '심사중', 'yes': 0, 'no': 0, 'abs': 0, 'cast': 0, 'approved': False, 'appStatus': '행사심사중'}
+  ✔ 행사 심사 패널 요약 — 행사 우선접수 8건 — 심사중 2 · 승인 5 · 일반 전환 1
+  ✔ 행사 심사 패널 표·5명 투표 버튼 — 행 8 · 버튼 30
+  ✔ 행사승인권한자 5명 — 김서산, 박해미, 이부춘, 한은지, 홍대산
+  ✔ 5명 중 3명 찬성 → 행사 우선 승인 확정 — {'on': True, 'status': '승인', 'yes': 3, 'no': 0, 'abs': 0, 'cast': 3, 'approved': True, 'appStatus': '추첨대기'}
+  ✔ 승인된 행사 접수 상태 — [('해미읍성축제추진위', '심사중'), ('서산체육회', '승인'), ('부춘동부녀회', '미승인'), ('고북마늘', '승인'), ('대산항수리', '승인'), ('예천세탁소', '승인'), ('예천케이크', '승인'), ('햇살농원', '승인')]
+  ✔ 회원 직접 신청 건이 관리자 행사 심사에 표시 — {'company': '햇살농원', 'name': '2026 검증 시민 걷기축제', 'period': '2026-12-06', 'reason': '시청 협조 공문 사본 제출', 'byMember': True, 'inPanel': True}
+  ✔ 접수 1단계 — 정치행정 선택 체크박스·안내 완전 삭제 — {'chk': False, 'box': False, 'note': False, 'inStep1': False, 'inPick': False, 'eventNote': '\n              \n              공문 전용 저단게시대(32개소)는 행사 우선접수에서 선택·배정이
+  ✔ 관리자 공문 전용 데이터 — 정치행정 게시대는 내부 로직에 유지 — ['정치행정)호수공원사거리1', '정치행정)롯데마트사거리1']
+  ✔ 행사 우선접수 체크 — 입력칸 열림 + 저단게시대 불가 안내(정치행정 문구 없음) — {'evChecked': True, 'fieldsOpen': True, 'note': True, 'noteTxt': '\n              \n              공문 전용 저단게시대(32개소)는 행사 우선접수에서 선택·배정이 불가합니다 — 3단계 목록에서 제외됩니다. (김
+  ✔ 행사 우선접수 — 공문 전용 저단게시대 3단계 목록 제외 — {'lowN': 32, 'id': 'L01', 'inList': False, 'visible': 12}
+  ✔ 저단 강제 편입 데이터 준비 — {'pushed': 'L01', 'inRank': True}
+  ✔ 행사 우선접수 — 저단게시대 포함 접수 차단(로직 방어) — toast=행사 우선접수는 공문 전용 저단게시대를 사용할 수 없습니다 — 1개소를 선택에서 제외했습니다. (저)게시대는 시청 공문 접수에서만 배정됩니다. · step=3
+  ✔ 접수 페이지 — 행사 우선접수 회원 직접 신청 안내 — apply.html
+  ✔ 행사 심사 페이지 — 회원 접수 → 관리자 5인 승인 흐름 안내·신청 링크 — admin-event.html
+  ✔ 반려 3명 → 미승인 · 일반 추첨 전환(순위 유지) — {'on': True, 'status': '미승인', 'yes': 0, 'no': 3, 'abs': 0, 'cast': 3, 'approved': False, 'appStatus': '추첨대기'} / {'status': '추첨대기', 'ev': '미승인', 'p1': 2, 'p2': 1}
+  ✔ 마이페이지 행사 우선접수 표시 — 행사 우선접수=False · 행사명=False
+  ✔ 주별 현황에 행사 우선접수 집계 — 주간 접수 92건 · 행사 신청 8건
+  ✔ 승인 행사가 일반보다 먼저 배정 (12회 반복) — 행사 승 12/12
+  ✔ 미승인 행사는 일반 추첨에 모여 참여 — 행사 승 12/24 · 우선집계 0
+  ✔ 공문 우선배정 면은 추첨 전에 차감 — 공문 2면 · 공문 자리 ['3']
+  ✔ 시한임박 감지 문구 — 기본 0% · 인정 범위 차차주 — 📅 시한임박 감지 — 12월 5일 (게첨 5일 전) · 기본 가산 0% · 직책자 부여 시 최대 +5% · 인정 범위 차차주까지
+  ✔ 시한임박 인정 범위 — 차차주(20일)까지 · 21일 뒤 제외 — {'in20': {'days': 20, 'within': True, 'limitDays': 20, 'label': '차차주(2주 뒤)까지', 'date': '2026-12-20'}, 'out21': {'days': 21, 'within': False, 'limitDays': 20, 'label': '차차주(2주 뒤)까지', 'date': '2026-12-21'}}
+  ✔ 시한임박 자동 가산 0% (기본 1.00배) — {'id': '2026-W47-A-0113', 'w': 1, 'u': {'urgent': True, 'within': True, 'days': 5, 'date': '2026-12-05', 'applied': False, 'grant': None, 'grants': []
+  ✔ 시한임박 가산점 패널 — 인정 범위·부여자 표시 — 시한임박 감지 2건 · 인정 범위(차차주까지) 2건 · 가산 부여 0건 (부여자 0명 · 부여자별 몫을 최종 합산) · 현재 부여 한도 총괄 관리자 최대 5%
+  ✔ 부여 권한 한도 — 지부장 5 · 수석 3 · 현장 3 · 사무 2 · 사무국장·감사 0 — {'super': 5, 'chief': 5, 'senior': 3, 'field': 3, 'staff': 2, 'office': 0, 'audit1': 0, 'audit2': 0}
+  ✔ 시한임박 가산점 — 화면 [부여] 클릭으로 5% 부여 — {'id': '2026-W47-A-0139', 'company': '석림미용실', 'date': '2026-12-03', 'days': 3, 'within': True, 'applied': True, 'pct': 5, 'total': 5, 'grants': [{'pct
+  ✔ 지부장 — 시한임박 +5% 부여 → 가중치 1.05 — limit=5 · {'id': '2026-W47-A-0139', 'pct': 5, 'total': 5, 'grants': [{'pct': 5, 'role': 'chief', 'label': '지부장', 'name': '김서산', 'at': '2026-11-23 15:16'}], 'grant': {'pct': 5, 'role': 'chief', 'label': '지부장', 'name': '김서산', 'at': '2026-11-23 15:16', 'count': 1, 'grants': [{'pct': 5, 'role': 'chief', 'label': '지부장', 'name': '김서산', 'at': '2026-11-23 15:16'}]}, 'limit': 5} · w=1.05
+  ✔ 부여자 기록 — 직책·성명·% — {'pct': 5, 'role': 'chief', 'label': '지부장', 'name': '김서산', 'at': '2026-11-23 15:16', 'count': 1, 'grants': [{'pct': 5, 'role': 'chief', 'label': '지부장', 'name': '김서산', 'at': '2026-11-23 15:16'}]}
+  ✔ 사무실무원 — 5% 요청 거부(한도 2% 초과 차단) — limit=2 · result=None · w=1
+  ✔ 사무실무원 — 한도 내 +2% 부여 → 가중치 1.02 — w=1.02
+  ✔ 사무국장 — 가산점 부여 권한 없음 — {'limit': 0, 'can': False}
+  ✔ 시한임박 가산점 해제 — 기본 0%(1.00배) — w=1
+  ✔ 회원관리 탭 — 협회 등록 회원사 목록 — 19행 / 회원 19명
+  ✔ 접수자 본인의 직책 자동 가산 없음 (옛 직책값 무시) — {'w': 1, 'note': '가산점 없음'}
+  ✔ 협회 등록 회원사 — 기본 가산 0% — rate=0 · weight=1
+  ✔ 수석부지부장 — 회원사 +3% 부여 → 가중치 1.03 — rate=0.03 · weight=1.03
+  ✔ 회원사 가산 한도 초과(4%) 거부 — 수석 3% — None
+  ✔ 협회 등록 해제 → 가산 0% — weight=1
+  ✔ 시한임박 인정 범위 상수 — 차차주(20일) · 1.15배 잔존 없음 — days: 20
+  ✔ 부여 한도 상수 — 지부장 5 · 수석 3 · 현장 3 · 사무 2 — source
+  ✔ 직책자 본인 자동 가산 로직 제거 — ROLE_BONUS·roleBonusOfApp 잔존 없음
+  ✔ 시안 심사 화면 — 시한임박 가산점 안내·차차주 — admin-review.html
+  ✔ 규격·안내 — 가산점 규칙 미노출(삭제) — 가산점 0회
+  ✔ 부여자 4명 각자 한도 부여 → 최종 합산 +13%(가중치 1.13) — 합산=13 · 부여자 4명 · w=1.13
+  ✔ 부여자별 내역이 각각 유지 — 지부장 +5 · 수석 +3 · 현장 +3 · 사무 +2 — [('지부장', 5), ('수석부지부장', 3), ('현장실무원', 3), ('사무실무원', 2)]
+  ✔ 가중치 메모 — 부여자 전원과 합산 % 표기 — 시한임박 +5%(지부장 김서산) +3%(수석부지부장 박해미) +3%(현장실무원 최수석) +2%(사무실무원 한은지) = 합산 +13%
+  ✔ 같은 부여자 재부여 — 그 부여자 몫만 교체(합산 +13%→+11%, 항목 4개 유지) — 합산=11 · [3, 3, 3, 2]
+  ✔ 한 부여자 해제 — 나머지 부여자 % 유지(+11%→+9%) — 합산=9 · w=1.09
+  ✔ 부여자별 한도 초과 거부 — 현장실무원 4%(한도 3%) — None
+  ✔ 시한임박 패널 — 부여자별 칩 + 최종 합산 표시 — 시한임박 감지 2건 · 인정 범위(차차주까지) 2건 · 가산 부여 2건 (부여자 4명 · 부여자별 몫을 최종 합산) · 현재 부여 한도 현장실무원 최대 3%
+  ✔ 회원사 가산점 부여자별 합산 — 지부장 +5% + 사무 +2% = +7%(1.07배) — 합산=7 · w=1.07
+  ✔ 회원사 — 한 부여자 몫 해제 시 다른 부여자 % 유지 — 합산=5
+  ✔ 회원관리 패널 — 부여자별 칩 + 최종 합산 표시 — 1곳 협회 등록 · 가산점 기본 0% · 부여자 1명(부여자별 몫을 최종 합산) · 현재 부여 한도 사무실무원 최대 2%
+  ✔ 다시 열어도 부여자별 내역·합산 유지(단일 구조 잔존 없음) — {'total': 9, 'count': 3, 'array': True, 'legacy': 0}
+  ✔ 부여자별 배열·합산 로직 소스 반영 — app.js
+  ✔ 행사 우선접수 시나리오 콘솔 오류 — 0건
+  ✔ 360px 3단계 한 줄 보기 · 가로 넘침 없음 — 12행 · 초과 0 · {'sw': 360, 'cw': 360}
+  ✔ 360px 행사 심사 신청란 — overflow 0
+
+== 11. 풀가림은 목요일 선착순만 · 기타사유(관리자 사유 → 고객 팝업) ==
+  ✔ 기타사유 등록 (접수 제한 · 안내 후 선택) — {'pid': 'P01', 'codes': ['A2'], 'text': '도로공사로 12월 1일까지 접근 제한', 'mode': 'block'} / {'pid': 'P01', 'codes': ['A4'], 'text': '가로수 정비 예정 — 시야 가림 가능', 'mode': 'warn'}
+  ✔ 주간 추첨 가용 면 — 풀가림·접수제한 기타사유 제외 — 11 → 9 (2면 감소 필요)
+  ✔ 목요일 선착순 가용 면 — 풀가림 포함 — fc=10 (접수제한 1면만 제외)
+  ✔ 풀가림 단수 — 정기 접수 선택 불가 — {'k': 'cover', 'label': '풀가림 · 목요일 선착순만 선택', 'off': True, 'flag': 'cover', 'cover': True, 'rivals': 0}
+  ✔ 기타사유(접수 제한) 선택 불가 — {'k': 'other', 'label': '기타사유 · 접수 제한', 'off': True, 'flag': 'other', 'other': True, 'note': {'text': '도로공사로 12월 1일까지 접근 제한', 'mode': 'block'}, 'rivals': 1}
+  ✔ 기타사유(안내 후 선택) — 확인 후 선택 가능 — {'k': 'other', 'label': '기타사유 · 안내 후 선택', 'off': False, 'flag': 'other', 'other': True, 'note': {'text': '가로수 정비 예정 — 시야 가림 가능', 'mode': 'warn'}, 'rivals': 0}
+  ✔ 기타사유 안내 팝업 — 관리자 사유 표시 — <div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
+  ✔ 게시대 상세 — 기타사유 배지·사유 안내 — 기타사유 안내A2 A동 2단 — 도로공사로 12월 1일까지 접근 제한 접수 제한A4 A동 4단 — 가로수 정비 예정 — 시야 가림 가능 안내 후 선택안내 후 선택 자리는 사유 확인 팝업을 거쳐 선택
+  ✔ 추첨 엔진 — 풀가림·기타사유 단수 배정 제외 — 배정 110면 · 제외 위반 []
+  ✔ 3단계 — 풀가림 단수 지정 차단 — slot=''
+  ✔ 목요일 선착순 — 풀가림·기타사유 안내 팝업 — open=True · 풀가림=True · 사유=True
+  ✔ 풀가림·기타사유 시나리오 콘솔 오류 — 0건
+
+== 12. 추첨 전 취소 — 페널티 없이 자유 취소 ==
+  ✔ 마이페이지 상세 — [접수 취소 (페널티 없음)] 버튼 — '❌ 접수 취소 (페널티 없음)'
+  ✔ 추첨 전 취소 확인 팝업 — 페널티 없음 안내 — 추첨 전 접수 취소는 페널티가 부과되지 않습니다. 취소하시겠습니까?접수번호 2026-W47-A-0164 · 1매 · 해미파출소취소하면 상태가 추첨 전 취소로 바뀌
+  ✔ 추첨 전 취소 토스트 — 페널티 없음 — 접수가 취소되었습니다 (추첨 전 취소 · 페널티 없음)
+  ✔ 추첨 전 취소 → 접수취소 상태 — {'status': '접수취소', 'reject': None}
+  ✔ 추첨 전 취소 — 페널티 미부과 — 페널티 2 → 2
+  ✔ 마이페이지 — 추첨 전 취소 상태 표시 — 완료 사진은 등록일로부터 3개월(90일)간 보관 후 자동 삭제됩니다. 증빙이 필요한 경우 기간 내에 미리 다운로드하거나 인쇄해 보관해 주세요.접수증 출력시안 확대
+  ✔ 추첨 대상에서 제외 — pool 86건
+  ✔ 추첨 전 취소 콘솔 오류 — 0건
+
+== 13. 게시대 정렬 — 경쟁률 높은 순(기본) · 낮은 순 · 기본순 ==
+  ✔ 현황 정렬 버튼 3개 · 기본 경쟁률 높은 순 — [['경쟁률 높은 순', True], ['경쟁률 낮은 순', False], ['기본순', False]]
+  ✔ 현황 — 경쟁률 높은 순 정렬 — ['4.40', '2.60', '2.40', '2.33', '2.20']…
+  ✔ 현황 — 경쟁률 낮은 순 전환 — ['0.00', '0.00', '0.00', '0.00', '0.00']…
+  ✔ 현황 — 기본순 전환 — ['P01', 'P02', 'P03', 'P04', 'P05']
+  ✔ 3단계 정렬 버튼 3개 — [['경쟁률 높은 순', True], ['경쟁률 낮은 순', False], ['기본순', False]]
+  ✔ 3단계 — 기본 경쟁률 높은 순 — ['4.40', '2.60', '2.40', '2.33', '2.20']…
+  ✔ 3단계 — 경쟁률 낮은 순 전환 — ['0.00', '0.00', '0.00', '0.00', '0.00']…
+  ✔ 정렬 시나리오 콘솔 오류 — 0건
+
+== 14. 게시 지정서 일괄 출력 — 건마다 A4 1장 · 표 열/행 여유 ==
+  ✔ 게시 지정서 일괄 출력 목록 — 83행 · 83건 · 이번 회차 확정·배정 건 (건마다 A4 1장)
+  ✔ 일괄 출력 — 접수 건마다 1장 — 83장 / 83건
+  ✔ 게시 지정서 60칸(2단 30행) 표 — 30행 · 열 [38, 78, 174, 126]
+  ✔ 표 열 폭 — 순번·지역명·게시기간 여유 — [38, 78, 174, 126]
+  ✔ 표 행 높이·좌우 여백 — height=27px · padding-left=4px
+  ✔ 상단 정보 표 여백 — 10px
+  ✔ 건별 페이지 나눔(page-break) — page
+  ✔ 일괄 출력 페이지 나눔 CSS — page-break-after rule
+  ✔ 시청 신고 표지 제목 — ■ YYYY/MM/DD 현수막 접수현황 — 2026/11/23
+  ✔ 표 헤더 8열 — OK
+  ✔ 표 헤더 연두색(#92d050) — rgb(146, 208, 80)
+  ✔ 공문 행 — 인지대 0(면제) · 금액 = 매수×7,700 — [('광고랜드(공문)(공문)', 0, 15400)]
+  ✔ 공문 행 표시 · 살구색 인지대 셀 — ok
+  ✔ 요약 — 총건·총매에서 공문 제외 — {'count': 84, 'offCount': 1, 'genCount': 83, 'seats': 115, 'offSeats': 2, 'genSeats': 113}
+  ✔ 인지대 = 인지대대상매 × 3,000 — 339000 / 113매
+  ✔ 요약 박스 인지대 표기 — ₩339,000
+  ✔ 하단 연두색 합계 행 — 합계 1,224,500
+Traceback (most recent call last):
+  File "/workspace/seosan-banner-lottery/multipage/verify_part.py", line 3338, in <module>
+    code = main(sys.argv[1:])
+           ^^^^^^^^^^^^^^^^^^
+  File "/workspace/seosan-banner-lottery/multipage/verify_part.py", line 1531, in main
+    pg.click('#btnReportShow')
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/sync_api/_generated.py", line 16300, in click
+    self._sync(
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/_sync_base.py", line 124, in _sync
+    return task.result()
+           ^^^^^^^^^^^^^
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/page.py", line 1125, in click
+    return await self._main_frame.click(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/frame.py", line 587, in click
+    return await self._channel.click(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/channel_owner.py", line 387, in finish
+    raise e from None
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/channel_owner.py", line 352, in finish
+    result = await zone.run_async(lambda: awaitable)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.local/lib/python3.12/site-packages/playwright/_impl/utils/zones.py", line 58, in run_async
+    return await func()
+           ^^^^^^^^^^^^
+playwright._impl._errors.TimeoutError: Page.click: Timeout 20000ms exceeded.
+Call log:
+  - waiting for locator("#btnReportShow")
+    - locator resolved to <button type="button" id="btnReportShow" class="btn primary">미리보기</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-close="" class="modal-bg"></div> from <div id="modal" class="modal open">…</div> subtree intercepts pointer events
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-close="" class="modal-bg"></div> from <div id="modal" class="modal open">…</div> subtree intercepts pointer events
+    - retrying click action
+      - waiting 100ms
+    39 × waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <div data-close="" class="modal-bg"></div> from <div id="modal" class="modal open">…</div> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+

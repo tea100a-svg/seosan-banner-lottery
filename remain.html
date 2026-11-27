@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>document.documentElement.setAttribute('data-device-view','pc');</script>
+<title>미배정 상시접수 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
+<meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
+<link rel="stylesheet" href="assets/style.css?v=20261127r66">
+</head>
+<body data-page="remain">
+<div class="demo-banner">
+  <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
+  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
+</div>
+
+<header class="site-header">
+  <div class="wrap hdr">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#bfd8ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="4" width="19" height="9.5" rx="1.6" fill="rgba(191,216,255,.14)"/>
+          <path d="M6.5 7.4h11M6.5 10.2h7"/>
+          <path d="M6 13.5v6M18 13.5v6"/>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <span class="org">사단법인 충청남도옥외광고협회 서산시지부</span>
+        <h1>현수막 지정게시대 접수 시스템</h1>
+      </div>
+    </div>
+    <div class="hdr-side">
+      <div class="hdr-auth">
+        <button class="btn-auth amber" id="btnLogin" type="button" data-login-open="1" aria-label="로그인 또는 회원가입">로그인 / 회원가입</button>
+        <div class="hdr-user hidden" id="authUser">
+          <span><b id="authName">회원</b><small id="authSub">일반업체</small></span>
+          <button class="btn-auth sm" id="btnLogout" type="button" data-logout="1">로그아웃</button>
+        </div>
+      </div>
+      <div class="chip-round">
+        <span class="dot"></span>
+        <div>
+          <b id="roundName">2026년 12월 1주차 주간 추첨</b>
+          <small id="roundDue">입고 마감 수 18:00</small>
+        </div>
+      </div>
+      <label class="switch admin-switch" title="협회 관리자 모드 전환" aria-label="관리자 모드 전환">
+        <input type="checkbox" id="adminToggle">
+        <span class="track"><span class="knob"></span></span>
+        <span class="switch-label">관리자 모드</span>
+      </label>
+    </div>
+  </div>
+  <nav class="tabs wrap site-nav" aria-label="페이지 이동">
+    <a class="tab" href="index.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="9" rx="1.5"/><path d="M7 13v6M17 13v6M7 7.5h10M7 10h6"/></svg>
+      게시대 현황
+    </a>
+    <a class="tab" href="board-schedule.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg>
+      게시현황(1·4주)
+    </a>
+    <a class="tab" href="apply.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8.5 11h7M8.5 15h4"/></svg>
+      주간 추첨 접수
+    </a>
+    <a class="tab" href="apply-event.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 4.8 5.3.8-3.8 3.7.9 5.3L12 15l-4.8 2.6.9-5.3L4.3 8.6l5.3-.8Z"/></svg>
+      행사 우선접수
+    </a>
+    <a class="tab active" href="remain.html" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      미배정 상시접수
+    </a>
+    <a class="tab" href="first.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      취소분 선착순
+    </a>
+    <a class="tab" href="guide-rules.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5Z"/></svg>
+      규격·안내
+    </a>
+    <a class="tab" href="mypage.html" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      마이페이지
+    </a>
+    <a class="tab admin-tab" href="admin-draw.html" id="adminTab" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6Z"/><path d="M9 12l2 2 4-4"/></svg>
+      협회 관리자
+    </a>
+    <a class="tab admin-tab hidden" href="admin-roles.html" id="masterTab" role="tab" aria-selected="false" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18M4 15l2-9 6 4 6-4 2 9Z"/></svg>
+      마스터 관리
+    </a>
+  </nav>
+</header>
+
+
+<main class="wrap main">
+
+<section class="view active" id="view-first">
+
+    <div class="view-head">
+      <div>
+        <h2>⚡ 미배정 상시접수</h2>
+        <p id="firstRoundLine">추첨에서 배정되지 않은 잔여 자리를 요일·일과시간 제한 없이 상시 접수합니다.</p>
+      </div>
+      <span class="badge b-gray" id="fcBadge"><i></i>접수 시간 아님</span>
+    </div>
+
+    <ol class="stepper" id="fcStepper">
+      <li class="step active" data-step="1"><span class="num">1</span><span>광고주·내용<small>문구·시안</small></span></li>
+      <li class="step" data-step="2"><span class="num">2</span><span>창구·수량<small>주간·매수</small></span></li>
+      <li class="step" data-step="3"><span class="num">3</span><span>게시대 선택<small>1개소 1매</small></span></li>
+      <li class="step" data-step="4"><span class="num">4</span><span>확인·접수<small>수수료 안내</small></span></li>
+    </ol>
+
+    <form class="panel" id="fcForm" autocomplete="off" novalidate>
+
+      <!-- 1단계 · 실제 광고주 · 현수막 문구 · 시안 (로그인 정보 박스 없이 최상단) -->
+      <div class="step-body active" id="fcStep1">
+        <div class="callout info" id="fcWeekPickBox" style="margin-bottom:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+          <div><b>📅 게시 희망 날짜(게철 주차) 선택</b> — 먼저 어느 주의 미배정 잔여석을 접수할지 고르세요.<br>
+            <span class="sm">이번 주 진행 중 주간은 요일·시간 제한 없이 바로 접수되며, 다음 주 이후 잔여석은 사전 접수로 받습니다.</span>
+            <div class="chips" id="fcWeekPick" style="margin-top:8px"></div></div>
+        </div>
+        <div class="sect-label">현수막 시안 · 실제 광고주 · 문구 <span>시안 첨부 시 광고주·연락처·문구 자동완성</span></div>
+        <div class="field" id="fcFDesign">
+          <span class="flabel">현수막 시안 파일 첨부<span class="req">*</span></span>
+          <div class="drop" id="fcDropZone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4.5M8 8l4-4 4 4"/><path d="M4.5 15v3A1.5 1.5 0 0 0 6 19.5h12a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg>
+            <b>시안 파일을 끌어놓거나 눌러서 선택</b>
+            <span>JPG · PNG · SVG / 5MB 이하 · 첨부 시 광고주·연락처·문구 자동 추출</span>
+            <input type="file" id="fcDesign" accept="image/*">
+          </div>
+          <div id="fcFilePreview"></div>
+          <div class="err-txt">현수막 시안 파일을 첨부해 주세요. (JPG·PNG / 5MB 이하)</div>
+          <div class="hint-txt">시안 파일 첨부는 <b>필수</b>입니다 — 규격·실명제 박스를 확인하고 광고주·연락처·문구를 자동완성합니다.
+            <button class="btn sm ghost" type="button" id="btnFcDesignSample" style="margin-left:6px">시연용 샘플 시안 첨부</button><button class="btn sm ghost" type="button" id="btnFcDesignSampleName" style="margin-left:4px">✅ 실명제 있는 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnFcDesignSampleNoName" style="margin-left:4px">⚠️ 실명제 누락 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnFcDesignSampleBlack" style="margin-left:4px">⬛ 검정 바탕 시안(샘플)</button><button class="btn sm ghost" type="button" id="btnFcDesignSampleRed" style="margin-left:4px">🟥 빨간 바탕 시안(샘플)</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field" id="fcFAdv">
+            <label for="fcAdvertiser">실제 광고주명<span class="req">*</span></label>
+            <input class="input ko-ime" id="fcAdvertiser" lang="ko" maxlength="30" placeholder="예) 햇살농원 (홍보할 실제 사업자)" autocomplete="off">
+            <div class="err-txt">실제 광고주명을 입력해 주세요.</div>
+          </div>
+          <div class="field" id="fcFAdvBiz">
+            <label for="fcAdvBiz">광고주 사업자등록번호 <span class="opt">(선택)</span></label>
+            <input class="input" id="fcAdvBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" autocomplete="off">
+            <div class="err-txt">사업자등록번호는 숫자 10자리로 입력해 주세요.</div>
+          </div>
+        </div>
+        <div class="field" id="fcFAdvPhone">
+          <label for="fcAdvPhone">광고주 연락처 <span class="opt">(선택)</span></label>
+          <input class="input" id="fcAdvPhone" placeholder="010-0000-0000" inputmode="tel" maxlength="13" autocomplete="off">
+          <div class="err-txt">광고주 연락처를 정확히 입력해 주세요.</div>
+          <div class="hint-txt">사업자등록번호가 없으면 <b>광고주명 + 연락처</b>로 중복·페널티를 확인합니다. 비워두면 신청 연락처를 사용합니다.</div>
+        </div>
+        <div class="field" id="fcFText">
+          <label for="fcText">현수막 문구<span class="req">*</span></label>
+          <textarea class="input ko-ime" id="fcText" lang="ko" maxlength="40" placeholder="예) 가을 수확기 특선 사과 직판 · 30% 할인" autocomplete="off"></textarea>
+          <div class="counter"><span id="fcTextCount">0</span> / 40자</div>
+          <div class="err-txt">문구를 4자 이상 입력해 주세요.</div>
+        </div>
+        <div class="callout danger hidden" id="fcAbuseNote" role="alert"></div>
+        <div class="callout warn hidden" id="fcYouthNote" role="status"></div>
+        <div class="callout warn med-float hidden" id="fcMedicalAdNote" role="status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+          <div><b>🏥 의료광고 안내</b> — 의료광고 심의필 번호가 없는 경우 <b>게첨 중이라도 조기 철거</b>될 수 있습니다.<span class="sm" style="display:block;margin-top:4px">의료 광고는 사전 심의를 받은 뒤 심의필 번호(예: 제2026-123호)를 현수막에 표기해 주세요.</span></div>
+        </div>
+        <div id="fcLicWrapEl" class="hidden"></div>
+        <div class="callout info" id="fcAdjInfo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+          <div><b>미배정 상시접수는 인접 교차로 게시대도 함께 담을 수 있습니다.</b> — 근접 게시대 동시 접수 제한(택1)은 <b>주간 추첨 접수</b>에만 적용됩니다.</div>
+        </div>
+        <div class="divider"></div>
+        <label class="check" id="fcAgree1"><input type="checkbox" id="fcChkRule"> <span><b>[필수]</b> 지정게시대 표시 기준을 준수합니다. — 적색·흑색 배경 금지, 타인 비방·허위 내용 없음, 규격 <b>7,100×900mm(880mm 권장)</b> · <b>실명제 박스(200×125mm)</b> 표기 준수</span></label>
+        <label class="check" id="fcAgree2"><input type="checkbox" id="fcChkDup"> <span><b>[필수]</b> 같은 업소·같은 내용으로 다른 게시대에 중복 접수하지 않았습니다.<span data-skipweek> 2회 연속 게시 신청이 아님도 확인합니다.</span></span></label>
+        <div class="step-notes" id="fcNotes1">
+          <div class="callout info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+            <div>중복 접수와 페널티는 신청 업체가 아니라 <b>실제 광고주 기준</b>으로 이 단계에서 바로 확인합니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2단계 · 접수 창구 · 신청 수량 -->
+      <div class="step-body" id="fcStep2">
+        <div class="sect-label">접수 창구 선택 <span>진행 중 주간 잔여석 / 이번 회차 목요일 선착순</span></div>
+        <div class="chips" id="fcModeChips" style="margin-bottom:10px"></div>
+        <div class="toolbar" style="margin-bottom:12px">
+          <div class="chips" id="fcDayChips"></div>
+        </div>
+        <div id="fcBanner"></div>
+        <div class="field" id="fcFQty">
+          <label for="fcQty">신청 수량 (매)<span class="req">*</span></label>
+          <div class="qty-ctl">
+            <button type="button" class="qty-btn" data-fcqty-step="-1" aria-label="1매 줄이기">−</button>
+            <input class="input qty-input" id="fcQty" type="number" min="1" max="50" step="1" value="1" inputmode="numeric">
+            <span class="qty-unit">매</span>
+            <button type="button" class="qty-btn" data-fcqty-step="1" aria-label="1매 늘리기">+</button>
+            <div class="qty-presets">
+              <button type="button" data-fcqty-set="1">1매</button>
+              <button type="button" data-fcqty-set="3">3매</button>
+              <button type="button" data-fcqty-set="5">5매</button>
+              <button type="button" data-fcqty-set="10">10매</button>
+            </div>
+          </div>
+          <div class="err-txt">신청 수량은 1매 이상, 잔여 매수 이내로 입력해 주세요.</div>
+          <div class="hint-txt" id="fcQtyHint"></div>
+        </div>
+        <div class="summary" id="fcLeftInfo" style="margin-top:6px"></div>
+        <div class="step-notes" id="fcNotes2">
+          <div class="callout info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+            <div><b>🔥 진행 중 주간 잔여석</b> — 협회 일괄 게첨이 끝난 주간의 남은 면을 <b>요일·일과시간 제한 없이</b> 지금 접수합니다. 접수 후 <b>협회 검인 도장</b>을 받은 뒤 <b>광고사는 직접 설치</b>, <b>일반인은 광고사에 의뢰</b>(직접설치 금지)해야 합니다.</div>
+          </div>
+          <div class="callout info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+            <div><b>목요일 선착순</b> — 미입고 회수 면을 목요일 일과시간 <b>09:00 ~ 18:00</b>에만 접수합니다. 금요일은 현장 게첨 준비일로 접수가 제한되며, 당첨분은 <b>금요일 10:00까지 입고</b>해야 합니다 (미입고 시 자동 취소).</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3단계 · 잔여 게시대 한 줄 보기 목록에서 선택 -->
+      <div class="step-body" id="fcStep3">
+        <div class="rank-status" id="fcPickStatus"></div>
+        <div class="sect-label">선택한 게시대 <span id="fcPickInfo">0개소</span></div>
+        <div class="pick-slots" id="fcPickSlots"></div>
+        <div class="pick-filters">
+          <div class="chips" id="fcThemeChips"></div>
+        </div>
+        <div class="fc-list" id="firstList"></div>
+        <div class="step-notes" id="fcNotes3">
+          <div class="callout info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+            <div><b>한 게시대에는 1매만</b> 담을 수 있습니다. 2단계 신청 수량(<b>N매</b>)만큼 <b>서로 다른 게시대 N개소</b>를 골라 주세요. 정치행정(공문 전용 저단) 게시대는 이 화면에 나오지 않습니다.</div>
+          </div>
+          <div class="callout warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5 21 19H3Z"/><path d="M12 10v4M12 16.4v.1"/></svg>
+            <div><b>풀가림</b>(가로수·잡초 등 시야 가림) 단수는 정기 추첨 접수에서 제외되고 <b>목요일 선착순에서만</b> 안내를 확인하고 담을 수 있습니다 — [풀가림·기타 자리] 버튼으로 고릅니다. <b>인접 게시대 택1 제한</b> 구역은 한 접수에 두 곳을 함께 담을 수 없습니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4단계 · 수수료·설치 방식 확인 · 접수 제출 (안내문구는 하단) -->
+      <div class="step-body" id="fcStep4">
+        <div class="sect-label">접수 내용 확인</div>
+        <div class="summary" id="fcSummary"></div>
+        <div class="fee-box">
+          <div>
+            <span>선착순 접수 수수료 (1매 · 주간 7일 기준)</span>
+            <b id="fcFeeTotal">10,700원</b>
+            <div class="fee-lines" id="fcFeeLines"></div>
+          </div>
+          <span class="badge b-amber" style="align-self:center">즉시 확정 · 접수 후 납부</span>
+        </div>
+        <div class="hint-txt" style="margin-top:12px">수수료는 <b>1매 단가(탈부착·관리 7,000 + 부가세 700 + 시청 인지대 3,000 = 10,700원) × 신청 수량</b>입니다. 예) 3매 32,100원 · 10매 107,000원.</div>
+        <div id="fcInstallInfo" style="margin-top:12px"></div>
+        <div class="step-notes" id="fcNotes"></div>
+      </div>
+    </form>
+
+    <div class="apply-foot" id="fcFoot">
+      <button class="btn ghost" id="fcPrev" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 6l-6 6 6 6"/></svg>
+        이전
+      </button>
+      <div class="hint" id="fcStepHint">1단계 · 실제 광고주 · 현수막 문구 · 시안을 등록해 주세요.</div>
+      <div class="spacer"></div>
+      <button class="btn primary" id="fcNext" type="button">
+        다음 단계
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+</section>
+<button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
+</main>
+
+<footer class="footer">
+  <div class="wrap fi">
+    <div>
+      <b>사단법인 충청남도옥외광고협회 서산시지부</b><br>
+      충남 서산시 덕지천로 1, 2층 (석남동) · 대표전화 041-665-1216 · 팩스 041-665-1218<br>
+      업무시간 평일 09:00 ~ 18:00 (점심 12:00 ~ 13:00)
+    </div>
+    <div class="links">
+      <span>시연용 프로토타입 v1.5 · 주간 운영(목 선착순·금 마감) · 서산시 지정게시대 81개소</span>
+      <span>·</span>
+      <span>실제 서비스 아님</span>
+      <span>·</span>
+      <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal">
+  <div class="modal-bg" data-close></div>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div style="min-width:0">
+        <h3 id="modalTitle">제목</h3>
+        <p id="modalSub"></p>
+      </div>
+      <button class="modal-x" data-close aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<style id="printPageRule"></style>
+<script src="assets/app.js?v=20261127r66"></script>
+</body>
+</html>
