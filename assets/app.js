@@ -5645,22 +5645,28 @@
     var q = encodeURIComponent((p.addr || p.name || "서산시").trim());
     return { map: "https://map.kakao.com/link/search/" + q, road: "" };
   }
+  function openBoardMapPopup(url, title) {
+    if (!url) { toast("위치 정보가 아직 없습니다."); return; }
+    var w = Math.min(960, Math.max(360, (window.screen && window.screen.availWidth ? window.screen.availWidth - 80 : 960)));
+    var h = Math.min(720, Math.max(480, (window.screen && window.screen.availHeight ? window.screen.availHeight - 100 : 720)));
+    var left = Math.max(0, Math.round(((window.screen && window.screen.availWidth ? window.screen.availWidth : 1280) - w) / 2));
+    var top = Math.max(0, Math.round(((window.screen && window.screen.availHeight ? window.screen.availHeight : 800) - h) / 2));
+    var feat = "width=" + w + ",height=" + h + ",left=" + left + ",top=" + top + ",resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=yes,status=no";
+    var win = window.open(url, "sbl_map_popup", feat);
+    if (win) { try { win.focus(); } catch (_) {} }
+    else { window.open(url, "_blank", "noopener"); }
+  }
   function boardMapBtnsHTML(p) {
     var lk = boardLinksOf(p);
-    var mapBtn = lk && lk.map
-      ? '<a class="btn sm ghost" href="' + esc(lk.map) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="카카오맵(다음지도) 바로가기">🗺️ 지도보기</a>'
-      : '<button class="btn sm ghost" data-boardmap="' + esc(p.id) + '" type="button" title="지도보기">🗺️ 지도보기</button>';
-    var roadBtn = lk && lk.road
-      ? '<a class="btn sm ghost" href="' + esc(lk.road) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="카카오맵 로드뷰 바로가기">📷 로드뷰보기</a>'
-      : '<button class="btn sm ghost" data-boardroad="' + esc(p.id) + '" type="button" title="로드뷰보기">📷 로드뷰보기</button>';
+    var mapBtn = '<button class="btn sm ghost" data-boardmap="' + esc(p.id) + '" type="button" title="카카오맵(다음지도) 팝업으로 보기">🗺️ 지도보기</button>';
+    var roadBtn = '<button class="btn sm ghost" data-boardroad="' + esc(p.id) + '" type="button" title="카카오맵 로드뷰 팝업으로 보기"' + (lk && lk.road ? '' : ' disabled') + '>📷 로드뷰보기</button>';
     return mapBtn + roadBtn;
   }
   function showBoardFeatureSoon(pid, kind) {
     var p = boardById(pid);
     var lk = boardLinksOf(p);
     var url = lk ? (kind === "road" ? (lk.road || lk.map) : lk.map) : "";
-    if (url) { window.open(url, "_blank", "noopener"); return; }
-    toast("위치 정보가 아직 없습니다.");
+    openBoardMapPopup(url, (p ? p.name : "게시대") + (kind === "road" ? " 로드뷰" : " 지도"));
   }
   function placementRow(p, opts) {
     opts = opts || {};
