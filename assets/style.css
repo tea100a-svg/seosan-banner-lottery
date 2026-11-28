@@ -2436,3 +2436,29 @@ details.special-fold > .sf-body{padding:16px 20px 20px}
 
 
 
+
+/* ── 게시대현황 전체 지도 (Leaflet) — 김재봉 님 2026-11-28 ─────────────────── */
+.map-panel{margin:4px 0 14px}
+.map-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}
+.map-bar-hint{color:var(--muted);margin:0}
+.map-box{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.map-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.map-top .chips{display:flex;gap:6px;flex-wrap:wrap;margin:0}
+.status-map{height:520px;width:100%;border-radius:10px;border:1px solid #e2e8f0;background:#eef2f7;z-index:0}
+.map-legend{margin:8px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.map-legend .mleg{display:inline-block;padding:1px 8px;border-radius:999px;color:#fff;font-size:11.5px}
+.map-legend .mleg-normal{background:#2563eb}
+.map-legend .mleg-official{background:#16a34a}
+.map-legend .mleg-political{background:#7c3aed}
+.sbl-pin-wrap{background:none;border:none}
+.sbl-pin{position:relative;display:block;filter:drop-shadow(0 2px 3px rgba(15,23,42,.35))}
+.sbl-pin-l{position:absolute;top:-2px;left:0;width:24px;text-align:center;font-size:10.5px;font-weight:800;color:#0f172a;line-height:14px}
+.leaflet-popup-content{margin:10px 12px}
+.map-pop{font-size:13px;line-height:1.45}
+.map-pop-name{font-weight:800;color:var(--navy);font-size:14px;margin-bottom:2px}
+.map-pop-meta{color:#475569;font-size:12px}
+.map-pop-badge{display:inline-block;margin-left:4px;padding:0 7px;border-radius:999px;background:var(--pin,#2563eb);color:#fff;font-size:11px;font-weight:700}
+.map-pop-cnt{margin:6px 0 8px;font-size:12.5px;color:#334155}
+.map-pop-btns{display:flex;gap:6px;flex-wrap:wrap}
+.map-pop-btns .btn{font-size:12px;padding:4px 9px}
+.dong-pop-list + .split-map-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}

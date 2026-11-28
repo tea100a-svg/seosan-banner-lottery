@@ -6,7 +6,7 @@
 <script>document.documentElement.setAttribute('data-device-view','pc');</script>
 <title>게시대 현황 | 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
 <meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨·접수·게시 통합관리 시스템">
-<link rel="stylesheet" href="assets/style.css?v=20261128r79">
+<link rel="stylesheet" href="assets/style.css?v=20261128r80">
 </head>
 <body data-page="status">
 <header class="site-header">
@@ -130,6 +130,20 @@
         </div>
       </div>
     </div>
+    <div class="map-panel" id="statusMapPanel">
+      <div class="map-bar">
+        <button class="btn ghost sm" id="btnStatusMap" type="button" aria-expanded="false" aria-controls="statusMapBox">🗺️ 전체 지도 보기</button>
+        <span class="sm map-bar-hint" id="statusMapHint">서산시 지정게시대 113개소(분리 게시대 A·B동 포함 120개 위치)를 지도에서 한눈에 봅니다</span>
+      </div>
+      <div class="map-box" id="statusMapBox" hidden>
+        <div class="map-top">
+          <div class="chips" id="statusMapChips" aria-label="지도 게시대 구분"></div>
+          <span class="sm" id="statusMapCount"></span>
+        </div>
+        <div class="status-map" id="statusMapCanvas" role="application" aria-label="서산시 지정게시대 전체 지도"></div>
+        <div class="hint-txt map-legend">📍 핀 색 — <b class="mleg mleg-normal">일반</b> <b class="mleg mleg-official">공문전용</b> <b class="mleg mleg-political">정치행정</b> · 핀을 누르면 게시대명·이번 주 신청 현황과 [🗺️ 카카오맵][📷 로드뷰][상세][접수] 버튼이 뜹니다. 검색어·읍면동 필터가 지도에도 함께 적용됩니다.</div>
+      </div>
+    </div>
     <div class="kind-sections" id="statusKindSections">
       <section class="kind-sec" data-kind="normal">
         <button class="kind-sec-head" id="btnKind-normal" data-ksec="normal" type="button" aria-expanded="false" aria-controls="kindBody-normal">
@@ -232,6 +246,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261128r79"></script>
+<script src="assets/app.js?v=20261128r80"></script>
 </body>
 </html>
