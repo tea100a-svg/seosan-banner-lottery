@@ -6328,8 +6328,11 @@
     return out;
   }
   var SORT_OPTS = [{ k: 'comp-desc', t: '경쟁률 높은 순' }, { k: 'comp-asc', t: '경쟁률 낮은 순' }, { k: 'default', t: '기본순' }];
-  function sortChipsHTML(cur, attr) {
-    return SORT_OPTS.map(function (o) {
+  function sortChipsHTML(cur, attr, defaultFirst) {
+    var opts = defaultFirst
+      ? SORT_OPTS.filter(function (o) { return o.k === 'default'; }).concat(SORT_OPTS.filter(function (o) { return o.k !== 'default'; }))
+      : SORT_OPTS;
+    return opts.map(function (o) {
       return '<button class="chip' + (o.k === cur ? ' active' : '') + '" data-' + attr + '="' + o.k + '" type="button">' + o.t + '</button>';
     }).join('');
   }
@@ -6584,7 +6587,7 @@
     var reqPlacesN = Object.keys(reqPlacesMap).length;
     if ($('#statusReqInfo')) $('#statusReqInfo').innerHTML = '<b>' + weekRangeTxt(wk) + '</b> 게첨 주 — 접수 <b>' + appsR.length + '건</b> · 접수수량 <b>' + qtyR + '매 / ' + reqPlacesN + '개소</b> · 배정 <b>' + ws.awarded + '매</b> · 잔여 <b>' + ws.left + '면</b>. 카드의 <b>N/M건 접수중</b>은 그 게시대를 1·2·3순위로 신청한 건수입니다.';
 
-    if ($('#statusSortChips')) $('#statusSortChips').innerHTML = sortChipsHTML(ui.sort, 'sort');
+    if ($('#statusSortChips')) $('#statusSortChips').innerHTML = sortChipsHTML(ui.sort, 'sort', true);   /* 기본순을 맨 왼쪽으로 (2026-11-28 지시) */
     /* 게시대 구분 — 일반 81 / 🏛️ 공문전용 30 / ⚖️ 정치행정 2 3개 접기/펼치기 섹션 (칩 없음) */
     KIND_SECS.forEach(function (s) {
       var ce = $('#kindCount-' + s.k);
