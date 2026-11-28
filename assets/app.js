@@ -4227,6 +4227,31 @@
     });
     return n;
   }
+  /* 단수 선택 팝업용 — 배정된 자리의 현수막 문구를 간략하게 (기관·업체명 빼고 광고문구만)
+     김재봉 님 2026-11-28 지시: "동선택하고 단선택하러 가면 이번 회차 확정 하지 말고 공문내용 표시해줘 간략하게 광고문구만" */
+  function briefCopyOf(t, max) {
+    var s = String(t == null ? '' : t).replace(/\s+/g, ' ').trim();
+    if (!s) return '';
+    max = Number(max) || 22;
+    if (s.length <= max) return s;
+    var cut = s.slice(0, max);
+    var sep = Math.max(cut.lastIndexOf(' · '), cut.lastIndexOf('·'), cut.lastIndexOf(','), cut.lastIndexOf(' '));
+    if (sep >= Math.floor(max * 0.6)) cut = cut.slice(0, sep);
+    cut = cut.replace(/[\s·,]+$/, '');
+    return (cut || s.slice(0, max)) + '…';
+  }
+  function slotAssignedCopy(it) {
+    if (!it) return '';
+    if (it.kind === 'official' && it.official) return briefCopyOf(it.official.text);
+    if (it.kind === 'app' && it.app) return briefCopyOf(it.app.text);
+    return '';
+  }
+  function slotAssignedName(it) {
+    if (!it) return '';
+    if (it.kind === 'official' && it.official) return String(it.official.org || '공문');
+    if (it.kind === 'app' && it.app) return String(it.app.company || '');
+    return '';
+  }
   function slotStateMap(p, week, prePlan) {
     var map = {};
     if (!p) return map;
@@ -4253,8 +4278,10 @@
           off: oBlocked, flag: flag, other: true, note: note, rivals: rivalCount(p.id, s.code, wk) };
         return;
       }
-      if (it && it.kind === 'official') { map[s.code] = { k: 'official', label: '공문 우선배정', off: true, item: it }; return; }
-      if (it && it.kind === 'app') { map[s.code] = { k: 'confirmed', label: '이번 회차 확정', off: true, item: it }; return; }
+      if (it && it.kind === 'official') { map[s.code] = { k: 'official', label: '공문 우선배정', off: true, item: it,
+        copy: slotAssignedCopy(it), who: slotAssignedName(it) }; return; }
+      if (it && it.kind === 'app') { map[s.code] = { k: 'confirmed', label: '이번 회차 확정', off: true, item: it,
+        copy: slotAssignedCopy(it), who: slotAssignedName(it) }; return; }
       if (usable > 0) { usable -= 1; map[s.code] = { k: 'free', label: '빈 칸 (가능)', off: false, rivals: rivalCount(p.id, s.code, wk) }; return; }
       map[s.code] = { k: 'inuse', label: '현재 게시 중', off: false, rivals: rivalCount(p.id, s.code, wk) };
     });
@@ -4494,10 +4521,17 @@
       var isCover = (st.k === 'cover');
       var disabled = st.off || isCover;
       var isOn = (cur === s.code);
-      var meta = isOn ? '✓ 선택됨' : (isCover ? '풀가림 (목요일 선착순 전용)' : (st.off ? (st.label || '선택 불가') : (st.rivals ? '경합 ' + st.rivals + '건 · 선택 가능' : '선택 가능')));
+      /* 공문 배정·이번 회차 확정된 단 — "이번 회차 확정" 대신 현수막 광고문구만 간략히 보여 준다 */
+      var isAssigned = (st.k === 'official' || st.k === 'confirmed');
+      var meta = isOn ? '✓ 선택됨' : (isCover ? '풀가림 (목요일 선착순 전용)' : (isAssigned ? '배정 완료' : (st.off ? (st.label || '선택 불가') : (st.rivals ? '경합 ' + st.rivals + '건 · 선택 가능' : '선택 가능'))));
       var subTxt = st.label || (st.k === 'free' ? '빈 칸 · 자동/지정 가능' : '');
-      var cls = 'tier-pop-btn' + (isOn ? ' on' : '') + (disabled ? ' off' : '') + (!disabled && st.rivals ? ' rival' : '');
-      return '<button type="button" class="' + cls + '" data-tierpick="' + esc(s.code) + '"' + (disabled ? ' disabled' : '') + '>' +
+      var fullTxt = subTxt;
+      if (isAssigned) {
+        subTxt = st.copy || (st.k === 'official' ? '공문 배정' : '확정 배정');
+        fullTxt = (st.who ? st.who + ' — ' : '') + ((st.item && ((st.k === 'official' && st.item.official && st.item.official.text) || (st.k === 'confirmed' && st.item.app && st.item.app.text))) || subTxt);
+      }
+      var cls = 'tier-pop-btn' + (isOn ? ' on' : '') + (disabled ? ' off' : '') + (isAssigned ? ' assigned' : '') + (!disabled && st.rivals ? ' rival' : '');
+      return '<button type="button" class="' + cls + '" data-tierpick="' + esc(s.code) + '" title="' + esc(fullTxt) + '"' + (disabled ? ' disabled' : '') + '>' +
         '<span class="tier-pop-main">' +
           '<span class="tier-pop-title">' + s.row + '단 <span style="font-size:12px;color:var(--muted);font-weight:700">(' + esc(s.code) + ')</span></span>' +
           '<span class="tier-pop-sub">' + esc(subTxt) + '</span>' +

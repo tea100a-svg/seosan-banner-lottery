@@ -2215,6 +2215,9 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .dong-pop-meta,.tier-pop-meta{font-size:12px;font-weight:800;color:var(--blue-d);white-space:nowrap;text-align:right}
 .tier-pop-btn.off .tier-pop-meta{color:#b03a3a}
 .tier-pop-btn.rival .tier-pop-meta{color:#9a5b00}
+.tier-pop-btn.assigned{background:#f6f8fb}
+.tier-pop-btn.assigned .tier-pop-sub{color:#334155;font-weight:700}
+.tier-pop-btn.assigned .tier-pop-meta{color:#475569}
 .tier-pop-btn.on .tier-pop-meta{color:var(--purple)}
 
 /* 하단 기획·제작자 이름 마우스 오버랩 플로팅 소개 (2026-11-25) */
