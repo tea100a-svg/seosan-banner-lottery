@@ -6557,9 +6557,11 @@
               }
             }
           }
-          rows1.push('<tr>' +
+          /* 김재봉 님 2026-11-28 지시: 같은 게시대 이름은 흐리게 하지 않고 똑같이 선명하게,
+             같은 게시대 안의 동 사이는 흐린 줄(place-start 아님) · 게시대가 바뀌는 첫 행은 굵은 줄(place-start) */
+          rows1.push('<tr class="' + (gi === 0 ? 'place-start' : 'same-place') + '">' +
             '<td class="xl-c-day">' + esc(b.day) + '</td>' +
-            '<td class="xl-c-name">' + (gi === 0 ? (esc(b.name) + boardKindBadgeHTML(b)) : ('<span style="color:#94a3b8">' + esc(b.name) + '</span>')) + '</td>' +
+            '<td class="xl-c-name">' + esc(b.name) + (gi === 0 ? boardKindBadgeHTML(b) : '') + '</td>' +
             '<td class="xl-c-dong">' + esc(col) + '</td>' +
             tds + '</tr>');
         });
@@ -6584,7 +6586,7 @@
           if (!groups[col]) { groups[col] = []; order.push(col); }
           groups[col].push(s);
         });
-        order.forEach(function (col) {
+        order.forEach(function (col, gi) {
           var slist = groups[col];
           var trs = '';
           slist.forEach(function (sl) {
@@ -6615,9 +6617,9 @@
               '</tr>';
             });
           });
-          blocks.push('<div class="xl-block">' +
+          blocks.push('<div class="xl-block ' + (gi === 0 ? 'place-start' : 'same-place') + '">' +
             '<div class="xl-block-head">' +
-              '<span>' + esc(b.name) + (col && col !== '—' ? ' · ' + esc(col) + '동' : '') + ' (' + slist.length + '단)' + boardKindBadgeHTML(b) + '</span>' +
+              '<span>' + (gi === 0 ? '' : '<b style="opacity:.65;margin-right:5px">↳</b>') + esc(b.name) + (col && col !== '—' ? ' · ' + esc(col) + '동' : '') + ' (' + slist.length + '단)' + boardKindBadgeHTML(b) + '</span>' +
               '<small>' + esc(b.day) + '요일 코스 · ' + esc(b.dong) + '</small>' +
             '</div>' +
             '<table class="xl-4w-tbl">' +

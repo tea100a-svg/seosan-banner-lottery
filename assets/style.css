@@ -2315,9 +2315,15 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .xl-tbl td.xl-slot.special{background:#eef2ff}
 .xl-tbl td.xl-slot.special .xl-txt{color:#3730a3}
 .xl-tbl td.xl-slot.na{background:#f1f5f9;color:#cbd5e1;text-align:center}
+/* ── 김재봉 님 2026-11-28 지시 ── 게시현황(1주·4주) 같은 게시대는 흐린 줄, 다른 게시대로 바뀌는 곳은 굵은 줄 */
+.xl-tbl tbody tr.same-place > td{border-top:1px solid #e8edf3;border-bottom:1px solid #e8edf3}
+.xl-tbl tbody tr.place-start > td{border-top:2px solid #334155;border-bottom:1px solid #e8edf3}
 .xl-4w-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 @media (max-width:1024px){.xl-4w-grid{grid-template-columns:1fr}}
-.xl-block{border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;background:#fff}
+.xl-block{border:1px solid #e8edf3;border-radius:10px;overflow:hidden;background:#fff}
+.xl-block.place-start{border:2px solid #334155;box-shadow:0 1px 4px rgba(15,23,42,.12)}
+.xl-block.same-place .xl-block-head{background:#475569}
+.xl-block.same-place .xl-block-head small{color:#e2e8f0}
 .xl-block-head{background:#1e3a5f;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:800}
 .xl-block-head small{font-weight:600;color:#cbd5e1;font-size:11.5px}
 .xl-4w-tbl{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
