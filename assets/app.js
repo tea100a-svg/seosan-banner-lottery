@@ -4105,18 +4105,23 @@
      · 김재봉 님 21:40 지시: **고장은 완전 차단**, **풀가림은 확인 팝업을 거쳐 선택 접수 가능**
        — 풀가림 칸을 고르면 '풀가림 안내' 팝업에서 [확인하고 선택]을 눌러야 지정됩니다.
        위치 무관 신청은 정상 단수를 먼저 배정하고, 풀가림 칸은 정상 칸이 다 찬 뒤에만 씁니다. */
-  var SLOT_FLAG_LABEL = { fault: '고장', cover: '풀가림', uninstall: '설치불가', other: '기타사유', aged: '노후화 사용금지' };
+  /* 김재봉 님 2026-11-28 지시: '노후화 사용금지' 상태를 없앴다 — 단수 상태는 정상 → 고장 → 풀가림 → 설치불가 → 기타사유만 쓴다.
+     예전 데이터에 aged 로 남은 칸은 '설치불가'로 읽어 접수 차단을 그대로 유지한다(호환). */
+  var SLOT_FLAG_LABEL = { fault: '고장', cover: '풀가림', uninstall: '설치불가', other: '기타사유' };
+  var SLOT_FLAG_ORDER = ['fault', 'cover', 'uninstall', 'other'];
+  function slotFlagNorm(f) { return f === 'aged' ? 'uninstall' : f; }
   function slotFlagOf(p, code) {
     if (!p || !p.slotFlags || !code) return '';
-    var f = p.slotFlags[String(code)];
-    return (f === 'fault' || f === 'cover' || f === 'uninstall' || f === 'other' || f === 'aged') ? f : '';
+    var f = slotFlagNorm(p.slotFlags[String(code)]);
+    return SLOT_FLAG_ORDER.indexOf(f) >= 0 ? f : '';
   }
   function slotFlagCount(p, kind) {
     if (!p || !p.slotFlags) return 0;
-    var f = p.slotFlags, n = 0;
-    Object.keys(f).forEach(function (c) {
-      if ((f[c] !== 'fault' && f[c] !== 'cover' && f[c] !== 'uninstall' && f[c] !== 'other' && f[c] !== 'aged') || !slotValid(p, c)) return;
-      if (!kind || f[c] === kind) n += 1;
+    var n = 0;
+    slotCodeListOf(p).forEach(function (c) {
+      var f = slotFlagOf(p, c);
+      if (!f) return;
+      if (!kind || f === kind) n += 1;
     });
     return n;
   }
@@ -4135,6 +4140,28 @@
   function slotOtherOf(p, code) {
     return slotFlagOf(p, code) === 'other' ? (slotNoteOf(p, code) || { text: '관리자 안내 사유', mode: 'block' }) : null;
   }
+  /* 단수 상태(고장·풀가림·설치불가·기타사유)별 사유 — slotNotes 에 상태(flag)를 함께 적어 둔다 */
+  function slotReasonTextOf(p, code, flag) {
+    if (!p || !p.slotNotes) return '';
+    var f = slotFlagNorm(flag);
+    if (!f || slotFlagOf(p, code) !== f) return '';
+    var n = p.slotNotes[String(code)];
+    if (!n || (n.flag || 'other') !== f) return '';
+    return String(n.text || '').trim();
+  }
+  function slotReasonOf(p, code) { return slotReasonTextOf(p, code, slotFlagOf(p, code)); }
+  function slotReasonList(p) {
+    var out = [];
+    if (!p) return out;
+    slotCodeListOf(p).forEach(function (c) {
+      var f = slotFlagOf(p, c);
+      if (!f) return;
+      var tx = slotReasonTextOf(p, c, f);
+      if (!tx) return;
+      out.push({ code: c, name: slotName(p, c), flag: f, label: SLOT_FLAG_LABEL[f] || f, text: tx });
+    });
+    return out;
+  }
   function slotOtherBlocked(p, code) { var o = slotOtherOf(p, code); return !!o && o.mode !== 'warn'; }
   function slotNoteList(p) {
     var out = [];
@@ -4149,11 +4176,11 @@
   /* 고장·설치불가·'접수 제한' 기타사유 = 완전 차단 / 풀가림·'안내 후 선택' 기타사유 = 확인 후 선택 */
   function slotIsBlocked(p, code) {
     var f = slotFlagOf(p, code);
-    return f === 'fault' || f === 'uninstall' || f === 'aged' || slotOtherBlocked(p, code);
+    return f === 'fault' || f === 'uninstall' || slotOtherBlocked(p, code);
   }
-  function slotDownCount(p) { return slotFlagCount(p, 'fault') + slotFlagCount(p, 'cover') + slotFlagCount(p, 'uninstall') + slotOtherCount(p) + slotFlagCount(p, 'aged'); }
+  function slotDownCount(p) { return slotFlagCount(p, 'fault') + slotFlagCount(p, 'cover') + slotFlagCount(p, 'uninstall') + slotOtherCount(p); }
   function slotFaultCount(p) { return slotFlagCount(p, 'fault'); }
-  function slotBlockCount(p) { return slotFlagCount(p, 'fault') + slotFlagCount(p, 'uninstall') + slotFlagCount(p, 'aged') + slotNoteList(p).filter(function (x) { return x.mode !== 'warn'; }).length; }
+  function slotBlockCount(p) { return slotFlagCount(p, 'fault') + slotFlagCount(p, 'uninstall') + slotNoteList(p).filter(function (x) { return x.mode !== 'warn'; }).length; }
   /* 모든 단수가 고장·설치불가이면 신청 불가 — 풀가림만 남은 게시대는 (확인 후) 신청할 수 있습니다 */
   function slotAllDown(p) { var t = slotCodeListOf(p).length; return t > 0 && slotBlockCount(p) >= t; }
   /* 차단(고장·설치불가)만 빼고 남은 칸이 모두 풀가림인가 */
@@ -4165,12 +4192,11 @@
   function placeBlocked(p) { return !p || !!p.broken || slotAllDown(p); }
   function slotFlagSummary(p) {
     var f = slotFlagCount(p, 'fault'), c = slotFlagCount(p, 'cover'), u = slotFlagCount(p, 'uninstall');
-    var o = slotOtherCount(p), ag = slotFlagCount(p, 'aged');
+    var o = slotOtherCount(p);
     var out = [];
     if (f) out.push('고장 ' + f + '면');
     if (u) out.push('설치불가 ' + u + '면');
     if (c) out.push('풀가림 ' + c + '면');
-    if (ag) out.push('노후화 사용금지 ' + ag + '면');
     if (o) out.push('기타사유 ' + o + '면');
     return out.join(' · ');
   }
@@ -4182,7 +4208,8 @@
     var wholeBroken = !!p.broken;
     codes.forEach(function (c) {
       if (!slotValid(p, c)) return;
-      if (flag) p.slotFlags[c] = flag; else delete p.slotFlags[c];
+      if (flag) p.slotFlags[c] = flag;
+      else { delete p.slotFlags[c]; if (p.slotNotes) delete p.slotNotes[c]; }
     });
     /* 전체 고장(수리중) 게시대에서 일부 층·단수를 정상으로 풀면
        → 전체 고장 잠금을 자동 해제하고, 나머지 칸은 고장으로 남겨 해제한 칸만 접수·추첨·선착순에 씁니다. */
@@ -4205,7 +4232,7 @@
     return p;
   }
   function setSlotFlag(pid, code, flag) {
-    return setSlotFlags(pid, [String(code)], ({ fault: 1, cover: 1, uninstall: 1, aged: 1 })[flag] ? flag : '');
+    return setSlotFlags(pid, [String(code)], ({ fault: 1, cover: 1, uninstall: 1 })[slotFlagNorm(flag)] ? slotFlagNorm(flag) : '');
   }
   /* 'A*' = A동 전체(그 동의 빈 칸 중 아무 자리) */
   function slotBoardAll(code) { return /^[A-G]\*$/.test(String(code || '')); }
@@ -4368,13 +4395,13 @@
       var it = plan.post[s.code];
       if (p.broken) { map[s.code] = { k: 'broken', label: '고장·수리중', off: true }; return; }
       var flag = slotFlagOf(p, s.code);
-      if (flag === 'fault' || flag === 'uninstall' || flag === 'aged') {
-        map[s.code] = { k: flag, label: SLOT_FLAG_LABEL[flag] + ' (선택 불가)', off: true, flag: flag };
+      if (flag === 'fault' || flag === 'uninstall') {
+        map[s.code] = { k: flag, label: SLOT_FLAG_LABEL[flag] + ' (선택 불가)' + (slotReasonOf(p, s.code) ? ' · ' + slotReasonOf(p, s.code) : ''), off: true, flag: flag, reason: slotReasonOf(p, s.code) };
         return;
       }
       if (flag === 'cover') {
         /* 풀가림 — 정기 추첨 접수에서는 선택할 수 없다 (목요일 잔여석 선착순으로만 접수) */
-        map[s.code] = { k: 'cover', label: '풀가림 · 목요일 선착순만 선택', off: true, flag: flag, cover: true, rivals: rivalCount(p.id, s.code, wk) };
+        map[s.code] = { k: 'cover', label: '풀가림 · 목요일 선착순만 선택' + (slotReasonOf(p, s.code) ? ' · ' + slotReasonOf(p, s.code) : ''), off: true, flag: flag, cover: true, reason: slotReasonOf(p, s.code), rivals: rivalCount(p.id, s.code, wk) };
         return;
       }
       if (flag === 'other') {
@@ -4460,12 +4487,14 @@
         else if (st.k === 'inuse') who = '게시중';
         else if (st.k === 'broken') who = '수리중';
         else who = '확정';
-        /* 관리자 모드에서는 칸을 눌러 정상 → 고장 → 풀가림으로 바꾼다 */
+        /* 관리자 모드에서는 칸을 눌러 정상 → 고장 → 풀가림 → 설치불가 → 기타사유로 바꾼다 (사유 입력 팝업) */
         var cellAttr = admin ? ' data-slotflag="' + esc(s.code) + '" data-slotpid="' + p.id + '" role="button" tabindex="0"' : '';
+        var cellReason = slotReasonOf(p, s.code);
         var cellTitle = s.code + ' · ' + slotName(p, s.code) + ' · ' + st.label + (st.rivals ? ' · 지정 경합 ' + st.rivals + '건' : '') +
-          (admin ? ' (눌러서 정상 → 고장 → 풀가림 → 설치불가 → 노후화 → 기타사유)' : '');
-        body += '<span class="sm-c ' + st.k + (admin ? ' clickable' : '') + '"' + cellAttr + ' title="' + esc(cellTitle) + '">' +
-          '<b>' + esc(s.code) + '</b><em>' + esc(who) + '</em></span>';
+          (cellReason ? ' · 사유: ' + cellReason : '') +
+          (admin ? ' (눌러서 정상 → 고장 → 풀가림 → 설치불가 → 기타사유, 상태마다 사유 입력 팝업)' : '');
+        body += '<span class="sm-c ' + st.k + (admin ? ' clickable' : '') + (cellReason ? ' has-reason' : '') + '"' + cellAttr + ' title="' + esc(cellTitle) + '">' +
+          '<b>' + esc(s.code) + '</b><em>' + esc(who) + (cellReason ? ' ✎' : '') + '</em></span>';
       }
       body += '</div>';
     });
@@ -4479,8 +4508,7 @@
         return '<span class="sf-grp"><i>' + esc(label) + '</i>' +
           '<button type="button" class="sf-btn fault" data-sfbatch="' + target + '" data-sfbatchpid="' + p.id + '" data-sfflag="fault" title="' + esc(label) + ' 전체 고장">고장</button>' +
           '<button type="button" class="sf-btn cover" data-sfbatch="' + target + '" data-sfbatchpid="' + p.id + '" data-sfflag="cover" title="' + esc(label) + ' 전체 풀가림">풀가림</button>' +
-          '<button type="button" class="sf-btn uninstall" data-sfbatch="' + target + '" data-sfbatchpid="' + p.id + '" data-sfflag="uninstall" title="' + esc(label) + ' 전체 설치불가">설치불가</button>' +
-          '<button type="button" class="sf-btn aged" data-sfbatch="' + target + '" data-sfbatchpid="' + p.id + '" data-sfflag="aged" title="' + esc(label) + ' 전체 노후화 사용금지">노후화</button>' +
+          '<button type="button" class="sf-btn uninstall" data-sfbatch="' + target + '" data-sfbatchpid="' + p.id + '" data-sfflag="uninstall" title="' + esc(label) + ' 전체 설치불가 (사유 입력)">설치불가</button>' +
           '<button type="button" class="sf-btn other" data-sfother="' + target + '" data-sfotherpid="' + p.id + '" title="' + esc(label) + ' 기타사유 등록">기타사유</button>' +
           '<button type="button" class="sf-btn" data-sfbatch="' + target + '" data-sfbatchpid="' + p.id + '" data-sfflag="" title="' + esc(label) + ' 전체 정상 복구">해제</button></span>';
       }
@@ -4489,7 +4517,7 @@
       var bs = '';
       Object.keys(boards).forEach(function (k) { if (k) bs += btns('b' + k, k + '동 전체'); });
       sfBatch = '<div class="sf-batch" id="slotFlagBatch" style="border-style:solid;background:#f7f9fd">' +
-        '<b style="flex:1 1 100%;color:var(--ink);font-size:12px">층·단수 고장/풀가림 — 층수(1~5단)별 일괄 체크</b>' + bn + '</div>' +
+        '<b style="flex:1 1 100%;color:var(--ink);font-size:12px">층·단수 고장/풀가림/설치불가 — 층수(1~5단)·동별 일괄 지정 (사유 입력 팝업)</b>' + bn + '</div>' +
         (bs ? '<div class="sf-batch" id="slotFlagBatchDong"><b>게시동 일괄</b>' + bs + '</div>' : '');
     }
     return '<div class="slotmap" id="slotMap">' +
@@ -4502,7 +4530,7 @@
       '<div class="sm-grid">' + head + body + '</div>' +
       '<div class="sm-legend"><span><i class="free"></i>빈 칸(가능)</span><span><i class="official"></i>공문 우선배정</span>' +
       '<span><i class="confirmed"></i>이번 회차 확정</span><span><i class="inuse"></i>현재 게시 중(차주 자리)</span>' +
-      '<span><i class="fault"></i>고장(단수)</span><span><i class="cover"></i>풀가림(단수·목요일 선착순)</span><span><i class="uninstall"></i>설치불가(단수)</span><span><i class="aged"></i>노후화 사용금지(단수)</span><span><i class="other"></i>기타사유(단수)</span>' +
+      '<span><i class="fault"></i>고장(단수)</span><span><i class="cover"></i>풀가림(단수·목요일 선착순)</span><span><i class="uninstall"></i>설치불가(단수)</span><span><i class="other"></i>기타사유(단수)</span>' +
       '<span><i class="broken"></i>고장·수리중</span></div></div>';
   }
   /* 3단계 선택칩 안의 세부 위치 버튼 (누르면 동 선택 팝업 → 단수 선택 팝업) */
@@ -6586,7 +6614,7 @@
   function placeSchedCell(p, s, wk, plan, smap) {
     var st = (smap && smap[s.code]) || {};
     var it = plan && plan.post ? plan.post[s.code] : null;
-    if (p.broken || st.k === 'broken' || st.k === 'fault' || st.k === 'uninstall' || st.k === 'aged') {
+    if (p.broken || st.k === 'broken' || st.k === 'fault' || st.k === 'uninstall') {
       return { cls: 'off', tag: p.broken ? '수리중' : (SLOT_FLAG_LABEL[st.k] || '사용불가'), adv: '접수 불가', sub: st.label || '' };
     }
     if (st.k === 'cover') {
@@ -6722,7 +6750,7 @@
         var rv = rMap[s.code] || 0;
         if (p.broken) { map[s.code] = { k: 'broken', label: '고장·수리중', off: true, rivals: 0 }; return; }
         var flag = slotFlagOf(p, s.code);
-        if (flag === 'fault' || flag === 'uninstall' || flag === 'aged') {
+        if (flag === 'fault' || flag === 'uninstall') {
           map[s.code] = { k: flag, label: SLOT_FLAG_LABEL[flag] + ' (선택 불가)', off: true, flag: flag, rivals: 0 };
           return;
         }
@@ -7203,12 +7231,18 @@
       '<dt>상태</dt><dd>' + (p.broken ? '<span class="badge b-broken"><i></i>고장·수리중 — 접수·선착순·추첨 제외</span>' : '<span class="badge b-green"><i></i>정상 운영</span>') + '</dd>' +
       '</dl></div>' +
       (adminSlots
-        ? '<div class="sect-label">세부 위치 · 게시동(A·B·C) × 단(1~5) <span>칸을 눌러 고장·풀가림을 지정합니다</span></div>' +
+        ? '<div class="sect-label">세부 위치 · 게시동(A·B·C) × 단(1~5) <span>칸을 눌러 고장·풀가림·설치불가·기타사유를 지정합니다 (상태마다 사유 입력 팝업)</span></div>' +
           (slotNoteList(p).length
             ? '<div class="callout warn slot-note-box">' + IC.alert + '<div><b>기타사유 안내</b><ul class="slot-note-list">' +
               slotNoteList(p).map(function (n) {
                 return '<li><b>' + esc(n.code) + (n.name ? ' ' + esc(n.name) : '') + '</b> — ' + esc(n.text) +
                   ' <span class="badge ' + (n.mode === 'warn' ? 'b-amber' : 'b-red') + '"><i></i>' + (n.mode === 'warn' ? '안내 후 선택' : '접수 제한') + '</span></li>';
+              }).join('') + '</ul></div></div>'
+            : '') +
+          (slotReasonList(p).filter(function (n) { return n.flag !== 'other'; }).length
+            ? '<div class="callout warn slot-note-box">' + IC.alert + '<div><b>단수 상태 사유</b><ul class="slot-note-list">' +
+              slotReasonList(p).filter(function (n) { return n.flag !== 'other'; }).map(function (n) {
+                return '<li><b>' + esc(n.code) + (n.name ? ' ' + esc(n.name) : '') + '</b> — <span class="badge b-red"><i></i>' + esc(n.label) + '</span> ' + esc(n.text) + '</li>';
               }).join('') + '</ul></div></div>'
             : '') +
           slotGridHTML(p)
@@ -7408,7 +7442,7 @@
       var code = String(c || '');
       if (!code || !slotValid(p, code)) return;
       p.slotFlags[code] = 'other';
-      p.slotNotes[code] = { text: t, mode: mode === 'warn' ? 'warn' : 'block', at: nowStamp() };
+      p.slotNotes[code] = { text: t, mode: mode === 'warn' ? 'warn' : 'block', flag: 'other', at: nowStamp() };
       done.push(code);
     });
     if (!done.length) return null;
@@ -7428,47 +7462,112 @@
     save();
     return p;
   }
-  /* 관리자 — 기타사유 입력 팝업 (단수 · 그 단 전체 · 게시대 전체) */
-  function askSlotOther(pid, target) {
+  /* 관리자 — 고장·풀가림·설치불가 상태 + 사유 저장 (사유를 비우면 기본 문구) */
+  function setSlotReason(pid, codes, flag, text) {
     var p = placementById(pid);
-    if (!p) return false;
-    var codes = [];
-    var t = String(target || '');
+    var f = slotFlagNorm(flag);
+    if (!p || !codes || !codes.length || SLOT_FLAG_ORDER.indexOf(f) < 0 || f === 'other') return null;
+    var t = String(text == null ? '' : text).trim();
+    if (!t) t = (SLOT_FLAG_LABEL[f] || f) + ' — 관리자 지정';
+    if (!p.slotFlags) p.slotFlags = {};
+    if (!p.slotNotes) p.slotNotes = {};
+    var done = [];
+    codes.forEach(function (c) {
+      var code = String(c || '');
+      if (!code || !slotValid(p, code)) return;
+      p.slotFlags[code] = f;
+      p.slotNotes[code] = { text: t, mode: 'block', flag: f, at: nowStamp() };
+      done.push(code);
+    });
+    if (!done.length) return null;
+    audit('게시대', p.name + ' ' + done.join('·') + ' ' + (SLOT_FLAG_LABEL[f] || f) + ' — ' + t);
+    save();
+    return p;
+  }
+  /* 관리자 — 기타사유 입력 팝업 (단수 · 그 단 전체 · 게시대 전체) */
+  /* 대상(단수 's코드' · 동 'bA' · 층 'r3' · 게시대 전체 '') → 단수 코드 목록 */
+  function slotTargetCodesOf(p, target) {
+    var t = String(target || ''), codes = [];
     if (t.charAt(0) === 's') codes = [t.slice(1)];
     else if (t.charAt(0) === 'b') codes = slotCodeListOf(p).filter(function (c) { return c.charAt(0) === t.slice(1); });
     else if (t.charAt(0) === 'r') codes = slotCodeListOf(p).filter(function (c) { return String(c).slice(-1) === t.slice(1); });
     else codes = slotCodeListOf(p);
+    return codes;
+  }
+  function slotTargetScopeOf(p, target, codes) {
+    var t = String(target || '');
+    if (t.charAt(0) === 's') return codes[0] + ' ' + slotName(p, codes[0]);
+    if (t.charAt(0) === 'b') return t.slice(1) + '동 전체 (' + codes.length + '면)';
+    if (t.charAt(0) === 'r') return t.slice(1) + '단 전체 (' + codes.length + '면)';
+    return '게시대 전체 (' + codes.length + '면)';
+  }
+  /* 관리자 — 상태(고장·풀가림·설치불가·기타사유)마다 사유 입력 팝업을 띄우고 함께 저장한다
+     (김재봉 님 2026-11-28 지시 "각각 사유달기 팝업") */
+  function askSlotReason(pid, target, flag) {
+    var p = placementById(pid);
+    if (!p) return false;
+    var f = slotFlagNorm(flag || 'other');
+    if (SLOT_FLAG_ORDER.indexOf(f) < 0) return false;
+    var codes = slotTargetCodesOf(p, target);
     if (!codes.length) return false;
-    var scope = t.charAt(0) === 's' ? (codes[0] + ' ' + slotName(p, codes[0]))
-      : (t.charAt(0) === 'b' ? t.slice(1) + '동 전체 (' + codes.length + '면)' : (t.charAt(0) === 'r' ? t.slice(1) + '단 전체 (' + codes.length + '면)' : '게시대 전체 (' + codes.length + '면)'));
-    var prev = slotNoteOf(p, codes[0]) || { text: '', mode: 'block' };
+    var scope = slotTargetScopeOf(p, target, codes);
+    var lbl = SLOT_FLAG_LABEL[f] || f;
+    var isOther = (f === 'other');
+    var prev = isOther
+      ? (slotOtherOf(p, codes[0]) || { text: '', mode: 'block' })
+      : { text: slotReasonTextOf(p, codes[0], f), mode: 'block' };
+    var guide = isOther
+      ? '고장·풀가림·설치불가 외에 <b>도로공사·민원·안전점검</b> 같은 사유를 직접 적어 둡니다. 고객 화면에는 <b>기타사유 배지</b>와 함께 이 내용이 팝업으로 안내됩니다.'
+      : (f === 'fault'
+        ? '이 단수를 <b>고장</b>으로 막습니다. 고장 단수는 추첨·선착순·현장 접수 어디에도 배정되지 않습니다.'
+        : (f === 'cover'
+          ? '이 단수를 <b>풀가림</b>으로 표시합니다. 정기 추첨에서는 빠지고 목요일 잔여석 선착순에서만 확인 후 선택됩니다.'
+          : '이 단수를 <b>설치불가</b>로 막습니다. 추첨·선착순·현장 접수 어디에도 배정되지 않습니다.'));
+    var ph = isOther ? '예) 도로공사로 12월 1일까지 접근 제한'
+      : (f === 'fault' ? '예) 게시틀 파손으로 교체 전까지 사용 중지'
+        : (f === 'cover' ? '예) 가로수 가지가 현수막을 가려 게시 불가'
+          : '예) 게시틀 변형으로 현수막 설치 불가'));
+    var defTxt = lbl + ' — 관리자 지정';
     openModal({
-      title: '기타사유 등록', sub: p.name + ' · ' + scope,
-      body: '<div class="callout info">' + IC.info + '<div>고장·풀가림 외에 <b>도로공사·민원·안전점검</b> 같은 사유를 직접 적어 둡니다. 고객 화면에는 <b>기타사유 배지</b>와 함께 이 내용이 팝업으로 안내됩니다.</div></div>' +
-        '<div class="field"><label for="sloText">기타사유<span class="req">*</span></label>' +
-        '<input class="input ko-ime" id="sloText" lang="ko" maxlength="80" placeholder="예) 도로공사로 12월 1일까지 접근 제한" value="' + esc(prev.text) + '">' +
-        '<div class="err-txt">기타사유 내용을 입력해 주세요.</div></div>' +
-        '<div class="field"><label for="sloMode">고객 안내 방식</label>' +
-        '<select class="input" id="sloMode">' +
-        '<option value="block"' + (prev.mode === 'block' ? ' selected' : '') + '>접수 제한 — 추첨·선착순 모두 배정 제외</option>' +
-        '<option value="warn"' + (prev.mode === 'warn' ? ' selected' : '') + '>안내 후 선택 가능 — 사유 확인 팝업 후 접수</option>' +
-        '</select><div class="hint-txt">풀가림과 같이 고객이 안내를 확인하고도 접수하려는 자리면 <b>안내 후 선택 가능</b>을 고르세요.</div></div>',
+      title: isOther ? '기타사유 입력' : lbl + ' 사유 입력',
+      sub: p.name + ' · ' + scope,
+      body: '<div class="callout info">' + IC.info + '<div>' + guide + ' 적어 둔 사유는 이 게시대 <b>단수 상태 사유</b>에 함께 표시됩니다.</div></div>' +
+        '<div class="field"><label for="sloText">' + esc(isOther ? '기타사유' : lbl + ' 사유') + (isOther ? '<span class="req">*</span>' : '') + '</label>' +
+        '<input class="input ko-ime" id="sloText" lang="ko" maxlength="80" placeholder="' + esc(ph) + '" value="' + esc(prev.text || '') + '">' +
+        (isOther
+          ? '<div class="err-txt">기타사유 내용을 입력해 주세요.</div>'
+          : '<div class="hint-txt">비우면 <b>' + esc(defTxt) + '</b>으로 저장됩니다.</div>') +
+        '</div>' +
+        (isOther
+          ? '<div class="field"><label for="sloMode">고객 안내 방식</label>' +
+            '<select class="input" id="sloMode">' +
+            '<option value="block"' + (prev.mode === 'block' ? ' selected' : '') + '>접수 제한 — 추첨·선착순 모두 배정 제외</option>' +
+            '<option value="warn"' + (prev.mode === 'warn' ? ' selected' : '') + '>안내 후 선택 가능 — 사유 확인 팝업 후 접수</option>' +
+            '</select><div class="hint-txt">풀가림과 같이 고객이 안내를 확인하고도 접수하려는 자리면 <b>안내 후 선택 가능</b>을 고르세요.</div></div>'
+          : ''),
       foot: '<button class="btn ghost" data-close type="button">취소</button>' +
-        '<button class="btn primary" id="btnSlotOtherSave" type="button">기타사유 등록</button>',
+        '<button class="btn primary" id="btnSlotReasonSave" type="button">' + (isOther ? '기타사유 등록' : '사유 저장') + '</button>',
       after: function () {
-        onEl('#btnSlotOtherSave', 'click', function () {
+        onEl('#btnSlotReasonSave', 'click', function () {
           var tx = $('#sloText') ? String($('#sloText').value).trim() : '';
-          if (!tx) { toast('기타사유 내용을 입력해 주세요.', true); return; }
-          var md = $('#sloMode') ? String($('#sloMode').value) : 'block';
-          setSlotOther(pid, codes, tx, md);
-          closeModal();
-          toast(p.name + ' — 기타사유 ' + codes.length + '면 등록 (' + (md === 'warn' ? '안내 후 선택' : '접수 제한') + ')');
+          if (isOther) {
+            if (!tx) { toast('기타사유 내용을 입력해 주세요.', true); return; }
+            var md = $('#sloMode') ? String($('#sloMode').value) : 'block';
+            setSlotOther(pid, codes, tx, md);
+            closeModal();
+            toast(p.name + ' — 기타사유 ' + codes.length + '면 등록 (' + (md === 'warn' ? '안내 후 선택' : '접수 제한') + ')');
+          } else {
+            setSlotReason(pid, codes, f, tx);
+            closeModal();
+            toast(p.name + ' — ' + lbl + ' ' + codes.length + '면 지정' + (tx ? ' · 사유: ' + tx : ' (기본 사유)'));
+          }
           showPlacementDetail(pid, { slots: true });
         });
       }
     });
     return true;
   }
+  function askSlotOther(pid, target) { return askSlotReason(pid, target, 'other'); }
 
   function setSlot(pid, code, n) {
     var p = placementById(pid);
@@ -17913,24 +18012,27 @@
       ui.rank = rk; renderPickUI(); return;
     }
     if (el.hasAttribute('data-broken')) { toggleBroken(el.getAttribute('data-broken')); return; }
-    /* 단수 칸 클릭 — 정상 → 고장 → 풀가림 순환 (관리자 모드) */
+    /* 단수 칸 클릭 — 정상 → 고장 → 풀가림 → 설치불가 → 기타사유 순환 (관리자 모드, 상태마다 사유 입력 팝업) */
     if (el.hasAttribute('data-sfother')) { askSlotOther(el.getAttribute('data-sfotherpid'), el.getAttribute('data-sfother')); return; }
     if (el.hasAttribute('data-slotflag')) {
       var sfPid = el.getAttribute('data-slotpid'), sfCode = el.getAttribute('data-slotflag');
       var sfP = placementById(sfPid), sfCur = slotFlagOf(sfP, sfCode);
       /* 전체 고장(수리중) 게시대는 칸을 누르면 그 층·단수만 정상으로 풀린다 (나머지는 고장 유지) */
       var sfNext = (sfP && sfP.broken && sfCur === 'fault') ? ''
-        : (sfCur === '' ? 'fault' : (sfCur === 'fault' ? 'cover' : (sfCur === 'cover' ? 'uninstall' : (sfCur === 'uninstall' ? 'aged' : (sfCur === 'aged' ? 'other' : '')))));
-      if (sfCur === 'other' && sfNext === '') { clearSlotOther(sfPid, [sfCode]); showPlacementDetail(sfPid, { slots: true }); toast((sfP ? sfP.name + ' ' + sfCode : '') + ' — 정상 복구'); return; }
-      if (sfNext === 'other') { askSlotOther(sfPid, 's' + sfCode); return; }
-      setSlotFlag(sfPid, sfCode, sfNext);
-      showPlacementDetail(sfPid, { slots: true });
-      toast(sfP ? (sfP.name + ' ' + sfCode + ' — ' + (sfNext ? SLOT_FLAG_LABEL[sfNext] + '(으)로 지정 · 추첨·선착순 배정 제외' : '정상 복구')) : '', false);
+        : (sfCur === '' ? 'fault' : (sfCur === 'fault' ? 'cover' : (sfCur === 'cover' ? 'uninstall' : '')));
+      if (!sfNext) {
+        setSlotFlag(sfPid, sfCode, '');
+        showPlacementDetail(sfPid, { slots: true });
+        toast(sfP ? sfP.name + ' ' + sfCode + ' — 정상 복구' : '', false);
+        return;
+      }
+      askSlotReason(sfPid, 's' + sfCode, sfNext);
       return;
     }
-    /* 단수·동 일괄 지정 */
+    /* 단수·동 일괄 지정 — 지정 상태마다 사유 입력 팝업, 해제는 바로 */
     if (el.hasAttribute('data-sfbatch')) {
       var sbPid = el.getAttribute('data-sfbatchpid'), sbT = el.getAttribute('data-sfbatch'), sbF = el.getAttribute('data-sfflag') || '';
+      if (sbF) { askSlotReason(sbPid, sbT, sbF); return; }
       var sbP = placementById(sbPid), sbCodes = [];
       slotCodeListOf(sbP).forEach(function (c) {
         if (sbT.charAt(0) === 'r') { if (String(c).replace(/[^0-9]/g, '') === sbT.slice(1)) sbCodes.push(c); }
@@ -17939,7 +18041,7 @@
       setSlotFlags(sbPid, sbCodes, sbF);
       showPlacementDetail(sbPid, { slots: true });
       var sbName = sbT.charAt(0) === 'r' ? sbT.slice(1) + '층(' + sbT.slice(1) + '단)' : sbT.charAt(1) + '동 전체';
-      toast(sbP ? (sbP.name + ' ' + sbName + ' ' + sbCodes.length + '면 — ' + (sbF ? SLOT_FLAG_LABEL[sbF] : '정상') + ' 처리') : '', false);
+      toast(sbP ? (sbP.name + ' ' + sbName + ' ' + sbCodes.length + '면 — 정상 처리') : '', false);
       return;
     }
     if (el.hasAttribute('data-slotadmin')) { showPlacementDetail(el.getAttribute('data-slotadmin'), { slots: true }); return; }
@@ -19205,6 +19307,14 @@
         title: String($('#modalTitle') ? $('#modalTitle').textContent : ''),
         body: String($('#modalBody') ? $('#modalBody').innerHTML : '') };
     },
+    setSlotReason: function (pid, codes, flag, text) { var p = setSlotReason(pid, codes, flag, text); return !!p; },
+    slotReasonList: function (pid) { var p = placementById(pid); return p ? slotReasonList(p) : []; },
+    askSlotReason: function (pid, target, flag) {
+      askSlotReason(pid, target, flag);
+      return { open: !!($('#modal') && $('#modal').classList.contains('open')),
+        title: String($('#modalTitle') ? $('#modalTitle').textContent : ''),
+        body: String($('#modalBody') ? $('#modalBody').innerHTML : '') };
+    },
     askOtherPick: function (pid, code) {
       askOtherPick(pid, code, 1);
       return { open: !!($('#modal') && $('#modal').classList.contains('open')),
@@ -19228,7 +19338,7 @@
     slotNoteBox: function () { var e = document.querySelector('.slot-note-box'); return e ? String(e.textContent) : ''; },
     slotIsBlocked: function (pid, code) { return slotIsBlocked(boardById(pid), code); },
     slotBlock: function (pid) { return slotBlockCount(boardById(pid)); },
-    setSlotFlag3: function (pid, code, flag) { var p = setSlotFlags(pid, [String(code)], ({ fault: 1, cover: 1, uninstall: 1, aged: 1 })[flag] ? flag : ''); return p ? slotFlagOf(p, code) : null; },
+    setSlotFlag3: function (pid, code, flag) { var p = setSlotFlags(pid, [String(code)], ({ fault: 1, cover: 1, uninstall: 1, aged: 1 })[flag] ? slotFlagNorm(flag) : ''); return p ? slotFlagOf(p, code) : null; },
     locDetailHtml: function () { renderLocDetail(); return String($('#locDetail') ? $('#locDetail').innerHTML : ''); },
     locPrep: function (id, on) { return setLocPrep(id, on); },
     locPrint: function (id) { return printLoc(id); },
@@ -19341,7 +19451,7 @@
     reportSummary: function (w) { return reportSummaryOf(reportRowsOf(w)); },
     reportCover: function (w) { return reportCoverHTML(w); },
     reportDate: function (w) { return reportDateOf(w); },
-    /* 노후화 사용금지 검증 — 한 게시대의 한 칸만 남기고 '노후화'일 때와 정상일 때 추첨 결과를 비교 */
+    /* 단수 차단 검증 — 한 게시대의 한 칸만 남기고 '설치불가(옛 aged)'일 때와 정상일 때 추첨 결과를 비교 */
     agedProbe: function (pid, code) {
       var st = db, base = null;
       db.apps.forEach(function (a) { if (!base && a.round === ROUND.id) base = a; });
@@ -19358,7 +19468,7 @@
         var r = drawEngine([x], 5);
         return { seats: r.stat.seats, places: ((r.out['AGED-T'] || {}).places || []).map(function (p) { return p.slot; }) };
       }
-      var aged = run('aged'), normal = run('');
+      var aged = run('uninstall'), normal = run('');
       setSlotFlags(pid, [String(code)], '');
       return { aged: aged, normal: normal };
     },

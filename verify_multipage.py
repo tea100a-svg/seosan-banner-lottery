@@ -1980,16 +1980,16 @@ def main(argv):
         if codes2:
             test_code = codes2[0]
             before2 = pg.evaluate("(p) => window.SEOSAN_VERIFY.availSeat(p)", pid2)
-            pg.evaluate("(a) => window.SEOSAN_VERIFY.setSlotFlag3(a[0], a[1], 'aged')", [pid2, test_code])
+            pg.evaluate("(a) => window.SEOSAN_VERIFY.setSlotFlag3(a[0], a[1], 'uninstall')", [pid2, test_code])
             after2 = pg.evaluate("(p) => window.SEOSAN_VERIFY.availSeat(p)", pid2)
             st_aged = pg.evaluate("(a) => window.SEOSAN_VERIFY.slotStateOf(a[0], a[1])", [pid2, test_code])
-            (ok if before2 >= 1 and after2 == before2 - 1 and st_aged.get('off') and '노후화' in st_aged.get('label', '') else ng)(
-                '노후화 사용금지 — 가용 면 제외·선택 불가', 'pid=%s · avail %s → %s · %s' % (pid2, before2, after2, st_aged.get('label')))
+            (ok if before2 >= 1 and after2 == before2 - 1 and st_aged.get('off') and '설치불가' in st_aged.get('label', '') else ng)(
+                '설치불가 — 가용 면 제외·선택 불가 (노후화 상태 삭제)', 'pid=%s · avail %s → %s · %s' % (pid2, before2, after2, st_aged.get('label')))
             # 나머지 빈 칸을 고장으로 막아 '그 한 칸'만 남긴 뒤 추첨 엔진 결과 비교
             pg.evaluate("(o) => { const v = window.SEOSAN_VERIFY; o.codes.slice(1).forEach(c => v.setSlotFlag3(o.pid, c, 'fault')); }", {'pid': pid2, 'codes': codes2})
             probe = pg.evaluate("(a) => window.SEOSAN_VERIFY.agedProbe(a[0], a[1])", [pid2, test_code])
             (ok if probe and probe['normal']['seats'] >= 1 and probe['aged']['seats'] == 0 else ng)(
-                '노후화 사용금지 — 추첨 배정 제외', 'aged=%s · normal=%s' % (probe and probe['aged'], probe and probe['normal']))
+                '설치불가 — 추첨 배정 제외', 'aged=%s · normal=%s' % (probe and probe['aged'], probe and probe['normal']))
             pg.evaluate("(o) => { const v = window.SEOSAN_VERIFY; o.codes.forEach(c => v.setSlotFlag3(o.pid, c, '')); }", {'pid': pid2, 'codes': codes2})
         # 정치행정 — 지부장 ∥ 감사 순서 무관 승인 + 3단 배정
         pol = pg.evaluate("() => { const v = window.SEOSAN_VERIFY; const a = v.state().apps.filter(x => x.round === v.round().ROUND.id && x.status === '추첨대기').slice(-1)[0]; return a ? a.id : ''; }")
