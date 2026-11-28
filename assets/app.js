@@ -16021,7 +16021,10 @@
         '<td class="sm">' + esc(p.dong) + '</td>' +
         '<td class="mono" style="text-align:right">' + esc(p.day) + '</td>' +
         '<td class="mono" style="text-align:right">' + p.cap + '</td>' +
-        '<td class="sm" style="white-space:nowrap">' + (isLow ? (offSeats ? '<span class="badge b-blue">공문 ' + offSeats + '면 배정</span>' : '<span style="color:var(--muted)">1면 저단</span>') : (function () {
+        '<td class="sm" style="white-space:nowrap">' + (isLow ? ((offSeats ? '<span class="badge b-blue">공문 ' + offSeats + '면 배정</span>' : '<span style="color:var(--muted)">1면 저단</span>') + (function () {
+          var s = slotFlagSummary(p);
+          return s ? ' <span style="color:#b03a3a;font-weight:800">' + esc(s) + '</span>' : '';
+        })()) : (function () {
           var s = slotFlagSummary(p);
           return s ? '<span style="color:#b03a3a;font-weight:800">' + esc(s) + '</span>' : '<span style="color:var(--muted)">정상</span>';
         })()) + '</td>' +
@@ -16031,10 +16034,8 @@
         '<td><div class="bar"><i' + (p.broken ? ' class="full"' : '') + ' style="width:' + (p.broken ? 100 : pct) + '%"></i></div></td>' +
         '<td style="text-align:center;white-space:nowrap">' +
         '<button class="btn sm ghost" data-renameplace="' + p.id + '" type="button" title="게시대 이름 수정 — 바꾼 이름이 현황·게시현황·접수·공문·작업지시서에 바로 반영됩니다">이름 수정</button> ' +
-        (isLow
-          ? '<button class="btn sm ghost" type="button" disabled title="1면 저단 게시대 — 층·단수 구분이 없습니다. 고장 체크로 전체 수리중 처리합니다.">층·단수</button>'
-          : '<button class="btn sm ghost" data-slotadmin="' + p.id + '" type="button" title="층·단수(1~5단)와 개별 칸(A1~F2)마다 고장·풀가림 지정">층·단수 고장/풀가림</button> ') +
-        (isLow ? '' : '<button class="btn sm ghost" data-delplace="' + p.id + '" type="button" title="이 게시대 삭제">삭제</button>') +
+        '<button class="btn sm ghost" data-slotadmin="' + p.id + '" type="button" title="' + (isLow ? '1면 저단 — 이 면의 상태(고장·풀가림·설치불가·기타사유)와 사유를 지정합니다' : '층·단수(1~5단)와 개별 칸(A1~F2)마다 고장·풀가림·설치불가·기타사유 지정') + '">' + (isLow ? '상태·사유' : '층·단수 고장/풀가림') + '</button> ' +
+        '<button class="btn sm ghost" data-delplace="' + p.id + '" type="button" title="이 게시대 삭제">삭제</button>' +
         '</td></tr>';
     });
     html += '</tbody></table>';
