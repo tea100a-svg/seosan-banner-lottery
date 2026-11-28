@@ -535,6 +535,12 @@
     '석남동': '석남동', '예천동': '석남동', '죽성동': '석남동'
   };
   function adminDongOf(d) { return ADMIN_DONG[String(d || '')] || String(d || ''); }
+  /* 권역 통합 예외 — 김재봉 님 2026-11-28 지시: 세무서사거리 석림은 현장 기준 법정동 '석림동'으로 표기
+     (수석동+석림동 통합은 그대로 두고, 이 게시대만 법정동을 그대로 쓴다) */
+  var DONG_KEEP = ['세무서사거리 석림'];
+  function placedDongOf(name, beopdong) {
+    return (DONG_KEEP.indexOf(String(name || '')) >= 0) ? String(beopdong || '') : adminDongOf(beopdong);
+  }
 
   /* ── 공문 우선 100% 허용 동 (김재봉 님 지시: 의료원담장은 공문 우선 / 공문 100% 허용) ──
      · 의료원사거리에 통합된 의료원담장 구간(F·G동 = 4면)은 시청 공문 배정을 100%까지 받습니다.
@@ -556,7 +562,7 @@
     var bkr = SEED_BROKEN['P' + pad2(i + 1)] || '';
     var meta = PLACE_META[r[2]] || {};
     return {
-      id: 'P' + pad2(i + 1), day: r[0], dong: adminDongOf(r[1]), beopdong: r[1], name: r[2], baseName: r[2],
+      id: 'P' + pad2(i + 1), day: r[0], dong: placedDongOf(r[2], r[1]), beopdong: r[1], name: r[2], baseName: r[2],
       rows: rows, boards: boards, cap: cap, colTiers: tiers, colLabels: labels,
       dongPriority: DONG_PRIORITY[r[2]] ? DONG_PRIORITY[r[2]].slice() : null,
       officialFull: (OFFICIAL_FULL_BOARDS[r[2]] || null),
