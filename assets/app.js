@@ -7034,7 +7034,7 @@
                 txt = (c.sub && c.sub !== '정상 운영' && c.sub !== '추첨·심사 대기') ? c.sub : c.adv;
                 co = c.adv || '—';
               }
-              trs += '<tr class="' + (isCur ? 'is-cur' : '') + '">' +
+              trs += '<tr class="' + (isCur ? 'is-cur' : '') + (wi === 0 ? ' tier-start' : '') + '">' +
                 (wi === 0 ? '<td class="xl-tier" rowspan="4">' + sl.row + '단</td>' : '') +
                 '<td class="xl-per">' + esc(per) + (isCur ? ' <b style="color:#b45309">●</b>' : '') + '</td>' +
                 '<td class="st-' + esc(c.cls) + '">' + esc(txt) + '</td>' +
