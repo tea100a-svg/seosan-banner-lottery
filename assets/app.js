@@ -7198,7 +7198,15 @@
       '<dt>상태</dt><dd>' + (p.broken ? '<span class="badge b-broken"><i></i>고장·수리중 — 접수·선착순·추첨 제외</span>' : '<span class="badge b-green"><i></i>정상 운영</span>') + '</dd>' +
       '</dl></div>' +
       (adminSlots
-        ? '<div class="sect-label">세부 위치 · 게시동(A·B·C) × 단(1~5) <span>칸을 눌러 고장·풀가림을 지정합니다</span></div>' + slotGridHTML(p)
+        ? '<div class="sect-label">세부 위치 · 게시동(A·B·C) × 단(1~5) <span>칸을 눌러 고장·풀가림을 지정합니다</span></div>' +
+          (slotNoteList(p).length
+            ? '<div class="callout warn slot-note-box">' + IC.alert + '<div><b>기타사유 안내</b><ul class="slot-note-list">' +
+              slotNoteList(p).map(function (n) {
+                return '<li><b>' + esc(n.code) + (n.name ? ' ' + esc(n.name) : '') + '</b> — ' + esc(n.text) +
+                  ' <span class="badge ' + (n.mode === 'warn' ? 'b-amber' : 'b-red') + '"><i></i>' + (n.mode === 'warn' ? '안내 후 선택' : '접수 제한') + '</span></li>';
+              }).join('') + '</ul></div></div>'
+            : '') +
+          slotGridHTML(p)
         : '');
     openModal({
       title: p.name, sub: p.dong + ' · ' + (dSpecial ? (dKind === 'political' ? '정치행정 게시대' : '공문전용 저단게시대') : '지정게시대') + ' ' + p.id,
@@ -7450,7 +7458,7 @@
           setSlotOther(pid, codes, tx, md);
           closeModal();
           toast(p.name + ' — 기타사유 ' + codes.length + '면 등록 (' + (md === 'warn' ? '안내 후 선택' : '접수 제한') + ')');
-          showPlacementDetail(pid);
+          showPlacementDetail(pid, { slots: true });
         });
       }
     });
