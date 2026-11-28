@@ -2441,6 +2441,24 @@ details.special-fold > .sf-body{padding:16px 20px 20px}
 .map-panel{margin:4px 0 14px}
 .map-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}
 .map-bar-hint{color:var(--muted);margin:0}
+/* 🗺️ 전체 지도 보기 전용 강조 버튼 (2026-11-28 사용자 지시: 주변 접기 버튼·필터 칩에 묻히지 않게 확실히 띄운다) */
+.btn-map-cta{display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border:0;border-radius:12px;
+  background:linear-gradient(135deg,#0e7490 0%,#1d4ed8 100%);color:#fff;
+  font-size:15px;font-weight:800;letter-spacing:-.02em;line-height:1.15;white-space:nowrap;cursor:pointer;
+  box-shadow:0 6px 16px rgba(29,78,216,.32),inset 0 1px 0 rgba(255,255,255,.22);
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease}
+.btn-map-cta:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(29,78,216,.42),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn-map-cta:active{transform:translateY(0)}
+.btn-map-cta:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.btn-map-cta .mb-ico{font-size:17px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.btn-map-cta .mb-label{white-space:nowrap}
+.btn-map-cta .mb-badge{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;
+  background:#fff;color:#0f4c81;font-size:11.5px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.btn-map-cta[aria-expanded="true"]{background:#fff;color:#0e7490;
+  box-shadow:0 4px 14px rgba(15,23,42,.14),inset 0 0 0 2px #0e7490}
+.btn-map-cta[aria-expanded="true"]:hover{box-shadow:0 7px 18px rgba(15,23,42,.18),inset 0 0 0 2px #0e7490}
+.btn-map-cta[aria-expanded="true"] .mb-ico{filter:none}
+.btn-map-cta[aria-expanded="true"] .mb-badge{background:#0e7490;color:#fff}
 .map-box{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}
 .map-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .map-top .chips{display:flex;gap:6px;flex-wrap:wrap;margin:0}

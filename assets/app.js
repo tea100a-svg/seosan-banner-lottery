@@ -6086,7 +6086,10 @@
     box.hidden = !on;
     if (btn) {
       btn.setAttribute('aria-expanded', on ? 'true' : 'false');
-      btn.textContent = on ? '🗺️ 전체 지도 접기' : '🗺️ 전체 지도 보기';
+      btn.setAttribute('aria-label', on ? '전체 지도 접기 (지금 펼쳐져 있음)' : '전체 지도 보기 — 120개소 위치를 한눈에');
+      btn.innerHTML = on
+        ? '<span class="mb-ico" aria-hidden="true">🗺️</span><span class="mb-label">전체 지도 접기</span><span class="mb-badge">지도 펼침</span>'
+        : '<span class="mb-ico" aria-hidden="true">🗺️</span><span class="mb-label">전체 지도 보기</span><span class="mb-badge">120개소 위치 한눈에</span>';
     }
     if (on) renderStatusMap();
     else if (LEAFLET.map) { try { LEAFLET.map.invalidateSize(); } catch (e) { } }
