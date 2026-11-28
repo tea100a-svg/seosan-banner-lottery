@@ -6841,7 +6841,9 @@
     }
 
     var startWk = weekStartOf(schedBase);
-    var endSun = addDays(startWk, schedMode === '4w' ? 27 : 6);
+    /* 김재봉 님 2026-11-28 지시: 4주 보기는 기준 주(현재주)를 가운데 두고 ‘전전주 · 전주 · 현재주 · 다음주’ */
+    var schedWkStart = schedMode === '4w' ? addDays(startWk, -14) : startWk;
+    var endSun = addDays(startWk, schedMode === '4w' ? 13 : 6);
     var targetBoards = list.filter(function (b) {
       if (pFocus && b.id !== pFocus.id) return false;
       if (dayFilter && b.day !== dayFilter) return false;
@@ -6887,7 +6889,7 @@
         '</div>' +
       '</div>' +
       '<div class="xl-legend">' +
-        '<span style="font-weight:800;color:var(--ink);align-self:center;margin-right:4px">📅 ' + esc(dstr(startWk)) + '(월) ~ ' + esc(dstr(endSun)) + '(일) · ' + (schedMode === '4w' ? '4주간' : '1주간') + ' (' + targetBoards.length + '개소)</span>' +
+        '<span style="font-weight:800;color:var(--ink);align-self:center;margin-right:4px">📅 ' + esc(dstr(schedWkStart)) + '(월) ~ ' + esc(dstr(endSun)) + '(일) · ' + (schedMode === '4w' ? '4주간' : '1주간') + ' (' + targetBoards.length + '개소)</span>' +
         '<span class="xl-lg ok">확정·게시</span>' +
         '<span class="xl-lg off">공문·협회</span>' +
         '<span class="xl-lg warn">접수중</span>' +
@@ -6944,7 +6946,7 @@
         '<tbody>' + (rows1.length ? rows1.join('') : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">해당 조건의 게시대가 없습니다.</td></tr>') + '</tbody>' +
       '</table></div>';
     } else {
-      var weeks4 = [0, 1, 2, 3].map(function (wi) { return addDays(startWk, wi * 7); });
+      var weeks4 = [-2, -1, 0, 1].map(function (wi) { return addDays(startWk, wi * 7); });
       var idx4 = buildSchedWeekIndex(weeks4);
       var blocks = [];
       var curWk = weekStartOf(todayISO());
@@ -7024,7 +7026,7 @@
     root.querySelectorAll('[data-bsnav]').forEach(function (b) {
       b.addEventListener('click', function () {
         var dir = Number(b.getAttribute('data-bsnav')) || 0;
-        var stepDays = (ui.bsMode === '4w' ? 28 : 7) * dir;
+        var stepDays = 7 * dir;
         ui.bsDate = addDays(weekStartOf(ui.bsDate || todayISO()), stepDays);
         renderBoardSchedulePage();
       });
