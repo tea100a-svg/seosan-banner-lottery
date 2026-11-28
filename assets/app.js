@@ -3785,7 +3785,6 @@
     $('#applyWeekCal').innerHTML = calBlockHTML('apply');
     var st = weekStatsOf(s), w = weekInfoOf(s);
     renderCalSummary('apply');
-    if ($('#applyRuleStrip')) $('#applyRuleStrip').innerHTML = ruleStripHTML(s, { thisRound: s === currentPostingWeek() });
     if ($('#applyWeekHint')) {
       $('#applyWeekHint').innerHTML = '선택한 게첨 주 <b>' + weekRangeTxt(s) + '</b> — 추첨 ' + dfmt(w.drawDate) + ' ' + w.drawTime +
         ' · 입고 마감 ' + dfmt(w.deliverBy) + ' · 접수 <b>' + st.n + '건</b> / 신청 ' + st.qty + '매 / 배정 <b>' + st.awarded + '매</b>' +

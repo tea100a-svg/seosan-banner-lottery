@@ -2075,9 +2075,11 @@ def main(argv):
          and next_btns and not next_btns[0]['off'] else ng)(
             '접수 달력 — 11.23~11.29 주 선택 불가 · 11.30 주 선택 가능', '당일주 %d개 off=%s · 차주 off=%s' % (
                 len(cur_btns), [x['off'] for x in cur_btns], (next_btns[0]['off'] if next_btns else 'none')))
-        strip_apply = (pg.text_content('#applyRuleStrip') or '').replace('\n', ' ')
-        (ok if '다음 주 월요일부터 게첨' in strip_apply and '11.30' in strip_apply and '12.06' in strip_apply else ng)(
-            '접수 화면 주간 규칙 스트립 — 11.23 추첨 → 11.30~12.06 게첨', strip_apply.strip()[:110])
+        strip_apply = pg.query_selector('#applyRuleStrip')
+        strip_in_step2 = pg.eval_on_selector_all('#step2 .rule-strip', 'els => els.length')
+        (ok if strip_apply is None and strip_in_step2 == 0 else ng)(
+            '접수 2단계 주간 규칙 스트립 삭제(2026-11-28 김재봉 님 지시)',
+            '#applyRuleStrip=%r · #step2 .rule-strip=%d개' % (strip_apply, strip_in_step2))
 
         # 15-4) 추첨 접수대장·게시대 현황 화면의 주간 규칙 표기
         goto(pg, base + 'admin-draw.html', 700)
