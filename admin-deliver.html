@@ -5,15 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>document.documentElement.setAttribute('data-device-view','pc');</script>
 <title>📦 현수막 입고 | 협회 관리자 · 현수막 지정게시대 접수 시스템 · (사)충청남도옥외광고협회 서산시지부</title>
-<meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨 및 예약관리 시스템 시연용 멀티페이지 프로토타입">
-<link rel="stylesheet" href="assets/style.css?v=20261128r71">
+<meta name="description" content="(사)충청남도옥외광고협회 서산시지부 현수막 지정게시대 추첨·접수·게시 통합관리 시스템">
+<link rel="stylesheet" href="assets/style.css?v=20261128r72">
 </head>
 <body data-page="admin-deliver">
-<div class="demo-banner">
-  <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
-  <b>시연용 프로토타입</b> · 실제 접수·추첨·입고와 연결되지 않습니다. 표시된 업체·접수·수치는 모두 예시입니다. <b>주간 운영</b> — 월 10:00 추첨 / 수 18:00 입고 마감 / 목 선착순 접수 / 금 접수 제한 / 월요일 게첨(1주일)
-</div>
-
 <header class="site-header">
   <div class="wrap hdr">
     <div class="brand">
@@ -37,6 +32,7 @@
           <button class="btn-auth sm" id="btnLogout" type="button" data-logout="1">로그아웃</button>
         </div>
       </div>
+      <button class="notice-link hidden" id="btnNoticeShow" type="button" title="등록된 공지를 다시 봅니다">📢 공지 다시 보기</button>
       <div class="chip-round">
         <span class="dot"></span>
         <div>
@@ -44,11 +40,6 @@
           <small id="roundDue">입고 마감 수 18:00</small>
         </div>
       </div>
-      <label class="switch admin-switch" title="협회 관리자 모드 전환" aria-label="관리자 모드 전환">
-        <input type="checkbox" id="adminToggle">
-        <span class="track"><span class="knob"></span></span>
-        <span class="switch-label">관리자 모드</span>
-      </label>
     </div>
   </div>
   <nav class="tabs wrap site-nav" aria-label="페이지 이동">
@@ -109,14 +100,6 @@
         <p>당첨 현수막의 <b>실물 입고</b>를 확인하고, <b>수요일 18:00</b>까지 입고되지 않은 건을 한 번에 취소(반려)합니다.</p>
       </div>
     </div>
-<div class="role-bar" id="adminRoleBar">
-      <span class="role-badge">🔐 현재 접속 권한: <b id="adminRoleNow">마스터</b></span>
-      <span class="role-who" id="adminRoleWho"></span>
-      <span class="spacer"></span>
-      <label class="sm" for="adminRoleSel">시연용 직책 전환</label>
-      <select class="input sm" id="adminRoleSel"></select>
-      <span class="sm role-note" id="adminRoleNote"></span>
-    </div>
 <div class="quick-nav" id="docsQuickNav" aria-label="관련 화면">
   <span class="qn-label">관련 화면</span>
   <a class="btn sm ghost" href="admin-pay.html">💰 입금 확인</a>
@@ -154,6 +137,30 @@
 <button class="to-top" id="btnTop" type="button" hidden>▲ 맨 위로</button>
 </main>
 
+<section class="demo-tools" id="demoTools" aria-label="시연·테스트 도구">
+  <div class="wrap">
+    <details class="dt-box" id="demoToolsBox">
+      <summary class="dt-sum">
+        <span class="dt-ico" aria-hidden="true">🛠️</span>
+        <span class="dt-sum-txt">시연·테스트 도구</span>
+        <span class="dt-sum-sub">관리자 모드 · 시연 기준일 · 직책 전환</span>
+      </summary>
+      <div class="dt-body">
+        <div class="dt-row">
+          <label class="switch admin-switch" title="협회 관리자 모드 전환" aria-label="관리자 모드 전환">
+            <input type="checkbox" id="adminToggle">
+            <span class="track"><span class="knob"></span></span>
+            <span class="switch-label">관리자 모드</span>
+          </label>
+          <span class="dt-sep" aria-hidden="true"></span>
+          <span class="dt-slot" id="demoNowSlot"></span>
+        </div>
+        <div class="dt-row dt-role-row" id="demoRoleSlot"></div>
+      </div>
+    </details>
+  </div>
+</section>
+
 <footer class="footer">
   <div class="wrap fi">
     <div>
@@ -162,9 +169,9 @@
       업무시간 평일 09:00 ~ 18:00 (점심 12:00 ~ 13:00)
     </div>
     <div class="links">
-      <span>시연용 프로토타입 v1.5 · 주간 운영(목 선착순·금 마감) · 서산시 지정게시대 81개소</span>
+      <span>현수막 지정게시대 통합관리 시스템 · 주간 운영(목 선착순·금 마감) · 서산시 지정게시대 일반 81개소 + 공문전용·정치행정 32개소</span>
       <span>·</span>
-      <span>실제 서비스 아님</span>
+      <span>운영 시스템 v1.5</span>
       <span>·</span>
       <span class="credit">기획 · <b>김재봉</b> / 제작 · <b>AI 쪼코파이</b></span>
     </div>
@@ -188,6 +195,6 @@
 </div>
 
 <style id="printPageRule"></style>
-<script src="assets/app.js?v=20261128r71"></script>
+<script src="assets/app.js?v=20261128r72"></script>
 </body>
 </html>

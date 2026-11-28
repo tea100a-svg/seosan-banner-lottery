@@ -2342,7 +2342,7 @@
       return '<div class="ev-act">' + tally +
         '<div class="ev-note"><b>행사승인팀</b> 또는 <b>사무실무원·현장실무원(대리결재)</b>만 결재할 수 있습니다.<br><span class="sm">현재: ' +
         esc((ar && ar.name) ? (ar.name + ' · ' + (ar.label || '')) : '권한 없음') +
-        ' — 상단 <b>시연용 팀 전환</b>에서 행사승인팀 또는 실무원으로 바꿔 주세요.</span></div></div>';
+        ' — 하단 <b>🛠️ 시연·테스트 도구</b>의 <b>시연용 직책 전환</b>에서 행사승인팀 또는 실무원으로 바꿔 주세요.</span></div></div>';
     }
     var mine = eventApproverById(myEvId);
     var myVote = votedIds[myEvId] || '';
@@ -2884,18 +2884,19 @@
   }
 
   function ensureTopRoleBar() {
-    /* 관리자 본문 안에 있던 기존 바는 제거해 중복 ID를 막고, 상단 헤더 아래에 상시 노출 바를 둔다 */
+    /* 2026-11-28 — 헤더 아래 상시 바를 없애고 하단 🛠️ 시연·테스트 도구 패널(#demoRoleSlot)로 옮겼다.
+       중복 ID를 막기 위해 다른 곳에 남은 #adminRoleBar 는 지우고, 패널이 없는 화면에서만 예전처럼 헤더에 둔다. */
+    var slot = document.getElementById('demoRoleSlot');
     var oldBars = $$('#adminRoleBar');
+    var keep = null;
     oldBars.forEach(function (el) {
-      if (!el.classList.contains('top-role-bar') && el.parentNode) el.parentNode.removeChild(el);
+      if (slot && el.parentNode === slot && el.classList.contains('demo-role-bar')) keep = el;
+      else if (el.parentNode) el.parentNode.removeChild(el);
     });
-    var bar = document.querySelector('#adminRoleBar.top-role-bar');
-    if (bar) return bar;
-    var hdr = document.querySelector('header.site-header');
-    if (!hdr) return null;
-    bar = document.createElement('div');
+    if (keep) return keep;
+    var bar = document.createElement('div');
     bar.id = 'adminRoleBar';
-    bar.className = 'top-role-bar';
+    bar.className = slot ? 'top-role-bar demo-role-bar' : 'top-role-bar';
     bar.innerHTML =
       '<div class="wrap top-role-bar-inner">' +
         '<span class="role-badge">🔐 권한: <b id="adminRoleNow">마스터</b></span>' +
@@ -2908,6 +2909,9 @@
         '<select class="input sm" id="adminRoleSel" aria-label="시연용 직책 전환"></select>' +
         '<span class="sm role-note" id="adminRoleNote"></span>' +
       '</div>';
+    if (slot) { slot.appendChild(bar); return bar; }
+    var hdr = document.querySelector('header.site-header');
+    if (!hdr) return null;
     hdr.appendChild(bar);
     return bar;
   }
@@ -3371,10 +3375,20 @@
     var iso = addDays(base, Number(dow) - 1);
     return setDemoNow(iso);
   }
-  /* 상단 시연 바에 기준일 선택기 붙이기 (모든 페이지 공통 · HTML 수정 없이 주입) */
+  /* 하단 🛠️ 시연·테스트 도구 패널에 기준일 선택기 붙이기 (모든 페이지 공통 · HTML 수정 없이 주입)
+     2026-11-28 — 상단 시연 배너를 없애고 footer 바로 위 접힘 패널(#demoNowSlot)로 옮겼다. */
   function renderDemoNowBar() {
-    var bar = document.querySelector('.demo-banner');
-    if (!bar) return;
+    var host = document.getElementById('demoNowSlot');
+    if (!host) return;
+    /* 접힘 상태 기억 — 시연 중 패널을 열어 두면 다음 화면에서도 열린 채로 이어진다 */
+    var dt = document.getElementById('demoToolsBox');
+    if (dt && !dt.getAttribute('data-bound')) {
+      dt.setAttribute('data-bound', '1');
+      try { if (localStorage.getItem('seosan-demo-tools-open') === '1') dt.open = true; } catch (e) { }
+      dt.addEventListener('toggle', function () {
+        try { localStorage.setItem('seosan-demo-tools-open', dt.open ? '1' : '0'); } catch (e) { }
+      });
+    }
     var box = document.getElementById('demoNowBar');
     if (!box) {
       box = document.createElement('span');
@@ -3392,7 +3406,7 @@
         'title="이번 주 목요일을 공휴일로 보고 취소분 선착순(금요일)·입고 마감(금요일 14:00) 변경을 시연합니다">' +
         '🗓️ 목요일 공휴일 ' + (isThuHoliday() ? 'ON' : 'OFF') + '</button>' +
         '<span class="dn-now" id="demoNowTxt"></span>';
-      bar.appendChild(box);
+      host.appendChild(box);
       var inp = document.getElementById('demoNowDate');
       if (inp) inp.addEventListener('change', function () { setDemoNow(this.value); toast('시연 기준일을 ' + (this.value || '실제 오늘') + '로 바꿨습니다.'); });
     }
@@ -3493,7 +3507,7 @@
         : '🔥 취소분 선착순 접수는 매주 목요일 09:00~18:00에만 열립니다.') + '</b><br>' +
         '수요일 18:00까지 입금·입고되지 않은 <b>취소분(회수 면)만</b> 접수합니다. 오늘은 ' + fcOpenDayName() + '이 아니어서 접수 창구가 닫혀 있습니다.<br>' +
         (isThuHoliday() ? '선착순 당첨분 현수막 입고 마감은 <b>금요일 14:00</b>입니다.<br>' : '') +
-        '<span class="sm">상단 <b>📅 시연 기준일</b>을 ' + fcOpenDayName() + '(으)로 바꾸면 바로 체험할 수 있습니다.</span>' +
+        '<span class="sm">하단 <b>🛠️ 시연·테스트 도구</b>의 <b>📅 시연 기준일</b>을 ' + fcOpenDayName() + '(으)로 바꾸면 바로 체험할 수 있습니다.</span>' +
         '<div style="margin-top:8px"><button class="btn sm primary" type="button" data-demodow="' + fcOpenDow() + '">' + fcOpenDayName() + '로 전환</button>' +
         ' <a class="btn sm ghost" href="remain.html">⚡ 미배정 상시접수로 이동</a></div></div>';
     }

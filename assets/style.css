@@ -22,10 +22,6 @@ button{font-family:inherit}
 .hidden{display:none !important}
 a{color:var(--blue)}
 
-/* ---------- demo banner ---------- */
-.demo-banner{background:var(--navy);color:#a9c2e8;font-size:12.5px;text-align:center;padding:7px 14px;letter-spacing:-.01em}
-.demo-banner b{color:#fff;font-weight:700}
-
 /* ---------- header ---------- */
 .site-header{
   background:
@@ -1239,6 +1235,7 @@ html[data-device-view="mobile"] .ev-who{height:40px;font-size:13px}
   body:not(.print-wo) > header.site-header,
   body:not(.print-wo) > nav.tabs,
   body:not(.print-wo) > footer.footer,
+  body:not(.print-wo) > .demo-tools,
   body:not(.print-wo) > .toast{display:none !important}
   /* 접수증·게시지정서 인쇄 — 본문(현황·접수 화면)은 통째로 빼고 모달 종이만 남긴다 */
   body.print-receipt > main, body.print-desig > main{display:none !important}
@@ -1269,7 +1266,7 @@ html[data-device-view="mobile"] .ev-who{height:40px;font-size:13px}
   .desig-table td{height:25px !important;padding:0 3px !important;font-size:9.5px !important;line-height:1.15 !important;
     overflow:hidden !important;white-space:nowrap !important}
   /* 게시위치(위치보기) 인쇄 — 설치코스만 A4 세로 */
-  body.print-loc > header.site-header, body.print-loc > nav.tabs, body.print-loc > footer.footer, body.print-loc > .toast{display:none !important}
+  body.print-loc > header.site-header, body.print-loc > nav.tabs, body.print-loc > footer.footer, body.print-loc > .demo-tools, body.print-loc > .toast{display:none !important}
   body.print-loc #locPanel .callout, body.print-loc #locPanel .loc-left, body.print-loc #locPanel .loc-tools,
   body.print-loc #locPanel .loc-detail-actions, body.print-loc #locPanel .admin-head{display:none !important}
   body.print-loc #locPanel{box-shadow:none !important;border:0 !important;padding:0 !important;margin:0 !important}
@@ -1670,7 +1667,7 @@ table.pp-info th{background:#eef2f8;font-weight:700}
 @media print{
   /* 게첨 확인서(사진) — 모달·카드의 높이/스크롤/그림자 제한을 전부 풀고 A4 한 장씩
      (2026-11-23 김재봉 님 제보 "게첨사진인쇄가 짤리는데") */
-  body.print-photo .demo-banner,body.print-photo > header.site-header,body.print-photo > footer.footer,
+  body.print-photo .demo-tools,body.print-photo > header.site-header,body.print-photo > footer.footer,
   body.print-photo main.main,body.print-photo .mtabbar,body.print-photo .to-top,body.print-photo .toast,
   body.print-photo .modal-bg{display:none !important}
   body.print-photo .modal{position:static !important;display:block !important;inset:auto !important;padding:0 !important;
@@ -1726,7 +1723,6 @@ table.pp-info th{background:#eef2f8;font-weight:700}
    · ?view=mobile / ?view=pc, 헤더 토글, 푸터 '자동 감지로'로 언제든 전환
    ══════════════════════════════════════════════════════════════════════ */
 html[data-device-view="pc"] .wrap{max-width:1280px}
-html[data-device-view="pc"] .demo-banner{font-size:12.5px}
 @media (min-width:1180px){
   html[data-device-view="pc"] .dash-2col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
   html[data-device-view="pc"] .dash-2col > .panel{margin:0}
@@ -1742,7 +1738,6 @@ html[data-device-view="mobile"] body{max-width:430px;margin:0 auto;background:#f
   box-shadow:0 0 0 1px rgba(15,30,55,.06),0 16px 44px rgba(15,30,55,.12);min-height:100vh}
 @media (max-width:480px){html[data-device-view="mobile"] body{max-width:100%;box-shadow:none}}
 html[data-device-view="mobile"] .wrap{max-width:100%;padding:0 13px}
-html[data-device-view="mobile"] .demo-banner{font-size:10.5px;line-height:1.55;padding:6px 10px}
 html[data-device-view="mobile"] .hdr{padding-top:10px;padding-bottom:12px;gap:8px}
 html[data-device-view="mobile"] .brand{gap:9px}
 html[data-device-view="mobile"] .brand .org{display:none}
@@ -2027,6 +2022,51 @@ html[data-device-view="mobile"] #eventList .evbtn{flex:1 1 30%;min-height:40px}
 .demo-now .dn-btn:hover{background:rgba(255,255,255,.22)}
 .demo-now .dn-now{font-size:11px;color:#a9c4ea}
 @media (max-width:760px){ .demo-now{margin-left:0;width:100%;justify-content:center} }
+
+/* ── 🛠️ 시연·테스트 도구 — 페이지 하단 접힘 패널 (2026-11-28 김재봉 님 지시) ──
+   실제 운영 서버처럼 상단을 비우고, 관리자 모드 · 시연 기준일 · 직책 전환을
+   footer 바로 위 한 줄 패널로 모아 둔다. 평소에는 접혀 있어 첫인상에 드러나지 않는다. */
+.demo-tools{background:#f5f8fd;border-top:1px solid var(--line)}
+.demo-tools .wrap{max-width:1280px}
+.dt-box{margin:0}
+.dt-sum{display:flex;align-items:center;gap:7px;cursor:pointer;list-style:none;padding:9px 2px;
+  font-size:12.5px;font-weight:800;color:#52719b;letter-spacing:-.01em;user-select:none}
+.dt-sum::-webkit-details-marker{display:none}
+.dt-sum::-moz-list-bullet{display:none}
+.dt-sum-txt{font-weight:800}
+.dt-sum-sub{font-size:11.5px;font-weight:600;color:#8fa2bd}
+.dt-sum:after{content:'▾';margin-left:auto;font-size:11px;color:#95a9c6;transition:transform .2s}
+.dt-box[open] .dt-sum:after{transform:rotate(180deg)}
+.dt-sum:hover{color:var(--blue)}
+.dt-ico{font-size:13px;line-height:1}
+.dt-body{display:flex;flex-direction:column;gap:9px;padding:2px 2px 14px}
+.dt-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:24px}
+.dt-sep{width:1px;height:20px;background:#d9e3f1;flex:0 0 auto}
+.dt-slot{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0}
+.dt-role-row{gap:8px}
+.dt-role-row:empty{display:none}
+/* 패널 안에서는 밝은 배경용 색으로 */
+.demo-tools .admin-switch{background:#fff;border:1px solid #cfdcee;padding:4px 12px 4px 9px}
+.demo-tools .admin-switch:hover{background:#f7fbff;border-color:#a8c2e4}
+.demo-tools .switch .track{background:#c6d3e5;border-color:#c6d3e5}
+.demo-tools .switch input:checked + .track{background:#f0b429;border-color:#f0b429}
+.demo-tools .switch-label{color:#2f4a70}
+.demo-tools .demo-now{margin-left:0;padding:2px 8px;border-radius:10px;background:#fff;border:1px solid #cfdcee}
+.demo-tools .demo-now b{color:#1d3a63}
+.demo-tools .demo-now input[type=date]{border:1px solid #cfdcee;background:#fff;color:#16304f}
+.demo-tools .demo-now .dn-btn{border:1px solid #d6e1f0;background:#f1f6fd;color:#2b4f83}
+.demo-tools .demo-now .dn-btn:hover{background:#e4efff}
+.demo-tools .demo-now .dn-now{color:#6b7f9d}
+/* 하단 패널에 들어간 관리자 직책 바 */
+.demo-tools .demo-role-bar{background:none;border:0;padding:0;width:100%}
+.demo-tools .demo-role-bar .top-role-bar-inner{background:#eef3ff;border:1px solid #c9d8f2;border-radius:10px;padding:7px 12px}
+@media (max-width:640px){
+  .dt-sum{padding:8px 0;font-size:12px;gap:5px}
+  .dt-sum-sub{display:none}
+  .demo-tools .admin-switch{order:0;margin-left:0}
+  .demo-tools .demo-now{width:100%;justify-content:flex-start}
+  .dt-sep{display:none}
+}
 
 /* 게시 지정서 일괄 출력 — 상단 고정 툴바 (2026-11-23) */
 .desig-topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:56px;z-index:20;

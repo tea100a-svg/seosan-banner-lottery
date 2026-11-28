@@ -507,6 +507,8 @@ def main(argv):
 
         # 3-3 관리자 모드 체크 → admin-draw.html 로 이동
         goto(pg, base + 'index.html', 250)
+        pg.evaluate("() => { const d=document.getElementById('demoToolsBox'); if(d) d.open = true; }")
+        pg.wait_for_timeout(120)
         pg.click('label.admin-switch')
         pg.wait_for_url('**/admin-draw.html', timeout=8000)
         path = path_of(pg.url)
@@ -645,6 +647,8 @@ def main(argv):
         pg.check('#noticeOn')
         pg.click('#btnNoticeSave')
         pg.wait_for_timeout(350)
+        pg.evaluate("() => { const d=document.getElementById('demoToolsBox'); if(d) d.open = true; }")
+        pg.wait_for_timeout(120)
         pg.click('label.admin-switch')
         pg.wait_for_url('**/index.html', timeout=8000)
         pg.wait_for_timeout(700)
