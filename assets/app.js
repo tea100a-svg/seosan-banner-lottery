@@ -766,6 +766,14 @@
   /* 공문 전용 저단게시대 판정 — 일반 게시대(placement)에는 low 필드가 없고, 저단은 LOW_BOARDS 별도 목록
      (김재봉 님 지시 2026-11-22 "행사 우선은 정치행정, 저단게시대 사용 불가" — 행사 우선·정치행정 접수가 저단을 고르지 못하게 막는다) */
   function isLowBoard(p) { return !!(p && (p.low || p.officialOnly)); }
+  /* 저단·정치행정(LOW_BOARDS)은 코드에 고정된 목록이라 단수 상태·사유를 db.lowEdits 에 저장해 새로고침에도 남긴다 */
+  function persistLowSlots(p) {
+    if (!p || !isLowBoard(p)) return;
+    db.lowEdits = db.lowEdits || {};
+    var le = db.lowEdits[p.id] || (db.lowEdits[p.id] = {});
+    le.slotFlags = p.slotFlags || {};
+    le.slotNotes = p.slotNotes || {};
+  }
   function lowBoardById(id) {
     for (var i = 0; i < LOW_BOARDS.length; i++) { if (LOW_BOARDS[i].id === id) return LOW_BOARDS[i]; }
     return null;
@@ -3887,6 +3895,11 @@
     db.customPlaces = (db.customPlaces || []).filter(function (x) { return x.id !== pid; });
     db.removedPlaces = db.removedPlaces || [];
     if (PLACEMENTS.some(function (x) { return x.id === pid; }) && db.removedPlaces.indexOf(pid) < 0) db.removedPlaces.push(pid);
+    /* 저단·정치행정은 LOW_BOARDS 고정 목록이므로 db.removedLows 에 남겨 새로고침에도 빠져 있게 한다 */
+    if (isLowBoard(p)) {
+      db.removedLows = db.removedLows || [];
+      if (db.removedLows.indexOf(pid) < 0) db.removedLows.push(pid);
+    }
     /* 선택·세부위치·공문 배정에서 함께 정리 */
     [1, 2, 3].forEach(function (n) { var i = rankList(n).indexOf(pid); if (i >= 0) rankList(n).splice(i, 1); });
     if (ui.slots) delete ui.slots[pid];
@@ -4202,7 +4215,7 @@
   }
   /* 단수(또는 동) 일괄 지정 — codes 를 한 번에 바꾼다 */
   function setSlotFlags(pid, codes, flag) {
-    var p = placementById(pid);
+    var p = boardById(pid);
     if (!p || !codes || !codes.length) return null;
     p.slotFlags = p.slotFlags || {};
     var wholeBroken = !!p.broken;
@@ -4227,6 +4240,7 @@
     var list = codes.filter(function (c) { return slotValid(p, c); });
     audit('게시대', p.id + ' ' + p.name + ' — ' + (list.join('·') || '—') + ' ' +
       (flag ? (SLOT_FLAG_LABEL[flag] || flag) + ' 지정 (해당 단수 접수·추첨·선착순 배정 제외)' : '정상 복구'));
+    persistLowSlots(p);
     save();
     refreshPlaces();
     return p;
@@ -5239,6 +5253,7 @@
       removedPlaces: [],
       placeRenames: {},
       lowEdits: {},
+      removedLows: [],
       notice: {
         on: true, kind: 'info',
         title: '2026년 12월 1주차 주간 운영 · 현수막 입고 방식 안내',
@@ -5569,6 +5584,12 @@
       var rn = db.placeRenames[p.id];
       p.name = (rn && String(rn)) ? String(rn) : p.baseName;
     });
+    /* 삭제된 저단·정치행정은 목록에서 빼 둔다 (db.removedLows) */
+    if (db.removedLows && db.removedLows.length) {
+      for (var lri = LOW_BOARDS.length - 1; lri >= 0; lri--) {
+        if (db.removedLows.indexOf(LOW_BOARDS[lri].id) >= 0) LOW_BOARDS.splice(lri, 1);
+      }
+    }
     LOW_BOARDS.forEach(function (p) {
       if (!p.baseName) p.baseName = p.name;
       if (!p.kind) p.kind = (String(p.baseName).indexOf('정치행정)') === 0 ? 'political' : 'official');
@@ -5578,6 +5599,8 @@
       p.broken = !!(le && le.broken);
       p.brokenAt = (le && le.brokenAt) || null;
       p.brokenReason = (le && le.brokenReason) || '';
+      p.slotFlags = (le && le.slotFlags) ? le.slotFlags : {};
+      p.slotNotes = (le && le.slotNotes) ? le.slotNotes : {};
     });
     db.placeRenames && Object.keys(db.placeRenames).forEach(function (pid) { applyNameAliases(boardById(pid)); });
   }
@@ -7431,7 +7454,7 @@
   }
   /* 관리자 — 기타사유 지정 (단수 배열 · 사유 글 · 접수 제한/안내 후 선택) */
   function setSlotOther(pid, codes, text, mode) {
-    var p = placementById(pid);
+    var p = boardById(pid);
     if (!p || !codes || !codes.length) return null;
     var t = String(text == null ? '' : text).trim();
     if (!t) { toast('기타사유 내용을 입력해 주세요.', true); return null; }
@@ -7447,11 +7470,12 @@
     });
     if (!done.length) return null;
     audit('게시대', p.name + ' ' + done.join('·') + ' 기타사유 — ' + t + ' (' + (mode === 'warn' ? '안내 후 선택' : '접수 제한') + ')');
+    persistLowSlots(p);
     save();
     return { pid: p.id, codes: done, text: t, mode: mode === 'warn' ? 'warn' : 'block' };
   }
   function clearSlotOther(pid, codes) {
-    var p = placementById(pid);
+    var p = boardById(pid);
     if (!p) return null;
     (codes || []).forEach(function (c) {
       var code = String(c || '');
@@ -7459,12 +7483,13 @@
       if (p.slotNotes) delete p.slotNotes[code];
     });
     audit('게시대', p.name + ' ' + (codes || []).join('·') + ' 기타사유 해제 (정상 복구)');
+    persistLowSlots(p);
     save();
     return p;
   }
   /* 관리자 — 고장·풀가림·설치불가 상태 + 사유 저장 (사유를 비우면 기본 문구) */
   function setSlotReason(pid, codes, flag, text) {
-    var p = placementById(pid);
+    var p = boardById(pid);
     var f = slotFlagNorm(flag);
     if (!p || !codes || !codes.length || SLOT_FLAG_ORDER.indexOf(f) < 0 || f === 'other') return null;
     var t = String(text == null ? '' : text).trim();
@@ -7481,6 +7506,7 @@
     });
     if (!done.length) return null;
     audit('게시대', p.name + ' ' + done.join('·') + ' ' + (SLOT_FLAG_LABEL[f] || f) + ' — ' + t);
+    persistLowSlots(p);
     save();
     return p;
   }
@@ -7504,7 +7530,7 @@
   /* 관리자 — 상태(고장·풀가림·설치불가·기타사유)마다 사유 입력 팝업을 띄우고 함께 저장한다
      (김재봉 님 2026-11-28 지시 "각각 사유달기 팝업") */
   function askSlotReason(pid, target, flag) {
-    var p = placementById(pid);
+    var p = boardById(pid);
     if (!p) return false;
     var f = slotFlagNorm(flag || 'other');
     if (SLOT_FLAG_ORDER.indexOf(f) < 0) return false;
