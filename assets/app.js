@@ -3913,7 +3913,7 @@
     return place;
   }
   function removePlace(pid) {
-    var p = placementById(pid);
+    var p = boardById(pid);
     if (!p) return null;
     var before = db.placements.length;
     var nWeek = weekRequestCount(pid), off = officialSeatsOf(pid);
@@ -3942,7 +3942,7 @@
     return { id: pid, name: p.name, before: before, rest: db.placements.length };
   }
   function askRemovePlace(pid) {
-    var p = placementById(pid);
+    var p = boardById(pid);
     if (!p) return;
     var nWeek = weekRequestCount(pid), off = officialSeatsOf(pid);
     var warn = (nWeek || off)
