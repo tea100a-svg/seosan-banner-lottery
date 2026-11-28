@@ -7165,17 +7165,16 @@
     return barHTML + sumHTML + tblHTML;
   }
 
-  function showPlacementDetail(id) {
+  function showPlacementDetail(id, opts) {
     /* 공문전용 저단·정치행정 게시대도 상세를 연다 (boardById가 LOW_BOARDS까지 찾는다 · 2026-11-28) */
+    /* opts.slots — 관리자 게시대 관리의 '층·단수 고장/풀가림' 편집으로 열 때만 세부 위치 칸을 붙인다 (2026-11-28) */
     var p = boardById(id);
     if (!p) return;
+    var adminSlots = !!(opts && opts.slots);
     var dKind = boardKindOf(p), dSpecial = (dKind !== 'normal');
     var curWk = weekStartOf(ui.statusWeek || ROUND.postStart);
-    var pdState = { mode: '1w', date: curWk };
     var liveWk = (curWk === weekStartOf(CUR.start));
     var liveLeft = liveWk ? liveAvailOf(p) : 0;
-    var appsR = appsOfWeek(curWk).filter(function (a) { return requestedPlacesOf(a).indexOf(id) >= 0; });
-    var qtyAppsR = appsR.reduce(function (s2, a) { return s2 + qtyOf(a); }, 0);
     var body = '<div class="summary" style="margin-bottom:14px"><dl>' +
       '<dt>위치</dt><dd>' + esc('서산시 ' + p.dong + (p.beopdong && p.beopdong !== p.dong ? ' · 법정동 ' + p.beopdong : '')) + '</dd>' +
       '<dt>주소</dt><dd>' + (p.addr ? esc(p.addr) : '<span style="color:var(--muted)">자료에 미기재 (읍면동으로만 표시)</span>') + '</dd>' +
@@ -7197,41 +7196,10 @@
         ? '<dt>공문 우선</dt><dd><b>의료원담장(F·G ' + officialFullSeatsOf(p) + '면) 공문 우선 100% 허용</b> — 공문 상한 <b>' + officialCapOf(p) + '면</b> (' + esc(officialCapNote(p)) + ') · 공문 배정 시 담장 F1·F2·G1·G2부터 채웁니다</dd>'
         : '') +
       '<dt>상태</dt><dd>' + (p.broken ? '<span class="badge b-broken"><i></i>고장·수리중 — 접수·선착순·추첨 제외</span>' : '<span class="badge b-green"><i></i>정상 운영</span>') + '</dd>' +
-      '<dt>이번 주 접수중</dt><dd>' + (dSpecial ? '<b>접수 대상 아님</b> (공문·정치행정 배정 전용)' : (appsR.length + '건 · ' + qtyAppsR + '매 (1개소당 1매)')) + '</dd>' +
-      (liveWk ? '<dt>진행 중 주간</dt><dd><b>' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + '</b> · 잔여 <b>' + liveLeft + '면</b> — 협회 일괄 게첨이 끝난 주간입니다</dd>' : '') +
       '</dl></div>' +
-      '<div class="sect-label">📅 게시현황 (1주 · 4주 조회) <span>날짜를 고르면 해당 주 기준으로 바로 바뀝니다</span></div>' +
-      '<div class="pd-sched-box" id="pdScheduleBox">' + renderPlacementSchedHTML(p, pdState.mode, pdState.date) + '</div>' +
-      (function () {
-        var bd = Number(p.boards) || 1;
-        if (bd < 2) return '';
-        var rows2 = [];
-        for (var bi = 0; bi < bd; bi++) {
-          var L = colLabelOf(p, bi), ds = dongDescOf(p, L);
-          if (ds) rows2.push('<li><b>' + esc(L) + '동</b> — ' + esc(ds) + '</li>');
-        }
-        return rows2.length ? '<div class="callout info dong-desc-box">' + IC.info + '<div><b>게시동 안내</b><ul class="slot-note-list">' + rows2.join('') + '</ul></div></div>' : '';
-      })() +
-      '<div class="sect-label">세부 위치 · 게시동(A·B·C) × 단(1~5) <span>원하는 자리를 지정 접수할 수 있습니다</span></div>' +
-      (slotNoteList(p).length
-        ? '<div class="callout warn slot-note-box">' + IC.alert + '<div><b>기타사유 안내</b><ul class="slot-note-list">' +
-          slotNoteList(p).map(function (n) {
-            return '<li><b>' + esc(n.code) + (n.name ? ' ' + esc(n.name) : '') + '</b> — ' + esc(n.text) +
-              ' <span class="badge ' + (n.mode === 'warn' ? 'b-amber' : 'b-red') + '"><i></i>' + (n.mode === 'warn' ? '안내 후 선택' : '접수 제한') + '</span></li>';
-          }).join('') + '</ul><div class="sm">' + (slotNoteList(p).some(function (n) { return n.mode === 'warn'; })
-            ? '안내 후 선택 자리는 사유 확인 팝업을 거쳐 선택할 수 있습니다.'
-            : '접수 제한 자리는 추첨·선착순에서 배정되지 않습니다.') + '</div></div></div>'
-        : '') +
-      slotGridHTML(p) +
-      (dSpecial
-        ? '<div class="callout info">' + IC.info + '<div>' + (dKind === 'political'
-            ? '이 게시대는 <b>정치행정 현수막 전용</b>입니다. 일반 광고는 접수·추첨할 수 없고, 정치행정 신청이 <b>정치행정승인팀 승인</b>으로 확정되면 배정됩니다.'
-            : '이 게시대는 <b>시청 공문 현수막 전용 저단게시대</b>입니다. 일반 광고는 접수·추첨할 수 없고, 협회 관리자의 <b>🏛️ 공문 우선접수</b>에서만 배정됩니다.') + '</div></div>'
-        : (p.broken
-        ? '<div class="callout warn">' + IC.alert + '<div>현재 <b>수리중</b>인 게시대입니다. 복구 전까지 접수·추첨·목요일 선착순에서 제외되며, 잔여 매수에도 포함되지 않습니다. (협회 관리자만 상태를 바꿀 수 있습니다.)</div></div>'
-        : (liveWk && liveLeft
-          ? '<div class="callout warn" id="detailLiveCallout">' + IC.alert + '<div><b>진행 중 주간(' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + ') 잔여 ' + liveLeft + '면</b> — 협회 일괄 게첨이 종료된 주간이라 <b>광고사는 직접 설치</b>, <b>일반인은 반드시 광고사에 의뢰</b>해야 합니다. 아래 <b>[진행 주간 잔여석 접수]</b>로 바로 접수할 수 있습니다.</div></div>'
-          : '<div class="callout info">' + IC.info + '<div>한 게시대에는 <b>1매</b>만 표시할 수 있습니다. 잔여 매는 추첨 후 미배정 물량으로 <b>선착순 예약</b>에 공개됩니다.</div></div>')));
+      (adminSlots
+        ? '<div class="sect-label">세부 위치 · 게시동(A·B·C) × 단(1~5) <span>칸을 눌러 고장·풀가림을 지정합니다</span></div>' + slotGridHTML(p)
+        : '');
     openModal({
       title: p.name, sub: p.dong + ' · ' + (dSpecial ? (dKind === 'political' ? '정치행정 게시대' : '공문전용 저단게시대') : '지정게시대') + ' ' + p.id,
       wide: true,
@@ -7244,48 +7212,6 @@
           '<button class="btn" id="mdlFirst" type="button"' + (p.broken ? ' disabled' : '') + '>선착순 예약 보기</button>' +
           '<button class="btn primary" id="mdlApply" type="button"' + (p.broken ? ' disabled' : '') + '>주간 추첨 접수</button>'),
       after: function () {
-        function bindPdSched() {
-          var box = $('#pdScheduleBox');
-          if (!box) return;
-          box.querySelectorAll('[data-pd-mode]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-              pdState.mode = btn.getAttribute('data-pd-mode') === '4w' ? '4w' : '1w';
-              box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
-              bindPdSched();
-            });
-          });
-          box.querySelectorAll('[data-pd-jump]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-              pdState.date = btn.getAttribute('data-pd-jump') || pdState.date;
-              pdState.mode = '1w';
-              box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
-              bindPdSched();
-            });
-          });
-          var dp = $('#pdDatePick');
-          if (dp) dp.addEventListener('change', function () {
-            if (!this.value) return;
-            pdState.date = this.value;
-            box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
-            bindPdSched();
-          });
-          onEl('#pdPrevWk', 'click', function () {
-            pdState.date = addDays(weekStartOf(pdState.date), -7);
-            box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
-            bindPdSched();
-          });
-          onEl('#pdNextWk', 'click', function () {
-            pdState.date = addDays(weekStartOf(pdState.date), 7);
-            box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
-            bindPdSched();
-          });
-          onEl('#pdThisWk', 'click', function () {
-            pdState.date = weekStartOf(ROUND.postStart);
-            box.innerHTML = renderPlacementSchedHTML(p, pdState.mode, pdState.date);
-            bindPdSched();
-          });
-        }
-        bindPdSched();
         if (p.broken || dSpecial) return;
         onEl('#mdlLive', 'click', function () { closeModal(); goPage('remain.html?place=' + encodeURIComponent(id)); });
         onEl('#mdlApply', 'click', function () {
@@ -17982,10 +17908,10 @@
       /* 전체 고장(수리중) 게시대는 칸을 누르면 그 층·단수만 정상으로 풀린다 (나머지는 고장 유지) */
       var sfNext = (sfP && sfP.broken && sfCur === 'fault') ? ''
         : (sfCur === '' ? 'fault' : (sfCur === 'fault' ? 'cover' : (sfCur === 'cover' ? 'uninstall' : (sfCur === 'uninstall' ? 'aged' : (sfCur === 'aged' ? 'other' : '')))));
-      if (sfCur === 'other' && sfNext === '') { clearSlotOther(sfPid, [sfCode]); showPlacementDetail(sfPid); toast((sfP ? sfP.name + ' ' + sfCode : '') + ' — 정상 복구'); return; }
+      if (sfCur === 'other' && sfNext === '') { clearSlotOther(sfPid, [sfCode]); showPlacementDetail(sfPid, { slots: true }); toast((sfP ? sfP.name + ' ' + sfCode : '') + ' — 정상 복구'); return; }
       if (sfNext === 'other') { askSlotOther(sfPid, 's' + sfCode); return; }
       setSlotFlag(sfPid, sfCode, sfNext);
-      showPlacementDetail(sfPid);
+      showPlacementDetail(sfPid, { slots: true });
       toast(sfP ? (sfP.name + ' ' + sfCode + ' — ' + (sfNext ? SLOT_FLAG_LABEL[sfNext] + '(으)로 지정 · 추첨·선착순 배정 제외' : '정상 복구')) : '', false);
       return;
     }
@@ -17998,12 +17924,12 @@
         else if (c.charAt(0) === sbT.charAt(1) && c.length > 1) sbCodes.push(c);
       });
       setSlotFlags(sbPid, sbCodes, sbF);
-      showPlacementDetail(sbPid);
+      showPlacementDetail(sbPid, { slots: true });
       var sbName = sbT.charAt(0) === 'r' ? sbT.slice(1) + '층(' + sbT.slice(1) + '단)' : sbT.charAt(1) + '동 전체';
       toast(sbP ? (sbP.name + ' ' + sbName + ' ' + sbCodes.length + '면 — ' + (sbF ? SLOT_FLAG_LABEL[sbF] : '정상') + ' 처리') : '', false);
       return;
     }
-    if (el.hasAttribute('data-slotadmin')) { showPlacementDetail(el.getAttribute('data-slotadmin')); return; }
+    if (el.hasAttribute('data-slotadmin')) { showPlacementDetail(el.getAttribute('data-slotadmin'), { slots: true }); return; }
     if (el.hasAttribute('data-delplace')) { askRemovePlace(el.getAttribute('data-delplace')); return; }
     if (el.hasAttribute('data-renameplace')) { askRenamePlace(el.getAttribute('data-renameplace')); return; }
     if (el.hasAttribute('data-kindfilter')) { ui.adminKind = el.getAttribute('data-kindfilter') || ''; renderAdminPlace(); return; }
@@ -19748,7 +19674,7 @@
     setSlot: function (pid, code) { return setSlot(pid, code || '', 1); },
     slotOf: function (pid) { return (ui.slots || {})[pid] || ''; },
     slotsRead: function () { var v = readApply(); return { 1: v.priority1Slots.slice(), 2: v.priority2Slots.slice(), 3: v.priority3Slots.slice() }; },
-    placeDetail: function (id) { showPlacementDetail(id); return String($('#modalBody').innerHTML); },
+    placeDetail: function (id, opts) { showPlacementDetail(id, opts); return String($('#modalBody').innerHTML); },
     dongDesc: function (pid, letter) { return dongDescOf(boardById(pid), letter); },
     awardTxt: function (a) { return awardsTxt(a, 20); },
     slotAssign: function (a) { return slotAssignTxt(a); },
