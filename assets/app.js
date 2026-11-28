@@ -3264,9 +3264,34 @@
       return a.status !== '반려' && weekStartOf(a.start || ROUND.postStart) === s && requestedPlacesOf(a).indexOf(pid) >= 0;
     });
   }
-  function weekRequestCountOf(pid, week) { return weekAppsOf(pid, week).length; }
+  function weekRequestCountOf(pid, week) { return (weekAggOf(week).req[pid] || 0); }
   /* 한 게시대의 그 주 배정 면수 — 추첨 배정 + 공문 우선배정(확정) */
-  function weekAssignedSeatsOf(pid, week) {
+  function weekAssignedSeatsOf(pid, week) { return (weekAggOf(week).asg[pid] || 0); }
+  /* ── 주차 집계 캐시 (2026-11-28 검색 입력 렉 개선) ─────────────────────
+     게시대현황 카드 113개가 카드마다 db.apps 전체를 훑던 것을 주차당 한 번만 훑도록 캐시.
+     데이터가 바뀌면 save()/refreshPlaces() 에서 비운다. */
+  var WEEK_AGG = { key: '', req: null, asg: null, all: null };
+  function weekAggReset() { WEEK_AGG = { key: '', req: null, asg: null, all: null }; }
+  function weekAggOf(week) {
+    var s = weekStartOf(week || activeWeekStart());
+    if (WEEK_AGG.key === s && WEEK_AGG.all) return WEEK_AGG;
+    var req = {}, asg = {};
+    var all = db.apps.filter(function (a) { return weekStartOf(a.start || ROUND.postStart) === s; });
+    all.forEach(function (a) {
+      if (a.status !== '반려') {
+        requestedPlacesOf(a).forEach(function (pid) { if (pid) req[pid] = (req[pid] || 0) + 1; });
+      }
+      if (a.status === '반려' || a.status === '미입고취소' || a.status === '미입금취소' || a.status === '본인취소' || a.status === '접수취소') return;
+      (a.awardedPlaces || a.assignedPlaces || []).forEach(function (x) { if (x && x.pid) asg[x.pid] = (asg[x.pid] || 0) + (x.qty || 1); });
+    });
+    (db.official || []).forEach(function (o) {
+      if (o.status !== 'active' || !officialCoversWeek(o, s)) return;
+      (o.pids || []).forEach(function (x) { if (x) asg[x] = (asg[x] || 0) + 1; });
+    });
+    WEEK_AGG = { key: s, req: req, asg: asg, all: all };
+    return WEEK_AGG;
+  }
+  function weekAssignedSeatsOfSlow(pid, week) {
     var s = weekStartOf(week || activeWeekStart()), n = 0;
     appsOfWeek(s).forEach(function (a) {
       if (a.status === '반려' || a.status === '미입고취소' || a.status === '미입금취소' || a.status === '본인취소' || a.status === '접수취소') return;
@@ -3841,6 +3866,7 @@
      · 추가분은 db.customPlaces 에 남겨 새로고침(load) 후에도 유지되고,
        삭제한 기존 게시대는 db.removedPlaces 에 남겨 hydrate 에서 다시 살아나지 않는다. */
   function refreshPlaces() {
+    weekAggReset();
     renderStatus();
     renderApply();
     renderFirst();
@@ -5606,6 +5632,7 @@
   }
 
   function save() {
+    weekAggReset();
     try {
       var copy = JSON.parse(JSON.stringify(db));
       (copy.apps || []).forEach(function (a) {
@@ -6578,7 +6605,13 @@
     /* 주별 현황 달력 — 선택 주차가 접수 건수·배정·잔여에 그대로 연결된다 */
     renderStatusCal();
 
-    /* 구분별로 필터링된 게시대를 각 섹션 안에 그린다 (일반·공문전용·정치행정) */
+    renderStatusLists();
+  }
+  /* 게시대현황 목록만 다시 그리는 경량 경로 — 검색어 입력 때 통계·달력·주간 스트립을 건너뛰다 (2026-11-28 검색 렉 개선) */
+  function renderStatusLists() {
+    if (!has('statusKindSections')) return;
+    var wk = weekStartOf(ui.statusWeek || ROUND.postStart);
+    var kN = boardKindCounts();
     ui.statusAll = true;
     KIND_SECS.forEach(function (s) {
       var kList = statusVisible(s.k);
@@ -6595,7 +6628,7 @@
       }
     });
     applyKindSections();
-    /* 전체 지도 — 열려 있을 때만 마커를 다시 그리고, 구분 칩은 항상 최신 상태로 둡니다 */
+    /* 전체 지도 — 접혀 있으면 renderStatusMap이 즉시 빠져나가 마커를 다시 그리지 않는다 */
     renderStatusMap();
   }
 
@@ -18782,27 +18815,38 @@
         renderStatusMap();
       });
     }
-    onEl('#statusSearch', 'input', function () {
-      ui.q = this.value; ui.statusPage = 0;
-      expandPlacesForSearch(this.value);
-      renderStatus();
+    /* 게시대현황 검색 — 140ms 디바운스, 한글 IME 조합 중에는 건너뛰고, 목록만 다시 그린다 (2026-11-28 검색 렉 개선) */
+    var _statusSearchT = 0;
+    function applyStatusSearchNow() {
+      var el = $('#statusSearch');
+      if (_statusSearchT) { clearTimeout(_statusSearchT); _statusSearchT = 0; }
+      if (!el) return;
+      ui.q = String(el.value || ''); ui.statusPage = 0;
+      expandPlacesForSearch(ui.q);
+      renderStatusLists();
+    }
+    onEl('#statusSearch', 'input', function (e) {
+      if (e && (e.isComposing || e.keyCode === 229)) return;   /* 한글 조합 중 — compositionend에서 한 번만 */
+      var v = this.value;
+      if (_statusSearchT) clearTimeout(_statusSearchT);
+      _statusSearchT = setTimeout(function () {
+        _statusSearchT = 0;
+        ui.q = v; ui.statusPage = 0;
+        expandPlacesForSearch(v);
+        renderStatusLists();
+      }, 140);
     });
-    onEl('#statusSearch', 'compositionend', function () {
-      ui.q = this.value; ui.statusPage = 0;
-      expandPlacesForSearch(this.value);
-      renderStatus();
-    });
+    onEl('#statusSearch', 'compositionend', function () { applyStatusSearchNow(); });
+    onEl('#statusSearch', 'search', function () { applyStatusSearchNow(); });    /* type=search 지우기(×)·Enter — 즉시 */
+    onEl('#statusSearch', 'change', function () { applyStatusSearchNow(); });
     onEl('#statusSearch', 'keydown', function (e) {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      ui.q = this.value; ui.statusPage = 0;
-      expandPlacesForSearch(this.value);
-      renderStatus();
+      applyStatusSearchNow();
     });
     onEl('#statusDong', 'change', function () { ui.dong = this.value || ''; ui.statusPage = 0; renderStatus(); });
     onEl('#pickDong', 'change', function () { ui.pDong = this.value || ''; ui.pickPage = 0; renderPickUI(); });
     onEl('#pickSearch', 'input', function () { ui.pq = this.value; ui.pickPage = 0; renderPickUI(); });
-    if ($('#statusSearch')) onEl('#statusSearch', 'input', function () { ui.q = this.value; ui.statusPage = 0; expandPlacesForSearch(this.value); renderStatus(); });
 
     onEl('#btnDraw', 'click', startDraw);
     onEl('#payAll', 'change', function () {
