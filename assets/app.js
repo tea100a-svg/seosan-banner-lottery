@@ -5705,9 +5705,17 @@
   }
   function boardMapBtnsHTML(p) {
     var lk = boardLinksOf(p);
-    var mapBtn = '<button class="btn sm ghost" data-boardmap="' + esc(p.id) + '" type="button" title="카카오맵(다음지도) 팝업으로 보기">🗺️ 지도보기</button>';
-    var roadBtn = '<button class="btn sm ghost" data-boardroad="' + esc(p.id) + '" type="button" title="카카오맵 로드뷰 팝업으로 보기"' + (lk && lk.road ? '' : ' disabled') + '>📷 로드뷰보기</button>';
+    var mapBtn = '<button class="btn sm ghost" data-boardmap="' + esc(p.id) + '" type="button" title="카카오맵(다음지도) 팝업으로 보기">🗺️ 지도</button>';
+    var roadBtn = '<button class="btn sm ghost" data-boardroad="' + esc(p.id) + '" type="button" title="카카오맵 로드뷰 팝업으로 보기"' + (lk && lk.road ? '' : ' disabled') + '>📷 로드뷰</button>';
     return mapBtn + roadBtn;
+  }
+  /* 게시대 카드 버튼 줄 — 왼쪽에 [🗺️ 지도][📷 로드뷰], 오른쪽에 [상세][선택·접수]
+     (김재봉 님 2026-11-28 지시. 게시대현황·주간추첨·행사·상시·선착순·공문배정 카드 공통) */
+  function fcActHTML(p, rightHTML) {
+    return '<div class="fc-act">' +
+      '<span class="fc-act-l">' + boardMapBtnsHTML(p) + '</span>' +
+      '<span class="fc-act-r">' + (rightHTML || '') + '</span>' +
+      '</div>';
   }
   function showBoardFeatureSoon(pid, kind) {
     var p = boardById(pid);
@@ -5724,14 +5732,11 @@
     var isLive = (wk === weekStartOf(CUR.start));
     var liveLeft = isLive ? liveAvailOf(p) : 0;
     var fsum = slotFlagSummary(p);
-    /* 공문전용·정치행정 게시대는 일반 접수·추첨 대상이 아니다 — 접수 버튼 자리에 전용 안내 버튼을 둔다 (2026-11-28) */
+    /* 공문전용·정치행정 게시대는 일반 접수·추첨 대상이 아니다 — 접수 버튼 없이 [상세]만 둔다 */
     var kind = boardKindOf(p), special = (kind !== 'normal');
-    var liveBtn = special
-      ? '<button class="btn sm ghost" type="button" disabled title="' + (kind === 'political'
-          ? '정치행정 현수막 전용 게시대 — 정치행정승인팀 승인 후 배정되며, 일반 접수·추첨에서는 선택할 수 없습니다.'
-          : '시청 공문 현수막 전용 저단게시대 — 관리자 공문 우선접수에서만 배정되며, 일반 접수·추첨에서는 선택할 수 없습니다.') + '">' +
-          (kind === 'political' ? '정치행정전용' : '공문전용') + '</button>'
-      : (isLive
+    /* 공문전용·정치행정 카드는 제목 옆 🏛️/⚖️ 배지로 이미 구분되므로
+       아래 버튼 영역의 비활성 [공문전용]/[정치행정전용] 버튼은 두지 않는다 (김재봉 님 2026-11-28 지시 "중복 삭제") */
+    var liveBtn = special ? '' : (isLive
         ? '<button class="btn sm ' + (liveLeft && !off ? 'primary' : '') + '" data-fclive="' + esc(p.id) + '" type="button"' +
           ((liveLeft && !off) ? '' : ' disabled') + '>' + (off ? '불가' : (liveLeft ? '잔여석 접수' : '마감')) + '</button>'
         : '<button class="btn sm primary" data-apply="' + esc(p.id) + '" data-week="' + wk + '" type="button"' + (off ? ' disabled' : '') + '>' + (off ? '불가' : '접수') + '</button>');
@@ -5748,11 +5753,8 @@
         (special ? ' · ' + (kind === 'political' ? '정치행정 현수막 전용' : '시청 공문 전용') : '') +
         (assigned ? ' · 배정 ' + assigned + '면' : '') + '</span></div>' +
       countHtml +
-      '<div class="fc-act">' +
-        boardMapBtnsHTML(p) +
-        '<button class="btn sm ghost hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
-        liveBtn +
-      '</div></div>';
+      fcActHTML(p, '<button class="btn sm ghost hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' + liveBtn) +
+      '</div>';
   }
 
   /* 테마 배지 + 주소·위치설명 (자료에 있는 게시대만) */
@@ -7457,11 +7459,10 @@
         '<span>' + esc(p.dong) + ' · ' + esc(p.day) + '요일 설치 · 정원 ' + p.cap + '면' +
           (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
       '<div class="fcount"><b>' + reqN + '</b><span>/' + p.cap + '건 접수중</span></div>' +
-      '<div class="fc-act">' +
-        (!off ? '<button class="btn sm ghost rand-excl-btn has-tip' + (excluded ? ' is-excl' : '') + '" type="button" data-randexcl="' + esc(p.id) + '" aria-pressed="' + (excluded ? 'true' : 'false') + '" data-tip="체크해 두면 무작위 선택을 눌렀을 때 이 게시대는 후보에서 자동으로 빠져요.">' + (excluded ? '🚫 제외됨' : '무작위 제외') + '</button>' : '') +
+      fcActHTML(p, (!off ? '<button class="btn sm ghost rand-excl-btn has-tip' + (excluded ? ' is-excl' : '') + '" type="button" data-randexcl="' + esc(p.id) + '" aria-pressed="' + (excluded ? 'true' : 'false') + '" data-tip="체크해 두면 무작위 선택을 눌렀을 때 이 게시대는 후보에서 자동으로 빠져요.">' + (excluded ? '🚫 제외됨' : '무작위 제외') + '</button>' : '') +
         (picked && !off ? '<button class="btn sm ghost hide-sm" type="button" data-slotjump="' + esc(p.id) + '" title="세부 위치(게시동·단) 지정">위치</button>' : '') +
-        '<button class="btn sm ' + (picked ? 'ok' : (off || adjB ? '' : 'primary')) + '" type="button"' + (off ? ' disabled' : '') + '>' + esc(btn) + '</button>' +
-      '</div></div>';
+        '<button class="btn sm ' + (picked ? 'ok' : (off || adjB ? '' : 'primary')) + '" type="button"' + (off ? ' disabled' : '') + '>' + esc(btn) + '</button>') +
+      '</div>';
   }
 
   /* 3단계 — 선택 현황(순위별 선택 수 / 입력 수량)과 카드 목록 */
@@ -10286,10 +10287,8 @@
             : (fsum ? ' · ' + esc(fsum) + (fcIsLive() ? '' : ' · 풀가림·기타는 목요일 선착순만') : '')) +
           (dongPriorityShort(p) ? ' · ' + esc(dongPriorityShort(p)) : '') + '</span></div>' +
         '<div class="fcount' + (rem ? '' : ' sold') + '"><b>' + rem + '</b><span>' + (p.broken ? '가용 면 제외' : (fcIsLive() ? '잔여 면' : '잔여 매')) + '</span></div>' +
-        '<div class="fc-act">' +
-          '<button class="btn sm ' + (picked ? 'ok' : (label === '담기' ? 'primary' : '')) + '" data-fcpick="' + p.id + '" type="button"' +
-            ((open && rem && !bk && !yBlocked) ? '' : ' disabled') + '>' + label + '</button>' +
-        '</div>' +
+        fcActHTML(p, '<button class="btn sm ' + (picked ? 'ok' : (label === '담기' ? 'primary' : '')) + '" data-fcpick="' + p.id + '" type="button"' +
+            ((open && rem && !bk && !yBlocked) ? '' : ' disabled') + '>' + label + '</button>') +
         '</div>';
     }).join('');
   }
@@ -13178,11 +13177,9 @@
         '</b><span>' + esc(p.dong || '서산시') + ' · ' + esc(p.day) + '요일 설치 · 정원 ' + p.cap + '면 · ' + rule +
           (p.low ? '' : ' · ' + weekRequestCount(p.id) + '건 접수중') + '</span></div>' +
         '<div class="fcount' + (remOff ? '' : ' sold') + '"><b>' + off + '/' + capOff + '</b><span>공문 면</span></div>' +
-        '<div class="fc-act">' +
-          (on && !p.low ? '<button class="btn sm ' + ((ui.offSlots && ui.offSlots[p.id]) ? 'ok' : 'ghost') + '" data-offslotmodal="' + esc(p.id) + '" type="button">' + ((ui.offSlots && ui.offSlots[p.id]) ? '📍 ' + esc(slotChipTxt(p, ui.offSlots[p.id])) : '📍 동·단수') + '</button>' : '') +
+        fcActHTML(p, (on && !p.low ? '<button class="btn sm ' + ((ui.offSlots && ui.offSlots[p.id]) ? 'ok' : 'ghost') + '" data-offslotmodal="' + esc(p.id) + '" type="button">' + ((ui.offSlots && ui.offSlots[p.id]) ? '📍 ' + esc(slotChipTxt(p, ui.offSlots[p.id])) : '📍 동·단수') + '</button>' : '') +
           '<button class="btn sm ' + (on ? 'ok' : (full || adjB ? '' : 'primary')) + '" data-offpick="' + esc(p.id) + '" type="button"' +
-            ((!on && (full || adjB)) ? ' disabled' : '') + '>' + btnLbl + '</button>' +
-        '</div>' +
+            ((!on && (full || adjB)) ? ' disabled' : '') + '>' + btnLbl + '</button>') +
       '</div>';
     }).join('') : '<div class="empty" style="grid-column:1/-1">배정할 수 있는 게시대가 없습니다.</div>';
     if ($('#offSlots')) $('#offSlots').innerHTML = offSlotListHTML();
