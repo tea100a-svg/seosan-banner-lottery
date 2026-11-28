@@ -158,6 +158,22 @@ a{color:var(--blue)}
 .chip.active{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(10,28,51,.22)}
 .chip.danger{color:var(--bad);border-color:#f0c4c4}
 .chip.danger.active{background:var(--bad);border-color:var(--bad);color:#fff;box-shadow:0 4px 12px rgba(194,54,54,.25)}
+/* 게시대현황 — 일반·공문전용·정치행정 3개 접기/펼치기(아코디언) 섹션 (2026-11-28 김재봉 님 지시) */
+.kind-sections{display:flex;flex-direction:column;gap:10px;margin:0 0 4px}
+.kind-sec{border:1px solid #c9dbf5;border-radius:14px;background:#fff;box-shadow:0 3px 10px rgba(21,60,120,.07);overflow:hidden}
+.kind-sec-head{display:flex;align-items:center;gap:10px;width:100%;padding:14px 16px;background:linear-gradient(180deg,#f6faff,#e8f1fe);border:0;border-bottom:1px solid transparent;cursor:pointer;text-align:left;font:inherit;color:var(--navy);transition:.15s}
+.kind-sec-head:hover{background:linear-gradient(180deg,#eef5ff,#dbe9fd);border-color:#b7d0f2}
+.kind-sec-head[aria-expanded="true"]{background:linear-gradient(180deg,#2a6ee4,#1a53bd);color:#fff;border-bottom-color:#1a53bd;box-shadow:0 6px 16px rgba(29,95,214,.24)}
+.ks-ico{font-size:17px;line-height:1;flex:0 0 auto}
+.ks-label{font-size:14.5px;font-weight:800;letter-spacing:-.01em}
+.ks-count{margin-left:auto;font-size:12.5px;font-weight:700;color:#1a53bd;background:#fff;border:1px solid #d4e2f8;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.ks-count b{font-weight:800;font-variant-numeric:tabular-nums}
+.kind-sec-head[aria-expanded="true"] .ks-count{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.35);color:#fff}
+.ks-caret{font-size:12px;color:currentColor;opacity:.7;transition:transform .2s;flex:0 0 auto}
+.kind-sec-head[aria-expanded="true"] .ks-caret{transform:rotate(180deg)}
+.kind-sec-body{padding:12px 16px 16px}
+.kind-filter{margin:0 0 12px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}
+@media (max-width:640px){.ks-label{font-size:13.5px}.kind-sec-head{padding:12px 13px;gap:8px}.kind-sec-body{padding:10px 10px 14px}.ks-count{font-size:11.5px;padding:2px 8px}}
 .search{position:relative}
 .search input{
   width:230px;padding:9px 13px 9px 34px;border:1px solid var(--line);border-radius:10px;background:#fff;
