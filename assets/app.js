@@ -751,6 +751,31 @@
     for (var i = 0; i < LOW_BOARDS.length; i++) { if (LOW_BOARDS[i].id === id) return LOW_BOARDS[i]; }
     return null;
   }
+  /* ── 게시대 구분 (김재봉 님 2026-11-28 지시: 게시대현황·게시현황에 정치행정·공문전용 추가) ──
+     · normal    = 일반 지정게시대(81개소·575면) — 주간 추첨·상시·선착순 접수 대상
+     · official  = 공문전용 저단게시대(저) … 30개소) — 시청 공문 현수막만 배정
+     · political = 정치행정 게시대(정치행정) … 2개소) — 정치행정 현수막만 배정(정치행정승인팀 승인) */
+  function boardKindOf(p) {
+    if (!p) return 'normal';
+    if (String(p.name || '').indexOf('정치행정)') === 0) return 'political';
+    if (p.low || p.officialOnly) return 'official';
+    return 'normal';
+  }
+  function boardKindBadgeHTML(p) {
+    var k = boardKindOf(p);
+    if (k === 'normal') return '';
+    return ' <span class="tag kind-' + k + '" title="' + (k === 'political'
+      ? '정치행정 현수막 전용 — 정치행정승인팀 승인 후 배정됩니다 (일반 접수·추첨 대상 아님)'
+      : '시청 공문 현수막 전용 저단게시대 — 관리자 공문 접수에서만 배정됩니다 (일반 접수·추첨 대상 아님)') + '">' +
+      (k === 'political' ? '⚖️ 정치행정' : '🏛️ 공문전용') + '</span>';
+  }
+  /* 현황·게시현황이 함께 쓰는 전체 게시대 목록 — 일반(81) + 저단·정치행정(32) */
+  function allBoardList() { return db.placements.concat(LOW_BOARDS); }
+  function boardKindCounts() {
+    var n = { normal: db.placements.length, official: 0, political: 0, low: 0, all: db.placements.length + LOW_BOARDS.length };
+    LOW_BOARDS.forEach(function (p) { var k = boardKindOf(p); n[k] += 1; n.low += 1; });
+    return n;
+  }
   /* 게시대(일반 77개소) + 공문 전용 저단(32개소) — 관리자 공문 배정·작업지시서 전용 */
   function boardById(id) {
     return placementById(id) || lowBoardById(id);
@@ -3100,6 +3125,7 @@
     locAddrOpen: false, locAddrRows: {}, coverOk: {}, fcCover: {}, otherOk: {},
     suLicName: '', suLicData: '', suLicMime: '', licFromMember: false,
     adminSub: 'draw', guideSub: 'file', sort: 'default', pSort: 'default', calOpen: false, statusPage: 0, pickPage: 0, statusAll: true, pickAll: false,
+    boardKind: '', bsKind: '',
     statusWeek: ROUND.postStart, applyWeek: ROUND.postStart, offWeek: ROUND.postStart, drawWeek: ROUND.postStart, locWeek: ROUND.postStart, calMonth: {}, offSlots: {},
     themeSel: {}, themeSearch: '', themeEditSel: {},
     /* 현장 게첨사진 — 게시대 동 단위 등록 화면의 선택값 (2026-11-23) */
@@ -5684,19 +5710,30 @@
     var isLive = (wk === weekStartOf(CUR.start));
     var liveLeft = isLive ? liveAvailOf(p) : 0;
     var fsum = slotFlagSummary(p);
-    var liveBtn = isLive
-      ? '<button class="btn sm ' + (liveLeft && !off ? 'primary' : '') + '" data-fclive="' + esc(p.id) + '" type="button"' +
-        ((liveLeft && !off) ? '' : ' disabled') + '>' + (off ? '불가' : (liveLeft ? '잔여석 접수' : '마감')) + '</button>'
-      : '<button class="btn sm primary" data-apply="' + esc(p.id) + '" data-week="' + wk + '" type="button"' + (off ? ' disabled' : '') + '>' + (off ? '불가' : '접수') + '</button>';
+    /* 공문전용·정치행정 게시대는 일반 접수·추첨 대상이 아니다 — 접수 버튼 자리에 전용 안내 버튼을 둔다 (2026-11-28) */
+    var kind = boardKindOf(p), special = (kind !== 'normal');
+    var liveBtn = special
+      ? '<button class="btn sm ghost" type="button" disabled title="' + (kind === 'political'
+          ? '정치행정 현수막 전용 게시대 — 정치행정승인팀 승인 후 배정되며, 일반 접수·추첨에서는 선택할 수 없습니다.'
+          : '시청 공문 현수막 전용 저단게시대 — 관리자 공문 우선접수에서만 배정되며, 일반 접수·추첨에서는 선택할 수 없습니다.') + '">' +
+          (kind === 'political' ? '정치행정전용' : '공문전용') + '</button>'
+      : (isLive
+        ? '<button class="btn sm ' + (liveLeft && !off ? 'primary' : '') + '" data-fclive="' + esc(p.id) + '" type="button"' +
+          ((liveLeft && !off) ? '' : ' disabled') + '>' + (off ? '불가' : (liveLeft ? '잔여석 접수' : '마감')) + '</button>'
+        : '<button class="btn sm primary" data-apply="' + esc(p.id) + '" data-week="' + wk + '" type="button"' + (off ? ' disabled' : '') + '>' + (off ? '불가' : '접수') + '</button>');
+    var countHtml = special
+      ? '<div class="fcount"><b>' + (assigned || 0) + '/' + p.cap + '</b><span>' + (kind === 'political' ? '정치행정 배정' : '공문 배정') + '</span></div>'
+      : '<div class="fcount' + (isLive && !liveLeft ? ' sold' : '') + '"><b>' + (isLive ? liveLeft : reqN) + '</b><span>' + (isLive ? '잔여 면' : '/' + p.cap + '건 접수중') + '</span></div>';
     return '<div class="fc-item' + (off ? ' off' : '') + '" data-detail="' + esc(p.id) + '" data-week="' + wk + '" role="button" tabindex="0" aria-label="' + esc(p.name + ' 상세 보기') + '">' +
-      '<div class="fmain"><b>' + esc(p.name) +
+      '<div class="fmain"><b>' + esc(p.name) + boardKindBadgeHTML(p) +
       (p.youthProtect ? ' <span class="tag broken">🚸 초인접</span>' : '') +
       (p.broken ? ' <span class="tag broken">고장·수리중</span>'
         : (slotAllDown(p) ? ' <span class="tag broken">전체 고장·풀가림</span>'
           : (fsum ? ' <span class="tag broken">' + esc(fsum) + '</span>' : ''))) + '</b>' +
       '<span>' + esc(p.dong) + ' · ' + esc(p.day) + '요일 설치 · 정원 ' + p.cap + '면' +
+        (special ? ' · ' + (kind === 'political' ? '정치행정 현수막 전용' : '시청 공문 전용') : '') +
         (assigned ? ' · 배정 ' + assigned + '면' : '') + '</span></div>' +
-      '<div class="fcount' + (isLive && !liveLeft ? ' sold' : '') + '"><b>' + (isLive ? liveLeft : reqN) + '</b><span>' + (isLive ? '잔여 면' : '/' + p.cap + '건 접수중') + '</span></div>' +
+      countHtml +
       '<div class="fc-act">' +
         boardMapBtnsHTML(p) +
         '<button class="btn sm ghost hide-sm" data-detail="' + esc(p.id) + '" data-week="' + wk + '" type="button">상세</button>' +
@@ -5834,7 +5871,9 @@
 
   function statusVisible() {
     var q = ui.q.trim();
-    var list = db.placements.filter(function (p) {
+    /* 일반 + 공문전용 + 정치행정 전체 (2026-11-28) — 구분 칩으로 골라 본다 */
+    var list = allBoardList().filter(function (p) {
+      if (ui.boardKind && boardKindOf(p) !== ui.boardKind) return false;
       if (ui.theme && (p.themes || []).indexOf(ui.theme) < 0) return false;
       if (ui.day && p.day !== ui.day) return false;
       if (ui.dong && p.dong !== ui.dong) return false;
@@ -5920,7 +5959,7 @@
     if (b) {
       b.setAttribute('aria-expanded', ui.placeFold ? 'true' : 'false');
       b.innerHTML = (ui.placeFold ? '📋 게시대 현황 접기' : '📋 게시대 현황 펼쳐보기') +
-        ' (<b id="btnPlaceCount">' + (db.placements ? db.placements.length : 77) + '</b>개소)';
+        ' (<b id="btnPlaceCount">' + ((db.placements ? db.placements.length : 81) + LOW_BOARDS.length) + '</b>개소)';
     }
     if ($('#placeFoldHint')) $('#placeFoldHint').classList.toggle('hidden', !!ui.placeFold);
   }
@@ -5991,13 +6030,17 @@
     var w = weekInfoOf(wk), dd = dday(w.drawDate);
     $('#roundDue').textContent = '입고 마감 ' + dfmt(ROUND.deliverBy);
     $('#roundName').textContent = ROUND.label + ' 주간 추첨';
-    $('#stCount').textContent = db.placements.length;
-    $('#stCap').textContent = caps;
+    /* 게시대 수 — 일반 81 + 공문전용·정치행정 32 = 113개소, 정원도 저단 1면씩 함께 센다 (2026-11-28) */
+    var kN = boardKindCounts();
+    var lowCapSum = LOW_BOARDS.reduce(function (s, p) { return s + (Number(p.cap) || 1); }, 0);
+    $('#stCount').textContent = kN.all;
+    $('#stCap').textContent = caps + lowCapSum;
+    if ($('#stKindNote')) $('#stKindNote').textContent = '일반 ' + kN.normal + ' · 🏛️ 공문전용 ' + kN.official + ' · ⚖️ 정치행정 ' + kN.political;
     if ($('#stRequests')) $('#stRequests').textContent = appsR.length;
     if ($('#stWeekTxt')) $('#stWeekTxt').textContent = weekRangeTxt(wk);
 
     var stats = [
-      { label: '지정게시대', val: db.placements.length, unit: '개소', ic: IC.grid, sub: '총 ' + caps + '면 · 고장 ' + bkN + '개소(가용 제외)', accent: false },
+      { label: '지정게시대', val: kN.all, unit: '개소', ic: IC.grid, sub: '총 ' + (caps + lowCapSum) + '면 · 일반 ' + kN.normal + ' + 공문전용·정치행정 ' + kN.low + ' · 고장 ' + bkN + '개소(가용 제외)', accent: false },
       { label: weekKpiLabel(wk) + ' 접수 현황', val: appsR.length, unit: '건', ic: IC.doc, sub: '신청 ' + qtyR + '매 · 배정 ' + ws.awarded + '매 · 공문 ' + ws.official + '면', accent: true },
       { label: '추첨 경쟁률', val: (capAvail ? (qtyR / capAvail * 100).toFixed(0) : '0'), unit: '%', ic: IC.check, sub: '신청 ' + qtyR + '매 / 가용 ' + capAvail + '면 · ' + weekRangeTxt(wk), accent: false },
       { label: '해당 주 추첨', val: (dd > 0 ? 'D-' + dd : (dd === 0 ? '오늘' : '완료')), unit: '', ic: IC.clock, sub: dfmt(w.drawDate) + ' ' + w.drawTime + ' · 월요일 전산 추첨', accent: false }
@@ -6064,6 +6107,15 @@
     if ($('#statusReqInfo')) $('#statusReqInfo').innerHTML = '<b>' + weekRangeTxt(wk) + '</b> 게첨 주 — 접수 <b>' + appsR.length + '건</b> · 접수수량 <b>' + qtyR + '매 / ' + reqPlacesN + '개소</b> · 배정 <b>' + ws.awarded + '매</b> · 잔여 <b>' + ws.left + '면</b>. 카드의 <b>N/M건 접수중</b>은 그 게시대를 1·2·3순위로 신청한 건수입니다.';
 
     if ($('#statusSortChips')) $('#statusSortChips').innerHTML = sortChipsHTML(ui.sort, 'sort');
+    /* 게시대 구분 칩 — 전체 / 일반 / 공문전용 / 정치행정 (기존 필터 순서는 그대로 두고 위에 한 줄 더) */
+    if ($('#statusKindChips')) $('#statusKindChips').innerHTML = [
+      ['', '전체', kN.all], ['normal', '일반', kN.normal],
+      ['official', '🏛️ 공문전용', kN.official], ['political', '⚖️ 정치행정', kN.political]
+    ].map(function (x) {
+      var on = (ui.boardKind || '') === x[0];
+      return '<button class="chip' + (on ? ' active' : '') + '" data-bkind="' + x[0] + '" type="button">' + x[1] + ' <span class="tc">' + x[2] + '</span></button>';
+    }).join('');
+    if ($('#placeFoldHint')) $('#placeFoldHint').innerHTML = '필터(게시대 구분·테마·정렬·요일·읍면동)와 ' + kN.all + '개소 목록은 이 버튼을 누르면 함께 펼쳐집니다. 접수는 위 <b>접수하러 가기</b>에서 바로 할 수 있습니다. 공문전용·정치행정 32개소는 협회 공문·정치행정 배정에만 쓰입니다.';
     $('#statusThemeChips').innerHTML = themeChipsHTML(ui.theme, 'theme');
     $('#statusThemeInfo').textContent = ui.theme
       ? themeMeta(ui.theme).label + ' 코스 ' + themeCount(ui.theme) + '개소를 보고 있습니다.'
@@ -6087,7 +6139,7 @@
       ? list.map(function (p) { return placementRow(p, { week: wk }); }).join('')
       : '<div class="empty" style="grid-column:1/-1">' + IC.empty + '<div>조건에 맞는 게시대가 없습니다.</div></div>';
     if ($('#statusListInfo')) {
-      $('#statusListInfo').innerHTML = '<span>표시 <b>' + list.length + '</b>개소 / 전체 <b>' + db.placements.length + '</b>개소</span>' +
+      $('#statusListInfo').innerHTML = '<span>표시 <b>' + list.length + '</b>개소 / 전체 <b>' + kN.all + '</b>개소</span>' +
         '<span>·</span><span><b>' + weekRangeTxt(wk) + '</b> 게첨 주</span><span>·</span><span>한 줄 보기 — 페이지 넘김 없음</span>';
     }
   }
@@ -6141,11 +6193,17 @@
     }
     if (it && it.kind === 'official') {
       var offObj = it.official || {};
-      return { cls: 'official', tag: '공문 배정', adv: offObj.org || offObj.title || '공문 우선배정', sub: offObj.text || offObj.docNo || '공문 우선' };
+      return { cls: 'official', tag: (boardKindOf(p) === 'political' ? '정치행정 배정' : '공문 배정'), adv: offObj.org || offObj.title || '공문 우선배정', sub: offObj.text || offObj.docNo || '공문 우선' };
     }
     if (it && it.kind === 'app') {
       var appObj = it.app || {};
       return { cls: 'confirmed', tag: appObj.status || '확정', adv: appObj.advertiser || appObj.company || '배정 완료', sub: appObj.text || '' };
+    }
+    /* 공문전용·정치행정 게시대의 빈 면 — 일반 접수 불가로 표시한다 (2026-11-28) */
+    var bKind = boardKindOf(p);
+    if (bKind !== 'normal') {
+      return { cls: 'special', tag: (bKind === 'political' ? '정치행정 전용' : '공문 전용'),
+        adv: (bKind === 'political' ? '정치행정 배정 대기' : '공문 배정 대기'), sub: '일반 접수 불가' };
     }
     if (wk === weekStartOf(CUR.start) && st.k === 'inuse') {
       return { cls: 'inuse', tag: '게시중', adv: '기존 배정', sub: '진행 주간 게시중 (' + dstr(CUR.start) + '~' + dstr(CUR.end) + ')' };
@@ -6285,15 +6343,23 @@
     return { plan: fastPlan, smap: fastSmap };
   }
 
+  /* 게시현황(1·4주) 대상 게시대 — 일반(81) + 공문전용·정치행정(32) · 구분 필터(전체/일반/공문전용/정치행정) 적용 */
+  function bsBoardList() {
+    return allBoardList().filter(function (x) { return !ui.bsKind || boardKindOf(x) === ui.bsKind; });
+  }
   function renderBoardSchedulePage() {
     if (!has('bsScheduleRoot')) return;
     var root = $('#bsScheduleRoot');
     var sel = $('#bsPlaceSelect');
-    var list = PLACEMENTS.filter(function (x) { return !x.low && !x.officialOnly; });
-    if (!list.length) list = PLACEMENTS;
+    var allBs = allBoardList();
+    var kBsk = boardKindCounts();
+    var list = bsBoardList();
+    if (!list.length) list = allBs;
     var urlPid = paramOf('pid');
     if (ui.bsPid === undefined) ui.bsPid = urlPid || '';
     var pFocus = ui.bsPid ? boardById(ui.bsPid) : null;
+    /* 구분을 바꿔 초점 게시대가 목록에서 빠지면 초점을 풀어 준다 (빈 표 방지) */
+    if (pFocus && ui.bsKind && boardKindOf(pFocus) !== ui.bsKind) { ui.bsPid = ''; pFocus = null; }
     var schedMode = ui.bsMode === '4w' ? '4w' : '1w';
     var schedBase = ui.bsDate || weekStartOf(todayISO());
     var dayFilter = ui.bsDay || '';
@@ -6302,8 +6368,10 @@
     if (sel) {
       sel.innerHTML = '<option value="">전체 게시대 (' + list.length + '개소 · 엑셀 전체표)</option>' +
         list.map(function (x, i) {
+          var xk = boardKindOf(x);
           return '<option value="' + esc(x.id) + '"' + (x.id === ui.bsPid ? ' selected' : '') + '>' +
-            (i + 1) + '. ' + esc(x.name) + ' (' + esc(x.dong) + ' · ' + x.cap + '면)</option>';
+            (i + 1) + '. ' + esc(x.name) + ' (' + esc(x.dong) + ' · ' + x.cap + '면' +
+            (xk === 'political' ? ' · ⚖️ 정치행정' : (xk === 'official' ? ' · 🏛️ 공문전용' : '')) + ')</option>';
         }).join('');
       if (!sel._bsBound) {
         sel._bsBound = true;
@@ -6317,35 +6385,53 @@
     if ($('#bsHeadSub')) {
       $('#bsHeadSub').textContent = pFocus
         ? (pFocus.name + ' · ' + (pFocus.addr || '') + ' (' + (pFocus.code || '') + ')')
-        : ('서산시 지정게시대 ' + list.length + '개소 · 엑셀 시트(게시현황1주 · 게시현황4주) 스타일');
+        : ('서산시 지정게시대 ' + list.length + '개소 (일반 ' + kBsk.normal + ' + 공문전용·정치행정 ' + kBsk.low + ') · 엑셀 시트(게시현황1주 · 게시현황4주) 스타일');
     }
     if ($('#bsBoardMeta')) {
+      var pfKind = pFocus ? boardKindOf(pFocus) : 'normal';
       $('#bsBoardMeta').innerHTML = pFocus
         ? ('<b>' + esc(pFocus.day) + '요일 설치</b> · 정원 <b>' + pFocus.cap + '면</b> · ' +
-           (pFocus.broken ? '<span style="color:var(--warn);font-weight:700">고장·수리중</span>' : '<span style="color:var(--ok);font-weight:700">정상 운영</span>'))
+           (pfKind === 'political' ? '<span style="color:#5b21b6;font-weight:700">⚖️ 정치행정 전용</span>'
+             : (pfKind === 'official' ? '<span style="color:#1e3a8a;font-weight:700">🏛️ 공문전용</span>'
+               : (pFocus.broken ? '<span style="color:var(--warn);font-weight:700">고장·수리중</span>' : '<span style="color:var(--ok);font-weight:700">정상 운영</span>'))))
         : ('<b>월·화·수 전체 코스</b> · 1~5단 게시현황');
+    }
+    /* 공문전용·정치행정 게시대는 일반 접수 대상이 아니다 — 바로가기 버튼 상태도 같이 바꿔 준다 */
+    if ($('#bsGoApply')) {
+      var goSpecial = pFocus ? (boardKindOf(pFocus) !== 'normal') : false;
+      $('#bsGoApply').disabled = goSpecial;
+      $('#bsGoApply').textContent = goSpecial ? '공문·정치행정 전용 (일반 접수 불가)' : '이 게시대 주간 접수 →';
     }
     if ($('#bsPrevBoard') && !$('#bsPrevBoard')._bsBound) {
       $('#bsPrevBoard')._bsBound = true;
       $('#bsPrevBoard').addEventListener('click', function () {
+        var list2 = bsBoardList() || [];
+        if (!list2.length) list2 = allBoardList();
         var idx = -1;
-        for (var i = 0; i < list.length; i++) { if (list[i].id === ui.bsPid) { idx = i; break; } }
-        var prev = idx <= 0 ? list[list.length - 1] : list[idx - 1];
+        for (var i = 0; i < list2.length; i++) { if (list2[i].id === ui.bsPid) { idx = i; break; } }
+        var prev = idx <= 0 ? list2[list2.length - 1] : list2[idx - 1];
         if (prev) { ui.bsPid = prev.id; renderBoardSchedulePage(); }
       });
     }
     if ($('#bsNextBoard') && !$('#bsNextBoard')._bsBound) {
       $('#bsNextBoard')._bsBound = true;
       $('#bsNextBoard').addEventListener('click', function () {
+        var list2 = bsBoardList() || [];
+        if (!list2.length) list2 = allBoardList();
         var idx = -1;
-        for (var i = 0; i < list.length; i++) { if (list[i].id === ui.bsPid) { idx = i; break; } }
-        var nxt = idx < 0 ? list[0] : list[(idx + 1) % list.length];
+        for (var i = 0; i < list2.length; i++) { if (list2[i].id === ui.bsPid) { idx = i; break; } }
+        var nxt = idx < 0 ? list2[0] : list2[(idx + 1) % list2.length];
         if (nxt) { ui.bsPid = nxt.id; renderBoardSchedulePage(); }
       });
     }
     if ($('#bsGoApply') && !$('#bsGoApply')._bsBound) {
       $('#bsGoApply')._bsBound = true;
       $('#bsGoApply').addEventListener('click', function () {
+        var fp = ui.bsPid ? boardById(ui.bsPid) : null;
+        if (fp && boardKindOf(fp) !== 'normal') {
+          toast(fp.name + ' — 공문·정치행정 전용 게시대는 일반 접수 대상이 아닙니다.', true);
+          return;
+        }
         goPage('apply.html' + (ui.bsPid ? '?place=' + encodeURIComponent(ui.bsPid) : ''));
       });
     }
@@ -6374,6 +6460,15 @@
           '<button class="btn sm ghost" type="button" data-bsnav="1">다음 ▶</button>' +
           '<button class="btn sm" type="button" data-bsnow="1">이번 회차</button>' +
         '</div>' +
+      '</div>' +
+      '<div class="xl-bar" style="margin-bottom:10px">' +
+        '<div class="chips" aria-label="게시대 구분">' +
+          [['', '전체', kBsk.all], ['normal', '일반', kBsk.normal], ['official', '🏛️ 공문전용', kBsk.official], ['political', '⚖️ 정치행정', kBsk.political]].map(function (x) {
+            var on = (ui.bsKind || '') === x[0];
+            return '<button class="chip ' + (on ? 'on' : '') + '" type="button" data-bskind="' + x[0] + '">' + x[1] + ' <span class="tc">' + x[2] + '</span></button>';
+          }).join('') +
+        '</div>' +
+        '<div class="sm" style="color:var(--muted)">🏛️ 공문전용·⚖️ 정치행정 게시대는 협회 공문·정치행정 배정에만 쓰입니다 (일반 접수 불가)</div>' +
       '</div>' +
       '<div class="xl-bar" style="margin-bottom:10px">' +
         '<div class="chips">' +
@@ -6433,7 +6528,7 @@
           }
           rows1.push('<tr>' +
             '<td class="xl-c-day">' + esc(b.day) + '</td>' +
-            '<td class="xl-c-name">' + (gi === 0 ? esc(b.name) : '<span style="color:#94a3b8">' + esc(b.name) + '</span>') + '</td>' +
+            '<td class="xl-c-name">' + (gi === 0 ? (esc(b.name) + boardKindBadgeHTML(b)) : ('<span style="color:#94a3b8">' + esc(b.name) + '</span>')) + '</td>' +
             '<td class="xl-c-dong">' + esc(col) + '</td>' +
             tds + '</tr>');
         });
@@ -6491,7 +6586,7 @@
           });
           blocks.push('<div class="xl-block">' +
             '<div class="xl-block-head">' +
-              '<span>' + esc(b.name) + ' · ' + esc(col) + '동 (' + slist.length + '단)</span>' +
+              '<span>' + esc(b.name) + (col && col !== '—' ? ' · ' + esc(col) + '동' : '') + ' (' + slist.length + '단)' + boardKindBadgeHTML(b) + '</span>' +
               '<small>' + esc(b.day) + '요일 코스 · ' + esc(b.dong) + '</small>' +
             '</div>' +
             '<table class="xl-4w-tbl">' +
@@ -6541,6 +6636,12 @@
         renderBoardSchedulePage();
       });
     });
+    root.querySelectorAll('[data-bskind]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        ui.bsKind = b.getAttribute('data-bskind') || '';
+        renderBoardSchedulePage();
+      });
+    });
     var srIn = root.querySelector('#bsSearchIn');
     if (srIn) {
       srIn.addEventListener('input', function () {
@@ -6574,13 +6675,14 @@
     var smaps = weeks.map(function (w) { return slotStateMap(p, w); });
 
     var totalSlots = codes.length * nWeeks;
-    var usedN = 0, freeN = 0, rivalN = 0, offN = 0;
+    var usedN = 0, freeN = 0, rivalN = 0, offN = 0, spN = 0;
     codes.forEach(function (s) {
       weeks.forEach(function (w, idx) {
         var c = placeSchedCell(p, s, w, plans[idx], smaps[idx]);
         if (c.cls === 'confirmed' || c.cls === 'inuse' || c.cls === 'official') usedN += 1;
         else if (c.cls === 'free') freeN += 1;
         else if (c.cls === 'rival') rivalN += 1;
+        else if (c.cls === 'special') spN += 1;
         else offN += 1;
       });
     });
@@ -6603,6 +6705,7 @@
       '<span class="pd-chip blue">확정·게시 ' + usedN + '면</span>' +
       (rivalN ? '<span class="pd-chip amber">지정 접수 ' + rivalN + '칸</span>' : '') +
       '<span class="pd-chip ok">빈 자리 ' + freeN + '면</span>' +
+      (spN ? '<span class="pd-chip blue">공문·정치행정 전용 ' + spN + '면</span>' : '') +
       (offN ? '<span class="pd-chip red">제한·고장 ' + offN + '면</span>' : '') +
       '<span class="pd-chip">전체 ' + totalSlots + '면 기준</span>' +
       '</div></div>';
@@ -6660,8 +6763,10 @@
   }
 
   function showPlacementDetail(id) {
-    var p = placementById(id);
+    /* 공문전용 저단·정치행정 게시대도 상세를 연다 (boardById가 LOW_BOARDS까지 찾는다 · 2026-11-28) */
+    var p = boardById(id);
     if (!p) return;
+    var dKind = boardKindOf(p), dSpecial = (dKind !== 'normal');
     var curWk = weekStartOf(ui.statusWeek || ROUND.postStart);
     var pdState = { mode: '1w', date: curWk };
     var liveWk = (curWk === weekStartOf(CUR.start));
@@ -6678,12 +6783,18 @@
         : '—') + '</dd>' +
       '<dt>설치 요일</dt><dd>' + esc(p.day) + '요일</dd>' +
       '<dt>게시대 규모</dt><dd>' + placeSizeTxt(p) + ' · 총 ' + p.cap + '매</dd>' +
-      '<dt>현재 게시</dt><dd>' + p.inUse + '매 · 정원 ' + p.cap + '면</dd>' +
+      '<dt>현재 게시</dt><dd>' + (p.inUse || 0) + '매 · 정원 ' + p.cap + '면</dd>' +
+      (dSpecial
+        ? '<dt>운영 구분</dt><dd>' + (dKind === 'political'
+            ? '<span class="badge b-navy"><i></i>⚖️ 정치행정 전용</span> — 정치행정 현수막만 배정됩니다 (정치행정승인팀 승인 후 확정 · 일반 접수·추첨 대상 아님)'
+            : '<span class="badge b-navy"><i></i>🏛️ 공문전용 저단게시대</span> — 시청 공문 현수막만 배정됩니다 (관리자 공문 우선접수에서만 등록 · 일반 접수·추첨 대상 아님)') + '</dd>'
+        : '') +
+      '<dt>지도 · 로드뷰</dt><dd>' + boardMapBtnsHTML(p) + '</dd>' +
       (officialFullSeatsOf(p)
         ? '<dt>공문 우선</dt><dd><b>의료원담장(F·G ' + officialFullSeatsOf(p) + '면) 공문 우선 100% 허용</b> — 공문 상한 <b>' + officialCapOf(p) + '면</b> (' + esc(officialCapNote(p)) + ') · 공문 배정 시 담장 F1·F2·G1·G2부터 채웁니다</dd>'
         : '') +
       '<dt>상태</dt><dd>' + (p.broken ? '<span class="badge b-broken"><i></i>고장·수리중 — 접수·선착순·추첨 제외</span>' : '<span class="badge b-green"><i></i>정상 운영</span>') + '</dd>' +
-      '<dt>이번 주 접수중</dt><dd>' + appsR.length + '건 · ' + qtyAppsR + '매 (1개소당 1매)</dd>' +
+      '<dt>이번 주 접수중</dt><dd>' + (dSpecial ? '<b>접수 대상 아님</b> (공문·정치행정 배정 전용)' : (appsR.length + '건 · ' + qtyAppsR + '매 (1개소당 1매)')) + '</dd>' +
       (liveWk ? '<dt>진행 중 주간</dt><dd><b>' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + '</b> · 잔여 <b>' + liveLeft + '면</b> — 협회 일괄 게첨이 끝난 주간입니다</dd>' : '') +
       '</dl></div>' +
       '<div class="sect-label">📅 게시현황 (1주 · 4주 조회) <span>날짜를 고르면 해당 주 기준으로 바로 바뀝니다</span></div>' +
@@ -6709,19 +6820,26 @@
             : '접수 제한 자리는 추첨·선착순에서 배정되지 않습니다.') + '</div></div></div>'
         : '') +
       slotGridHTML(p) +
-      (p.broken
+      (dSpecial
+        ? '<div class="callout info">' + IC.info + '<div>' + (dKind === 'political'
+            ? '이 게시대는 <b>정치행정 현수막 전용</b>입니다. 일반 광고는 접수·추첨할 수 없고, 정치행정 신청이 <b>정치행정승인팀 승인</b>으로 확정되면 배정됩니다.'
+            : '이 게시대는 <b>시청 공문 현수막 전용 저단게시대</b>입니다. 일반 광고는 접수·추첨할 수 없고, 협회 관리자의 <b>🏛️ 공문 우선접수</b>에서만 배정됩니다.') + '</div></div>'
+        : (p.broken
         ? '<div class="callout warn">' + IC.alert + '<div>현재 <b>수리중</b>인 게시대입니다. 복구 전까지 접수·추첨·목요일 선착순에서 제외되며, 잔여 매수에도 포함되지 않습니다. (협회 관리자만 상태를 바꿀 수 있습니다.)</div></div>'
         : (liveWk && liveLeft
           ? '<div class="callout warn" id="detailLiveCallout">' + IC.alert + '<div><b>진행 중 주간(' + dstr(CUR.start) + ' ~ ' + dstr(CUR.end) + ') 잔여 ' + liveLeft + '면</b> — 협회 일괄 게첨이 종료된 주간이라 <b>광고사는 직접 설치</b>, <b>일반인은 반드시 광고사에 의뢰</b>해야 합니다. 아래 <b>[진행 주간 잔여석 접수]</b>로 바로 접수할 수 있습니다.</div></div>'
-          : '<div class="callout info">' + IC.info + '<div>한 게시대에는 <b>1매</b>만 표시할 수 있습니다. 잔여 매는 추첨 후 미배정 물량으로 <b>선착순 예약</b>에 공개됩니다.</div></div>'));
+          : '<div class="callout info">' + IC.info + '<div>한 게시대에는 <b>1매</b>만 표시할 수 있습니다. 잔여 매는 추첨 후 미배정 물량으로 <b>선착순 예약</b>에 공개됩니다.</div></div>')));
     openModal({
-      title: p.name, sub: p.dong + ' · 지정게시대 ' + p.id,
+      title: p.name, sub: p.dong + ' · ' + (dSpecial ? (dKind === 'political' ? '정치행정 게시대' : '공문전용 저단게시대') : '지정게시대') + ' ' + p.id,
       wide: true,
       body: body,
-      foot: '<button class="btn ghost" data-close type="button">닫기</button>' +
-        (liveWk && liveLeft && !p.broken ? '<button class="btn primary" id="mdlLive" type="button">🔥 진행 주간 잔여석 접수</button>' : '') +
-        '<button class="btn" id="mdlFirst" type="button"' + (p.broken ? ' disabled' : '') + '>선착순 예약 보기</button>' +
-        '<button class="btn primary" id="mdlApply" type="button"' + (p.broken ? ' disabled' : '') + '>주간 추첨 접수</button>',
+      foot: dSpecial
+        ? '<button class="btn ghost" data-close type="button">닫기</button>' +
+          '<span class="badge b-navy"><i></i>' + (dKind === 'political' ? '⚖️ 정치행정 전용 — 일반 접수 불가' : '🏛️ 공문 전용 — 일반 접수 불가') + '</span>'
+        : ('<button class="btn ghost" data-close type="button">닫기</button>' +
+          (liveWk && liveLeft && !p.broken ? '<button class="btn primary" id="mdlLive" type="button">🔥 진행 주간 잔여석 접수</button>' : '') +
+          '<button class="btn" id="mdlFirst" type="button"' + (p.broken ? ' disabled' : '') + '>선착순 예약 보기</button>' +
+          '<button class="btn primary" id="mdlApply" type="button"' + (p.broken ? ' disabled' : '') + '>주간 추첨 접수</button>'),
       after: function () {
         function bindPdSched() {
           var box = $('#pdScheduleBox');
@@ -6765,7 +6883,7 @@
           });
         }
         bindPdSched();
-        if (p.broken) return;
+        if (p.broken || dSpecial) return;
         onEl('#mdlLive', 'click', function () { closeModal(); goPage('remain.html?place=' + encodeURIComponent(id)); });
         onEl('#mdlApply', 'click', function () {
           closeModal(); goPage('apply.html?place=' + encodeURIComponent(id));
@@ -11237,7 +11355,13 @@
     if (m.type === 'agency') return 'agency';
     return 'direct';
   }
-  function memberList() { if (!db.members) db.members = []; return db.members; }
+  /* 첫 방문(저장 데이터 없음)에는 db가 아직 만들어지기 전에 시연 데이터 생성 단계에서 불릴 수 있다.
+     — 그때는 기본 회원 명단(SEED_MEMBERS)을 돌려줘야 시연 데이터가 멈추지 않는다 (2026-11-28 수정) */
+  function memberList() {
+    if (!db) return SEED_MEMBERS || [];
+    if (!db.members) db.members = [];
+    return db.members;
+  }
   function agencyAppCount(memberId) {
     if (!memberId) return 0;
     return db.apps.filter(function (a) { return a.memberId === memberId; }).length;
@@ -17171,7 +17295,7 @@
       e.preventDefault();
       return;
     }
-    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,[data-pffilter],[data-pffolder],[data-pfpick],#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-desigweek],[data-byeoljiweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
+    var el = (t && t.closest) ? t.closest('[data-aikeybtn],[data-airetry],[data-boardmap],[data-boardroad],[data-schedpage],[data-randexcl],[data-offslotmodal],[data-login-open],[data-auth-tab],[data-login-preset],[data-logout],[data-slotpick],[data-slotmodal],[data-slotjump],[data-evvote],[data-evproxy],[data-revproxy],[data-evsave],[data-desig],[data-offday],[data-offpick],[data-offnext],[data-offprev],[data-offstep],[data-mbdel],[data-offapprove],[data-offcancel],[data-theme],[data-woday],[data-ptheme],[data-fctheme],[data-themeedit],[data-themedel],[data-rank],[data-broken],[data-slotflag],[data-sfbatch],[data-slotadmin],[data-delplace],[data-brokenfilter],[data-qty-step],[data-qty-set],[data-unpaid],[data-precancel],[data-selfcancel],[data-penrelease],[data-close],[data-tab],[data-day],[data-pday],[data-dong],[data-pick],[data-detail],[data-apply],[data-book],[data-unpick],[data-receipt],[data-goto],[data-smssend],[data-smsauto],[data-smsverify],[data-guestlogin],[data-guestsignup],[data-guestcontinue],[data-guestnotice],[data-mpverify],[data-rolelogin],[data-mptoggle],[data-polrange-add],[data-polrange-week],[data-polrange-del],#btnDrawPrint,#btnDrawResultPrint,#btnPermSave,#btnPermReset,#btnRoleQuotaSave,#btnRoleQuotaReset,#btnAssocFixedSave,#btnAssocFixedReset,[data-ma-filter],[data-ma-team],[data-ma-appoint],[data-ma-unappoint],[data-ma-appointer],[data-openapproval],[data-repeatoff],[data-mppick],[data-mpback],[data-dupscan],[data-officeradd],[data-mbapprove],[data-mbreject],[data-officerapprove],[data-officerreject],[data-officerrevoke],[data-officerremove],[data-adminsub],[data-gsubtab],[data-spage],[data-sall],[data-ppage],[data-pall],[data-calprev],[data-calnext],[data-caltoday],[data-calweek] ,[data-weekapply],[data-sulicsample],#btnSuLicSample,#btnTop,#btnWeekCal,#btnWeekCalClose,#btnDesigBatchAllPrint,#btnDesigBatchSelPrint,#desigBatchAll,#btnReportShow,#btnReportPrint2,#btnPhotoPick,#btnPhotoSample,[data-pffilter],[data-pffolder],[data-pfpick],#btnOffFilePick,#btnViewToggle,#btnViewAuto,#btnBonusCapSave,#btnBonusCapReset,[data-offsample],[data-offzoom],[data-photodel],[data-photoview],[data-photodl],[data-photoproof],[data-locpick],[data-locdeliver],[data-locaddr],[data-locaddrrow],[data-locday],[data-locprep],[data-locprint],[data-licopen],[data-zoom],[data-zoomapprove],[data-zoomreject],[data-urgentgrant],[data-approve],[data-reject],[data-payconfirm],[data-deliverconfirm],[data-poststart],[data-fcday],[data-fctime],[data-fccover],[data-fcmode],[data-fcpick],[data-fcunpick],[data-fcqty-step],[data-fcqty-set],[data-livebook],[data-fclive],[data-sfother],[data-assocsave],[data-gradesave],[data-sort],[data-bkind],[data-psort],[data-polapprove],[data-polphone],[data-offphone],#btnPhoneProxyConfirm,[data-caltoggle],[data-woweek],[data-desigweek],[data-byeoljiweek],[data-offlow],[data-permrole],[data-demodow],[data-thuholy],[data-democal],[data-democalnav],[data-democalday],[data-fcweek],[data-offrec],.grant-chip') : null;
     if (!el) return;
     if (el.hasAttribute('data-aikeybtn')) { e.stopPropagation(); e.preventDefault(); openAiVisionKeyModal(el.getAttribute('data-aikeybtn') || 'apply'); return; }
     if (el.hasAttribute('data-airetry')) {
@@ -17435,6 +17559,7 @@
     if (el.hasAttribute('data-close')) { closeModal(); return; }
     if (el.hasAttribute('data-tab')) { showTab(el.getAttribute('data-tab')); return; }
     if (el.hasAttribute('data-sort')) { ui.sort = el.getAttribute('data-sort') || 'comp-desc'; renderStatus(); return; }
+    if (el.hasAttribute('data-bkind')) { ui.boardKind = el.getAttribute('data-bkind') || ''; ui.statusPage = 0; renderStatus(); return; }
     if (el.hasAttribute('data-psort')) { ui.pSort = el.getAttribute('data-psort') || 'comp-desc'; renderPickUI(); renderPickFilters(); return; }
     if (el.hasAttribute('data-day')) { ui.day = el.getAttribute('data-day'); ui.statusPage = 0; renderStatus(); return; }
     if (el.hasAttribute('data-pday')) { ui.pDay = el.getAttribute('data-pday'); renderPickUI(); return; }

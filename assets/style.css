@@ -187,6 +187,9 @@ a{color:var(--blue)}
 .tag{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--sky);color:var(--blue-d);white-space:nowrap;letter-spacing:-.01em}
 .tag.hot{background:#fff0e6;color:#b4530a}
 .tag.eco{background:var(--ok-bg);color:var(--ok)}
+/* 게시대 구분 배지 — 공문전용(저단) · 정치행정 (2026-11-28) */
+.tag.kind-official{background:#eef4ff;color:#1e3a8a;border:1px solid #c9dcff}
+.tag.kind-political{background:#f3edff;color:#5b21b6;border:1px solid #d9c9ff}
 .pc-meta{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
 .pc-meta span{display:flex;align-items:center;gap:4px}
 .pc-meta svg{width:13px;height:13px;opacity:.75}
@@ -2177,7 +2180,7 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 /* 잔여접수(.fc-item) 스타일 공통 확장 — 게시대현황·주간접수·공문접수 (2026-11-26) */
 .fc-item.off{background:#f8fafd;opacity:.76}
 .fc-item.adj-locked{border-color:#e8d7b4;background:#fffcf4}
-.fc-item .fc-act{margin-left:auto;display:flex;align-items:center;gap:4px;flex-shrink:0}
+.fc-item .fc-act{margin-left:auto;display:flex;align-items:center;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
 .fc-item .fc-act .btn.sm{padding:4px 10px;font-size:11.5px;height:28px;min-height:28px;border-radius:8px;line-height:1;min-width:0}
 .fc-item .fmain b{display:flex;align-items:center;flex-wrap:wrap;gap:4px;white-space:normal}
 .fc-item .pl-rank{display:inline-flex;align-items:center;padding:1px 6px;border-radius:999px;background:var(--blue);color:#fff;font-size:10.5px;font-weight:800}
@@ -2249,6 +2252,9 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .xl-tbl td.xl-slot.rival{background:#fef3c7}
 .xl-tbl td.xl-slot.off{background:#fee2e2}
 .xl-tbl td.xl-slot.free{background:#ffffff;color:#94a3b8;text-align:center}
+/* 공문전용·정치행정 게시대의 빈 면 — 일반 접수 불가 (2026-11-28) */
+.xl-tbl td.xl-slot.special{background:#eef2ff}
+.xl-tbl td.xl-slot.special .xl-txt{color:#3730a3}
 .xl-tbl td.xl-slot.na{background:#f1f5f9;color:#cbd5e1;text-align:center}
 .xl-4w-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 @media (max-width:1024px){.xl-4w-grid{grid-template-columns:1fr}}
@@ -2270,6 +2276,7 @@ body[data-page="apply"] .plrow .pl-tag,.fc-item .tag{font-size:10px;padding:1px 
 .xl-4w-tbl td.st-off{background:#fee2e2;color:#991b1b;font-weight:700}
 .xl-4w-tbl td.st-rival{background:#fef3c7;color:#92400e;font-weight:700}
 .xl-4w-tbl td.st-free{color:#94a3b8}
+.xl-4w-tbl td.st-special{background:#eef2ff;color:#3730a3;font-weight:700}
 
 /* 무작위 제외 설정 (카드 체크 + 제외 팝업) */
 .pick-row.rand-excluded{background:#fff8f6;border-color:#fed7aa}
