@@ -6065,7 +6065,7 @@
       var pts = mapFilteredPoints(), bounds = [];
       pts.forEach(function (pt) {
         var mk = L.marker(pt.ll, { icon: mapPinIcon(pt.kind, pt.letter), title: pt.label, riseOnHover: true, keyboard: true });
-        mk.bindPopup(mapPopupHTML(pt), { maxWidth: 320, minWidth: 250, autoPanPadding: [24, 24] });
+        mk.bindPopup(mapPopupHTML(pt), { maxWidth: 360, minWidth: 268, autoPanPadding: [24, 24] });
         mk.on('popupopen', function (e) { bindMapPopup(e.popup.getElement(), pt); });
         mk.addTo(LEAFLET.layer);
         bounds.push(pt.ll);

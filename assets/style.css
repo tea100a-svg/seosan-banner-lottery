@@ -2460,5 +2460,6 @@ details.special-fold > .sf-body{padding:16px 20px 20px}
 .map-pop-badge{display:inline-block;margin-left:4px;padding:0 7px;border-radius:999px;background:var(--pin,#2563eb);color:#fff;font-size:11px;font-weight:700}
 .map-pop-cnt{margin:6px 0 8px;font-size:12.5px;color:#334155}
 .map-pop-btns{display:flex;gap:6px;flex-wrap:wrap}
-.map-pop-btns .btn{font-size:12px;padding:4px 9px}
+.map-pop-btns .btn{font-size:11.5px;padding:3px 8px;white-space:nowrap}
+.map-pop-btns{gap:5px}
 .dong-pop-list + .split-map-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
